@@ -18,16 +18,4 @@ We are Computer Engineering students studying at Boğaziçi University. We are t
 - [Hasancan Keles](https://github.com/bounswe/bounswe2025group9/wiki/Personal-Wiki:-Hasancan-Keles)
 - [Mete DAMAR](https://github.com/bounswe/bounswe2025group9/wiki/Personal-Wiki:-Mete-DAMAR)
 
-## 💻 Meeting Notes
-
-| Day       | Time          |
-| --------- | ------------- |
-| Tuesdays  | 20:00 - 21:00 |
-| Thursdays | 18:00 - 19:00 |
-
-- [Meeting Notes - 1](https://github.com/bounswe/bounswe2025group9/wiki/Meeting-Notes-%E2%80%90-1)
-- [Meeting Notes - 2](https://github.com/bounswe/bounswe2025group9/wiki/Meeting-Notes-%E2%80%90-2)
-- [Meeting Notes - 3](https://github.com/bounswe/bounswe2025group9/wiki/Meeting-Notes-%E2%80%90-3)
-- [Meeting Notes - 4](https://github.com/bounswe/bounswe2025group9/wiki/Meeting-Notes-%E2%80%90-4)
-
 ## [Affordable & Healthy Eating Hub](https://github.com/bounswe/bounswe2025group9/wiki/Project:-Affordable-&-Healthy-Eating-Hub)
