@@ -18,4 +18,4 @@ We are Computer Engineering students studying at Boğaziçi University. We are t
 - [Hasancan Keles](https://github.com/bounswe/bounswe2025group9/wiki/Personal-Wiki:-Hasancan-Keles)
 - [Mete DAMAR](https://github.com/bounswe/bounswe2025group9/wiki/Personal-Wiki:-Mete-DAMAR)
 
-## [Affordable & Healthy Eating Hub](https://github.com/bounswe/bounswe2025group9/wiki/Project:-Affordable-&-Healthy-Eating-Hub)
+# [Affordable & Healthy Eating Hub](https://github.com/bounswe/bounswe2025group9/wiki/Project:-Affordable-&-Healthy-Eating-Hub)
