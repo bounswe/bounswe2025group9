@@ -1,5 +1,13 @@
 # Quick Setup
 
+## Development Setup
+```bash
+python -m venv venv # or use conda
+source venv/bin/activate
+
+pip install -r requirements-dev.txt # install requirements
+```
+
 ## Development Server
 Run the development server:
 ```bash
@@ -11,6 +19,13 @@ Run the development server:
 ./manage.py test
 ```
 
+## Contribution Guide
+
+Please format your changes with `black`:
+
+```bash
+black .
+```
 
 
 
