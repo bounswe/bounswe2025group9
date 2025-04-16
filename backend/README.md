@@ -4,6 +4,7 @@
 ```bash
 python -m venv venv # or use conda
 source venv/bin/activate
+source setup.sh # loads environment variables
 
 pip install -r requirements-dev.txt # install requirements
 ```
