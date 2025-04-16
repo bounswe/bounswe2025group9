@@ -7,6 +7,8 @@ source venv/bin/activate
 source setup.sh # loads environment variables
 
 pip install -r requirements-dev.txt # install requirements
+
+pre-commit install # install pre-commit hooks
 ```
 
 ## Development Server
@@ -28,6 +30,7 @@ Please format your changes with `black`:
 black .
 ```
 
+Note: If you setup `pre-commit` hooks, `black format` will automatically run. 
 
 
 
