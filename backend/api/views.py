@@ -3,7 +3,7 @@ from datetime import datetime
 
 
 def get_time(request: HttpRequest):
-    """ "
+    """
     Get the current time.
 
     GET /time?name={name}
