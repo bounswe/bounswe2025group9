@@ -1,0 +1,200 @@
+/* component styles */
+
+/* card component */
+.nh-card {
+  background-color: var(--color-bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  padding: var(--space-6);
+  overflow: hidden;
+  border: 1px solid var(--color-gray-800);
+  transition: background-color 0.3s ease, border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+/* buttons */
+.nh-button {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+.nh-button-lg {
+  padding: var(--space-4) var(--space-8);
+  font-size: var(--font-size-xl);
+  border-radius: var(--radius-lg);
+  font-weight: 600;
+}
+
+.nh-button-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.nh-button-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.nh-button-secondary {
+  background-color: var(--color-gray-800);
+  color: var(--color-gray-200);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.nh-button-secondary:hover {
+  background-color: var(--color-gray-700);
+}
+
+.nh-button-outline {
+  background-color: transparent;
+  border: 1px solid var(--color-gray-500);
+  color: var(--color-gray-200);
+  transition: border-color 0.3s ease, color 0.3s ease,
+    background-color 0.3s ease;
+}
+
+.nh-button-outline:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  border-color: var(--color-gray-400);
+}
+
+/* text styles */
+.nh-title {
+  font-size: var(--font-size-3xl);
+  font-weight: bold;
+  margin-bottom: var(--space-4);
+  color: var(--color-light);
+  transition: color 0.3s ease;
+}
+
+.nh-title-lg {
+  font-size: var(--font-size-5xl);
+  font-weight: bold;
+  margin-bottom: var(--space-6);
+  color: var(--color-light);
+  transition: color 0.3s ease;
+}
+
+.nh-subtitle {
+  font-size: var(--font-size-xl);
+  font-weight: 600;
+  color: var(--color-light);
+  transition: color 0.3s ease;
+}
+
+.nh-text {
+  color: var(--color-gray-400);
+  transition: color 0.3s ease;
+}
+
+.nh-text-light {
+  color: var(--color-gray-500);
+  transition: color 0.3s ease;
+}
+
+/* light mode text adjustments */
+.light-theme .nh-title,
+.light-theme .nh-title-lg,
+.light-theme .nh-subtitle {
+  color: #1e293b; /* slate-800 - darker than default for better contrast */
+}
+
+.light-theme .nh-text {
+  color: #334155; /* slate-700 - darker than default for better contrast */
+}
+
+/* navbar and footer */
+.nh-navbar {
+  background-color: var(--color-dark);
+  color: white;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--color-gray-800);
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.light-theme .nh-navbar {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.nh-footer {
+  background-color: var(--color-dark);
+  color: white;
+  padding: var(--space-6);
+  border-top: 1px solid var(--color-gray-800);
+  transition: background-color 0.3s ease, color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.light-theme .nh-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Light mode specific styles for footer links */
+.light-theme .nh-text-light {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.light-theme .nh-footer .nh-text-light {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.light-theme .nh-footer a.hover\:text-white:hover {
+  color: white !important;
+}
+
+/* grid items */
+.nh-grid {
+  display: grid;
+  gap: var(--space-8);
+  grid-template-columns: repeat(1, 1fr);
+}
+
+@media (min-width: 768px) {
+  .nh-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* container */
+.nh-container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+}
+
+/* light theme card adjustments */
+.light-theme .nh-card {
+  background-color: white; /* Pure white cards for better contrast against yellowish bg */
+  border-color: rgba(0, 0, 0, 0.05); /* Softer border for light theme */
+}
+
+/* light theme button adjustments */
+.light-theme .nh-button-secondary {
+  background-color: #fef3c7; /* amber-200 - slightly darker than bg */
+  color: #78350f; /* amber-900 - dark amber/brown */
+  border: 1px solid #fbbf24; /* amber-400 */
+}
+
+.light-theme .nh-button-secondary:hover {
+  background-color: #fde68a; /* amber-300 */
+}
+
+/* food image placeholder */
+.food-image-placeholder {
+  height: 10rem;
+  border-radius: var(--radius-lg);
+  margin-bottom: 1rem;
+  background-color: var(--color-gray-800);
+}
+
+.light-theme .food-image-placeholder {
+  background-color: #fef3c7; /* amber-200 */
+}
