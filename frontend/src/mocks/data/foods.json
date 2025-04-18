@@ -1,0 +1,252 @@
+[
+  {
+    "id": 1,
+    "name": "Apple",
+    "category": "Fruit",
+    "nutrition": {
+      "calories": 52,
+      "protein": 0.3,
+      "carbohydrates": 13.8,
+      "fat": 0.2,
+      "vitamins": {
+        "vitaminC": 4.6,
+        "vitaminA": 3,
+        "vitaminB6": 0.041
+      },
+      "minerals": {
+        "potassium": 107,
+        "calcium": 6,
+        "iron": 0.12
+      }
+    },
+    "nutritionScore": 7.2,
+    "dietaryTags": ["vegetarian", "vegan", "gluten-free", "low-fat"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 2,
+    "name": "Spinach",
+    "category": "Vegetable",
+    "nutrition": {
+      "calories": 23,
+      "protein": 2.9,
+      "carbohydrates": 3.6,
+      "fat": 0.4,
+      "vitamins": {
+        "vitaminC": 28,
+        "vitaminA": 469,
+        "vitaminK": 483
+      },
+      "minerals": {
+        "iron": 2.7,
+        "calcium": 99,
+        "magnesium": 79
+      }
+    },
+    "nutritionScore": 9.1,
+    "dietaryTags": ["vegetarian", "vegan", "gluten-free", "low-fat"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 3,
+    "name": "Chicken Breast",
+    "category": "Meat",
+    "nutrition": {
+      "calories": 165,
+      "protein": 31,
+      "carbohydrates": 0,
+      "fat": 3.6,
+      "vitamins": {
+        "vitaminB6": 0.6,
+        "vitaminB3": 13.4,
+        "vitaminB12": 0.3
+      },
+      "minerals": {
+        "potassium": 256,
+        "phosphorus": 210,
+        "selenium": 24
+      }
+    },
+    "nutritionScore": 8.5,
+    "dietaryTags": ["high-protein", "low-fat", "gluten-free"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 4,
+    "name": "Brown Rice",
+    "category": "Grain",
+    "nutrition": {
+      "calories": 112,
+      "protein": 2.6,
+      "carbohydrates": 23.5,
+      "fat": 0.9,
+      "vitamins": {
+        "vitaminB1": 0.1,
+        "vitaminB3": 1.3,
+        "vitaminB6": 0.15
+      },
+      "minerals": {
+        "magnesium": 44,
+        "phosphorus": 83,
+        "manganese": 1.1
+      }
+    },
+    "nutritionScore": 7.8,
+    "dietaryTags": ["vegetarian", "vegan", "gluten-free"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 5,
+    "name": "Salmon",
+    "category": "Fish",
+    "nutrition": {
+      "calories": 208,
+      "protein": 20.4,
+      "carbohydrates": 0,
+      "fat": 13.4,
+      "vitamins": {
+        "vitaminD": 11.2,
+        "vitaminB12": 3.2,
+        "vitaminB6": 0.6
+      },
+      "minerals": {
+        "potassium": 363,
+        "phosphorus": 240,
+        "selenium": 36.5
+      }
+    },
+    "nutritionScore": 8.3,
+    "dietaryTags": ["high-protein", "gluten-free"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 6,
+    "name": "Almonds",
+    "category": "Nuts",
+    "nutrition": {
+      "calories": 579,
+      "protein": 21.2,
+      "carbohydrates": 21.7,
+      "fat": 49.9,
+      "vitamins": {
+        "vitaminE": 25.6,
+        "vitaminB2": 1.1,
+        "vitaminB3": 3.9
+      },
+      "minerals": {
+        "magnesium": 270,
+        "calcium": 269,
+        "iron": 3.7
+      }
+    },
+    "nutritionScore": 7.6,
+    "dietaryTags": ["vegetarian", "vegan", "gluten-free", "high-protein"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 7,
+    "name": "Whole Milk",
+    "category": "Dairy",
+    "nutrition": {
+      "calories": 61,
+      "protein": 3.2,
+      "carbohydrates": 4.8,
+      "fat": 3.3,
+      "vitamins": {
+        "vitaminD": 1.3,
+        "vitaminA": 33,
+        "vitaminB12": 0.4
+      },
+      "minerals": {
+        "calcium": 113,
+        "potassium": 143,
+        "phosphorus": 91
+      }
+    },
+    "nutritionScore": 6.9,
+    "dietaryTags": ["vegetarian", "gluten-free"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 8,
+    "name": "Lentils",
+    "category": "Legume",
+    "nutrition": {
+      "calories": 116,
+      "protein": 9,
+      "carbohydrates": 20.1,
+      "fat": 0.4,
+      "vitamins": {
+        "vitaminB1": 0.2,
+        "vitaminB9": 181,
+        "vitaminB6": 0.2
+      },
+      "minerals": {
+        "iron": 3.3,
+        "phosphorus": 180,
+        "potassium": 369
+      }
+    },
+    "nutritionScore": 8.7,
+    "dietaryTags": ["vegetarian", "vegan", "low-fat", "high-protein"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 9,
+    "name": "Egg",
+    "category": "Eggs",
+    "nutrition": {
+      "calories": 143,
+      "protein": 12.6,
+      "carbohydrates": 0.7,
+      "fat": 9.5,
+      "vitamins": {
+        "vitaminA": 160,
+        "vitaminD": 2,
+        "vitaminB12": 0.9
+      },
+      "minerals": {
+        "iron": 1.2,
+        "phosphorus": 198,
+        "selenium": 30.8
+      }
+    },
+    "nutritionScore": 7.9,
+    "dietaryTags": ["vegetarian", "gluten-free", "high-protein"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  },
+  {
+    "id": 10,
+    "name": "Broccoli",
+    "category": "Vegetable",
+    "nutrition": {
+      "calories": 34,
+      "protein": 2.8,
+      "carbohydrates": 6.6,
+      "fat": 0.4,
+      "vitamins": {
+        "vitaminC": 89.2,
+        "vitaminK": 102,
+        "vitaminA": 31
+      },
+      "minerals": {
+        "calcium": 47,
+        "potassium": 316,
+        "iron": 0.7
+      }
+    },
+    "nutritionScore": 8.9,
+    "dietaryTags": ["vegetarian", "vegan", "gluten-free", "low-fat"],
+    "perUnit": "100g",
+    "imageUrl": "https://placehold.co/300x200/png"
+  }
+]
