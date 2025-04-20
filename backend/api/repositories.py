@@ -6,8 +6,10 @@ Repositories are responsible for data access logic and should not contain any bu
 This module provides functions to interact with the User model, such as fetching all users and creating a new user.
 """
 
+
 def get_all_users():
     return User.objects.all()
+
 
 def create_user(data):
     return User.objects.create(**data)

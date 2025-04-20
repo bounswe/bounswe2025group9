@@ -28,7 +28,8 @@ def get_time(request: HttpRequest):
             return JsonResponse({"error": "name is required"}, status=400)
         return JsonResponse({"time": datetime.now().isoformat(), "name": name})
 
-@api_view(['GET'])
+
+@api_view(["GET"])
 def get_users(request: Request) -> Response:
     """
     GET /users/
@@ -39,7 +40,7 @@ def get_users(request: Request) -> Response:
     return Response(serializer.data)  # Return serialized user data as JSON
 
 
-@api_view(['POST'])
+@api_view(["POST"])
 def create_user_view(request: Request) -> Response:
     """
     POST /users/
@@ -48,8 +49,5 @@ def create_user_view(request: Request) -> Response:
     serializer = UserSerializer(data=request.data)  # Deserialize and validate input
     if serializer.is_valid():
         user = register_user(serializer.validated_data)
-        return Response(
-            UserSerializer(user).data,
-            status=status.HTTP_201_CREATED
-        )
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
