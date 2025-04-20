@@ -58,6 +58,5 @@ class UserTest(TestCase):
             response.json(),
             {
                 "email": ["This field is required."],
-                "address": ["This field is required."],
             },
         )

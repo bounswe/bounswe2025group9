@@ -34,6 +34,12 @@ class UserSerializer(serializers.ModelSerializer):
     allergens = AllergenSerializer(many=True, read_only=True)
 
     class Meta:
+        """
+        model : the model to be serialized
+        fields : the fields to be serialized. If you want to serialize all fields, you can use '__all__'.
+        extra_kwargs : additional options for the fields. For example, you can set a field to be read-only or required.
+        """
+
         model = User
         fields = [
             "id",
@@ -45,3 +51,4 @@ class UserSerializer(serializers.ModelSerializer):
             "allergens",
             "recipes",
         ]
+        extra_kwargs = {"address": {"required": False}}
