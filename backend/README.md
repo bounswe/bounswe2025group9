@@ -20,6 +20,7 @@ Run the development server:
 ## Tests
 ```bash
 ./manage.py test
+python ./backend/manage.py test api  # this runs tests in terminal and returns which are passed, and what is error if any errors occured. 
 ```
 
 ## Contribution Guide
