@@ -80,13 +80,15 @@ The mock API is set up with the following components:
 
 The following mock API endpoints are available:
 
-| Endpoint             | Method | Description                |
-| -------------------- | ------ | -------------------------- |
-| `/api/foods`         | GET    | Get list of food items     |
-| `/api/posts`         | GET    | Get forum posts            |
-| `/api/login`         | POST   | User login                 |
-| `/api/signup`        | POST   | User registration          |
-| `/api/foods/propose` | POST   | Submit a new food proposal |
+| Endpoint               | Method | Description                       |
+| ---------------------- | ------ | --------------------------------- |
+| `/api/foods`           | GET    | Get list of food items with likes |
+| `/api/posts`           | GET    | Get forum posts with likes        |
+| `/api/login`           | POST   | User login                        |
+| `/api/signup`          | POST   | User registration                 |
+| `/api/foods/propose`   | POST   | Submit a new food proposal        |
+| `/api/like`            | POST   | Like a food or post item          |
+| `/api/likes/:type/:id` | GET    | Get number of likes for an item   |
 
 ### Using the API Client
 
@@ -133,6 +135,12 @@ const proposal = {
 };
 
 const result = await apiClient.proposeFood(proposal);
+
+// Like a food item
+const likeResponse = await apiClient.likeItem(1, "food");
+
+// Get likes for a post
+const postLikes = await apiClient.getItemLikes("posts", 2);
 ```
 
 ### How MSW Works
