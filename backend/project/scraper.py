@@ -6,6 +6,7 @@ import base64
 import urllib.parse
 import requests
 import re
+import json
 
 # Your FatSecret credentials
 
@@ -65,14 +66,13 @@ def parse_food_description(description: str):
     }
 
 
-def extract_food_info(details):
+def extract_food_info(details, food_category):
     """
     Extracts required structured data from FatSecret API's 'food.get' response.
     Chooses per 100g serving if available, else uses the first one.
     """
     food_data = details.get("food", {})
     food_name = food_data.get("food_name")
-    food_category = food_data.get("food_type", "Generic")
     servings = food_data.get("servings", {}).get("serving", [])
 
     if not isinstance(servings, list):
@@ -118,23 +118,55 @@ def extract_food_info(details):
 
 
 if __name__ == "__main__":
-    keyword = "tomato"  # can be changed later or looped from a list
-    result = make_request("foods.search", {"search_expression": keyword})
+    input_file = "../500_common_foods.json"
+    output_file = "bulk_500_food_data.json"
+    delay = 1.2  # seconds
+    enriched_data = []
 
-    if "foods" not in result:
-        print("API ERROR:", result.get("error", "Unknown"))
-        exit()
+    with open(input_file, "r") as f:
+        common_foods = json.load(f)
 
-    food_entry = result["foods"]["food"]
-    if isinstance(food_entry, list):
-        food_entry = food_entry[0]
+    for food in common_foods:
+        food_name = food["food_name"]
+        food_cat = food["food_category"]
 
-    print("Found:", food_entry["food_name"], "- ID:", food_entry["food_id"])
-    print(
-        "Description preview:",
-        parse_food_description(food_entry.get("food_description", "")),
-    )
+        result = make_request("foods.search", {"search_expression": food_name})
 
-    details = make_request("food.get", {"food_id": food_entry["food_id"]})
-    food_info = extract_food_info(details)
-    print("Parsed Food from food.get:", food_info)
+        if "foods" not in result:
+            print("API ERROR:", result.get("error", "Unknown"))
+            exit()
+
+        food_entry = result["foods"]["food"]
+        if isinstance(food_entry, list):
+            food_entry = food_entry[0]
+
+        print("Found:", food_entry["food_name"], "- ID:", food_entry["food_id"])
+        print(
+            "Description preview:",
+            parse_food_description(food_entry.get("food_description", "")),
+        )
+
+        details = make_request("food.get", {"food_id": food_entry["food_id"]})
+        food_info = extract_food_info(details, food_cat)
+        print("Parsed Food from food.get:", food_info)
+
+    # keyword = "tomato"  # can be changed later or looped from a list
+    # result = make_request("foods.search", {"search_expression": keyword})
+
+    # if "foods" not in result:
+    #     print("API ERROR:", result.get("error", "Unknown"))
+    #     exit()
+
+    # food_entry = result["foods"]["food"]
+    # if isinstance(food_entry, list):
+    #     food_entry = food_entry[0]
+
+    # print("Found:", food_entry["food_name"], "- ID:", food_entry["food_id"])
+    # print(
+    #     "Description preview:",
+    #     parse_food_description(food_entry.get("food_description", "")),
+    # )
+
+    # details = make_request("food.get", {"food_id": food_entry["food_id"]})
+    # food_info = extract_food_info(details)
+    # print("Parsed Food from food.get:", food_info)
