@@ -5,13 +5,23 @@ import hashlib
 import base64
 import urllib.parse
 import requests
-import re
 import json
+import re
 
-# Your FatSecret credentials
+# FatSecret API credentials
+CONSUMER_KEY = "c67c15786eee4f9e8174e0fc06fe36fc"
+CONSUMER_SECRET = "05d6b078ff42420b892ed2c1d542cc24"
+
+INPUT_FILE = "500_common_foods.json"
+OUTPUT_FILE = "enriched_foods.json"
+RATE_LIMIT_DELAY = 1.2  # seconds between calls
 
 
 def get_oauth_params():
+    """
+    Fatsecret API v1.0 requires OAuth 1.0a authentication.
+    Free and basic version.
+    """
     return {
         "oauth_consumer_key": CONSUMER_KEY,
         "oauth_nonce": str(uuid.uuid4().hex),
@@ -22,6 +32,9 @@ def get_oauth_params():
 
 
 def sign_request(base_url, params):
+    """
+    Sign the request using HMAC-SHA1. For authentication.
+    """
     sorted_params = sorted((k, v) for k, v in params.items())
     encoded_params = urllib.parse.urlencode(sorted_params, quote_via=urllib.parse.quote)
     base_string = f"GET&{urllib.parse.quote(base_url, safe='')}&{urllib.parse.quote(encoded_params, safe='')}"
@@ -32,6 +45,9 @@ def sign_request(base_url, params):
 
 
 def make_request(method_name, extra_params):
+    """
+    Make a request to the FatSecret API.
+    """
     base_url = "https://platform.fatsecret.com/rest/server.api"
     oauth_params = get_oauth_params()
     all_params = {
@@ -44,15 +60,18 @@ def make_request(method_name, extra_params):
     all_params["oauth_signature"] = signature
 
     response = requests.get(base_url, params=all_params)
-    print("STATUS:", response.status_code)
-    print("TEXT:", response.text[:300])
+    if response.status_code != 200:
+        raise Exception(f"API Error: {response.status_code} - {response.text}")
     return response.json()
+
+
+# ------------------- Parsing Helpers ------------------- #
 
 
 def parse_food_description(description: str):
     """
-    Parses food_description string from 'foods.search' as a fallback.
-    Format example: "Per 1 serving - Calories: 300kcal | Fat: 13.00g | Carbs: 32.00g | Protein: 15.00g"
+    API provides a food description for nutritional information.
+    This function extracts calories, fat, carbs, and protein from it.
     """
     pattern = r"Calories:\s*([\d.]+)kcal\s*\|\s*Fat:\s*([\d.]+)g\s*\|\s*Carbs:\s*([\d.]+)g\s*\|\s*Protein:\s*([\d.]+)g"
     match = re.search(pattern, description)
@@ -66,17 +85,16 @@ def parse_food_description(description: str):
     }
 
 
-def extract_food_info(details, food_category):
+def extract_food_info(details):
     """
-    Extracts required structured data from FatSecret API's 'food.get' response.
-    Chooses per 100g serving if available, else uses the first one.
+    Extract food information from the API response.
     """
     food_data = details.get("food", {})
     food_name = food_data.get("food_name")
     servings = food_data.get("servings", {}).get("serving", [])
 
     if not isinstance(servings, list):
-        servings = [servings]  # sometimes it's a single dict
+        servings = [servings]
 
     serving_100g = None
     for s in servings:
@@ -87,7 +105,6 @@ def extract_food_info(details, food_category):
         serving_100g = servings[0]
 
     if not serving_100g:
-        print(f" No valid serving found for {food_name}")
         return None
 
     def get_float(val):
@@ -98,11 +115,12 @@ def extract_food_info(details, food_category):
 
     return {
         "food_name": food_name,
-        "food_category": food_category,
         "calories": get_float(serving_100g.get("calories")),
         "carbohydrates": get_float(serving_100g.get("carbohydrate")),
         "protein": get_float(serving_100g.get("protein")),
         "fat": get_float(serving_100g.get("fat")),
+        "serving_amount": get_float(serving_100g.get("metric_serving_amount")),
+        "serving_unit": serving_100g.get("metric_serving_unit"),
         "micronutrients": {
             "vitamin_a": get_float(serving_100g.get("vitamin_a")),
             "vitamin_c": get_float(serving_100g.get("vitamin_c")),
@@ -111,62 +129,73 @@ def extract_food_info(details, food_category):
             "potassium": get_float(serving_100g.get("potassium")),
             "sodium": get_float(serving_100g.get("sodium")),
         },
-        "serving_description": serving_100g.get("serving_description"),
-        "serving_amount": get_float(serving_100g.get("metric_serving_amount")),
-        "serving_unit": serving_100g.get("metric_serving_unit"),
     }
 
 
-if __name__ == "__main__":
-    input_file = "../500_common_foods.json"
-    output_file = "bulk_500_food_data.json"
-    delay = 1.2  # seconds
+# ------------------- Main Processing ------------------- #
+
+
+def enrich_food_list():
+    """
+    Sends API requests to FatSecret for each food in the input file.
+    Input file is 500_common_foods.json with food names and categories, since categories are not available in the API.
+    Output file is enriched_foods.json with detailed food information. This file will be used to populate the database with food entries.
+    Input file is not guaranteed to contain all foods, and currently it only has ~250 foods.
+    """
     enriched_data = []
 
-    with open(input_file, "r") as f:
-        common_foods = json.load(f)
+    with open(INPUT_FILE, "r", encoding="utf-8") as f:
+        food_list = json.load(f)
 
-    for food in common_foods:
-        food_name = food["food_name"]
-        food_cat = food["food_category"]
+    for entry in food_list:
+        food_name = entry["food_name"]
+        category = entry["food_category"]
+        print(f"🔍 Searching: {food_name}")
 
-        result = make_request("foods.search", {"search_expression": food_name})
+        try:
+            search = make_request("foods.search", {"search_expression": food_name})
+            foods = search.get("foods", {}).get("food", [])
+            if not foods:
+                print(f"Not found: {food_name}")
+                continue
 
-        if "foods" not in result:
-            print("API ERROR:", result.get("error", "Unknown"))
-            exit()
+            food_id = foods[0]["food_id"]
+            details = make_request("food.get", {"food_id": food_id})
+            parsed = extract_food_info(details)
 
-        food_entry = result["foods"]["food"]
-        if isinstance(food_entry, list):
-            food_entry = food_entry[0]
+            if not parsed:
+                print(f"No valid data: {food_name}")
+                continue
 
-        print("Found:", food_entry["food_name"], "- ID:", food_entry["food_id"])
-        print(
-            "Description preview:",
-            parse_food_description(food_entry.get("food_description", "")),
-        )
+            enriched_data.append(
+                {
+                    "name": parsed["food_name"],
+                    "category": category,
+                    "servingSize": parsed.get("serving_amount", 100.0),
+                    "caloriesPerServing": parsed.get("calories", 0.0),
+                    "proteinContent": parsed.get("protein", 0.0),
+                    "fatContent": parsed.get("fat", 0.0),
+                    "carbohydrateContent": parsed.get("carbohydrates", 0.0),
+                    "allergens": [],
+                    "dietaryOptions": [],
+                    "nutritionScore": 0.0,
+                    "imageUrl": "",
+                }
+            )
 
-        details = make_request("food.get", {"food_id": food_entry["food_id"]})
-        food_info = extract_food_info(details, food_cat)
-        print("Parsed Food from food.get:", food_info)
+            print(f"✅ Added: {food_name}")
+        except Exception as e:
+            print(f"Error for {food_name}: {e}")
 
-    # keyword = "tomato"  # can be changed later or looped from a list
-    # result = make_request("foods.search", {"search_expression": keyword})
+        time.sleep(RATE_LIMIT_DELAY)
 
-    # if "foods" not in result:
-    #     print("API ERROR:", result.get("error", "Unknown"))
-    #     exit()
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(enriched_data, f, indent=2, ensure_ascii=False)
 
-    # food_entry = result["foods"]["food"]
-    # if isinstance(food_entry, list):
-    #     food_entry = food_entry[0]
+    print(f"\n Done. {len(enriched_data)} foods saved to {OUTPUT_FILE}")
 
-    # print("Found:", food_entry["food_name"], "- ID:", food_entry["food_id"])
-    # print(
-    #     "Description preview:",
-    #     parse_food_description(food_entry.get("food_description", "")),
-    # )
 
-    # details = make_request("food.get", {"food_id": food_entry["food_id"]})
-    # food_info = extract_food_info(details)
-    # print("Parsed Food from food.get:", food_info)
+# ------------------- Run ------------------- #
+
+if __name__ == "__main__":
+    enrich_food_list()
