@@ -1,9 +1,13 @@
 from django.http import JsonResponse, HttpRequest
 from datetime import datetime
-from django.contrib.auth import login
-from django.views.decorators.csrf import csrf_exempt
-from django.db import IntegrityError
-from django.contrib.auth.models import User
+
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework.request import Request
+from rest_framework import status
+
+from .serializers import UserSerializer
+from .services import register_user, list_users
 
 
 def get_time(request: HttpRequest):
@@ -25,33 +29,25 @@ def get_time(request: HttpRequest):
         return JsonResponse({"time": datetime.now().isoformat(), "name": name})
 
 
-@csrf_exempt
-def signup_view(request):
-    if request.method != "POST":
-        return JsonResponse({"error": "Only POST allowed"}, status=405)
+@api_view(["GET"])
+def get_users(request: Request) -> Response:
+    """
+    GET /users/
+    Fetch and return a list of all users in the system.
+    """
+    users = list_users()
+    serializer = UserSerializer(users, many=True)
+    return Response(serializer.data)  # Return serialized user data as JSON
 
-    data = {
-        key: request.POST.get(key, "").strip()
-        for key in ["username", "email", "password1", "password2"]
-    }
 
-    if not all(data.values()):
-        return JsonResponse({"error": "All fields are required"}, status=400)
-
-    if data["password1"] != data["password2"]:
-        return JsonResponse({"error": "Passwords do not match"}, status=400)
-
-    if User.objects.filter(username=data["username"]).exists():
-        return JsonResponse({"error": "Username already taken"}, status=400)
-
-    if User.objects.filter(email=data["email"]).exists():
-        return JsonResponse({"error": "Email already in use"}, status=400)
-
-    try:
-        user = User.objects.create_user(
-            username=data["username"], email=data["email"], password=data["password1"]
-        )
-        login(request, user)
-        return JsonResponse({"success": "User created", "user_id": user.id})
-    except IntegrityError:
-        return JsonResponse({"error": "Failed to create user"}, status=500)
+@api_view(["POST"])
+def create_user_view(request: Request) -> Response:
+    """
+    POST /users/
+    Create a new user using the request payload.
+    """
+    serializer = UserSerializer(data=request.data)  # Deserialize and validate input
+    if serializer.is_valid():
+        user = register_user(serializer.validated_data)
+        return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

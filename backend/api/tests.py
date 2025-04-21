@@ -12,63 +12,52 @@ class GetTimeTest(TestCase):
         self.assertEqual(response.json()["name"], "Arda")  # type:ignore
 
 
-class SignupViewTests(TestCase):
-    def setUp(self):
-        self.url = (
-            "/api/signup"  # Replace with reverse('signup') if using named URL patterns
-        )
-
-    def test_valid_signup(self):
-        data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password1": "password123",
-            "password2": "password123",
-        }
-        response = self.client.post(self.url, data)
+class UserTest(TestCase):
+    def test_get_all_users(self):
+        response = cast(HttpResponse, self.client.get("/api/users/"))
         self.assertEqual(response.status_code, 200)
-        self.assertIn("success", response.json())
-        self.assertTrue(User.objects.filter(username="testuser").exists())
+        self.assertEquals(response.json(), [])
 
-    def test_missing_fields(self):
-        data = {"username": "", "email": "", "password1": "", "password2": ""}
-        response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("error", response.json())
-
-    def test_password_mismatch(self):
-        data = {
-            "username": "testuser",
-            "email": "test@example.com",
-            "password1": "pass1",
-            "password2": "pass2",
+    def test_create_user(self):
+        request_data = {
+            "name": "Berkay",
+            "surname": "Bilen",
+            "email": "berkaybilen@example.com",
+            "address": "Bogazici University",
+            "tags": [],
+            "allergens": [],
+            "recipes": [],
         }
-        response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("Passwords do not match", response.json()["error"])
-
-    def test_duplicate_username(self):
-        User.objects.create_user(username="testuser", email="a@a.com", password="pass")
-        data = {
-            "username": "testuser",
-            "email": "b@b.com",
-            "password1": "password",
-            "password2": "password",
-        }
-        response = self.client.post(self.url, data)
-        self.assertEqual(response.status_code, 400)
-        self.assertIn("Username already taken", response.json()["error"])
-
-    def test_duplicate_email(self):
-        User.objects.create_user(
-            username="user1", email="dup@example.com", password="pass"
+        response = cast(
+            HttpResponse, self.client.post("/api/users/create/", data=request_data)
         )
-        data = {
-            "username": "user2",
-            "email": "dup@example.com",
-            "password1": "password",
-            "password2": "password",
+        # Assuming there aer no previous users in the database, the first user will have id=1
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["id"], 1),
+        self.assertEqual(response.json()["name"], "Berkay")
+        self.assertEqual(response.json()["surname"], "Bilen")
+        self.assertEqual(response.json()["email"], "berkaybilen@example.com")
+        self.assertEqual(response.json()["address"], "Bogazici University")
+        self.assertEqual(response.json()["tags"], [])
+        self.assertEqual(response.json()["allergens"], [])
+        self.assertEqual(response.json()["recipes"], [])
+
+    def test_create_user_invalid(self):
+        """
+        Test creating a user with invalid data, assuming that the email and address fields are required.
+        Unit tests are not written only for succesful cases.
+        """
+        request_data = {
+            "name": "Berkay",
+            "surname": "Bilen",
         }
-        response = self.client.post(self.url, data)
+        response = cast(
+            HttpResponse, self.client.post("/api/users/create/", data=request_data)
+        )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Email already in use", response.json()["error"])
+        self.assertEqual(
+            response.json(),
+            {
+                "email": ["This field is required."],
+            },
+        )
