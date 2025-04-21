@@ -76,9 +76,9 @@ WSGI_APPLICATION = "project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
+        "USER": os.environ.get("DB_USER"),
+        "PASSWORD": os.environ.get("DB_PASSWORD"),
         "NAME": "mydb",
-        "USER": "django",
-        "PASSWORD": "djangopass",
         "HOST": "localhost",  # or 'db' if Django is also running in Docker
         "PORT": "3306",
     }
