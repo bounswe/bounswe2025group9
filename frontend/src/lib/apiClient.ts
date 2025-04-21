@@ -17,6 +17,7 @@ export interface Food {
   dietaryTags: string[];
   perUnit: string;
   imageUrl: string;
+  likes?: number;
 }
 
 export interface FoodProposal {
@@ -53,6 +54,13 @@ export interface AuthResponse {
   id: number;
   email: string;
   username: string;
+}
+
+export interface LikeResponse {
+  itemId: number;
+  itemType: string;
+  likes: number;
+  message?: string;
 }
 
 // api base url
@@ -100,4 +108,14 @@ export const apiClient = {
       method: "POST",
       body: JSON.stringify({ email, password, username }),
     }),
+
+  // likes
+  likeItem: (itemId: number, itemType: "food" | "post") =>
+    fetchJson<LikeResponse>("/like", {
+      method: "POST",
+      body: JSON.stringify({ itemId, itemType }),
+    }),
+
+  getItemLikes: (itemType: "foods" | "posts", itemId: number) =>
+    fetchJson<LikeResponse>(`/likes/${itemType}/${itemId}`),
 };

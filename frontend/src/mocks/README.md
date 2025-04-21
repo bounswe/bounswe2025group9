@@ -89,6 +89,49 @@ Proposes a new food to be added to the database.
 }
 ```
 
+### POST /api/like
+
+Likes a food or post item.
+
+**Request Body:**
+
+```json
+{
+  "itemId": 1,
+  "itemType": "food"
+}
+```
+
+**Response:**
+
+```json
+{
+  "itemId": 1,
+  "itemType": "food",
+  "likes": 1,
+  "message": "Successfully liked food with id 1"
+}
+```
+
+### GET /api/likes/:type/:id
+
+Gets the number of likes for a specific item.
+
+**Parameters:**
+
+- `type`: Either "foods" or "posts"
+- `id`: The ID of the item
+
+**Response:**
+
+```json
+{
+  "itemId": 1,
+  "itemType": "foods",
+  "likes": 5
+}
+```
+
 ## How to Use
 
 The mock service worker is automatically initialized in development environments.
@@ -119,6 +162,12 @@ const response = await apiClient.proposeFood({
     fat: 2,
   },
 });
+
+// like a food
+const likeResponse = await apiClient.likeItem(1, "food");
+
+// get likes for a post
+const postLikes = await apiClient.getItemLikes("posts", 2);
 ```
 
 ## Adding New Mock Endpoints

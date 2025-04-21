@@ -23,7 +23,7 @@ const Navbar = () => {
                         Forum
                     </Link>
                     <Link to="/api-examples" className="text-white hover:text-gray-300">
-                        API Examples
+                        API Examples [TEMPORARY]
                     </Link>
                 </div>
 
