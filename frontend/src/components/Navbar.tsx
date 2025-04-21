@@ -22,6 +22,9 @@ const Navbar = () => {
                     <Link to="/forum" className="text-white hover:text-gray-300">
                         Forum
                     </Link>
+                    <Link to="/api-examples" className="text-white hover:text-gray-300">
+                        API Examples
+                    </Link>
                 </div>
 
                 <div className="flex items-center space-x-5">

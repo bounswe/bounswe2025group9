@@ -33,8 +33,8 @@
 ## 2 · Roles & Ownership
 
 - **yazici** — project setup, code reviews, global styles, Home page
-- **saygan** — Login, Sign‑Up, validation, related tests
-- **keles** — Food list, modal, future propose‑food form
+- **keles** — Login, Sign‑Up, validation, related tests
+- **saygan** — Food list, modal, future propose‑food form
 - **goktas** — Post list, like button, future comments
 
 ---

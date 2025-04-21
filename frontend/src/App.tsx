@@ -5,6 +5,7 @@ import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup'
 import Foods from './pages/foods/Foods'
 import Forum from './pages/forum/Forum'
+import ApiExample from './pages/ApiExample'
 
 // app component with react-router setup
 function App() {
@@ -15,6 +16,7 @@ function App() {
           <Route index element={<Home />} />
           <Route path="foods" element={<Foods />} />
           <Route path="forum" element={<Forum />} />
+          <Route path="api-examples" element={<ApiExample />} />
           <Route path="login" element={<Login />} />
           <Route path="signup" element={<Signup />} />
           <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
