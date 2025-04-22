@@ -43,12 +43,22 @@ class UserSerializer(serializers.ModelSerializer):
         model = User
         fields = [
             "id",
+            "username",
+            "password",
+            "email",
             "name",
             "surname",
-            "email",
             "address",
             "tags",
             "allergens",
             "recipes",
         ]
-        extra_kwargs = {"address": {"required": False}}
+        extra_kwargs = {
+            "address": {"required": False},
+            "password": {"write_only": True},
+        }
+
+
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(max_length=255)
+    password = serializers.CharField(max_length=255)

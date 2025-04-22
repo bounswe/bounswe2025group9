@@ -1,33 +1,20 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import MainLayout from './components/MainLayout'
-import Home from './pages/Home'
-import Login from './pages/auth/Login'
-import Signup from './pages/auth/Signup'
-import Foods from './pages/foods/Foods'
-import Forum from './pages/forum/Forum'
-import ApiExample from './pages/ApiExample'
-import PostDetail from './pages/forum/PostDetail'
-import CreatePost from './pages/forum/CreatePost'
+// import home page component
+import Home from "./pages/Home";
+import Login from "./pages/auth/Login";
+import Signup from "./pages/auth/Signup";
+import Foods from "./pages/foods/Foods";
+import Forum from "./pages/forum/Forum";
+import ApiExample from "./pages/ApiExample";
+import PostDetail from "./pages/forum/PostDetail";
+import CreatePost from "./pages/forum/CreatePost";
 
-// app component with react-router setup
+// simple app component that displays group name
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<Home />} />
-          <Route path="foods" element={<Foods />} />
-          <Route path="forum" element={<Forum />} />
-          <Route path="api-examples" element={<ApiExample />} />
-          <Route path="forum/post/:postId" element={<PostDetail />} />
-          <Route path="forum/create" element={<CreatePost />} />
-          <Route path="login" element={<Login />} />
-          <Route path="signup" element={<Signup />} />
-          <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
-        </Route>
-      </Routes>
-    </BrowserRouter>
-  )
+    <div className="app">
+      <Home />
+    </div>
+  );
 }
 
-export default App
+export default App;

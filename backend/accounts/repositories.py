@@ -12,4 +12,4 @@ def get_all_users():
 
 
 def create_user(data):
-    return User.objects.create(**data)
+    return User.objects.create_user(**data)
