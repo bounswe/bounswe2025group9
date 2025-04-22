@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import get_time
+from .views import TimeView
 
 urlpatterns = [
-    path("time", get_time, name="get_time"),
+    path("time", TimeView.as_view(), name="get-time"),
 ]

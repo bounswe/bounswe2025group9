@@ -1,106 +1,75 @@
-from typing import cast
-from django.http import HttpResponse
-from django.test import TestCase
-from .models import User
-import json
+from rest_framework.test import APITestCase
+from rest_framework import status
+from django.urls import reverse
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
 
 
-class UserTest(TestCase):
-    def test_get_all_users(self):
-        response = cast(HttpResponse, self.client.get("/users/"))
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), [])
-
-    def test_create_user(self):
-        request_data = {
-            "username": "berkaybilen",
-            "password": "securepassword123",
-            "name": "Berkay",
-            "surname": "Bilen",
-            "email": "berkaybilen@example.com",
-            "address": "Bogazici University",
-            "tags": [],
-            "allergens": [],
-        }
-        response = cast(
-            HttpResponse, self.client.post("/users/create/", data=request_data)
-        )
-        self.assertEqual(response.status_code, 201)
-        data = response.json()
-        self.assertEqual(data["id"], 1)
-        self.assertEqual(data["username"], "berkaybilen")
-        self.assertEqual(data["name"], "Berkay")
-        self.assertEqual(data["surname"], "Bilen")
-        self.assertEqual(data["email"], "berkaybilen@example.com")
-        self.assertEqual(data["address"], "Bogazici University")
-        self.assertEqual(data["tags"], [])
-        self.assertEqual(data["allergens"], [])
-
-    def test_create_user_invalid(self):
-        response = self.client.post(
-            "/users/create/",
-            data={
-                "name": "Berkay",
-                "surname": "Bilen",
-            },
-        )
-        self.assertEqual(response.status_code, 400)
-
-        expected_fields = ["username", "password", "email"]
-        response_data = response.json()
-
-        for field in expected_fields:
-            self.assertIn(field, response_data)
-            self.assertEqual(response_data[field], ["This field is required."])
-
-
-class LoginTest(TestCase):
+class AuthAndUserViewTests(APITestCase):
     def setUp(self):
-        # Create a test user
         self.user = User.objects.create_user(
-            username="testuser", email="test@example.com", password="testpassword123"
+            username="testuser", email="test@example.com", password="testpass123"
         )
+        self.token_url = reverse("token_obtain_pair")
+        self.token_refresh_url = reverse("token_refresh")
+        self.user_list_url = reverse("user-list")
+        self.create_user_url = reverse("create-user")
 
-    def test_login_success(self):
-        """Test successful login with correct credentials"""
-        response = self.client.post(
-            "/users/login/jwt/",
-            json.dumps({"username": "testuser", "password": "testpassword123"}),
-            content_type="application/json",
+    def test_create_user_success(self):
+        data = {
+            "username": "newuser",
+            "email": "new@example.com",
+            "password": "newpass123",
+            "name": "New",
+            "surname": "User",
+            "address": "123 Test Street",
+        }
+        response = self.client.post(self.create_user_url, data)
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(response.data["username"], "newuser")
+        self.assertEqual(response.data["email"], "new@example.com")
+        self.assertEqual(response.data["name"], "New")
+        self.assertEqual(response.data["surname"], "User")
+        self.assertEqual(response.data["address"], "123 Test Street")
+
+    def test_create_user_invalid_data(self):
+        data = {"username": "", "email": "not-an-email", "password": ""}
+        response = self.client.post(self.create_user_url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_obtain_token_success(self):
+        data = {"username": "testuser", "password": "testpass123"}
+        response = self.client.post(self.token_url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
+        self.assertIn("refresh", response.data)
+
+    def test_obtain_token_invalid_credentials(self):
+        data = {"username": "testuser", "password": "wrongpass"}
+        response = self.client.post(self.token_url, data)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_refresh_token_success(self):
+        token_res = self.client.post(
+            self.token_url, {"username": "testuser", "password": "testpass123"}
         )
+        refresh = token_res.data["refresh"]
+        response = self.client.post(self.token_refresh_url, {"refresh": refresh})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("access", response.data)
 
-        self.assertEqual(response.status_code, 200)
-        data = response.json()
-        self.assertIn("token", data)
-        self.assertIn("user", data)
-        self.assertEqual(data["user"]["username"], "testuser")
+    def test_user_list_unauthenticated(self):
+        response = self.client.get(self.user_list_url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
-    def test_login_invalid_credentials(self):
-        """Test login with incorrect password"""
-        response = self.client.post(
-            "/users/login/jwt/",
-            json.dumps({"username": "testuser", "password": "wrongpassword"}),
-            content_type="application/json",
+    def test_user_list_authenticated(self):
+        token_res = self.client.post(
+            self.token_url, {"username": "testuser", "password": "testpass123"}
         )
+        access = token_res.data["access"]
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {access}")
 
-        self.assertEqual(response.status_code, 401)
-        self.assertIn("error", response.json())
-
-    def test_login_missing_fields(self):
-        """Test login with missing fields"""
-        response = self.client.post(
-            "/users/login/jwt/",
-            json.dumps(
-                {
-                    "username": "testuser"
-                    # Missing password
-                }
-            ),
-            content_type="application/json",
-        )
-
-        self.assertEqual(response.status_code, 400)
-        # Check for the specific missing field error in the response
-        response_data = response.json()
-        self.assertIn("password", response_data)
-        self.assertIn("This field is required.", response_data["password"])
+        response = self.client.get(self.user_list_url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsInstance(response.data, list)
