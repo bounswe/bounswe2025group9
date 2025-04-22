@@ -9,8 +9,8 @@ import json
 import re
 
 # FatSecret API credentials
-CONSUMER_KEY = "c67c15786eee4f9e8174e0fc06fe36fc"
-CONSUMER_SECRET = "05d6b078ff42420b892ed2c1d542cc24"
+CONSUMER_KEY = ""
+CONSUMER_SECRET = ""
 
 INPUT_FILE = "500_common_foods.json"
 OUTPUT_FILE = "enriched_foods.json"
@@ -150,7 +150,7 @@ def enrich_food_list():
     for entry in food_list:
         food_name = entry["food_name"]
         category = entry["food_category"]
-        print(f"🔍 Searching: {food_name}")
+        print(f"Searching: {food_name}")
 
         try:
             search = make_request("foods.search", {"search_expression": food_name})
@@ -183,7 +183,7 @@ def enrich_food_list():
                 }
             )
 
-            print(f"✅ Added: {food_name}")
+            print(f"Added: {food_name}")
         except Exception as e:
             print(f"Error for {food_name}: {e}")
 
