@@ -64,7 +64,7 @@ class LoginTest(TestCase):
     def test_login_success(self):
         """Test successful login with correct credentials"""
         response = self.client.post(
-            "/api/login",
+            "/users/login/jwt/",
             json.dumps({"username": "testuser", "password": "testpassword123"}),
             content_type="application/json",
         )
@@ -78,7 +78,7 @@ class LoginTest(TestCase):
     def test_login_invalid_credentials(self):
         """Test login with incorrect password"""
         response = self.client.post(
-            "/api/login",
+            "/users/login/jwt/",
             json.dumps({"username": "testuser", "password": "wrongpassword"}),
             content_type="application/json",
         )
@@ -89,7 +89,7 @@ class LoginTest(TestCase):
     def test_login_missing_fields(self):
         """Test login with missing fields"""
         response = self.client.post(
-            "/api/login",
+            "/users/login/jwt/",
             json.dumps(
                 {
                     "username": "testuser"
@@ -100,4 +100,7 @@ class LoginTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("error", response.json())
+        # Check for the specific missing field error in the response
+        response_data = response.json()
+        self.assertIn("password", response_data)
+        self.assertIn("This field is required.", response_data["password"])

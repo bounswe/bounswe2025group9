@@ -2,11 +2,10 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
-from .serializers import UserSerializer
+from .serializers import UserSerializer, LoginSerializer
 from .services import register_user, list_users
 from django.contrib.auth import authenticate
 from django.views.decorators.csrf import csrf_exempt
-import json
 from .auth import generate_jwt_token
 from django.http import JsonResponse
 
@@ -38,35 +37,26 @@ def create_user_view(request: Request) -> Response:
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-@csrf_exempt
+@csrf_exempt  # TODO remove this in production
+@api_view(["POST"])
 def login_view(request):
     """
     Login with username and password.
 
-    POST /api/login
+    POST /users/login/jwt/
     Payload: { "username": "user", "password": "pass" }
 
     Response:
     Success: { "token": "jwt_token", "user": {"id": 1, "username": "username"} }
     Error: { "error": "Invalid credentials" }
     """
-    if request.method != "POST":
-        return JsonResponse({"error": "Method not allowed"}, status=405)
 
-    try:
-        data = json.loads(request.body)
-        username = data.get("username")
-        password = data.get("password")
+    # Deserialize and validate input
+    serializer = LoginSerializer(data=request.data)
 
-        # Validate input
-        if not username or not password:
-            return JsonResponse(
-                {
-                    "error": "Missing required fields",
-                    "message": "Username and password are required",
-                },
-                status=400,
-            )
+    if serializer.is_valid():
+        username = serializer.validated_data["username"]
+        password = serializer.validated_data["password"]
 
         # Authenticate user
         user = authenticate(username=username, password=password)
@@ -91,8 +81,4 @@ def login_view(request):
             }
         )
 
-    except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "Invalid JSON", "message": "The request body is not valid JSON"},
-            status=400,
-        )
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

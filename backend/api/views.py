@@ -1,7 +1,9 @@
 from django.http import JsonResponse, HttpRequest
 from datetime import datetime
+from rest_framework.decorators import api_view
 
 
+@api_view(["GET"])
 def get_time(request: HttpRequest):
     """
     Get the current time.
@@ -14,8 +16,7 @@ def get_time(request: HttpRequest):
             "name": "Arda"
         }
     """
-    if request.method == "GET":
-        name = request.GET.get("name")
-        if name is None:
-            return JsonResponse({"error": "name is required"}, status=400)
-        return JsonResponse({"time": datetime.now().isoformat(), "name": name})
+    name = request.GET.get("name")
+    if name is None:
+        return JsonResponse({"error": "name is required"}, status=400)
+    return JsonResponse({"time": datetime.now().isoformat(), "name": name})
