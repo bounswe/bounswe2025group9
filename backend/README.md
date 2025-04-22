@@ -11,6 +11,12 @@ pip install -r requirements-dev.txt # install requirements
 pre-commit install # install pre-commit hooks
 ```
 
+# run following in another terminal process to run DB in docker.
+docker-compose up -d
+
+# Migration commands:
+python manage.py migrate
+
 ## Development Server
 Run the development server:
 ```bash
@@ -20,6 +26,7 @@ Run the development server:
 ## Tests
 ```bash
 ./manage.py test
+python ./backend/manage.py test api  # this runs tests in terminal and returns which are passed, and what is error if any errors occured. 
 ```
 
 ## Contribution Guide
