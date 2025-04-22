@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "affordable-and-healthy-eating-hub",
-    "slug": "affordable-and-healthy-eating-hub",
+    "name": "nutrihub",
+    "slug": "nutrihub",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
