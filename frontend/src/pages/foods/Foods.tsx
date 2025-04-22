@@ -1,4 +1,4 @@
-import { Hamburger, Carrot, Cookie } from '@phosphor-icons/react'
+import { Hamburger} from '@phosphor-icons/react'
 import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 
