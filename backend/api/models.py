@@ -39,9 +39,6 @@ class Recipe(models.Model):
         return self.name
 
 
-# Create your models here.
-
-
 class FoodEntry(models.Model):
     name = models.CharField(max_length=100)
     category = models.CharField(max_length=100)
@@ -50,7 +47,7 @@ class FoodEntry(models.Model):
     proteinContent = models.FloatField()
     fatContent = models.FloatField()
     carbohydrateContent = models.FloatField()
-    allergens = models.JSONField(default=list)  # or TextField with parsing if old MySQL
+    allergens = models.JSONField(default=list)
     dietaryOptions = models.JSONField(default=list)
     nutritionScore = models.FloatField()
     imageUrl = models.URLField(blank=True)
