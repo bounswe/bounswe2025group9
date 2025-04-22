@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "title": "Best vegetarian alternatives for meat?",
+    "content": "I've been trying to cut down on meat consumption. What are your favorite plant-based alternatives that actually taste good?",
+    "author": "healthyeater22",
+    "likes": 24,
+    "date": "2023-10-15T08:30:00Z"
+  },
+  {
+    "id": 2,
+    "title": "Traditional recipes from your country?",
+    "content": "I'd love to explore cuisines from around the world. Share your favorite traditional recipe from your home country!",
+    "author": "globalgourmet",
+    "likes": 42,
+    "date": "2023-10-12T14:15:00Z"
+  },
+  {
+    "id": 3,
+    "title": "Tips for reducing food waste",
+    "content": "I'm trying to be more environmentally conscious with my cooking. What are your best tips for reducing food waste in the kitchen?",
+    "author": "ecowarrior",
+    "likes": 17,
+    "date": "2023-10-10T19:45:00Z"
+  },
+  {
+    "id": 4,
+    "title": "Quick breakfast ideas for busy mornings",
+    "content": "I never have time to make breakfast before work. Looking for quick, nutritious options that can be prepared in under 5 minutes!",
+    "author": "rushhour",
+    "likes": 31,
+    "date": "2023-10-08T09:20:00Z"
+  },
+  {
+    "id": 5,
+    "title": "Your favorite cooking gadget?",
+    "content": "Just curious - what's the one kitchen gadget you couldn't live without? Mine is my air fryer!",
+    "author": "techfoodie",
+    "likes": 28,
+    "date": "2023-10-05T16:10:00Z"
+  }
+]
