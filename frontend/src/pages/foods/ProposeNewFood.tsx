@@ -25,7 +25,8 @@ interface MacronutrientData {
 }
 
 interface MicronutrientData {
-  [key: string]: string;
+  vitamins: string;
+  minerals: string;
 }
 
 const ProposeNewFood: React.FC = () => {
@@ -38,7 +39,10 @@ const ProposeNewFood: React.FC = () => {
     protein: '',
     fat: '',
   });
-  const [micronutrients, setMicronutrients] = useState<MicronutrientData>({});
+  const [micronutrients, setMicronutrients] = useState<MicronutrientData>({
+    vitamins: '',
+    minerals: '',
+  });
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
@@ -51,6 +55,14 @@ const ProposeNewFood: React.FC = () => {
     });
   };
 
+  const handleMicronutrientChange = (field: keyof MicronutrientData) => (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setMicronutrients({
+      ...micronutrients,
+      [field]: event.target.value,
+    });
+  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -78,7 +90,7 @@ const ProposeNewFood: React.FC = () => {
   return (
     <Container maxWidth="md">
       <Box sx={{ my: 4 }}>
-        <h1>Propose New Food</h1>
+        <h1 className="nh-title text-center mb-4">Propose New Food</h1>
         
         {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
         {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
@@ -106,6 +118,13 @@ const ProposeNewFood: React.FC = () => {
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategory(e.target.value)}
                 />
               </Grid>
+              
+              {/* Calories */}
+              <Grid size={{xs: 12}}>    
+                <h2 className="nh-subtitle">
+                  Calories (per 100g)
+                </h2>
+              </Grid>
 
               <Grid size={{xs: 12, sm: 6}}>
                 <TextField
@@ -120,7 +139,7 @@ const ProposeNewFood: React.FC = () => {
 
               {/* Macronutrients */}
               <Grid size={{xs: 12}}>    
-                <h2>
+                <h2 className="nh-subtitle">
                   Macronutrients (per 100g)
                 </h2>
               </Grid>
@@ -155,6 +174,35 @@ const ProposeNewFood: React.FC = () => {
                   label="Fat (g)"
                   value={macronutrients.fat}
                   onChange={handleMacronutrientChange('fat')}
+                />
+              </Grid>
+              
+              {/* Micronutrients */}
+              <Grid size={{xs: 12}}>    
+                <h2 className="nh-subtitle">
+                  Micronutrients (per 100g)
+                </h2>
+              </Grid>
+
+              <Grid size={{xs: 12, sm: 6}}>
+                <TextField
+                  required
+                  fullWidth
+                  type="number"
+                  label="Vitamins (mg)"
+                  value={micronutrients.vitamins}
+                  onChange={handleMicronutrientChange('vitamins')}
+                />
+              </Grid>
+
+              <Grid size={{xs: 12, sm: 6}}>
+                <TextField
+                  required
+                  fullWidth
+                  type="number"
+                  label="Minerals (mg)"
+                  value={micronutrients.minerals}
+                  onChange={handleMicronutrientChange('minerals')}
                 />
               </Grid>
 
