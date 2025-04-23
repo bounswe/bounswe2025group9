@@ -1,8 +1,12 @@
 // Test the following:
 // - Does the page render?
-// - Does the page fetch foods from the API?
 // - Does the page display food items?
 // - Does the page handle errors?
+//- Does the page fetch foods from the API?
+
+// TODO:
+// - Does the search bar work?
+
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'

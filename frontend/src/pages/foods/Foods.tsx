@@ -27,6 +27,7 @@ const FoodItem = (item : Food) => {
 // foods page component (placeholder)
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
+    const [searchTerm, setSearchTerm] = useState('')
 
     const fetchFoods = async () => {
         try {
@@ -43,6 +44,11 @@ const Foods = () => {
         fetchFoods();
     }, []);
 
+    // Filter foods based on search term
+    const filteredFoods = foods.filter(food => 
+        food.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
     return (
         <div className="py-12">
             <div className="nh-container">
@@ -57,6 +63,8 @@ const Foods = () => {
                             type="text" 
                             className="w-full nh-input pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                             placeholder="Search for a food..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -75,9 +83,9 @@ const Foods = () => {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {foods.length > 0 ?
-                        (foods.map(FoodItem)) : 
-                        (<p className="col-span-full text-center nh-text">No foods available. Please try again later.</p>)
+                    {filteredFoods.length > 0 ?
+                        (filteredFoods.map(FoodItem)) : 
+                        (<p className="col-span-full text-center nh-text">No foods found matching your search.</p>)
                     }
                 </div>
 
