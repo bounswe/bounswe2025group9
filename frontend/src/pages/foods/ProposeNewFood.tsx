@@ -186,7 +186,6 @@ const ProposeNewFood: React.FC = () => {
 
               <Grid size={{xs: 12, sm: 6}}>
                 <TextField
-                  required
                   fullWidth
                   type="number"
                   label="Vitamins (mg)"
@@ -197,7 +196,6 @@ const ProposeNewFood: React.FC = () => {
 
               <Grid size={{xs: 12, sm: 6}}>
                 <TextField
-                  required
                   fullWidth
                   type="number"
                   label="Minerals (mg)"
