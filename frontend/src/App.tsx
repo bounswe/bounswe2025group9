@@ -4,6 +4,7 @@ import Home from './pages/Home'
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup'
 import Foods from './pages/foods/Foods'
+import ProposeNewFood from './pages/foods/ProposeNewFood'
 import Forum from './pages/forum/Forum'
 import ApiExample from './pages/ApiExample'
 
@@ -15,6 +16,7 @@ function App() {
         <Route path="/" element={<MainLayout />}>
           <Route index element={<Home />} />
           <Route path="foods" element={<Foods />} />
+          <Route path="foods/propose" element={<ProposeNewFood />} />
           <Route path="forum" element={<Forum />} />
           <Route path="api-examples" element={<ApiExample />} />
           <Route path="login" element={<Login />} />

@@ -1,6 +1,7 @@
 import { Hamburger} from '@phosphor-icons/react'
 import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 
 
@@ -28,6 +29,7 @@ const FoodItem = (item : Food) => {
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
     const [searchTerm, setSearchTerm] = useState('')
+    const navigate = useNavigate();
 
     const fetchFoods = async () => {
         try {
@@ -76,7 +78,10 @@ const Foods = () => {
                         <button className="nh-button-primary px-6 py-2.5 whitespace-nowrap">
                             Search
                         </button>
-                        <button className="nh-button-secondary px-6 py-2.5 whitespace-nowrap">
+                        <button 
+                            className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"
+                            onClick={() => navigate('/foods/propose')}
+                        >
                             Add Food
                         </button>
                     </div>
