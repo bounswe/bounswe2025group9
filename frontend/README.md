@@ -232,3 +232,247 @@ The system supports these dietary options:
   "imageUrl": "https://placehold.co/300x200/png"
 }
 ```
+
+## Unit Testing with Vitest
+
+This project uses Vitest and React Testing Library for unit testing. Here's how to write and run tests for your components.
+
+### Setup
+
+The testing environment is already configured with:
+
+- Vitest for test running
+- React Testing Library for component testing
+- Jest DOM for DOM-specific assertions
+- MSW for API mocking
+
+### Writing Tests
+
+#### Basic Component Test Structure
+
+```typescript
+import { describe, it, expect } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { BrowserRouter } from "react-router-dom";
+import YourComponent from "./YourComponent";
+
+describe("YourComponent", () => {
+  it("renders correctly", () => {
+    render(
+      <BrowserRouter>
+        <YourComponent />
+      </BrowserRouter>
+    );
+
+    // Test assertions here
+  });
+});
+```
+
+#### Testing Page Components
+
+When testing page components:
+
+1. Always wrap with `BrowserRouter` if using React Router
+2. Test for presence of main elements
+3. Verify navigation links
+4. Check responsive layouts
+5. Test component interactions
+
+Example for a page component:
+
+```typescript
+describe("Foods Page", () => {
+  it("renders food list and search functionality", () => {
+    render(
+      <BrowserRouter>
+        <FoodsPage />
+      </BrowserRouter>
+    );
+
+    // Test main elements
+    expect(screen.getByText("Food List")).toBeInTheDocument();
+    expect(screen.getByPlaceholderText("Search foods...")).toBeInTheDocument();
+
+    // Test navigation
+    const addFoodLink = screen.getByText("Add Food").closest("a");
+    expect(addFoodLink).toHaveAttribute("href", "/foods/add");
+
+    // Test responsive layout
+    const container = screen.getByTestId("food-list-container");
+    expect(container).toHaveClass("grid", "grid-cols-1", "md:grid-cols-2");
+  });
+});
+```
+
+#### Testing API Interactions
+
+Use MSW to mock API calls in tests:
+
+```typescript
+import { setupServer } from "msw/node";
+import { rest } from "msw";
+
+const server = setupServer(
+  rest.get("/api/foods", (req, res, ctx) => {
+    return res(
+      ctx.json([
+        { id: 1, name: "Apple" },
+        { id: 2, name: "Banana" },
+      ])
+    );
+  })
+);
+
+describe("FoodList Component", () => {
+  beforeAll(() => server.listen());
+  afterEach(() => server.resetHandlers());
+  afterAll(() => server.close());
+
+  it("loads and displays foods", async () => {
+    render(<FoodList />);
+
+    // Wait for data to load
+    const items = await screen.findAllByRole("listitem");
+    expect(items).toHaveLength(2);
+  });
+});
+```
+
+#### Testing User Interactions
+
+Test user interactions using React Testing Library's fireEvent:
+
+```typescript
+import { fireEvent } from "@testing-library/react";
+
+describe("Search Component", () => {
+  it("updates search results on input change", () => {
+    render(<SearchComponent />);
+
+    const input = screen.getByPlaceholderText("Search...");
+    fireEvent.change(input, { target: { value: "apple" } });
+
+    expect(input).toHaveValue("apple");
+  });
+});
+```
+
+#### Testing Responsive Design
+
+Test responsive layouts by checking Tailwind classes:
+
+```typescript
+describe("Responsive Layout", () => {
+  it("applies correct responsive classes", () => {
+    render(<YourComponent />);
+
+    const container = screen.getByTestId("responsive-container");
+    expect(container).toHaveClass("flex", "flex-col", "md:flex-row");
+  });
+});
+```
+
+### Running Tests
+
+Run all tests:
+
+```bash
+npm test
+```
+
+Run tests in watch mode:
+
+```bash
+npm test -- --watch
+```
+
+Run tests for a specific file:
+
+```bash
+npm test -- src/pages/Home.test.tsx
+```
+
+### Best Practices
+
+1. **Test Structure**
+
+   - Group related tests using `describe`
+   - Use clear, descriptive test names
+   - Follow the pattern: "should [expected behavior] when [condition]"
+
+2. **Component Testing**
+
+   - Test what the user sees, not implementation details
+   - Use semantic queries (getByRole, getByText) over test IDs
+   - Mock external dependencies
+
+3. **API Testing**
+
+   - Use MSW for API mocking
+   - Test both success and error cases
+   - Verify loading states
+
+4. **Accessibility**
+
+   - Test for proper ARIA attributes
+   - Ensure keyboard navigation works
+   - Verify screen reader compatibility
+
+5. **Performance**
+   - Keep tests focused and fast
+   - Use async utilities properly
+   - Clean up after tests
+
+### Common Test Patterns
+
+#### Testing Navigation
+
+```typescript
+it("navigates to correct route", () => {
+  render(
+    <MemoryRouter>
+      <YourComponent />
+    </MemoryRouter>
+  );
+
+  const link = screen.getByText("Some Link").closest("a");
+  expect(link).toHaveAttribute("href", "/expected-route");
+});
+```
+
+#### Testing Form Submissions
+
+```typescript
+it("handles form submission", async () => {
+  render(<YourForm />);
+
+  const input = screen.getByLabelText("Username");
+  fireEvent.change(input, { target: { value: "testuser" } });
+
+  const submitButton = screen.getByRole("button", { name: "Submit" });
+  fireEvent.click(submitButton);
+
+  await waitFor(() => {
+    expect(screen.getByText("Success!")).toBeInTheDocument();
+  });
+});
+```
+
+#### Testing Error States
+
+```typescript
+it("displays error message on API failure", async () => {
+  server.use(
+    rest.get("/api/data", (req, res, ctx) => {
+      return res(ctx.status(500));
+    })
+  );
+
+  render(<YourComponent />);
+
+  await waitFor(() => {
+    expect(screen.getByText("Error loading data")).toBeInTheDocument();
+  });
+});
+```
