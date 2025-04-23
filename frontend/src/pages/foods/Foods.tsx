@@ -2,33 +2,39 @@ import { Hamburger} from '@phosphor-icons/react'
 import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import FoodDetail from './FoodDetail';
 
-
-
-const FoodItem = (item : Food) => {
-    return (<div key={item.id} className="nh-card p-4">
-    <div className="food-image-placeholder flex justify-center items-center">
-        <Hamburger size={48} weight="fill" className="text-primary opacity-50" />
-    </div>
-    <div className="flex items-center mt-4">
-        <div className="flex items-center justify-center mr-2">
-            <Hamburger size={20} className="text-primary flex-shrink-0" />
+const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
+    return (
+        <div 
+            key={item.id} 
+            className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={onClick}
+        >
+            <div className="food-image-placeholder flex justify-center items-center">
+                <Hamburger size={48} weight="fill" className="text-primary opacity-50" />
+            </div>
+            <div className="flex items-center mt-4">
+                <div className="flex items-center justify-center mr-2">
+                    <Hamburger size={20} className="text-primary flex-shrink-0" />
+                </div>
+                <h3 className="nh-subtitle">{item.name}</h3>
+            </div>
+            <div className="mt-2">
+                <p className="nh-text">Category: {item.category}</p>
+                <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
+                <p className="nh-text">Calories: {item.nutrition.calories} kcal per {item.perUnit}</p>
+                <p className="nh-text">Dietary Tags: {item.dietaryTags.join(', ')}</p>
+            </div>
         </div>
-        <h3 className="nh-subtitle">{item.name}</h3>
-    </div>
-    <div className="mt-2">
-        <p className="nh-text">Category: {item.category}</p>
-        <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
-        <p className="nh-text">Calories: {item.nutrition.calories} kcal per {item.perUnit}</p>
-        <p className="nh-text">Dietary Tags: {item.dietaryTags.join(', ')}</p>
-    </div>
-</div>)
+    );
 }
 
 // foods page component (placeholder)
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
     const [searchTerm, setSearchTerm] = useState('')
+    const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const navigate = useNavigate();
 
     const fetchFoods = async () => {
@@ -89,12 +95,22 @@ const Foods = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     {filteredFoods.length > 0 ?
-                        (filteredFoods.map(FoodItem)) : 
+                        (filteredFoods.map(food => (
+                            <FoodItem 
+                                key={food.id} 
+                                item={food} 
+                                onClick={() => setSelectedFood(food)}
+                            />
+                        ))) : 
                         (<p className="col-span-full text-center nh-text">No foods found matching your search.</p>)
                     }
                 </div>
 
-
+                <FoodDetail 
+                    food={selectedFood}
+                    open={!!selectedFood}
+                    onClose={() => setSelectedFood(null)}
+                />
             </div>
         </div>
     )
