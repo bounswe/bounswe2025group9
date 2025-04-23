@@ -4,9 +4,19 @@
 // - Does the page handle errors?
 //- Does the page fetch foods from the API?
 
-// TODO:
+// TODO: SEARCH BAR TESTINGS
 // - Does the search bar work?
+// - Does the search bar display the correct results?
 
+// TODO: FOOD DETAIL PAGE TESTINGS
+// - Does the food detail page render?
+// - Does the food detail page display the correct information?
+// - Does the food detail page handle errors?
+
+// TODO: PROPOSE NEW FOOD PAGE TESTINGS
+// - Does the propose new food page render?
+// - Does the propose new food page handle errors?
+// - Does the propose new food page handle the form submission?
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
