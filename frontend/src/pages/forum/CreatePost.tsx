@@ -1,19 +1,39 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Minus, CaretDown } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, Minus } from '@phosphor-icons/react'
+import { apiClient, Food } from '../../lib/apiClient'
 
-// Define ingredient interface
+// Local interfaces for this component
 interface Ingredient {
     id: number;
-    foodId: string;
+    foodId: number;
+    foodName: string;
     amount: number;
 }
 
-// Define food interface
-interface Food {
-    id: string;
+interface FoodItem {
+    id: number;
     name: string;
 }
+
+// Post interfaces
+interface PostBase {
+    type: 'recipe' | 'nutrition_tip';
+    title: string;
+}
+
+interface RecipePost extends PostBase {
+    type: 'recipe';
+    ingredients: Ingredient[];
+    instructions: string;
+}
+
+interface NutritionTipPost extends PostBase {
+    type: 'nutrition_tip';
+    content: string;
+}
+
+type PostData = RecipePost | NutritionTipPost;
 
 const CreatePost = () => {
     const navigate = useNavigate();
@@ -22,36 +42,56 @@ const CreatePost = () => {
     const [content, setContent] = useState('');
     const [instructions, setInstructions] = useState('');
     const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-    const [foods, setFoods] = useState<Food[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
+    const [foods, setFoods] = useState<FoodItem[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    // Fetch available foods (in a real app, this would come from an API)
+    // Fetch foods when component mounts
     useEffect(() => {
-        // Simulate API call
-        setTimeout(() => {
-            setFoods([
-                { id: 'apple', name: 'Apple' },
-                { id: 'banana', name: 'Banana' },
-                { id: 'chicken', name: 'Chicken Breast' },
-                { id: 'rice', name: 'Brown Rice' },
-                { id: 'egg', name: 'Egg' },
-                { id: 'milk', name: 'Milk' },
-                { id: 'broccoli', name: 'Broccoli' },
-                { id: 'spinach', name: 'Spinach' },
-                { id: 'almond', name: 'Almonds' },
-                { id: 'salmon', name: 'Salmon' },
-            ]);
-            setIsLoading(false);
-        }, 500);
+        fetchFoods();
     }, []);
+
+    // Fetch foods from API
+    const fetchFoods = async () => {
+        setLoading(true);
+        try {
+            const data = await apiClient.getFoods();
+            
+            // Transform foods into simpler format for our select dropdowns
+            const foodItems: FoodItem[] = data.map(food => ({
+                id: food.id,
+                name: food.name
+            }));
+            
+            setFoods(foodItems);
+            
+            // Initialize first ingredient when foods are loaded
+            if (foodItems.length > 0 && ingredients.length === 0) {
+                setIngredients([
+                    {
+                        id: Date.now(),
+                        foodId: foodItems[0].id,
+                        foodName: foodItems[0].name,
+                        amount: 100
+                    }
+                ]);
+            }
+        } catch (error) {
+            console.error('Error fetching foods:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     // Add a new ingredient to the list
     const addIngredient = () => {
+        if (foods.length === 0) return;
+        
         setIngredients([
             ...ingredients,
             {
                 id: Date.now(),
-                foodId: foods.length > 0 ? foods[0].id : '',
+                foodId: foods[0].id,
+                foodName: foods[0].name,
                 amount: 100
             }
         ]);
@@ -63,10 +103,19 @@ const CreatePost = () => {
     };
 
     // Update an ingredient's food selection
-    const updateIngredientFood = (id: number, foodId: string) => {
+    const updateIngredientFood = (id: number, foodId: number) => {
+        const selectedFood = foods.find(food => food.id === foodId);
+        if (!selectedFood) return;
+        
         setIngredients(
             ingredients.map(ingredient => 
-                ingredient.id === id ? { ...ingredient, foodId } : ingredient
+                ingredient.id === id 
+                ? { 
+                    ...ingredient, 
+                    foodId, 
+                    foodName: selectedFood.name 
+                } 
+                : ingredient
             )
         );
     };
@@ -80,29 +129,48 @@ const CreatePost = () => {
         );
     };
 
-    // Handle form submission
-    const handleSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        // Prepare post data based on type
-        const postData = postType === 'recipe' 
-            ? {
-                type: postType,
+    // Create post data
+    const createPostData = (): PostData => {
+        if (postType === 'recipe') {
+            return {
+                type: 'recipe',
                 title,
                 ingredients,
                 instructions
-            }
-            : {
-                type: postType,
+            };
+        } else {
+            return {
+                type: 'nutrition_tip',
                 title,
                 content
             };
+        }
+    };
+
+    // Handle form submission
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        // Create post data
+        const postData = createPostData();
         
         // In a real implementation, we would send postData to an API
         console.log('Post created:', postData);
         
-        // Navigate back to forum
-        navigate('/forum');
+        try {
+            // For demo purposes, we'll navigate back to forum
+            // In a real app, we would call an API endpoint to create the post
+            // Example: await apiClient.createPost(postData);
+            
+            // Just simulate a small delay before redirecting
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Navigate back to forum
+            navigate('/forum');
+        } catch (error) {
+            console.error('Error creating post:', error);
+            // Handle error (would show an error message to the user)
+        }
     };
 
     return (
@@ -174,13 +242,14 @@ const CreatePost = () => {
                                             type="button"
                                             onClick={addIngredient}
                                             className="nh-button nh-button-primary flex items-center gap-1 py-1 px-3"
+                                            disabled={loading}
                                         >
                                             <Plus size={18} weight="bold" />
                                             Add Ingredient
                                         </button>
                                     </div>
                                     
-                                    {isLoading ? (
+                                    {loading ? (
                                         <p>Loading available foods...</p>
                                     ) : (
                                         <div className="space-y-3">
@@ -196,7 +265,7 @@ const CreatePost = () => {
                                                         <select
                                                             className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
                                                             value={ingredient.foodId}
-                                                            onChange={(e) => updateIngredientFood(ingredient.id, e.target.value)}
+                                                            onChange={(e) => updateIngredientFood(ingredient.id, parseInt(e.target.value))}
                                                             required
                                                         >
                                                             {foods.map((food) => (
@@ -223,6 +292,7 @@ const CreatePost = () => {
                                                         type="button"
                                                         onClick={() => removeIngredient(ingredient.id)}
                                                         className="p-2 text-red-500 hover:text-red-700"
+                                                        disabled={ingredients.length <= 1}
                                                     >
                                                         <Minus size={20} weight="bold" />
                                                     </button>

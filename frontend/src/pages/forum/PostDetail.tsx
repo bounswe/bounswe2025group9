@@ -1,6 +1,17 @@
-import { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ChatText, ArrowLeft } from '@phosphor-icons/react'
+import { apiClient } from '../../lib/apiClient'
+
+// Post interface for the data from API
+interface APIPost {
+    id: number;
+    title: string;
+    content: string;
+    author: string;
+    likes: number;
+    date: string;
+}
 
 // Comment type definition
 interface Comment {
@@ -13,10 +24,14 @@ interface Comment {
 const PostDetail = () => {
     const { postId } = useParams<{ postId: string }>()
     const postIdNum = parseInt(postId || '0')
+    const navigate = useNavigate()
     
     // Post state
+    const [post, setPost] = useState<APIPost | null>(null)
+    const [loading, setLoading] = useState(true)
     const [liked, setLiked] = useState(false)
-    const [likeCount, setLikeCount] = useState(Math.floor(Math.random() * 50))
+    // Track original likes to maintain consistency
+    const [originalLikes, setOriginalLikes] = useState<number>(0)
     
     // Comment state
     const [commentText, setCommentText] = useState('')
@@ -30,12 +45,120 @@ const PostDetail = () => {
             timestamp: new Date(Date.now() - Math.random() * 10000000000)
         }))
     })
+
+    // Function to sync with sessionStorage
+    const syncWithStorage = useCallback(() => {
+        if (!post) return;
+        
+        // Store the updated like state in sessionStorage to keep Forum in sync
+        sessionStorage.setItem(`post_${post.id}_liked`, liked ? 'true' : 'false');
+        sessionStorage.setItem(`post_${post.id}_likes`, String(post.likes));
+    }, [post, liked]);
+
+    // Fetch specific post when component mounts
+    useEffect(() => {
+        fetchPost();
+    }, [postId]);
+
+    // Fetch post data from API
+    const fetchPost = async () => {
+        if (!postId || isNaN(postIdNum)) {
+            navigate('/forum');
+            return;
+        }
+
+        setLoading(true);
+        try {
+            const allPosts = await apiClient.getPosts();
+            const foundPost = allPosts.find(p => p.id === postIdNum);
+            
+            if (foundPost) {
+                setPost(foundPost);
+                
+                // Store the original likes count for reference
+                setOriginalLikes(foundPost.likes);
+                
+                // Check if this post was previously liked from sessionStorage
+                const storedLiked = sessionStorage.getItem(`post_${postIdNum}_liked`);
+                
+                // If we have previously stored like state, use it
+                if (storedLiked !== null) {
+                    setLiked(storedLiked === 'true');
+                } else {
+                    // Reset the liked state if no previous state found
+                    setLiked(false);
+                }
+            } else {
+                // Post not found, redirect to forum
+                navigate('/forum');
+            }
+        } catch (error) {
+            console.error('Error fetching post:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
     
     // Handle like button click
-    const handleLikeToggle = () => {
-        setLiked(!liked)
-        setLikeCount(prev => prev + (liked ? -1 : 1))
+    const handleLikeToggle = async () => {
+        if (!post) return;
+        
+        // Update UI optimistically
+        const newLiked = !liked;
+        setLiked(newLiked);
+        
+        // Calculate new like count
+        const likeDelta = newLiked ? 1 : -1;
+        const newLikeCount = post.likes + likeDelta;
+        
+        // Update post with new like count
+        setPost({ ...post, likes: newLikeCount });
+        
+        try {
+            // Call API to update like status
+            if (newLiked) {
+                await apiClient.likeItem(post.id, "post");
+            } else {
+                // In a real implementation, there would be an unlike API
+                // This is a mock for demonstration purposes
+                console.log('Unlike post:', post.id);
+                // await apiClient.unlikeItem(post.id, "post");
+            }
+            
+            // Store the updated likes as the new "original" value
+            setOriginalLikes(newLikeCount);
+            
+            // Update sessionStorage immediately to keep state in sync
+            syncWithStorage();
+        } catch (error) {
+            console.error('Error toggling post like:', error);
+            // Revert UI changes on error
+            setLiked(!newLiked);
+            const revertedLikeCount = post.likes - likeDelta;
+            setPost({ ...post, likes: revertedLikeCount });
+            
+            // Also revert in session storage
+            if (post) {
+                sessionStorage.setItem(`post_${post.id}_liked`, !newLiked ? 'true' : 'false');
+                sessionStorage.setItem(`post_${post.id}_likes`, String(revertedLikeCount));
+            }
+        }
     }
+    
+    // Store like state in sessionStorage when navigating away or when state changes
+    useEffect(() => {
+        syncWithStorage();
+    }, [post, liked, syncWithStorage]);
+    
+    // Make sure to sync on unmount as well to ensure Forum gets latest state
+    useEffect(() => {
+        return () => {
+            if (post) {
+                sessionStorage.setItem(`post_${post.id}_liked`, liked ? 'true' : 'false');
+                sessionStorage.setItem(`post_${post.id}_likes`, String(post.likes));
+            }
+        };
+    }, [post, liked]);
     
     // Handle comment submission
     const handleCommentSubmit = (e: React.FormEvent) => {
@@ -46,19 +169,69 @@ const PostDetail = () => {
         // Add new comment to the beginning of the list
         const newComment: Comment = {
             id: comments.length,
-            author: 'User1', // Current user
+            author: 'You', // Current user
             content: commentText,
             timestamp: new Date()
         }
         
         setComments(prevComments => [newComment, ...prevComments])
         setCommentText('') // Clear the input
+        
+        // In a real implementation, this would call an API to save the comment
     }
+    
+    // Format date for display
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    };
     
     // Scroll to top on page load
     useEffect(() => {
         window.scrollTo(0, 0)
     }, [])
+
+    if (loading) {
+        return (
+            <div className="py-12">
+                <div className="nh-container">
+                    <div className="mb-6">
+                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6">
+                            <ArrowLeft size={20} weight="bold" />
+                            Back to Forum
+                        </Link>
+                    </div>
+                    <div className="text-center my-12">
+                        <p className="text-lg">Loading post...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (!post) {
+        return (
+            <div className="py-12">
+                <div className="nh-container">
+                    <div className="mb-6">
+                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6">
+                            <ArrowLeft size={20} weight="bold" />
+                            Back to Forum
+                        </Link>
+                    </div>
+                    <div className="text-center my-12">
+                        <p className="text-lg">Post not found.</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="py-12">
@@ -76,13 +249,11 @@ const PostDetail = () => {
                         <div className="mt-0.5 mr-2">
                             <ChatText size={24} weight="fill" className="text-primary flex-shrink-0" />
                         </div>
-                        <h1 className="nh-title">Discussion Topic {postIdNum + 1}</h1>
+                        <h1 className="nh-title">{post.title}</h1>
                     </div>
                     
                     <p className="nh-text mb-6">
-                        This is a placeholder for forum post content. The actual implementation
-                        will display real posts from the community. This is an expanded view with
-                        more details about the post and all related comments.
+                        {post.content}
                     </p>
                     
                     <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4">
@@ -90,7 +261,7 @@ const PostDetail = () => {
                             <div className="mt-0.5">
                                 <User size={16} className="flex-shrink-0" />
                             </div>
-                            Posted by: User{postIdNum + 1}
+                            Posted by: {post.author} • {formatDate(post.date)}
                         </span>
                         <button 
                             onClick={handleLikeToggle}
@@ -99,7 +270,7 @@ const PostDetail = () => {
                             <div className="mt-0.5">
                                 <ThumbsUp size={16} weight={liked ? "fill" : "regular"} className="flex-shrink-0" />
                             </div>
-                            Likes: {likeCount}
+                            Likes: {post.likes}
                         </button>
                     </div>
                 </div>

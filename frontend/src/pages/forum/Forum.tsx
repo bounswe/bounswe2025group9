@@ -1,48 +1,212 @@
-// forum page component (placeholder)
-import { useState } from 'react'
+// forum page component
+import { useState, useEffect } from 'react'
 import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots } from '@phosphor-icons/react'
-import { Link } from 'react-router-dom'
+import { Link, useLocation } from 'react-router-dom'
+import { apiClient, Post } from '../../lib/apiClient'
+
+interface APIPost {
+    id: number;
+    title: string;
+    content: string;
+    author: string;
+    likes: number;
+    date: string;
+}
 
 const Forum = () => {
-    const [currentPage, setCurrentPage] = useState(1)
-    const postsPerPage = 5
-    const totalPosts = 15 // This would come from an API in a real implementation
-    const totalPages = Math.ceil(totalPosts / postsPerPage)
-    const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({})
-    const [likeCounts, setLikeCounts] = useState<{[key: number]: number}>(
-        // Generate random initial like counts
-        [...Array(totalPosts)].reduce((acc, _, index) => {
-            acc[index] = Math.floor(Math.random() * 50);
-            return acc;
-        }, {} as {[key: number]: number})
-    )
+    const location = useLocation();
+    const [posts, setPosts] = useState<APIPost[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const postsPerPage = 5;
+    const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
     
-    // Generate random comment counts for posts
-    const [commentCounts] = useState<{[key: number]: number}>(
-        [...Array(totalPosts)].reduce((acc, _, index) => {
-            acc[index] = Math.floor(Math.random() * 20);
-            return acc;
-        }, {} as {[key: number]: number})
-    )
+    // Calculate total pages based on fetched posts
+    const totalPages = Math.ceil(posts.length / postsPerPage);
+    
+    // Fetch posts when component mounts or when returning to this component
+    useEffect(() => {
+        fetchPosts();
+    }, []);
+
+    // Refresh data when navigating back to this page
+    useEffect(() => {
+        // Check if we're coming back to the forum from somewhere else
+        if (location.pathname === '/forum') {
+            fetchPosts();
+        }
+    }, [location]);
+
+    // Get posts from API
+    const fetchPosts = async () => {
+        setLoading(true);
+        try {
+            const data = await apiClient.getPosts();
+            
+            // Create a new likedPosts state based on sessionStorage
+            const newLikedPosts: {[key: number]: boolean} = {};
+            
+            // Check sessionStorage for any likes that were set in PostDetail or previously in Forum
+            const updatedPosts = data.map(post => {
+                const storedLikes = sessionStorage.getItem(`post_${post.id}_likes`);
+                const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
+                
+                // If we have stored like information, update the post
+                if (storedLikes) {
+                    post.likes = parseInt(storedLikes);
+                }
+                
+                // Update the liked state
+                if (storedLiked) {
+                    newLikedPosts[post.id] = storedLiked === 'true';
+                }
+                
+                return post;
+            });
+            
+            // Update state
+            setPosts(updatedPosts);
+            setLikedPosts(newLikedPosts);
+        } catch (error) {
+            console.error('Error fetching posts:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Handle like toggling with API
+    const handleLikeToggle = async (postId: number) => {
+        // Toggle the liked state in UI for immediate feedback
+        const isCurrentlyLiked = likedPosts[postId] || false;
+        const newLiked = !isCurrentlyLiked;
+        
+        // Update the liked state immediately
+        setLikedPosts(prev => ({
+            ...prev,
+            [postId]: newLiked
+        }));
+        
+        try {
+            // Update the posts with new like count
+            setPosts(posts.map(post => {
+                if (post.id === postId) {
+                    const newLikeCount = post.likes + (newLiked ? 1 : -1);
+                    
+                    // Store the updated like state and count in sessionStorage immediately
+                    sessionStorage.setItem(`post_${postId}_liked`, String(newLiked));
+                    sessionStorage.setItem(`post_${postId}_likes`, String(newLikeCount));
+                    
+                    return {
+                        ...post,
+                        likes: newLikeCount
+                    };
+                }
+                return post;
+            }));
+            
+            // Call the API to like/unlike the post
+            if (newLiked) {
+                await apiClient.likeItem(postId, "post");
+            } else {
+                // In a real implementation, there would be an unlike API
+                // This is a mock for demonstration purposes
+                console.log('Unlike post:', postId);
+                // await apiClient.unlikeItem(postId, "post");
+            }
+        } catch (error) {
+            console.error('Error toggling post like:', error);
+            
+            // Revert UI change if API call fails
+            setLikedPosts(prev => ({
+                ...prev,
+                [postId]: isCurrentlyLiked
+            }));
+            
+            // Also revert the like count and sessionStorage
+            setPosts(posts.map(post => {
+                if (post.id === postId) {
+                    const originalLikeCount = post.likes + (isCurrentlyLiked ? 0 : newLiked ? -1 : 1);
+                    
+                    // Update sessionStorage
+                    sessionStorage.setItem(`post_${postId}_liked`, String(isCurrentlyLiked));
+                    sessionStorage.setItem(`post_${postId}_likes`, String(originalLikeCount));
+                    
+                    return {
+                        ...post,
+                        likes: originalLikeCount
+                    };
+                }
+                return post;
+            }));
+        }
+    };
+
+    // Get current posts for pagination
+    const getCurrentPosts = () => {
+        const indexOfLastPost = currentPage * postsPerPage;
+        const indexOfFirstPost = indexOfLastPost - postsPerPage;
+        return posts.slice(indexOfFirstPost, indexOfFirstPost + postsPerPage);
+    };
 
     const handlePageChange = (page: number) => {
-        setCurrentPage(page)
-        // In a real implementation, this would fetch the posts for the selected page
-    }
+        setCurrentPage(page);
+        // Scroll to top when changing page
+        window.scrollTo(0, 0);
+    };
 
-    const handleLikeToggle = (postIndex: number) => {
-        // Toggle the liked state
-        const newLikedPosts = { ...likedPosts }
-        newLikedPosts[postIndex] = !likedPosts[postIndex]
-        setLikedPosts(newLikedPosts)
+    // Format date for display
+    const formatDate = (dateString: string) => {
+        const date = new Date(dateString);
+        return date.toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric'
+        });
+    };
+
+    // We need to re-check session storage when the component regains focus
+    // This ensures updates from PostDetail are reflected if user navigates back
+    useEffect(() => {
+        const handleFocus = () => {
+            // Re-sync with sessionStorage for any changes when the user returns to this page
+            const updatedLikedPosts = { ...likedPosts };
+            let needsUpdate = false;
+            
+            posts.forEach(post => {
+                const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
+                const storedLikes = sessionStorage.getItem(`post_${post.id}_likes`);
+                
+                if (storedLiked !== null) {
+                    const isLiked = storedLiked === 'true';
+                    if (updatedLikedPosts[post.id] !== isLiked) {
+                        updatedLikedPosts[post.id] = isLiked;
+                        needsUpdate = true;
+                    }
+                }
+                
+                if (storedLikes !== null) {
+                    const likeCount = parseInt(storedLikes);
+                    if (post.likes !== likeCount) {
+                        post.likes = likeCount;
+                        needsUpdate = true;
+                    }
+                }
+            });
+            
+            if (needsUpdate) {
+                setLikedPosts({ ...updatedLikedPosts });
+                setPosts([...posts]);
+            }
+        };
         
-        // Update the like count
-        const newLikeCounts = { ...likeCounts }
-        newLikeCounts[postIndex] = likeCounts[postIndex] + (newLikedPosts[postIndex] ? 1 : -1)
-        setLikeCounts(newLikeCounts)
+        // Add event listener for when window regains focus
+        window.addEventListener('focus', handleFocus);
         
-        // In a real implementation, this would call an API to update the like status
-    }
+        // Cleanup
+        return () => {
+            window.removeEventListener('focus', handleFocus);
+        };
+    }, [posts, likedPosts]);
 
     return (
         <div className="py-12">
@@ -56,93 +220,97 @@ const Forum = () => {
                         New Post
                     </Link>
                 </div>
-                <p className="nh-text text-center mb-12">
-                    This is a placeholder for the Forum page.
-                    Implementation will come in the next phase.
-                </p>
-
-                <div className="space-y-6 max-w-4xl mx-auto">
-                    {Array(postsPerPage).fill(null).map((_, index) => {
-                        const postIndex = (currentPage - 1) * postsPerPage + index
-                        if (postIndex >= totalPosts) return null
-                        
-                        return (
-                            <div key={postIndex} className="nh-card">
+                
+                {loading ? (
+                    <div className="text-center my-12">
+                        <p className="text-lg">Loading posts...</p>
+                    </div>
+                ) : posts.length === 0 ? (
+                    <div className="text-center my-12">
+                        <p className="text-lg">No posts found. Be the first to create a post!</p>
+                    </div>
+                ) : (
+                    <div className="space-y-6 max-w-4xl mx-auto">
+                        {getCurrentPosts().map((post) => (
+                            <div key={post.id} className="nh-card">
                                 <div className="flex items-center mb-2">
                                     <div className="mt-0.5 mr-2">
                                         <ChatText size={20} weight="fill" className="text-primary flex-shrink-0" />
                                     </div>
-                                    <h3 className="nh-subtitle">Discussion Topic {postIndex + 1}</h3>
+                                    <h3 className="nh-subtitle">{post.title}</h3>
                                 </div>
                                 <p className="nh-text mb-4">
-                                    This is a placeholder for forum post content. The actual implementation
-                                    will display real posts from the community.
+                                    {post.content.length > 150 
+                                        ? post.content.substring(0, 150) + '...' 
+                                        : post.content}
                                 </p>
                                 <div className="flex justify-between items-center text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
                                         <div className="mt-0.5">
                                             <User size={16} className="flex-shrink-0" />
                                         </div>
-                                        Posted by: User{postIndex + 1}
+                                        Posted by: {post.author} • {formatDate(post.date)}
                                     </span>
                                     <div className="flex items-center gap-4">
                                         <Link 
-                                            to={`/forum/post/${postIndex}`}
+                                            to={`/forum/post/${post.id}`}
                                             className="flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700"
                                         >
                                             <div className="mt-0.5">
                                                 <ChatDots size={16} className="flex-shrink-0" />
                                             </div>
-                                            Comments: {commentCounts[postIndex] || 0}
+                                            Comments
                                         </Link>
                                         <button 
-                                            onClick={() => handleLikeToggle(postIndex)}
-                                            className={`flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${likedPosts[postIndex] ? 'text-primary' : ''}`}
+                                            onClick={() => handleLikeToggle(post.id)}
+                                            className={`flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${likedPosts[post.id] ? 'text-primary' : ''}`}
                                         >
                                             <div className="mt-0.5">
-                                                <ThumbsUp size={16} weight={likedPosts[postIndex] ? "fill" : "regular"} className="flex-shrink-0" />
+                                                <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />
                                             </div>
-                                            Likes: {likeCounts[postIndex] || 0}
+                                            Likes: {post.likes || 0}
                                         </button>
                                     </div>
                                 </div>
                             </div>
-                        )
-                    })}
-                </div>
+                        ))}
+                    </div>
+                )}
 
-                {/* Pagination */}
-                <div className="flex justify-center items-center mt-8 gap-2">
-                    <button 
-                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                        disabled={currentPage === 1}
-                        className={`p-2 rounded-full ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-primary hover:bg-gray-100'}`}
-                    >
-                        <CaretLeft size={20} weight="bold" />
-                    </button>
-                    
-                    {[...Array(totalPages)].map((_, index) => (
-                        <button
-                            key={index}
-                            onClick={() => handlePageChange(index + 1)}
-                            className={`w-8 h-8 rounded-full ${
-                                currentPage === index + 1 
-                                ? 'bg-[#0d7c5f] dark:bg-[#090909] text-white' 
-                                : 'text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-500'
-                            }`}
+                {/* Pagination - only show if we have posts and more than one page */}
+                {!loading && posts.length > 0 && totalPages > 1 && (
+                    <div className="flex justify-center items-center mt-8 gap-2">
+                        <button 
+                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                            disabled={currentPage === 1}
+                            className={`p-2 rounded-full ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-primary hover:bg-gray-100'}`}
                         >
-                            {index + 1}
+                            <CaretLeft size={20} weight="bold" />
                         </button>
-                    ))}
-                    
-                    <button 
-                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                        disabled={currentPage === totalPages}
-                        className={`p-2 rounded-full ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-primary hover:bg-gray-100'}`}
-                    >
-                        <CaretRight size={20} weight="bold" />
-                    </button>
-                </div>
+                        
+                        {[...Array(totalPages)].map((_, index) => (
+                            <button
+                                key={index}
+                                onClick={() => handlePageChange(index + 1)}
+                                className={`w-8 h-8 rounded-full ${
+                                    currentPage === index + 1 
+                                    ? 'bg-[#0d7c5f] dark:bg-[#090909] text-white' 
+                                    : 'text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-500'
+                                }`}
+                            >
+                                {index + 1}
+                            </button>
+                        ))}
+                        
+                        <button 
+                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                            disabled={currentPage === totalPages}
+                            className={`p-2 rounded-full ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-primary hover:bg-gray-100'}`}
+                        >
+                            <CaretRight size={20} weight="bold" />
+                        </button>
+                    </div>
+                )}
             </div>
         </div>
     )
