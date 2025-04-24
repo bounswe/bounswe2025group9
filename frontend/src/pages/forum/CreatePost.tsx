@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Minus } from '@phosphor-icons/react'
+import { ArrowLeft, Plus, Minus, MagnifyingGlass, X } from '@phosphor-icons/react'
 import { apiClient, Food, CreatePostRequest, PostIngredient } from '../../lib/apiClient'
 
 // Local interfaces for this component
@@ -38,11 +38,38 @@ const CreatePost = () => {
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    
+    // States for ingredient search functionality
+    const [activeIngredientId, setActiveIngredientId] = useState<number | null>(null);
+    const [searchTerms, setSearchTerms] = useState<{[key: number]: string}>({});
+    const [showDropdown, setShowDropdown] = useState<{[key: number]: boolean}>({});
+    const dropdownRef = useRef<{[key: number]: HTMLDivElement | null}>({});
+
+    // Set ref for dropdown elements
+    const setDropdownRef = (id: number, element: HTMLDivElement | null) => {
+        dropdownRef.current[id] = element;
+    };
 
     // Fetch foods when component mounts
     useEffect(() => {
         fetchFoods();
     }, []);
+
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (activeIngredientId && 
+                dropdownRef.current[activeIngredientId] && 
+                !dropdownRef.current[activeIngredientId]?.contains(event.target as Node)) {
+                setShowDropdown(prev => ({...prev, [activeIngredientId]: false}));
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, [activeIngredientId]);
 
     // Fetch foods from API
     const fetchFoods = async () => {
@@ -58,17 +85,7 @@ const CreatePost = () => {
             
             setFoods(foodItems);
             
-            // Initialize first ingredient when foods are loaded
-            if (foodItems.length > 0 && ingredients.length === 0) {
-                setIngredients([
-                    {
-                        id: Date.now(),
-                        foodId: foodItems[0].id,
-                        foodName: foodItems[0].name,
-                        amount: 100
-                    }
-                ]);
-            }
+            // No longer initializing a default ingredient here
         } catch (error) {
             console.error('Error fetching foods:', error);
         } finally {
@@ -80,38 +97,70 @@ const CreatePost = () => {
     const addIngredient = () => {
         if (foods.length === 0) return;
         
+        const newIngredientId = Date.now();
+        
         setIngredients([
             ...ingredients,
             {
-                id: Date.now(),
-                foodId: foods[0].id,
-                foodName: foods[0].name,
+                id: newIngredientId,
+                foodId: 0, // Using 0 as a temporary ID
+                foodName: '', // Empty food name
                 amount: 100
             }
         ]);
+        
+        // Initialize empty search term for the new ingredient
+        setSearchTerms(prev => ({
+            ...prev,
+            [newIngredientId]: ''
+        }));
+        
+        // Show dropdown immediately for this new ingredient
+        setShowDropdown(prev => ({
+            ...prev,
+            [newIngredientId]: true
+        }));
+        
+        // Set this as the active ingredient
+        setActiveIngredientId(newIngredientId);
     };
 
     // Remove an ingredient from the list
     const removeIngredient = (id: number) => {
         setIngredients(ingredients.filter(ingredient => ingredient.id !== id));
+        
+        // Clean up search state
+        const newSearchTerms = {...searchTerms};
+        delete newSearchTerms[id];
+        setSearchTerms(newSearchTerms);
+        
+        const newShowDropdown = {...showDropdown};
+        delete newShowDropdown[id];
+        setShowDropdown(newShowDropdown);
     };
 
     // Update an ingredient's food selection
-    const updateIngredientFood = (id: number, foodId: number) => {
-        const selectedFood = foods.find(food => food.id === foodId);
-        if (!selectedFood) return;
-        
+    const updateIngredientFood = (id: number, foodId: number, foodName: string) => {
         setIngredients(
             ingredients.map(ingredient => 
                 ingredient.id === id 
                 ? { 
                     ...ingredient, 
                     foodId, 
-                    foodName: selectedFood.name 
+                    foodName
                 } 
                 : ingredient
             )
         );
+        
+        // Update search term with the selected food name
+        setSearchTerms(prev => ({...prev, [id]: foodName}));
+        
+        // Close dropdown after selection
+        setShowDropdown(prev => ({...prev, [id]: false}));
+        
+        // Clear active ingredient
+        setActiveIngredientId(null);
     };
 
     // Update an ingredient's amount
@@ -123,9 +172,51 @@ const CreatePost = () => {
         );
     };
 
+    // Handle search input change
+    const handleSearchChange = (id: number, term: string) => {
+        setSearchTerms(prev => ({...prev, [id]: term}));
+        setShowDropdown(prev => ({...prev, [id]: true}));
+        setActiveIngredientId(id);
+    };
+
+    // Filter foods based on search term
+    const getFilteredFoods = (id: number) => {
+        const searchTerm = searchTerms[id] || '';
+        if (!searchTerm.trim()) return foods;
+        
+        // Perform case-insensitive search
+        const lowerSearchTerm = searchTerm.toLowerCase();
+        
+        // Only return foods that start with the search term
+        return foods.filter(food => 
+            food.name.toLowerCase().startsWith(lowerSearchTerm)
+        );
+    };
+
+    // Clear search input
+    const clearSearch = (id: number) => {
+        // Get current ingredient
+        const ingredient = ingredients.find(ing => ing.id === id);
+        if (!ingredient) return;
+        
+        // Reset search to current food name
+        setSearchTerms(prev => ({...prev, [id]: ingredient.foodName}));
+    };
+
     // Create post request data
     const createPostRequestData = (): CreatePostRequest => {
         if (postType === 'recipe') {
+            // Validate that we have ingredients
+            if (ingredients.length === 0) {
+                throw new Error('Recipe must have at least one ingredient');
+            }
+            
+            // Check if any ingredients have invalid/empty food selections
+            const hasInvalidIngredients = ingredients.some(ing => ing.foodId === 0 || ing.foodName === '');
+            if (hasInvalidIngredients) {
+                throw new Error('All ingredients must have a food selected');
+            }
+            
             return {
                 type: 'recipe',
                 title,
@@ -144,6 +235,22 @@ const CreatePost = () => {
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        
+        // Check if we're trying to post a recipe without ingredients
+        if (postType === 'recipe' && ingredients.length === 0) {
+            alert('Please add at least one ingredient to your recipe');
+            return;
+        }
+        
+        // Check if any ingredients have empty food selections
+        if (postType === 'recipe') {
+            const emptyIngredients = ingredients.filter(ing => ing.foodId === 0 || ing.foodName === '');
+            if (emptyIngredients.length > 0) {
+                alert('Please select a food for all ingredients');
+                return;
+            }
+        }
+        
         setSubmitting(true);
         
         try {
@@ -245,51 +352,99 @@ const CreatePost = () => {
                                         <p>Loading available foods...</p>
                                     ) : (
                                         <div className="space-y-3">
-                                            {ingredients.length === 0 && (
-                                                <p className="text-gray-500 italic">
-                                                    No ingredients added. Click 'Add Ingredient' to add some.
-                                                </p>
-                                            )}
-                                            
-                                            {ingredients.map((ingredient) => (
-                                                <div key={ingredient.id} className="flex items-center gap-3">
-                                                    <div className="flex-grow">
-                                                        <select
-                                                            className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                                                            value={ingredient.foodId}
-                                                            onChange={(e) => updateIngredientFood(ingredient.id, parseInt(e.target.value))}
-                                                            required
-                                                        >
-                                                            {foods.map((food) => (
-                                                                <option key={food.id} value={food.id}>
-                                                                    {food.name}
-                                                                </option>
-                                                            ))}
-                                                        </select>
-                                                    </div>
-                                                    <div className="w-32">
-                                                        <div className="flex">
-                                                            <input
-                                                                type="number"
-                                                                className="w-full p-2 border rounded-l-md dark:bg-gray-800 dark:border-gray-700"
-                                                                value={ingredient.amount}
-                                                                onChange={(e) => updateIngredientAmount(ingredient.id, parseInt(e.target.value) || 0)}
-                                                                min="1"
-                                                                required
-                                                            />
-                                                            <span className="bg-gray-200 dark:bg-gray-700 p-2 rounded-r-md">g</span>
-                                                        </div>
-                                                    </div>
-                                                    <button
+                                            {ingredients.length === 0 ? (
+                                                <div className="text-center p-4 border border-dashed border-gray-300 dark:border-gray-700 rounded-md">
+                                                    <p className="text-gray-500 mb-3">
+                                                        No ingredients added yet. Please add ingredients to your recipe.
+                                                    </p>
+                                                    <button 
                                                         type="button"
-                                                        onClick={() => removeIngredient(ingredient.id)}
-                                                        className="p-2 text-red-500 hover:text-red-700"
-                                                        disabled={ingredients.length <= 1}
+                                                        onClick={addIngredient}
+                                                        className="nh-button nh-button-primary flex items-center gap-1 py-2 px-4 mx-auto"
+                                                        disabled={loading}
                                                     >
-                                                        <Minus size={20} weight="bold" />
+                                                        <Plus size={20} weight="bold" />
+                                                        Add Your First Ingredient
                                                     </button>
                                                 </div>
-                                            ))}
+                                            ) : (
+                                                ingredients.map((ingredient) => (
+                                                    <div key={ingredient.id} className="flex items-center gap-3">
+                                                        <div className="flex-grow relative" ref={(el) => setDropdownRef(ingredient.id, el)}>
+                                                            <div className="relative">
+                                                                <input
+                                                                    type="text"
+                                                                    className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700 pr-14"
+                                                                    value={searchTerms[ingredient.id] || ''}
+                                                                    onChange={(e) => handleSearchChange(ingredient.id, e.target.value)}
+                                                                    onFocus={() => {
+                                                                        setShowDropdown(prev => ({...prev, [ingredient.id]: true}));
+                                                                        setActiveIngredientId(ingredient.id);
+                                                                    }}
+                                                                    placeholder="Search for an ingredient..."
+                                                                    required
+                                                                />
+                                                                <div className="absolute inset-y-0 right-0 flex items-center">
+                                                                    {searchTerms[ingredient.id] && (
+                                                                        <button
+                                                                            type="button"
+                                                                            className="px-2 flex items-center text-gray-400 hover:text-gray-600"
+                                                                            onClick={() => clearSearch(ingredient.id)}
+                                                                        >
+                                                                            <X size={16} />
+                                                                        </button>
+                                                                    )}
+                                                                    <div className="px-3 flex items-center pointer-events-none">
+                                                                        <MagnifyingGlass size={16} className="text-gray-400" />
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                            
+                                                            {/* Search Results Dropdown */}
+                                                            {showDropdown[ingredient.id] && (
+                                                                <div className="absolute z-10 mt-1 w-full bg-white dark:bg-gray-800 shadow-lg rounded-md border border-gray-200 dark:border-gray-700 max-h-60 overflow-auto">
+                                                                    {getFilteredFoods(ingredient.id).length > 0 ? (
+                                                                        getFilteredFoods(ingredient.id).map(food => (
+                                                                            <div 
+                                                                                key={food.id}
+                                                                                className={`p-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
+                                                                                    ingredient.foodId === food.id ? 'bg-gray-100 dark:bg-gray-700 font-semibold' : ''
+                                                                                }`}
+                                                                                onClick={() => updateIngredientFood(ingredient.id, food.id, food.name)}
+                                                                            >
+                                                                                {food.name}
+                                                                            </div>
+                                                                        ))
+                                                                    ) : (
+                                                                        <div className="p-2 text-gray-500">No matching foods found</div>
+                                                                    )}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="w-32">
+                                                            <div className="flex">
+                                                                <input
+                                                                    type="number"
+                                                                    className="w-full p-2 border rounded-l-md dark:bg-gray-800 dark:border-gray-700"
+                                                                    value={ingredient.amount}
+                                                                    onChange={(e) => updateIngredientAmount(ingredient.id, parseInt(e.target.value) || 0)}
+                                                                    min="1"
+                                                                    required
+                                                                />
+                                                                <span className="bg-gray-200 dark:bg-gray-700 p-2 rounded-r-md">g</span>
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => removeIngredient(ingredient.id)}
+                                                            className="p-2 text-red-500 hover:text-red-700"
+                                                            disabled={ingredients.length <= 1}
+                                                        >
+                                                            <Minus size={20} weight="bold" />
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            )}
                                         </div>
                                     )}
                                 </div>
