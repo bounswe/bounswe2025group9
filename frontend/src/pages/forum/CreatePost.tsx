@@ -1,16 +1,9 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Minus } from '@phosphor-icons/react'
-import { apiClient, Food } from '../../lib/apiClient'
+import { apiClient, Food, CreatePostRequest, PostIngredient } from '../../lib/apiClient'
 
 // Local interfaces for this component
-interface Ingredient {
-    id: number;
-    foodId: number;
-    foodName: string;
-    amount: number;
-}
-
 interface FoodItem {
     id: number;
     name: string;
@@ -24,7 +17,7 @@ interface PostBase {
 
 interface RecipePost extends PostBase {
     type: 'recipe';
-    ingredients: Ingredient[];
+    ingredients: PostIngredient[];
     instructions: string;
 }
 
@@ -41,9 +34,10 @@ const CreatePost = () => {
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [instructions, setInstructions] = useState('');
-    const [ingredients, setIngredients] = useState<Ingredient[]>([]);
+    const [ingredients, setIngredients] = useState<PostIngredient[]>([]);
     const [foods, setFoods] = useState<FoodItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
 
     // Fetch foods when component mounts
     useEffect(() => {
@@ -129,8 +123,8 @@ const CreatePost = () => {
         );
     };
 
-    // Create post data
-    const createPostData = (): PostData => {
+    // Create post request data
+    const createPostRequestData = (): CreatePostRequest => {
         if (postType === 'recipe') {
             return {
                 type: 'recipe',
@@ -150,26 +144,24 @@ const CreatePost = () => {
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
-        // Create post data
-        const postData = createPostData();
-        
-        // In a real implementation, we would send postData to an API
-        console.log('Post created:', postData);
+        setSubmitting(true);
         
         try {
-            // For demo purposes, we'll navigate back to forum
-            // In a real app, we would call an API endpoint to create the post
-            // Example: await apiClient.createPost(postData);
+            // Create post data
+            const postData = createPostRequestData();
             
-            // Just simulate a small delay before redirecting
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Use the apiClient to create the post
+            const response = await apiClient.createPost(postData);
+            console.log('Post created:', response);
             
             // Navigate back to forum
             navigate('/forum');
         } catch (error) {
             console.error('Error creating post:', error);
-            // Handle error (would show an error message to the user)
+            // In a real app, we would show an error message to the user
+            alert('Failed to create post. Please try again.');
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -337,8 +329,9 @@ const CreatePost = () => {
                             <button 
                                 type="submit" 
                                 className="nh-button nh-button-primary px-6 py-2"
+                                disabled={submitting}
                             >
-                                Post {postType === 'recipe' ? 'Recipe' : 'Nutrition Tip'}
+                                {submitting ? 'Posting...' : `Post ${postType === 'recipe' ? 'Recipe' : 'Nutrition Tip'}`}
                             </button>
                         </div>
                     </form>

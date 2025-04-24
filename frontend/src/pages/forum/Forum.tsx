@@ -11,6 +11,7 @@ interface APIPost {
     author: string;
     likes: number;
     date: string;
+    type?: 'recipe' | 'nutrition_tip';
 }
 
 const Forum = () => {
@@ -64,9 +65,17 @@ const Forum = () => {
                 return post;
             });
             
+            // Sort posts by date in descending order (newest first)
+            const sortedPosts = updatedPosts.sort((a, b) => {
+                return new Date(b.date).getTime() - new Date(a.date).getTime();
+            });
+            
             // Update state
-            setPosts(updatedPosts);
+            setPosts(sortedPosts);
             setLikedPosts(newLikedPosts);
+            
+            // Reset to first page when posts are refreshed
+            setCurrentPage(1);
         } catch (error) {
             console.error('Error fetching posts:', error);
         } finally {
