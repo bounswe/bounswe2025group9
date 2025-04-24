@@ -20,6 +20,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
+import { BrowserRouter } from 'react-router-dom'
 import { apiClient } from '../../lib/apiClient'
 import Foods from './Foods'
 import '@testing-library/jest-dom'
@@ -31,13 +32,18 @@ vi.mock('../../lib/apiClient', () => ({
     }
 }))
 
+// Helper function to render with router
+const renderWithRouter = (ui: React.ReactElement) => {
+    return render(<BrowserRouter>{ui}</BrowserRouter>)
+}
+
 describe('Foods Page', () => {
     beforeEach(() => {
         vi.clearAllMocks()
     })
 
     it('renders the page with all main elements', () => {
-        render(<Foods />)
+        renderWithRouter(<Foods />)
 
         // Check if main title and description are rendered
         expect(screen.getByText('Foods Catalog')).toBeInTheDocument()
@@ -62,7 +68,7 @@ describe('Foods Page', () => {
         }]
         
         vi.mocked(apiClient.getFoods).mockResolvedValueOnce(mockFoods)
-        render(<Foods />)
+        renderWithRouter(<Foods />)
         
         await waitFor(() => {
             expect(screen.getByText('Test Food')).toBeInTheDocument()
@@ -73,15 +79,15 @@ describe('Foods Page', () => {
 
     it('displays error message when fetch fails', async () => {
         vi.mocked(apiClient.getFoods).mockRejectedValueOnce(new Error('Failed to fetch foods'))
-        render(<Foods />)
+        renderWithRouter(<Foods />)
         
         await waitFor(() => {
-            expect(screen.getByText('No foods available. Please try again later.')).toBeInTheDocument()
+            expect(screen.getByText('Error fetching foods. Please try again later.')).toBeInTheDocument()
         })
     })
 
     it('calls getFoods on component mount', () => {
-        render(<Foods />)
+        renderWithRouter(<Foods />)
         expect(apiClient.getFoods).toHaveBeenCalledTimes(1)
     })
 })

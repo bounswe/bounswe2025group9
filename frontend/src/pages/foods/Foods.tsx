@@ -1,7 +1,7 @@
 import { Hamburger} from '@phosphor-icons/react'
 import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 
 const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
@@ -33,17 +33,19 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
 // foods page component (placeholder)
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
+    const [fetchSuccess, setFetchSuccess] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-    const navigate = useNavigate();
 
     const fetchFoods = async () => {
         try {
             const response = await apiClient.getFoods();
             setFoods(response);
+            setFetchSuccess(true);
             console.log("Fetched foods:", response);
         } catch (error) {
             console.error('Error fetching foods:', error);
+            setFetchSuccess(false);
         }
     }
 
@@ -84,27 +86,26 @@ const Foods = () => {
                         <button className="nh-button-primary px-6 py-2.5 whitespace-nowrap">
                             Search
                         </button>
-                        <button 
-                            className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"
-                            onClick={() => navigate('/foods/propose')}
-                        >
-                            Add Food
-                        </button>
+                        <Link to="/foods/propose" className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"> Add Food</Link>
                     </div>
-                </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredFoods.length > 0 ?
-                        (filteredFoods.map(food => (
-                            <FoodItem 
-                                key={food.id} 
-                                item={food} 
-                                onClick={() => setSelectedFood(food)}
-                            />
-                        ))) : 
-                        (<p className="col-span-full text-center nh-text">No foods found matching your search.</p>)
-                    }
                 </div>
+                {fetchSuccess ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {filteredFoods.length > 0 ?
+                            (filteredFoods.map(food => (
+                                <FoodItem 
+                                    key={food.id} 
+                                    item={food} 
+                                    onClick={() => setSelectedFood(food)}
+                                />
+                            ))) : 
+                            (<p className="col-span-full text-center nh-text">No foods found matching your search.</p>)
+                        }
+                    </div>
+                    ) : (
+                        <p className="col-span-full text-center nh-text">Error fetching foods. Please try again later.</p>
+                )}
 
                 <FoodDetail 
                     food={selectedFood}
