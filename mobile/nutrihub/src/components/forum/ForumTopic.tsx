@@ -1,8 +1,9 @@
-
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { SPACING } from '../../constants/theme';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
+import { createFontStyles } from '../../constants/theme';
 
 interface ForumTopicProps {
   id: number;
@@ -22,24 +23,31 @@ const ForumTopic: React.FC<ForumTopicProps> = ({
   likesCount,
   onPress,
 }) => {
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
+
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress}>
+    <TouchableOpacity 
+      style={[styles.container, { backgroundColor: colors.card }]} 
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
       <View style={styles.content}>
         <View style={styles.titleRow}>
-          <Icon name="message-text" size={16} color={COLORS.accent} style={styles.titleIcon} />
-          <Text style={styles.title}>{title}</Text>
+          <Icon name="message-text" size={16} color={colors.accent} style={styles.titleIcon} />
+          <Text style={[styles.title, fonts.subheading]}>{title}</Text>
         </View>
-        <Text style={styles.topicContent}>{content}</Text>
+        <Text style={[styles.topicContent, fonts.caption]}>{content}</Text>
         <View style={styles.metaContainer}>
           <View style={styles.authorContainer}>
-            <Icon name="account" size={14} color={COLORS.lightGray} />
-            <Text style={styles.metaText}>Posted by: {author}</Text>
+            <Icon name="account" size={14} color={colors.textSecondary} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}>Posted by: {author}</Text>
           </View>
           <View style={styles.statsContainer}>
-            <Icon name="comment-outline" size={14} color={COLORS.lightGray} />
-            <Text style={styles.metaText}> Comments: {commentsCount}</Text>
-            <Icon name="thumb-up-outline" size={14} color={COLORS.lightGray} style={styles.likeIcon} />
-            <Text style={styles.metaText}> Likes: {likesCount}</Text>
+            <Icon name="comment-outline" size={14} color={colors.textSecondary} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}> Comments: {commentsCount}</Text>
+            <Icon name="thumb-up-outline" size={14} color={colors.textSecondary} style={styles.likeIcon} />
+            <Text style={[styles.metaText, { color: colors.textSecondary }]}> Likes: {likesCount}</Text>
           </View>
         </View>
       </View>
@@ -49,7 +57,6 @@ const ForumTopic: React.FC<ForumTopicProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: COLORS.darkCard,
     borderRadius: 8,
     overflow: 'hidden',
     marginBottom: SPACING.md,
@@ -66,13 +73,10 @@ const styles = StyleSheet.create({
     marginRight: SPACING.xs,
   },
   title: {
-    ...FONTS.subheading,
     flex: 1,
   },
   topicContent: {
-    ...FONTS.caption,
     marginBottom: SPACING.md,
-    color: COLORS.lightGray,
   },
   metaContainer: {
     flexDirection: 'row',
@@ -91,7 +95,6 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   metaText: {
-    ...FONTS.caption,
     fontSize: 12,
     marginLeft: 4,
   },

@@ -1,46 +1,54 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, SPACING, FONTS } from '../../constants/theme';
-import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';  
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { SPACING } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
+import { createFontStyles } from '../../constants/theme';
 
-// Extract the exact union type of valid icon names
-type IconName = React.ComponentProps<typeof Icon>['name'];
-
-interface FeatureCardProps {
+type FeatureCardProps = {
+  iconName: React.ComponentProps<typeof Icon>['name'];
   title: string;
   description: string;
-  iconName: IconName;  // use the extracted union type
-}
+};
 
-const FeatureCard: React.FC<FeatureCardProps> = ({ title, description, iconName }) => {
+const FeatureCard: React.FC<FeatureCardProps> = ({ iconName, title, description }) => {
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
+
   return (
-    <View style={styles.card}>
-      <Icon name={iconName} size={30} color={COLORS.accent} />
-      <Text style={styles.title}>{title}</Text>
-      <Text style={styles.description}>{description}</Text>
+    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
+      <View style={[styles.iconContainer, { backgroundColor: colors.placeholder }]}>
+        <Icon name={iconName} size={30} color={colors.accent} />
+      </View>
+      <View style={styles.textContainer}>
+        <Text style={[styles.title, fonts.subheading]}>{title}</Text>
+        <Text style={[styles.description, fonts.caption]}>{description}</Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  card: {
-    backgroundColor: COLORS.darkCard,
-    borderRadius: 8,
-    padding: SPACING.md,
+  container: {
+    borderRadius: 12,
+    overflow: 'hidden',
     marginBottom: SPACING.md,
-    width: '100%',
+    borderWidth: 1,
+  },
+  iconContainer: {
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  textContainer: {
+    padding: SPACING.md,
   },
   title: {
-    ...FONTS.subheading,
-    marginTop: SPACING.sm,
     marginBottom: SPACING.xs,
   },
-
-  
   description: {
-    ...FONTS.caption,
-    lineHeight: 18,
+    lineHeight: 20,
   },
 });
- 
+
 export default FeatureCard;
