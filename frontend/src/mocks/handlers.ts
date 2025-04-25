@@ -42,6 +42,22 @@ interface LikeRequest {
   itemType: "food" | "post";
 }
 
+// Post-related interfaces
+interface PostIngredient {
+  id: number;
+  foodId: number;
+  foodName: string;
+  amount: number;
+}
+
+interface CreatePostRequest {
+  type: 'recipe' | 'nutrition_tip';
+  title: string;
+  content?: string;  // For nutrition tips
+  ingredients?: PostIngredient[];  // For recipes
+  instructions?: string;  // For recipes
+}
+
 // mock user database
 const users: User[] = [
   {
@@ -118,6 +134,68 @@ export const handlers = [
     }));
 
     return HttpResponse.json(postsWithLikes);
+  }),
+
+  // POST /api/posts/create
+  http.post("/api/posts/create", async ({ request }) => {
+    const postData = (await request.json()) as CreatePostRequest;
+
+    // Validate required fields
+    if (!postData.title || !postData.type) {
+      return new HttpResponse(null, {
+        status: 400,
+        statusText: "Missing required fields",
+      });
+    }
+
+    // Validate based on post type
+    if (postData.type === 'nutrition_tip' && !postData.content) {
+      return new HttpResponse(null, {
+        status: 400,
+        statusText: "Content is required for nutrition tips",
+      });
+    }
+
+    if (postData.type === 'recipe' && (!postData.ingredients || !postData.instructions)) {
+      return new HttpResponse(null, {
+        status: 400,
+        statusText: "Ingredients and instructions are required for recipes",
+      });
+    }
+
+    // Get the highest existing post ID to create a new unique ID
+    const highestId = Math.max(...posts.map(post => post.id), 0);
+    
+    // Create the new post with mock author data
+    const newPost = {
+      id: highestId + 1,
+      title: postData.title,
+      content: postData.type === 'nutrition_tip' 
+        ? postData.content 
+        : JSON.stringify({
+            ingredients: postData.ingredients,
+            instructions: postData.instructions
+          }),
+      author: "currentUser", // In a real app, this would come from the authenticated user
+      likes: 0,
+      date: new Date().toISOString(),
+      type: postData.type
+    };
+
+    // Add to the posts array (in a real app, this would be saved to a database)
+    // Note: This is ephemeral and will be reset when the server restarts
+    posts.push(newPost as any);
+    
+    // Initialize likes for the new post
+    likes.posts.set(newPost.id, 0);
+
+    return HttpResponse.json(
+      {
+        message: "Post created successfully",
+        post: newPost
+      },
+      { status: 201 }
+    );
   }),
 
   // POST /api/login

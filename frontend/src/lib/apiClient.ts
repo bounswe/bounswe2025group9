@@ -48,6 +48,27 @@ export interface Post {
   author: string;
   likes: number;
   date: string;
+  type: 'recipe' | 'nutrition_tip';
+}
+
+export interface PostIngredient {
+  id: number;
+  foodId: number;
+  foodName: string;
+  amount: number;
+}
+
+export interface CreatePostRequest {
+  type: 'recipe' | 'nutrition_tip';
+  title: string;
+  content?: string;  // For nutrition tips
+  ingredients?: PostIngredient[];  // For recipes
+  instructions?: string;  // For recipes
+}
+
+export interface CreatePostResponse {
+  message: string;
+  post: Post;
 }
 
 export interface AuthResponse {
@@ -95,6 +116,12 @@ export const apiClient = {
 
   // posts
   getPosts: () => fetchJson<Post[]>("/posts"),
+  
+  createPost: (postData: CreatePostRequest) =>
+    fetchJson<CreatePostResponse>("/posts/create", {
+      method: "POST",
+      body: JSON.stringify(postData),
+    }),
 
   // auth
   login: (email: string, password: string) =>
