@@ -1,4 +1,4 @@
-# Affordable and Healthy Eating Hub - Mobile App (Expo)
+# NutriHub - Mobile App (Expo)
 
 ## Project Overview
 
@@ -27,7 +27,7 @@ To develop and run this project, you need a few key tools:
 
 2.  **Navigate to Project Directory:** Go into the mobile app's folder.
     ```bash
-    cd mobile/affordable-and-healthy-eating-hub
+    cd mobile/nutrihub
     ```
 3.  **Install Dependencies:** Use **npm** to download and install all the required libraries listed in the `package.json` file.
     ```bash
@@ -40,12 +40,12 @@ This project uses the following core technologies:
 
 
 * **React Native:** A framework for building native mobile apps. **What it is:** It allows us to write app logic and UI using React and TypeScript/JavaScript. **Why we use it:** To create truly native iOS and Android apps from a single codebase, reusing web development knowledge (React).
-* **TypeScript:** A programming language that builds on JavaScript by adding static types. This project uses TypeScript to help catch errors early, improve code readability, and make refactoring safer. Your code will be in `.ts` and `.tsx` files.
+* **TypeScript:** A programming language that builds on JavaScript by adding static types. This project uses TypeScript to help catch errors early, improve code readability, and make refactoring safer. The source codes will be in `.ts` and `.tsx` files.
 * **Expo:** A set of tools and services built around React Native. **What it is:** It provides a development environment, manages the native build process (mostly behind the scenes), and offers the helpful Expo Go app. **Why we use it:** To speed up development, simplify testing across devices via Expo Go, and leverage pre-built modules from the Expo SDK.
 
 ## Simulating the App
 
-1.  **Start the Development Server:** Run the following command in the project directory (`mobile/YourExpoAppName`):
+1.  **Start the Development Server:** Run the following command in the project directory (`mobile/nutrihub`):
     ```bash
     npx expo start
     ```
