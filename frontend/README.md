@@ -476,3 +476,60 @@ it("displays error message on API failure", async () => {
   });
 });
 ```
+
+## Docker
+
+
+### Docker Images
+- **Container images** define the initial state of container filesystems.
+- Created using a **Dockerfile**, which contains instructions for assembling the image.
+
+### Dockerfile Syntax
+Dockerfiles are processed sequentially, with the general format:
+
+```docker
+# Comments are indicated by hashes
+INSTRUCTION arguments
+
+# Common instructions
+FROM <base_image>
+COPY <source> <destination>
+RUN <command>
+```
+
+### Important Dockerfile Instructions:
+- **FROM**: Specifies the base image.
+- **COPY**: Copies files/directories into the container.
+- **RUN**: Executes commands during the image build process.
+- **EXPOSE**: Indicates the ports on which the container listens at runtime.
+- **ENTRYPOINT and CMD**:
+  - `ENTRYPOINT` defines the main command to run when the container starts.
+  - `CMD` provides default arguments for the command specified in ENTRYPOINT.
+
+## Building and Running Docker Images
+
+### Build an image
+To build the image from the Dockerfile:
+
+```bash
+cd frontend
+docker build -t frontend-app .
+```
+
+### Run a container
+To launch a container from the image:
+
+```bash
+cd frontend
+docker run -p 5173:5173 frontend-app
+```
+
+- The `-p` flag maps ports from the host system to the container.
+
+## Additional Resources
+- [Docker Official Introduction](https://docs.docker.com/get-started/introduction/develop-with-containers/)
+- [Dockerizing a React App](https://www.docker.com/blog/how-to-dockerize-react-app/)
+
+---
+_Source: [Spacelift Blog on Dockerfiles](https://spacelift.io/blog/dockerfile)_
+
