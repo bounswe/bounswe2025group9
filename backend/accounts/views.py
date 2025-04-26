@@ -4,6 +4,7 @@ from rest_framework.request import Request
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .serializers import UserSerializer
@@ -34,3 +35,29 @@ class CreateUserView(APIView):
             user = register_user(serializer.validated_data)
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class LogoutView(APIView):
+    """
+    POST /users/token/logout/
+    Body: { "refresh": "<refresh_token>" }
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        refresh_token = request.data.get("refresh")
+        if not refresh_token:
+            return Response(
+                {"detail": "Refresh token is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            token = RefreshToken(refresh_token)
+            token.blacklist()
+            return Response(status=status.HTTP_205_RESET_CONTENT)
+        except Exception:
+            return Response(
+                {"detail": "Invalid or expired refresh token."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
