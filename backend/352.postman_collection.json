@@ -1,0 +1,191 @@
+{
+	"info": {
+		"_postman_id": "08253493-ba92-4328-a8e8-19fd2185deb0",
+		"name": "352",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17560267"
+	},
+	"item": [
+		{
+			"name": "register_user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n            \"username\": \"eren1\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren1@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": []\r\n        }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/users/create/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"create",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://localhost:8000/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "get_token_jwt",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\" : \"eren1\", \"password\": \"securepassword1235\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/users/token/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"token",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "refresh_token_jwt",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"refresh\" : \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0NTQzODk5NiwiaWF0IjoxNzQ1MzUyNTk2LCJqdGkiOiIyYTUzNDNkZGQxNDc0YTliYjEzN2VkNmYxZTdhMWJhMSIsInVzZXJfaWQiOjR9.1beuuvVPObEbNtlhpUirqOMaukKCkui5pTqXiYMT32I\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/users/token/refresh/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"token",
+						"refresh",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login_django_auth_default",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "// http://localhost:8000/users/login/ go to this page on browser \r\n// and use the information below to pass csrf check\r\n\r\n// Doesn't work anymore\r\n{\"username\" : \"ahmet\", \"password\": \"securepassword1235\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8000/users/login/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						"login",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_all_users_with_token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1MzU0NTgxLCJpYXQiOjE3NDUzNTA5ODEsImp0aSI6ImVjN2E3ZjBkZWZkMzQ1NDc5ZWFhOTNiOTNjNDI0YTUyIiwidXNlcl9pZCI6Mn0.9xlv1Y7Na_pEQbk0gNIpr4w7G1Z9LKUaV8FVW3x3oic",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/users/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "time",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8000/api/time?name=osman",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8000",
+					"path": [
+						"api",
+						"time"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "osman"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
