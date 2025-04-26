@@ -12,19 +12,20 @@ pre-commit install # install pre-commit hooks
 ```
 
 # run following in another terminal process to run DB in docker.
-```
 docker-compose up -d
-```
+
 # Migration commands:
-```
+python manage.py makemigrations
 python manage.py migrate
-```
 
 ## Development Server
 Run the development server:
 ```bash
 ./manage.py runserver 9000
 ```
+
+# Now we have exposede our API, and our DB is running. We need to populate our DB with common foods. We have already created a JSON file named food.json under db_initialization folder. Before making request don't forget to populate DB. 
+python .\backend\api\db_initialization\load_food_data.py
 
 ## Tests
 ```bash
