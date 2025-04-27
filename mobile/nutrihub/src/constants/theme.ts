@@ -40,7 +40,7 @@ export const darkColors: ColorTheme = {
 export const lightColors: ColorTheme = {
   background: '#FEFCE8', // Light amber background 
   card: '#FFFFFF',
-  accent: '#007AFF', // Keep accent color consistent
+  accent: '#000000', // 
   text: '#1E293B', // Slate-800 
   textSecondary: '#334155', // Slate-700 
   border: 'rgba(0, 0, 0, 0.05)',
