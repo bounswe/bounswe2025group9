@@ -8,7 +8,9 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
-import { COLORS, SPACING, FONTS } from '../constants/theme';
+import { SPACING } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { createFontStyles } from '../constants/theme';
 import PrimaryButton from '../components/common/PrimaryButton';
 import FeatureCard from '../components/common/FeatureCard';
 import { MainTabParamList } from '../navigation/types';
@@ -17,6 +19,8 @@ type HomeScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Home'
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
 
   const handleExploreFoods = () => {
     navigation.navigate('Food');
@@ -27,11 +31,11 @@ const HomeScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
-        <Text style={styles.welcomeTitle}>Welcome to NutriHub</Text>
-        <Text style={styles.welcomeDescription}>
+        <Text style={[styles.welcomeTitle, fonts.heading]}>Welcome to NutriHub</Text>
+        <Text style={[styles.welcomeDescription, fonts.body]}>
           Your complete nutrition platform for discovering healthy foods, sharing recipes, 
           and joining a community of health enthusiasts.
         </Text>
@@ -75,19 +79,16 @@ const HomeScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContent: {
     padding: SPACING.md,
     alignItems: 'center',
   },
   welcomeTitle: {
-    ...FONTS.heading,
     textAlign: 'center',
     marginBottom: SPACING.sm,
   },
   welcomeDescription: {
-    ...FONTS.body,
     textAlign: 'center',
     marginBottom: SPACING.xl,
     lineHeight: 22,

@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, StyleProp, ViewStyle, TextStyle } from 'react-native';
-import { COLORS, FONTS, SPACING } from '../../constants/theme';
+import { SPACING } from '../../constants/theme';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import { useTheme } from '../../context/ThemeContext';
+import { createFontStyles } from '../../constants/theme';
 
 interface FoodItemProps {
   id: number;
@@ -18,20 +20,30 @@ const FoodItem: React.FC<FoodItemProps> = ({
   iconName,
   onPress,
   style,
-}) => (
-  <TouchableOpacity style={[styles.container, style]} onPress={onPress} activeOpacity={0.7} accessibilityRole="button">
-    <View style={styles.iconContainer}>
-      <Icon name={iconName} size={40} color={COLORS.lightGray} />
-    </View>
-    <View style={styles.textContainer}>
-      <View style={styles.titleRow}>
-        <Icon name={iconName} size={16} color={COLORS.accent} />
-        <Text style={styles.title}>{title}</Text>
+}) => {
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
+
+  return (
+    <TouchableOpacity 
+      style={[styles.container, { backgroundColor: colors.card }, style]} 
+      onPress={onPress} 
+      activeOpacity={0.7} 
+      accessibilityRole="button"
+    >
+      <View style={[styles.iconContainer, { backgroundColor: colors.placeholder }]}>
+        <Icon name={iconName} size={40} color={colors.accent} />
       </View>
-      <Text style={styles.description}>{description}</Text>
-    </View>
-  </TouchableOpacity>
-);
+      <View style={styles.textContainer}>
+        <View style={styles.titleRow}>
+          <Icon name={iconName} size={16} color={colors.accent} />
+          <Text style={[styles.title, fonts.subheading]}>{title}</Text>
+        </View>
+        <Text style={[styles.description, fonts.caption]}>{description}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create<{
   container: ViewStyle;
@@ -42,14 +54,12 @@ const styles = StyleSheet.create<{
   description: TextStyle;
 }>({
   container: {
-    backgroundColor: COLORS.darkCard,
     borderRadius: SPACING.sm,
     overflow: 'hidden',
     marginBottom: SPACING.md,
     flexDirection: 'row',
   },
   iconContainer: {
-    backgroundColor: COLORS.darkGray,
     width: 80,
     height: 80,
     justifyContent: 'center',
@@ -66,13 +76,9 @@ const styles = StyleSheet.create<{
     marginBottom: SPACING.xs,
   },
   title: {
-    ...FONTS.subheading,
     marginLeft: SPACING.xs,
   },
-  description: {
-    ...FONTS.caption,
-    color: COLORS.lightGray,
-  },
+  description: {},
 });
 
 export default FoodItem;

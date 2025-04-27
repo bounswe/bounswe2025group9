@@ -11,7 +11,9 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS } from '../constants/theme';
+import { SPACING } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { createFontStyles } from '../constants/theme';
 import PrimaryButton from '../components/common/PrimaryButton';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
@@ -22,6 +24,8 @@ const LoginScreen: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   
   const { login, isLoading, error } = useAuth();
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
 
   const handleLogin = async () => {
     await login(email, password);
@@ -33,20 +37,20 @@ const LoginScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={{ flex: 1 }}
       >
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.logoContainer}>
-            <Icon name="heart" size={40} color={COLORS.accent} />
-            <Text style={styles.logoText}>NutriHub</Text>
+            <Icon name="heart-pulse" size={40} color={colors.accent} />
+            <Text style={[styles.logoText, fonts.heading]}>{colors.text !== '#FFFFFF' ? 'NutriHub' : 'NutriHub'}</Text>
           </View>
 
           <View style={styles.formContainer}>
-            <Text style={styles.welcomeText}>Welcome Back</Text>
-            <Text style={styles.subtitleText}>
+            <Text style={[styles.welcomeText, fonts.heading]}>Welcome Back</Text>
+            <Text style={[styles.subtitleText, fonts.body]}>
               Sign in to your account to continue
             </Text>
 
@@ -58,11 +62,11 @@ const LoginScreen: React.FC = () => {
             )}
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Email</Text>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Email</Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, { backgroundColor: colors.card, color: colors.text }]}
                 placeholder="Enter your email"
-                placeholderTextColor={COLORS.lightGray}
+                placeholderTextColor={colors.textSecondary}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 value={email}
@@ -71,12 +75,12 @@ const LoginScreen: React.FC = () => {
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.inputLabel}>Password</Text>
-              <View style={styles.passwordInputContainer}>
+              <Text style={[styles.inputLabel, { color: colors.text }]}>Password</Text>
+              <View style={[styles.passwordInputContainer, { backgroundColor: colors.card }]}>
                 <TextInput
-                  style={styles.passwordInput}
+                  style={[styles.passwordInput, { color: colors.text }]}
                   placeholder="Enter your password"
-                  placeholderTextColor={COLORS.lightGray}
+                  placeholderTextColor={colors.textSecondary}
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
@@ -88,12 +92,12 @@ const LoginScreen: React.FC = () => {
                   <Icon
                     name={showPassword ? 'eye-off' : 'eye'}
                     size={20}
-                    color={COLORS.lightGray}
+                    color={colors.textSecondary}
                   />
                 </TouchableOpacity>
               </View>
               <TouchableOpacity style={styles.forgotPassword}>
-                <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+                <Text style={[styles.forgotPasswordText, { color: colors.accent }]}>Forgot Password?</Text>
               </TouchableOpacity>
             </View>
 
@@ -104,13 +108,13 @@ const LoginScreen: React.FC = () => {
               style={styles.loginButton}
               disabled={isLoading}
             >
-              {isLoading && <ActivityIndicator color={COLORS.white} />}
+              {isLoading && <ActivityIndicator color="#FFFFFF" />}
             </PrimaryButton>
 
             <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account? </Text>
+              <Text style={[styles.signUpText, fonts.caption]}>Don't have an account? </Text>
               <TouchableOpacity onPress={handleSignUp}>
-                <Text style={styles.signUpLink}>Sign Up</Text>
+                <Text style={[styles.signUpLink, { color: colors.accent }]}>Sign Up</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -123,7 +127,6 @@ const LoginScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   scrollContent: {
     flexGrow: 1,
@@ -137,18 +140,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   logoText: {
-    ...FONTS.heading,
     marginLeft: SPACING.xs,
   },
   formContainer: {
     width: '100%',
   },
   welcomeText: {
-    ...FONTS.heading,
     marginBottom: SPACING.xs,
   },
   subtitleText: {
-    ...FONTS.body,
     marginBottom: SPACING.xl,
   },
   errorContainer: {
@@ -168,27 +168,23 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.lg,
   },
   inputLabel: {
-    ...FONTS.caption,
+    fontSize: 14,
     marginBottom: SPACING.xs,
     fontWeight: '500',
   },
   input: {
-    backgroundColor: COLORS.darkCard,
     borderRadius: 8,
     padding: SPACING.md,
-    color: COLORS.white,
     fontSize: 16,
   },
   passwordInputContainer: {
     flexDirection: 'row',
-    backgroundColor: COLORS.darkCard,
     borderRadius: 8,
     alignItems: 'center',
   },
   passwordInput: {
     flex: 1,
     padding: SPACING.md,
-    color: COLORS.white,
     fontSize: 16,
   },
   eyeIcon: {
@@ -199,7 +195,6 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
   },
   forgotPasswordText: {
-    color: COLORS.accent,
     fontSize: 14,
   },
   loginButton: {
@@ -213,11 +208,10 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xl,
   },
   signUpText: {
-    ...FONTS.caption,
+    fontSize: 14,
   },
   signUpLink: {
-    ...FONTS.caption,
-    color: COLORS.accent,
+    fontSize: 14,
     fontWeight: 'bold',
   },
 });
