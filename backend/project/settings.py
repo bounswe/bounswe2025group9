@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta  # import this library top of the settings.py file
 from pathlib import Path
-import os
+import os, sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -77,17 +77,24 @@ WSGI_APPLICATION = "project.wsgi.application"
 
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "USER": "django",
-        "PASSWORD": "djangopass",
-        "NAME": "mydb",
-        "HOST": "localhost",  # or 'db' if Django is also running in Docker
-        "PORT": "3306",
+if "test" in sys.argv:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "USER": "django",
+            "PASSWORD": "djangopass",
+            "NAME": "mydb",
+            "HOST": "localhost",
+            "PORT": "3306",
+        }
+    }
 
 
 # Password validation
