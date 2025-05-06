@@ -11,7 +11,7 @@ sys.path.append(BASE_DIR)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
 
-from api.models import FoodEntry
+from foods.models import FoodEntry
 
 json_path = os.path.join(os.path.dirname(__file__), "foods.json")
 with open(json_path, "r", encoding="utf-8") as f:
