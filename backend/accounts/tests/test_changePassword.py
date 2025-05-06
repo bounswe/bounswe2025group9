@@ -24,7 +24,7 @@ class ChangePasswordTests(APITestCase):
             HTTP_AUTHORIZATION=f"Bearer {str(refresh.access_token)}"
         )
 
-        self.url = "/user/change-password/"
+        self.url = "/users/change-password/"
 
     def test_change_password_success(self):
         """
