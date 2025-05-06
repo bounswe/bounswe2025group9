@@ -1,4 +1,4 @@
-version: '3.8'
+version: "3.8"
 
 services:
   db:
@@ -14,6 +14,24 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+
+  web:
+    build: .
+    container_name: django-app
+    volumes:
+      - .:/project
+    ports:
+      - "8081:9000"
+    depends_on:
+      - db
+    environment:
+      BACKEND_SECRET_KEY: "super-secret-key"
+      MYSQL_DATABASE: "mydb"
+      MYSQL_USER: "django"
+      MYSQL_PASSWORD: "djangopass"
+      MYSQL_HOST: "db"
+      MYSQL_PORT: "3306"
+    command: python manage.py runserver 0.0.0.0:9000
 
 volumes:
   mysql_data:

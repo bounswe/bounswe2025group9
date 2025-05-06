@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from datetime import timedelta  # import this library top of the settings.py file
 from pathlib import Path
 import os
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -84,7 +85,7 @@ DATABASES = {
         "USER": "django",
         "PASSWORD": "djangopass",
         "NAME": "mydb",
-        "HOST": "localhost",  # or 'db' if Django is also running in Docker
+        "HOST": "mysql-db",  # or 'db' if Django is also running in Docker
         "PORT": "3306",
     }
 }
