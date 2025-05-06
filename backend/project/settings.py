@@ -85,7 +85,7 @@ DATABASES = {
         "USER": "django",
         "PASSWORD": "djangopass",
         "NAME": "mydb",
-        "HOST": "mysql-db",  # or 'db' if Django is also running in Docker
+        "HOST": "db",  # changed from mysql-db to db to match docker-compose service name
         "PORT": "3306",
     }
 }

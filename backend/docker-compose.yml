@@ -14,6 +14,11 @@ services:
       - "3306:3306"
     volumes:
       - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "django", "-pdjangopass"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   web:
     build: .
@@ -23,7 +28,8 @@ services:
     ports:
       - "8081:9000"
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       BACKEND_SECRET_KEY: "super-secret-key"
       MYSQL_DATABASE: "mydb"
