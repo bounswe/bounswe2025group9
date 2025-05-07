@@ -18,14 +18,11 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirement files
-COPY requirements-dev.txt requirements.txt ./
-
-# Install Python dependencies
-RUN pip install --upgrade pip && pip install -r requirements-dev.txt
-
 # Copy project files
 COPY . .
+
+# Install Python dependencies
+RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Run Django dev server
 CMD ["python", "manage.py", "runserver", "0.0.0.0:9000"]

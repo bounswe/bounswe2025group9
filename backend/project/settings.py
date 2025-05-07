@@ -22,7 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-r4nD0m$eCreT_K3y!!@#"
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-4@#&*j3!$@!v1g2z5@)7q0x8^9b6c3z1+4$@#&*j3!$@!v1g2z5@)7q0x8^9b6c3z1+",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -82,11 +85,13 @@ WSGI_APPLICATION = "project.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.mysql",
-        "USER": "django",
-        "PASSWORD": "djangopass",
-        "NAME": "mydb",
-        "HOST": "db",  # changed from mysql-db to db to match docker-compose service name
-        "PORT": "3306",
+        "USER": os.getenv("MYSQL_USER", "django"),
+        "PASSWORD": os.getenv("MYSQL_PASSWORD", "djangopass"),
+        "NAME": os.getenv("MYSQL_DATABASE", "mydb"),
+        "HOST": os.getenv(
+            "MYSQL_HOST", "db"
+        ),  # changed from mysql-db to db to match docker-compose service name
+        "PORT": os.getenv("MYSQL_PORT", "3306"),
     }
 }
 

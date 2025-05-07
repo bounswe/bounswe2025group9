@@ -15,7 +15,17 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "django", "-pdjangopass"]
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u",
+          "django",
+          "-pdjangopass",
+        ]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -31,13 +41,16 @@ services:
       db:
         condition: service_healthy
     environment:
-      BACKEND_SECRET_KEY: "super-secret-key"
+      # Django secret key
+      DJANGO_SECRET_KEY: "super-secret-key"
+
+      # MySQL settings
       MYSQL_DATABASE: "mydb"
       MYSQL_USER: "django"
       MYSQL_PASSWORD: "djangopass"
+      MYSQL_ROOT_PASSWORD: "rootpass"
       MYSQL_HOST: "db"
       MYSQL_PORT: "3306"
-    command: python manage.py runserver 0.0.0.0:9000
 
 volumes:
   mysql_data:
