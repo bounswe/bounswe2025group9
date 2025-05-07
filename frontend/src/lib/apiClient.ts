@@ -84,8 +84,25 @@ export interface LikeResponse {
   message?: string;
 }
 
+// jwt auth types
+export interface JwtResponse {
+  access: string;
+  refresh: string;
+}
+
+export interface UserResponse {
+  id: number;
+  username: string;
+  email: string;
+  name: string;
+  surname: string;
+  address: string;
+  tags: any[];
+  allergens: any[];
+}
+
 // api base url
-const API_BASE_URL = "/api";
+const API_BASE_URL = "http://localhost:8081";
 
 // helper function for fetch requests
 async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
@@ -124,16 +141,25 @@ export const apiClient = {
     }),
 
   // auth
-  login: (email: string, password: string) =>
-    fetchJson<AuthResponse>("/login", {
+  login: (username: string, password: string) =>
+    fetchJson<JwtResponse>("/users/token/", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ username, password }),
     }),
 
-  signup: (email: string, password: string, username: string) =>
-    fetchJson<AuthResponse>("/signup", {
+  signup: (data: {
+    username: string;
+    password: string;
+    name: string;
+    surname: string;
+    email: string;
+    address?: string;
+    tags?: any[];
+    allergens?: any[];
+  }) =>
+    fetchJson<UserResponse>("/users/create/", {
       method: "POST",
-      body: JSON.stringify({ email, password, username }),
+      body: JSON.stringify(data),
     }),
 
   // likes
