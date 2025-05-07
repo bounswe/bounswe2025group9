@@ -101,16 +101,42 @@ export interface UserResponse {
   allergens: any[];
 }
 
-// api base url
-const API_BASE_URL = "http://localhost:8081";
+// api base urls
+const BACKEND_API_URL = "http://localhost:8081";
+const MOCK_API_URL = "/api";
+
+// token storage
+let accessToken: string | null = null;
+
+// set access token
+export const setAccessToken = (token: string | null): void => {
+  accessToken = token;
+};
+
+// get auth header
+const getAuthHeader = (): HeadersInit => {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+  
+  return headers;
+};
 
 // helper function for fetch requests
-async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
+async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: boolean = false): Promise<T> {
+  const defaultHeaders = getAuthHeader();
+  const baseUrl = useRealBackend ? BACKEND_API_URL : MOCK_API_URL;
+  
+  const response = await fetch(`${baseUrl}${url}`, {
     ...options,
+    headers: {
+      ...defaultHeaders,
+      ...(options?.headers || {}),
+    },
   });
 
   if (!response.ok) {
@@ -140,12 +166,18 @@ export const apiClient = {
       body: JSON.stringify(postData),
     }),
 
-  // auth
+  // auth - use real backend
   login: (username: string, password: string) =>
     fetchJson<JwtResponse>("/users/token/", {
       method: "POST",
       body: JSON.stringify({ username, password }),
-    }),
+    }, true),
+    
+  refreshToken: (refresh: string) =>
+    fetchJson<JwtResponse>("/users/token/refresh/", {
+      method: "POST",
+      body: JSON.stringify({ refresh }),
+    }, true),
 
   signup: (data: {
     username: string;
@@ -160,7 +192,7 @@ export const apiClient = {
     fetchJson<UserResponse>("/users/create/", {
       method: "POST",
       body: JSON.stringify(data),
-    }),
+    }, true),
 
   // likes
   likeItem: (itemId: number, itemType: "food" | "post") =>
