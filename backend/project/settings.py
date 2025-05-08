@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     "accounts",
     "api",
     "foods",
+    "forum",
     "corsheaders",
 ]
 
