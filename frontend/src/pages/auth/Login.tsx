@@ -1,16 +1,23 @@
 import { SignIn } from '@phosphor-icons/react'
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
 
-// login page component (placeholder)
+// login page component
 const Login = () => {
+    const { login } = useAuth()
+    const navigate = useNavigate()
+    
     const [formData, setFormData] = useState({
-        email: '',
+        username: '',
         password: ''
     })
     const [errors, setErrors] = useState({
-        email: '',
+        username: '',
         password: ''
     })
+    const [loginError, setLoginError] = useState('')
+    const [isLoading, setIsLoading] = useState(false)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -18,7 +25,7 @@ const Login = () => {
             ...prev,
             [name]: value
         }))
-        // Clear error when user starts typing
+        // clear error when user starts typing
         if (errors[name as keyof typeof errors]) {
             setErrors(prev => ({
                 ...prev,
@@ -30,15 +37,12 @@ const Login = () => {
     const validateForm = () => {
         let isValid = true
         const newErrors = {
-            email: '',
+            username: '',
             password: ''
         }
 
-        if (!formData.email) {
-            newErrors.email = 'Email is required'
-            isValid = false
-        } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid'
+        if (!formData.username) {
+            newErrors.username = 'Username is required'
             isValid = false
         }
 
@@ -54,11 +58,22 @@ const Login = () => {
         return isValid
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (validateForm()) {
-            // TODO: Implement login logic here
-            console.log('Form submitted:', formData)
+            setLoginError('')
+            setIsLoading(true)
+            try {
+                // use auth context login
+                await login(formData.username, formData.password)
+                
+                // redirect to home page
+                navigate('/')
+            } catch (err) {
+                setLoginError('Invalid username or password')
+            } finally {
+                setIsLoading(false)
+            }
         }
     }
 
@@ -75,22 +90,22 @@ const Login = () => {
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                                Email
+                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                                Username
                             </label>
                             <input
-                                type="email"
-                                id="email"
-                                name="email"
-                                value={formData.email}
+                                type="text"
+                                id="username"
+                                name="username"
+                                value={formData.username}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.email ? 'border-red-500' : 'border-gray-300'
+                                    errors.username ? 'border-red-500' : 'border-gray-300'
                                 }`}
-                                placeholder="Enter your email"
+                                placeholder="Enter your username"
                             />
-                            {errors.email && (
-                                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                            {errors.username && (
+                                <p className="mt-1 text-sm text-red-500">{errors.username}</p>
                             )}
                         </div>
 
@@ -116,11 +131,16 @@ const Login = () => {
 
                         <button
                             type="submit"
-                            className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+                            disabled={isLoading}
+                            className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Sign In
+                            {isLoading ? 'Signing in...' : 'Sign In'}
                         </button>
                     </form>
+
+                    {loginError && (
+                        <p className="mt-2 text-sm text-red-500 text-center">{loginError}</p>
+                    )}
 
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600">

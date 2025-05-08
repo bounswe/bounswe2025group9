@@ -1,5 +1,6 @@
 import { UserPlus } from '@phosphor-icons/react'
 import { useState } from 'react'
+import { apiClient } from '../../lib/apiClient'
 
 // signup page component (placeholder)
 const SignUp = () => {
@@ -8,17 +9,21 @@ const SignUp = () => {
         username: '',
         password: '',
         confirmPassword: '',
-        firstName: '',
-        lastName: ''
+        name: '',
+        surname: '',
+        address: ''
     })
     const [errors, setErrors] = useState({
         email: '',
         username: '',
         password: '',
         confirmPassword: '',
-        firstName: '',
-        lastName: ''
+        name: '',
+        surname: '',
+        address: ''
     })
+    const [signupError, setSignupError] = useState('')
+    const [signupSuccess, setSignupSuccess] = useState(false)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -42,8 +47,9 @@ const SignUp = () => {
             username: '',
             password: '',
             confirmPassword: '',
-            firstName: '',
-            lastName: ''
+            name: '',
+            surname: '',
+            address: ''
         }
 
         // Email validation
@@ -83,13 +89,19 @@ const SignUp = () => {
         }
 
         // Name validation
-        if (!formData.firstName) {
-            newErrors.firstName = 'First name is required'
+        if (!formData.name) {
+            newErrors.name = 'First name is required'
             isValid = false
         }
 
-        if (!formData.lastName) {
-            newErrors.lastName = 'Last name is required'
+        if (!formData.surname) {
+            newErrors.surname = 'Last name is required'
+            isValid = false
+        }
+
+        // Address validation
+        if (!formData.address) {
+            newErrors.address = 'Address is required'
             isValid = false
         }
 
@@ -97,11 +109,38 @@ const SignUp = () => {
         return isValid
     }
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         if (validateForm()) {
-            // TODO: Implement signup logic here
-            console.log('Form submitted:', formData)
+            setSignupError('')
+            setSignupSuccess(false)
+            try {
+                console.log('attempting signup with data:', {
+                    username: formData.username,
+                    name: formData.name,
+                    surname: formData.surname,
+                    email: formData.email,
+                    password: formData.password,
+                    confirmPassword: formData.confirmPassword,
+                    address: formData.address
+                })
+                await apiClient.signup({
+                    username: formData.username,
+                    password: formData.password,
+                    name: formData.name,
+                    surname: formData.surname,
+                    email: formData.email,
+                    address: formData.address,
+                    tags: [],
+                    allergens: []
+                })
+                console.log('signup successful')
+                setSignupSuccess(true)
+                // optionally redirect to login or auto-login
+            } catch (err) {
+                console.error('signup failed:', err)
+                setSignupError('signup failed, please check your info')
+            }
         }
     }
 
@@ -119,42 +158,42 @@ const SignUp = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
                                     First Name
                                 </label>
                                 <input
                                     type="text"
-                                    id="firstName"
-                                    name="firstName"
-                                    value={formData.firstName}
+                                    id="name"
+                                    name="name"
+                                    value={formData.name}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.firstName ? 'border-red-500' : 'border-gray-300'
+                                        errors.name ? 'border-red-500' : 'border-gray-300'
                                     }`}
                                     placeholder="Enter your first name"
                                 />
-                                {errors.firstName && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.firstName}</p>
+                                {errors.name && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.name}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="surname" className="block text-sm font-medium text-gray-700 mb-1">
                                     Last Name
                                 </label>
                                 <input
                                     type="text"
-                                    id="lastName"
-                                    name="lastName"
-                                    value={formData.lastName}
+                                    id="surname"
+                                    name="surname"
+                                    value={formData.surname}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.lastName ? 'border-red-500' : 'border-gray-300'
+                                        errors.surname ? 'border-red-500' : 'border-gray-300'
                                     }`}
                                     placeholder="Enter your last name"
                                 />
-                                {errors.lastName && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.lastName}</p>
+                                {errors.surname && (
+                                    <p className="mt-1 text-sm text-red-500">{errors.surname}</p>
                                 )}
                             </div>
                         </div>
@@ -239,6 +278,26 @@ const SignUp = () => {
                             )}
                         </div>
 
+                        <div>
+                            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                                Address
+                            </label>
+                            <input
+                                type="text"
+                                id="address"
+                                name="address"
+                                value={formData.address}
+                                onChange={handleChange}
+                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
+                                    errors.address ? 'border-red-500' : 'border-gray-300'
+                                }`}
+                                placeholder="Enter your address"
+                            />
+                            {errors.address && (
+                                <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                            )}
+                        </div>
+
                         <button
                             type="submit"
                             className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
@@ -246,6 +305,13 @@ const SignUp = () => {
                             Create Account
                         </button>
                     </form>
+
+                    {signupError && (
+                        <p className="mt-2 text-sm text-red-500 text-center">{signupError}</p>
+                    )}
+                    {signupSuccess && (
+                        <p className="mt-2 text-sm text-green-600 text-center">signup successful! you can now log in.</p>
+                    )}
 
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600">
