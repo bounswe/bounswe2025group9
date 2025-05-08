@@ -1,14 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { SPACING } from '../constants/theme';
+import { SPACING, PALETTE } from '../constants/theme';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
-import ForumScreen from '../screens/ForumScreen';
-import FoodScreen from '../screens/FoodScreen';
+import ForumScreen from '../screens/forum/ForumScreen';
+import FoodScreen from '../screens/food/FoodScreen';
 import { MainTabParamList, RootStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -22,28 +22,28 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Header: React.FC<{ title?: string }> = ({ title }) => {
   const navigation = useNavigation<NavigationProp>();
   const { logout } = useAuth();
-  const { colors, theme, toggleTheme } = useTheme();
+  const { theme, themeType, toggleTheme, textStyles } = useTheme();
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.headerBackground }}>
-      <View style={[styles.header, { backgroundColor: colors.headerBackground, borderBottomColor: colors.border }]}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: theme.headerBackground }}>
+      <View style={[styles.header, { backgroundColor: theme.headerBackground, borderBottomColor: theme.border }]}>
         <View style={styles.logoContainer}>
-          <Icon name="heart-pulse" size={24} color="#FFFFFF" />
-          <Text style={[styles.logoText, { color: colors.headerText }]}>NutriHub</Text>
+          <Icon name="heart-pulse" size={24} color={theme.headerText} />
+          <Text style={[styles.logoText, { color: theme.headerText }]}>NutriHub</Text>
         </View>
         
         <View style={styles.navContainer}>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: colors.headerText }]}>Home</Text>
+            <Text style={[styles.navText, { color: theme.headerText }]}>Home</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: colors.headerText }]}>Foods</Text>
+            <Text style={[styles.navText, { color: theme.headerText }]}>Foods</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: colors.headerText }]}>Forum</Text>
+            <Text style={[styles.navText, { color: theme.headerText }]}>Forum</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: colors.headerText }]}>API Examples [TEMPORARY]</Text>
+            <Text style={[styles.navText, { color: theme.headerText }]}>API Examples [TEMPORARY]</Text>
           </TouchableOpacity>
         </View>
         
@@ -56,18 +56,18 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
             accessibilityLabel="Toggle theme"
           >
             <Icon 
-              name={theme === 'dark' ? 'weather-sunny' : 'weather-night'} 
+              name={themeType === 'dark' ? 'weather-sunny' : 'weather-night'} 
               size={22} 
-              color={colors.headerText} 
+              color={theme.headerText} 
             />
           </TouchableOpacity>
           
           <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: '#FFFFFF' }]} // White button
+            style={[styles.actionButton, { backgroundColor: PALETTE.NEUTRAL.WHITE }]} 
             onPress={() => logout()}
           >
-            <Icon name="logout" size={18} color={colors.headerBackground} />
-            <Text style={[styles.actionButtonText, { color: colors.headerBackground }]}>Log out</Text>
+            <Icon name="logout" size={18} color={theme.headerBackground} />
+            <Text style={[styles.actionButtonText, { color: theme.headerBackground }]}>Log out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -75,11 +75,8 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
   );
 };
 
-
-
-
 const MainTabNavigator = () => {
-  const { colors, theme } = useTheme();
+  const { theme } = useTheme();
   
   return (
     <View style={{ flex: 1 }}>
@@ -87,14 +84,20 @@ const MainTabNavigator = () => {
       <Tab.Navigator
         screenOptions={({ route }) => ({ 
           headerShown: false, 
-          tabBarActiveTintColor: colors.accent,
-          tabBarInactiveTintColor: colors.textSecondary,
+          tabBarActiveTintColor: theme.tabBarActiveColor,
+          tabBarInactiveTintColor: theme.tabBarInactiveColor,
           tabBarStyle: {
-            backgroundColor: colors.tabBarColor,
-            borderTopColor: colors.border, 
+            backgroundColor: theme.tabBarBackground,
+            borderTopColor: 'transparent',
+            elevation: 8,
+            shadowColor: PALETTE.NEUTRAL.BLACK,
+            shadowOffset: { width: 0, height: -2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 3,
           },
           tabBarLabelStyle: {
-            paddingBottom: SPACING.xs, 
+            paddingBottom: SPACING.xs,
+            fontWeight: '500',
           },
           tabBarIcon: ({ color, size, focused }) => {
             let iconName: React.ComponentProps<typeof Icon>['name'];
@@ -161,7 +164,6 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   actionButtonText: {
-    color: '#FFFFFF',
     marginLeft: SPACING.xs,
     fontWeight: 'bold',
     fontSize: 14,
