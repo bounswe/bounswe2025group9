@@ -11,9 +11,20 @@ class FoodCatalog(APIView):
 
     def get(self, request):
         """
-        GET /foods
-        Fetch and return a list of the first 10 food entries in the system.
+        GET /foods/get_foods
+        Fetch and return a list of food entries in the system.
+        The number of rows can be specified using the 'limit' query parameter.
         """
-        objects = FoodEntry.objects.all()[:10]
+        limit = request.query_params.get(
+            "limit", 10
+        )  # Default to 10 rows if 'limit' is not provided
+        try:
+            limit = int(limit)
+        except ValueError:
+            return Response(
+                {"error": "Invalid limit parameter. Must be an integer."}, status=400
+            )
+
+        objects = FoodEntry.objects.all()[:limit]
         serializer = FoodEntrySerializer(objects, many=True)
         return Response(serializer.data)
