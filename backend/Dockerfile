@@ -24,5 +24,5 @@ COPY . .
 # Install Python dependencies
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Run Django dev server
-CMD ["python", "manage.py", "runserver", "0.0.0.0:9000"]
+# Run Django migrations and dev server
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py runserver 0.0.0.0:9000"]
