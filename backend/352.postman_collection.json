@@ -21,19 +21,13 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/create/",
+					"raw": "http://127.0.0.1:8081/users/create/",
 					"protocol": "http",
-					"host": [
-						"127.0.0.1"
-					],
-					"port": "8000",
-					"path": [
-						"users",
-						"create",
-						""
-					]
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["users", "create", ""]
 				},
-				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8000/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
 			},
 			"response": []
 		},
@@ -52,17 +46,11 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/token/",
+					"raw": "http://127.0.0.1:8081/users/token/",
 					"protocol": "http",
-					"host": [
-						"127.0.0.1"
-					],
-					"port": "8000",
-					"path": [
-						"users",
-						"token",
-						""
-					]
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["users", "token", ""]
 				}
 			},
 			"response": []
@@ -85,18 +73,11 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/token/refresh/",
+					"raw": "http://127.0.0.1:8081/users/token/refresh/",
 					"protocol": "http",
-					"host": [
-						"127.0.0.1"
-					],
-					"port": "8000",
-					"path": [
-						"users",
-						"token",
-						"refresh",
-						""
-					]
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["users", "token", "refresh", ""]
 				}
 			},
 			"response": []
@@ -108,7 +89,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "// http://127.0.0.1:8000/users/login/ go to this page on browser \r\n// and use the information below to pass csrf check\r\n\r\n// Doesn't work anymore\r\n{\"username\" : \"ahmet\", \"password\": \"securepassword1235\"}",
+					"raw": "// http://127.0.0.1:8081/users/login/ go to this page on browser \r\n// and use the information below to pass csrf check\r\n\r\n// Doesn't work anymore\r\n{\"username\" : \"ahmet\", \"password\": \"securepassword1235\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -116,17 +97,11 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/login/",
+					"raw": "http://127.0.0.1:8081/users/login/",
 					"protocol": "http",
-					"host": [
-						"127.0.0.1"
-					],
-					"port": "8000",
-					"path": [
-						"users",
-						"login",
-						""
-					]
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["users", "login", ""]
 				}
 			},
 			"response": []
@@ -147,16 +122,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/",
+					"raw": "http://127.0.0.1:8081/users/",
 					"protocol": "http",
-					"host": [
-						"127.0.0.1"
-					],
-					"port": "8000",
-					"path": [
-						"users",
-						""
-					]
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["users", ""]
 				}
 			},
 			"response": []
@@ -167,16 +137,11 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://127.0.0.1:8000/api/time?name=osman",
+					"raw": "http://127.0.0.1:8081/api/time?name=osman",
 					"protocol": "http",
-					"host": [
-						"127.0.0.1"
-					],
-					"port": "8000",
-					"path": [
-						"api",
-						"time"
-					],
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["api", "time"],
 					"query": [
 						{
 							"key": "name",
@@ -187,82 +152,104 @@
 			},
 			"response": []
 		},
-        {
-          "name": "create_post",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"My first post\",\n  \"body\": \"This is the body of my post.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://127.0.0.1:8000/forum/posts/",
-              "protocol": "http",
-              "host": ["127.0.0.1"],
-              "port": "8000",
-              "path": ["forum", "posts"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "list_posts",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "http://127.0.0.1:8000/forum/posts/",
-              "protocol": "http",
-              "host": ["127.0.0.1"],
-              "port": "8000",
-              "path": ["forum", "posts"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get_post_detail",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "http://127.0.0.1:8000/forum/posts/1/",
-              "protocol": "http",
-              "host": ["127.0.0.1"],
-              "port": "8000",
-              "path": ["forum", "posts", "1"]
-            }
-          },
-          "response": []
-        }
+		{
+			"name": "get_food_catalog",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/foods?limit=10",
+					"protocol": "http",
+					"host": ["localhost"],
+					"port": "8081",
+					"path": ["foods"],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				},
+				"description": "Fetch a list of food entries. Use the 'limit' query parameter to specify the number of rows to return."
+			},
+			"response": []
+		},
+		{
+			"name": "create_post",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"My first post\",\n  \"body\": \"This is the body of my post.\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/posts/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "posts", ""]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list_posts",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/posts/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "posts", ""]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_post_detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/posts/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "posts", "1", ""]
+				}
+			},
+			"response": []
+		}
 	]
 }
