@@ -3,7 +3,6 @@ import { View, Text, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
-import { createFontStyles } from '../../constants/theme';
 
 type FeatureCardProps = {
   iconName: React.ComponentProps<typeof Icon>['name'];
@@ -11,18 +10,22 @@ type FeatureCardProps = {
   description: string;
 };
 
+/**
+ * FeatureCard Component
+ * 
+ * Displays a feature with an icon, title, and description
+ */
 const FeatureCard: React.FC<FeatureCardProps> = ({ iconName, title, description }) => {
-  const { colors } = useTheme();
-  const fonts = createFontStyles(colors);
+  const { theme, textStyles } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
-      <View style={[styles.iconContainer, { backgroundColor: colors.placeholder }]}>
-        <Icon name={iconName} size={30} color={colors.accent} />
+    <View style={[styles.container, { backgroundColor: theme.card, borderColor: theme.border }]}>
+      <View style={[styles.iconContainer, { backgroundColor: theme.placeholder }]}>
+        <Icon name={iconName} size={30} color={theme.primary} />
       </View>
       <View style={styles.textContainer}>
-        <Text style={[styles.title, fonts.subheading]}>{title}</Text>
-        <Text style={[styles.description, fonts.caption]}>{description}</Text>
+        <Text style={[styles.title, textStyles.subtitle]}>{title}</Text>
+        <Text style={[styles.description, textStyles.caption]}>{description}</Text>
       </View>
     </View>
   );
