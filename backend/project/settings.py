@@ -47,9 +47,12 @@ INSTALLED_APPS = [
     "accounts",
     "api",
     "foods",
+    "forum",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -154,3 +157,25 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER": timedelta(days=1),
     "SLIDING_TOKEN_LIFETIME_LATE_USER": timedelta(days=30),
 }
+
+# cors settings for development
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # vite development server
+    "http://127.0.0.1:5173",  # alternative localhost
+]
+
+# allow postman to make requests
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# allow credentials (cookies, authorization headers)
+CORS_ALLOW_CREDENTIALS = True

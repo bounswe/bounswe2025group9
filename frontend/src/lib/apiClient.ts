@@ -84,16 +84,59 @@ export interface LikeResponse {
   message?: string;
 }
 
-// api base url
-const API_BASE_URL = "/api";
+// jwt auth types
+export interface JwtResponse {
+  access: string;
+  refresh: string;
+}
+
+export interface UserResponse {
+  id: number;
+  username: string;
+  email: string;
+  name: string;
+  surname: string;
+  address: string;
+  tags: any[];
+  allergens: any[];
+}
+
+// api base urls
+const BACKEND_API_URL = "http://localhost:8081";
+const MOCK_API_URL = "/api";
+
+// token storage
+let accessToken: string | null = null;
+
+// set access token
+export const setAccessToken = (token: string | null): void => {
+  accessToken = token;
+};
+
+// get auth header
+const getAuthHeader = (): HeadersInit => {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+  };
+  
+  if (accessToken) {
+    headers["Authorization"] = `Bearer ${accessToken}`;
+  }
+  
+  return headers;
+};
 
 // helper function for fetch requests
-async function fetchJson<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(`${API_BASE_URL}${url}`, {
-    headers: {
-      "Content-Type": "application/json",
-    },
+async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: boolean = false): Promise<T> {
+  const defaultHeaders = getAuthHeader();
+  const baseUrl = useRealBackend ? BACKEND_API_URL : MOCK_API_URL;
+  
+  const response = await fetch(`${baseUrl}${url}`, {
     ...options,
+    headers: {
+      ...defaultHeaders,
+      ...(options?.headers || {}),
+    },
   });
 
   if (!response.ok) {
@@ -123,18 +166,33 @@ export const apiClient = {
       body: JSON.stringify(postData),
     }),
 
-  // auth
-  login: (email: string, password: string) =>
-    fetchJson<AuthResponse>("/login", {
+  // auth - use real backend
+  login: (username: string, password: string) =>
+    fetchJson<JwtResponse>("/users/token/", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
-    }),
+      body: JSON.stringify({ username, password }),
+    }, true),
+    
+  refreshToken: (refresh: string) =>
+    fetchJson<JwtResponse>("/users/token/refresh/", {
+      method: "POST",
+      body: JSON.stringify({ refresh }),
+    }, true),
 
-  signup: (email: string, password: string, username: string) =>
-    fetchJson<AuthResponse>("/signup", {
+  signup: (data: {
+    username: string;
+    password: string;
+    name: string;
+    surname: string;
+    email: string;
+    address?: string;
+    tags?: any[];
+    allergens?: any[];
+  }) =>
+    fetchJson<UserResponse>("/users/create/", {
       method: "POST",
-      body: JSON.stringify({ email, password, username }),
-    }),
+      body: JSON.stringify(data),
+    }, true),
 
   // likes
   likeItem: (itemId: number, itemType: "food" | "post") =>
