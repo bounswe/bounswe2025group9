@@ -204,7 +204,7 @@
 					"protocol": "http",
 					"host": ["127.0.0.1"],
 					"port": "8081",
-					"path": ["forum", "posts"]
+					"path": ["forum", "posts", ""]
 				}
 			},
 			"response": []
@@ -225,7 +225,7 @@
 					"protocol": "http",
 					"host": ["127.0.0.1"],
 					"port": "8081",
-					"path": ["forum", "posts"]
+					"path": ["forum", "posts", ""]
 				}
 			},
 			"response": []
@@ -246,7 +246,7 @@
 					"protocol": "http",
 					"host": ["127.0.0.1"],
 					"port": "8081",
-					"path": ["forum", "posts", "1"]
+					"path": ["forum", "posts", "1", ""]
 				}
 			},
 			"response": []
