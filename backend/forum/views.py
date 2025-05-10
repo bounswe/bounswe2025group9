@@ -43,6 +43,8 @@ class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
+    filterset_fields = ["author"]
+    ordering_fields = ["created_at"]
 
     def get_queryset(self):
         queryset = Comment.objects.all().order_by("created_at")
