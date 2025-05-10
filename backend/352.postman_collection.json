@@ -1,9 +1,8 @@
 {
 	"info": {
-		"_postman_id": "08253493-ba92-4328-a8e8-19fd2185deb0",
+		"_postman_id": "e5e61182-b6b0-467d-b391-a8364f08fc2c",
 		"name": "352",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "17560267"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
 	"item": [
 		{
@@ -13,7 +12,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n            \"username\": \"eren1\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren1@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": []\r\n        }",
+					"raw": "{\r\n            \"username\": \"deneme11\",\r\n            \"password\": \"deneme123\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren21@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": []\r\n        }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -21,12 +20,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8000/users/create/",
+					"raw": "http://localhost:8081/users/create/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8000",
+					"port": "8081",
 					"path": [
 						"users",
 						"create",
@@ -44,7 +43,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"username\" : \"eren1\", \"password\": \"securepassword1235\"}",
+					"raw": "{\"username\" : \"deneme11\", \"password\": \"deneme123\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -52,12 +51,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:8000/users/token/",
+					"raw": "http://localhost:8081/users/token/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8000",
+					"port": "8081",
 					"path": [
 						"users",
 						"token",
@@ -133,26 +132,33 @@
 		},
 		{
 			"name": "get_all_users_with_token",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
 				"auth": {
 					"type": "bearer",
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1MzU0NTgxLCJpYXQiOjE3NDUzNTA5ODEsImp0aSI6ImVjN2E3ZjBkZWZkMzQ1NDc5ZWFhOTNiOTNjNDI0YTUyIiwidXNlcl9pZCI6Mn0.9xlv1Y7Na_pEQbk0gNIpr4w7G1Z9LKUaV8FVW3x3oic",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2ODkwNzc0LCJpYXQiOjE3NDY4ODcxNzQsImp0aSI6Ijc5ODcyYmE0YTkzZTRlNWE4YWExY2U5NTI3ZTRkNTkwIiwidXNlcl9pZCI6MX0.OhISgn0t07PnvGJLNf02DSLnqa8ebCj23mBMYs4ax1o",
 							"type": "string"
 						}
 					]
 				},
 				"method": "GET",
 				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
-					"raw": "http://localhost:8000/users/",
+					"raw": "http://localhost:8081/users/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "8000",
+					"port": "8081",
 					"path": [
 						"users",
 						""
@@ -182,6 +188,52 @@
 							"key": "name",
 							"value": "osman"
 						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Change Password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2ODkxMTIyLCJpYXQiOjE3NDY4ODc1MjIsImp0aSI6ImI1YmJhNTc2M2JiODRiYTg5Njg0N2I4YWZjZTM1ODJmIiwidXNlcl9pZCI6Mn0.9414qQ1kh-xuK2iesfzHG8LdgQu9O7X4jKzIBSs6jU0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "old_password",
+							"value": "deneme123",
+							"type": "text"
+						},
+						{
+							"key": "new_password",
+							"value": "yusuf123",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:8081/users/change-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"change-password",
+						""
 					]
 				}
 			},
