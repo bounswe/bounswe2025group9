@@ -657,6 +657,112 @@
               ]
             }
           }
+        },
+        {
+          "name": "update_own_post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Post Title\",\n  \"body\": \"Updated content of the post.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", "1", ""]
+            },
+            "description": "**Update a post (must be the author)**\n\nThis allows partial update of the post (e.g., title or body).\n\nOnly the author of the post can perform this operation.\n\n### Example body:\n```json\n{\n  \"title\": \"Updated Post Title\",\n  \"body\": \"Updated content of the post.\"\n}\n```\n\nReturns:\n- `200 OK` on success\n- `403 Forbidden` if not the author"
+          }
+        },
+        {
+          "name": "create_comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"post\": 1,\n  \"body\": \"This is a great post!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/comments/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", ""]
+            },
+            "description": "**Create a comment**\n\nSubmit a comment on a given post by including the `post` ID in the payload.\n\nRequires authentication.\n\n### Request Body\n```json\n{\n  \"post\": 1,\n  \"body\": \"This is a great post!\"\n}\n```"
+          }
+        },
+        {
+          "name": "list_comments_for_post",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/comments/?post=1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", ""],
+              "query": [
+                { "key": "post", "value": "1" }
+              ]
+            },
+            "description": "**List comments for a given post**\n\nReturns all comments where `post=1`.\n\nQuery param required: `?post=<post_id>`"
+          }
+        },
+        {
+          "name": "delete_own_comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/comments/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", "1", ""]
+            },
+            "description": "**Delete your own comment**\n\nThis deletes comment with ID `1`. Only the comment's author can delete it.\n\nReturns:\n- `204 No Content` on success\n- `403 Forbidden` if user is not the author"
+          }
+        },
+        {
+          "name": "update_own_comment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Actually I changed my mind.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/comments/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", "1", ""]
+            },
+            "description": "**Update your own comment**\n\nSend a `PATCH` request to modify a comment’s body. Only the comment author can perform this action.\n\n### Example body:\n```json\n{\n  \"body\": \"Actually I changed my mind.\"\n}\n```\n\nReturns:\n- `200 OK` with updated comment\n- `403 Forbidden` if not the author"
+          }
         }
 	]
 }
