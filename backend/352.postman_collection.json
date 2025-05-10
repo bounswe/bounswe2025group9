@@ -682,6 +682,30 @@
           }
         },
         {
+          "name": "filter_posts_by_author",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/?author=1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "author", "value": "1" }
+              ]
+            },
+            "description": "**Filter posts by author**\n\nReturns posts authored by the user with ID `1`.\n\nTo get the ID of the currently logged-in user, use the `/users/me/` endpoint (if available) or decode the JWT token payload.\n\nExample:\n```http\nGET /forum/posts/?author=1\n```"
+          }
+        },
+        {
           "name": "create_comment",
           "request": {
             "method": "POST",

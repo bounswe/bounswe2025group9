@@ -22,7 +22,7 @@ class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ["tags"]
+    filterset_fields = ["tags", "author"]
     ordering_fields = ["created_at"]
 
     def get_queryset(self):
