@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ChangePasswordSerializer
 from .services import register_user, list_users
 
 
@@ -33,4 +33,23 @@ class CreateUserView(APIView):
         if serializer.is_valid():
             user = register_user(serializer.validated_data)
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(
+                serializer.validated_data["new_password"]
+            )  # Hashes password internally
+            user.save()
+            return Response(
+                {"detail": "Password changed successfully"}, status=status.HTTP_200_OK
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -9,6 +9,17 @@ This is useful for validating incoming data and saving it to the database.
 """
 
 
+class ChangePasswordSerializer(serializers.Serializer):
+    old_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+
+    def validate_old_password(self, value):
+        user = self.context["request"].user
+        if not user.check_password(value):
+            raise serializers.ValidationError("Old password is incorrect")
+        return value
+
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
