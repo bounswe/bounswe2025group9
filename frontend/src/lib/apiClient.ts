@@ -121,6 +121,9 @@ const getAuthHeader = (): HeadersInit => {
   
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
+    console.log('Using auth token:', accessToken.substring(0, 10) + '...');
+  } else {
+    console.log('No auth token available');
   }
   
   return headers;
@@ -130,20 +133,55 @@ const getAuthHeader = (): HeadersInit => {
 async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: boolean = false): Promise<T> {
   const defaultHeaders = getAuthHeader();
   const baseUrl = useRealBackend ? BACKEND_API_URL : MOCK_API_URL;
+  const fullUrl = `${baseUrl}${url}`;
   
-  const response = await fetch(`${baseUrl}${url}`, {
-    ...options,
+  console.log(`Making API request to: ${fullUrl}`, {
+    method: options?.method || 'GET',
     headers: {
       ...defaultHeaders,
       ...(options?.headers || {}),
-    },
+    }
   });
+  
+  try {
+    const fetchOptions = {
+      ...options,
+      headers: {
+        ...defaultHeaders,
+        ...(options?.headers || {}),
+      },
+      credentials: 'include' as RequestCredentials, // Include cookies for CORS
+    };
+    
+    const response = await fetch(fullUrl, fetchOptions);
 
-  if (!response.ok) {
-    throw new Error(`API error: ${response.status} ${response.statusText}`);
+    if (!response.ok) {
+      let errorBody = 'No error details available';
+      try {
+        const errorText = await response.text();
+        errorBody = errorText;
+        // Try parsing as JSON if possible
+        try {
+          const errorJson = JSON.parse(errorText);
+          errorBody = JSON.stringify(errorJson, null, 2);
+        } catch {
+          // Not JSON, use as is
+        }
+      } catch (e) {
+        console.error('Failed to read error response:', e);
+      }
+      
+      console.error(`API error (${response.status} ${response.statusText}):`, errorBody);
+      throw new Error(`API error: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    console.log(`Response from ${options?.method || 'GET'} ${url}:`, data);
+    return data as T;
+  } catch (error) {
+    console.error(`Failed request to ${fullUrl}:`, error);
+    throw error;
   }
-
-  return response.json() as Promise<T>;
 }
 
 // api endpoints
@@ -193,6 +231,19 @@ export const apiClient = {
       method: "POST",
       body: JSON.stringify(data),
     }, true),
+
+  // user profile - use real backend
+  getUserProfile: () => {
+    console.log('Getting user profile from backend');
+    // Log detailed request info
+    const url = "/users/profile/";
+    console.log('Request URL:', BACKEND_API_URL + url);
+    console.log('Auth headers:', getAuthHeader());
+    
+    return fetchJson<UserResponse>(url, {
+      method: "GET"
+    }, true);
+  },
 
   // likes
   likeItem: (itemId: number, itemType: "food" | "post") =>

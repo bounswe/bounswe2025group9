@@ -1,12 +1,13 @@
 import { SignIn } from '@phosphor-icons/react'
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 // login page component
 const Login = () => {
     const { login } = useAuth()
     const navigate = useNavigate()
+    const location = useLocation()
     
     const [formData, setFormData] = useState({
         username: '',
@@ -17,7 +18,17 @@ const Login = () => {
         password: ''
     })
     const [loginError, setLoginError] = useState('')
+    const [successMessage, setSuccessMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+
+    // Check for success message in location state when component mounts
+    useEffect(() => {
+        if (location.state?.message) {
+            setSuccessMessage(location.state.message)
+            // Clear the location state after reading the message
+            window.history.replaceState({}, document.title)
+        }
+    }, [location.state])
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -87,6 +98,12 @@ const Login = () => {
                         </div>
                         <h2 className="nh-title text-center">Login</h2>
                     </div>
+                    
+                    {successMessage && (
+                        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-md">
+                            {successMessage}
+                        </div>
+                    )}
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
