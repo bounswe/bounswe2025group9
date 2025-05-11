@@ -57,10 +57,8 @@ class AdminFoodProposal(admin.ModelAdmin):
         else:
             was_approved = False
 
-        # Save the model first
         super().save_model(request, obj, form, change)
 
-        # If just approved, create a FoodEntry (only once)
         if obj.isApproved and not was_approved:
             entry = FoodEntry.objects.create(
                 name=obj.name,
