@@ -40,10 +40,12 @@ class AdminFoodProposal(admin.ModelAdmin):
     search_fields = ("name",)
     list_filter = ("isApproved",)
     readonly_fields = ("createdAt", "proposedBy")
-    actions = ["approve_proposals", "reject_proposals"]
 
-    def approve_proposals(self, request, queryset):
-        queryset.update(isApproved=True)
+    def has_add_permission(self, request):
+        return False
 
-    def reject_proposals(self, request, queryset):
-        queryset.update(isApproved=False)
+    def has_change_permission(self, request, obj=None):
+        return True
+
+    def has_view_permission(self, request, obj=None):
+        return True
