@@ -55,7 +55,7 @@ class TaggingTests(TestCase):
         response = cast(Any, self.client.get(f"/forum/posts/?tags={self.tag1.id}"))
         self.assertEqual(response.status_code, 200)
 
-        titles = [p["title"] for p in response.data]
+        titles = [p["title"] for p in response.data["results"]]
         self.assertIn("Apple tips", titles)
         self.assertIn("Hybrid Post", titles)
         self.assertNotIn("Avocado toast", titles)
@@ -68,7 +68,7 @@ class TaggingTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        titles = [p["title"] for p in response.data]
+        titles = [p["title"] for p in response.data["results"]]
         self.assertIn("Apple tips", titles)
         self.assertIn("Avocado toast", titles)
         self.assertIn("Hybrid Post", titles)
@@ -77,11 +77,11 @@ class TaggingTests(TestCase):
         # ascending
         response = cast(Any, self.client.get("/forum/posts/?ordering=created_at"))
         self.assertEqual(response.status_code, 200)
-        ordered_titles = [p["title"] for p in response.data]
+        ordered_titles = [p["title"] for p in response.data["results"]]
         self.assertEqual(ordered_titles, ["Apple tips", "Avocado toast", "Hybrid Post"])
 
         # descending
         response = cast(Any, self.client.get("/forum/posts/?ordering=-created_at"))
         self.assertEqual(response.status_code, 200)
-        ordered_titles = [p["title"] for p in response.data]
+        ordered_titles = [p["title"] for p in response.data["results"]]
         self.assertEqual(ordered_titles, ["Hybrid Post", "Avocado toast", "Apple tips"])
