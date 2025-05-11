@@ -8,16 +8,22 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
     return (
         <div 
             key={item.id} 
-            className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow"
+            className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow w-full max-w-xs mx-auto"
             onClick={onClick}
         >
-            <div className="food-image-placeholder flex justify-center items-center">
-                <Hamburger size={48} weight="fill" className="text-primary opacity-50" />
+            <div className="food-image-placeholder w-full h-40 bg-gray-100 flex justify-center items-center overflow-hidden rounded">
+                {item.imageUrl ? (
+                    <img
+                        src={item.imageUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                    />
+                ) : (
+                    <Hamburger size={64} weight="fill" className="text-primary opacity-50" />
+                )}
             </div>
             <div className="flex items-center mt-4">
-                <div className="flex items-center justify-center mr-2">
-                    <Hamburger size={20} className="text-primary flex-shrink-0" />
-                </div>
                 <h3 className="nh-subtitle">{item.name}</h3>
             </div>
             <div className="mt-2">
