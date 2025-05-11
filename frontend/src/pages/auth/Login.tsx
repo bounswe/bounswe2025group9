@@ -81,6 +81,9 @@ const Login = () => {
                 // redirect to home page
                 navigate('/')
             } catch (err) {
+                if (err instanceof Error) {
+                    setLoginError(err.message)
+                }
                 setLoginError('Invalid username or password')
             } finally {
                 setIsLoading(false)
@@ -149,7 +152,7 @@ const Login = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full py-2 px-4 bg-primary text-slate-500 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             {isLoading ? 'Signing in...' : 'Sign In'}
                         </button>
