@@ -5,19 +5,15 @@ export interface Food {
   id: number;
   name: string;
   category: string;
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    vitamins: Record<string, number>;
-    minerals: Record<string, number>;
-  };
+  servingSize: number;
+  caloriesPerServing: number;
+  proteinContent: number;
+  fatContent: number;
+  carbohydratesContent: number;
+  allergens: string[];
+  dietaryOptions: string[];
   nutritionScore: number;
-  dietaryTags: string[];
-  perUnit: string;
   imageUrl: string;
-  likes?: number;
 }
 
 export interface FoodProposal {
@@ -149,7 +145,10 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: () => fetchJson<Food[]>("/foods"),
+  getFoods: () => fetchJson<Food[]>("/foods", {
+      method: "GET",
+    },
+    true),
 
   proposeFood: (proposal: FoodProposal) =>
     fetchJson<FoodProposalResponse>("/foods/propose", {
