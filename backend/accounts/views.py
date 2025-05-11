@@ -53,3 +53,21 @@ class ChangePasswordView(APIView):
                 {"detail": "Password changed successfully"}, status=status.HTTP_200_OK
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UserProfileView(APIView):
+    # use jwt authentication
+    authentication_classes = [JWTAuthentication]
+    # require authentication
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        """
+        GET /profile/
+        Fetch the current user's profile information.
+        """
+        # current user is available in request.user
+        user = request.user
+        # serialize user data
+        serializer = UserSerializer(user)
+        return Response(serializer.data)
