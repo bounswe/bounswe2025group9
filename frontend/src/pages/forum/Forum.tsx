@@ -48,38 +48,6 @@ const getTagStyle = (tagName: string) => {
     }
 };
 
-// define CSS variables for tag styling
-const tagStyles = `
-:root {
-    --dietary-bg: #d1fae5;
-    --dietary-text: #065f46;
-    --dietary-active-bg: #059669;
-    --dietary-active-text: white;
-    --dietary-hover-bg: #a7f3d0;
-    --dietary-dark-bg: #1a3a32;
-    --dietary-dark-text: #4eebc8;
-    --dietary-dark-hover-bg: #224a40;
-
-    --recipe-bg: #ede9fe;
-    --recipe-text: #5b21b6;
-    --recipe-active-bg: #7c3aed;
-    --recipe-active-text: white;
-    --recipe-hover-bg: #ddd6fe;
-    --recipe-dark-bg: #2a1a40;
-    --recipe-dark-text: #c48aff;
-    --recipe-dark-hover-bg: #3b2a51;
-
-    --mealplan-bg: #dbeafe;
-    --mealplan-text: #1e40af;
-    --mealplan-active-bg: #2563eb;
-    --mealplan-active-text: white;
-    --mealplan-hover-bg: #bfdbfe;
-    --mealplan-dark-bg: #1a2940;
-    --mealplan-dark-text: #80b3ff;
-    --mealplan-dark-hover-bg: #233552;
-}
-`;
-
 // Hard-coded tag IDs for filtering
 const TAG_IDS = {
     "Dietary tip": 1,
@@ -119,7 +87,12 @@ const Forum = () => {
     const fetchPosts = async (tagId?: number) => {
         // check if cache is still valid and we're not changing filters
         const now = Date.now();
+        
+        // Force a fresh fetch when clearing filters
+        const isResettingFilters = tagId === undefined && activeFilter !== null;
+        
         if (
+            !isResettingFilters &&
             cachedPosts.length > 0 && 
             now - lastFetchTime < CACHE_DURATION &&
             tagId === undefined && 
@@ -148,16 +121,21 @@ const Forum = () => {
             // Add tag filter if specified
             if (tagId !== undefined) {
                 params.tags = tagId;
-            } else if (activeFilter !== null) {
+            } else if (activeFilter !== null && !isResettingFilters) {
                 params.tags = activeFilter;
             }
             
-            const data = await apiClient.getForumPosts(params);
+            // Log the request for debugging
+            console.log(`Fetching posts with params:`, params, `isResettingFilters: ${isResettingFilters}`);
             
-            // update the cache only if no filter is applied
-            if (tagId === undefined && activeFilter === null) {
+            const data = await apiClient.getForumPosts(params);
+            console.log(`Fetched ${data.length} posts`);
+            
+            // update the cache only if no filter is applied or we're resetting filters
+            if ((tagId === undefined && activeFilter === null) || isResettingFilters) {
                 cachedPosts = data;
                 lastFetchTime = now;
+                console.log('Updated cache with all posts');
             }
             
             // sync liked state with the new data
@@ -168,6 +146,9 @@ const Forum = () => {
             if (cachedPosts.length > 0) {
                 console.log('Using cached data due to fetch error');
                 syncLikedState(cachedPosts);
+            } else {
+                // Set empty posts array to prevent infinite loading state
+                syncLikedState([]);
             }
         } finally {
             setLoading(false);
@@ -195,6 +176,7 @@ const Forum = () => {
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
+        // Force a fresh fetch when clearing filters
         fetchPosts(undefined);
         setCurrentPage(1);
     };
