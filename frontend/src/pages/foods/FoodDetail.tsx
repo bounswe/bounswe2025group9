@@ -46,7 +46,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 Nutrition Score: {food.nutritionScore}
               </Typography>
               <Typography className="nh-text">
-                Per Unit: {food.perUnit}
+                Serving Size: {food.servingSize}
               </Typography>
             </Grid>
 
@@ -57,31 +57,31 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
             {/* Nutrition Information */}
             <Grid size={{xs: 12}}>
               <Typography variant="h6" className="nh-subtitle">
-                Nutrition Information (per 100g)
+                Nutrition Information (per {food.servingSize})
               </Typography>
             </Grid>
 
             <Grid size={{xs: 12, sm: 6}}>
               <Typography className="nh-text">
-                Calories: {food.nutrition.calories} kcal
+                Calories: {food.caloriesPerServing} kcal
               </Typography>
             </Grid>
 
             <Grid size={{xs: 12, sm: 6}}>
               <Typography className="nh-text">
-                Carbohydrates: {food.nutrition.carbohydrates}g
+                Carbohydrates: {food.carbohydrateContent} g
               </Typography>
             </Grid>
 
             <Grid size={{xs: 12, sm: 6}}>
               <Typography className="nh-text">
-                Protein: {food.nutrition.protein}g
+                Protein: {food.proteinContent}g
               </Typography>
             </Grid>
 
             <Grid size={{xs: 12, sm: 6}}>
               <Typography className="nh-text">
-                Fat: {food.nutrition.fat}g
+                Fat: {food.fatContent}g
               </Typography>
             </Grid>
 
@@ -92,7 +92,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 Dietary Tags
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {food.dietaryTags.map((tag) => (
+                {food.dietaryOptions.map((tag) => (
                   <Typography 
                     key={tag}
                     className="nh-text"

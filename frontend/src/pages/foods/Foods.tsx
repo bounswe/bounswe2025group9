@@ -23,8 +23,8 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
             <div className="mt-2">
                 <p className="nh-text">Category: {item.category}</p>
                 <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
-                <p className="nh-text">Calories: {item.nutrition.calories} kcal per {item.perUnit}</p>
-                <p className="nh-text">Dietary Tags: {item.dietaryTags.join(', ')}</p>
+                <p className="nh-text">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
+                <p className="nh-text">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
             </div>
         </div>
     );

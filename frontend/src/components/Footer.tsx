@@ -35,12 +35,12 @@ const Footer = () => {
                 </div>
 
                 <div className="border-t border-gray-700 mt-6 pt-6 text-center nh-text-light">
-                    <p className="flex items-center justify-center">
+                    <span className="flex items-center justify-center">
                         <div className="flex items-center justify-center mr-1">
                             <Copyright size={16} className="flex-shrink-0" />
                         </div>
                         {new Date().getFullYear()} NutriHub. BOUN SWE 2025 Group 9
-                    </p>
+                    </span>
                 </div>
             </div>
         </footer>
