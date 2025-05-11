@@ -32,9 +32,6 @@ const Navbar = () => {
                         <Link to="/forum" className="text-white hover:text-gray-300">
                             Forum
                         </Link>
-                        <Link to="/api-examples" className="text-white hover:text-gray-300">
-                            API Examples [TEMPORARY]
-                        </Link>
                     </div>
                 )}
 
