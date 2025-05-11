@@ -105,11 +105,11 @@ const Forum = () => {
     }, [location]);
 
     // Get all posts from API
-    const fetchAllPosts = async () => {
-        // check if cache is still valid
+    const fetchAllPosts = async (forceRefresh = false) => {
+        // check if cache is still valid, unless we're forcing a refresh
         const now = Date.now();
         
-        if (cachedPosts.length > 0 && now - lastFetchTime < CACHE_DURATION) {
+        if (!forceRefresh && cachedPosts.length > 0 && now - lastFetchTime < CACHE_DURATION) {
             // use cached data if available and fresh
             console.log('Using cached forum posts data');
             setAllPosts(cachedPosts);
@@ -211,17 +211,12 @@ const Forum = () => {
 
     // helper function to sync liked state with post data
     const syncLikedState = (postData: ForumPost[]) => {
-        // Create a new likedPosts state based on sessionStorage
+        // Create a new likedPosts state based on post data
         const newLikedPosts: {[key: number]: boolean} = {};
         
-        // Check sessionStorage for any likes that were set in PostDetail or previously in Forum
+        // Update the liked state based on post data
         postData.forEach((post: ForumPost) => {
-            const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
-            
-            // Update the liked state
-            if (storedLiked) {
-                newLikedPosts[post.id] = storedLiked === 'true';
-            }
+            newLikedPosts[post.id] = post.liked || false;
         });
         
         // Update state
@@ -230,42 +225,70 @@ const Forum = () => {
 
     // Handle like toggling with API
     const handleLikeToggle = async (postId: number) => {
-        // Toggle the liked state in UI for immediate feedback
-        const isCurrentlyLiked = likedPosts[postId] || false;
-        const newLiked = !isCurrentlyLiked;
-        
-        // Update the liked state immediately
-        setLikedPosts(prev => ({
-            ...prev,
-            [postId]: newLiked
-        }));
-        
         try {
-            // Call the API to like/unlike the post
-            if (newLiked) {
-                await apiClient.likeItem(postId, "post");
+            console.log(`[Forum] Toggling like for post ID: ${postId}`);
+            
+            // Determine the new liked state
+            const newLiked = !likedPosts[postId];
+            const likeDelta = newLiked ? 1 : -1;
+            
+            // Update liked posts state immediately for button UI
+            setLikedPosts(prev => ({
+                ...prev,
+                [postId]: newLiked
+            }));
+            
+            // Optimistically update the UI first for immediate feedback
+            const updatedAllPosts = allPosts.map(post => {
+                if (post.id === postId) {
+                    // Toggle the liked state and adjust likes count
+                    return {
+                        ...post,
+                        liked: newLiked,
+                        likes: (post.likes || 0) + likeDelta
+                    };
+                }
+                return post;
+            });
+            
+            // Update cached posts and state
+            cachedPosts = updatedAllPosts;
+            setAllPosts(updatedAllPosts);
+            lastFetchTime = Date.now(); // Update cache timestamp
+            
+            // Call the API to toggle like/unlike the post
+            const response = await apiClient.toggleLikePost(postId);
+            console.log(`[Forum] Toggle like response:`, response);
+            
+            // If the response contains an updated like count, update the cache to match
+            const responseObj = response as any;
+            if ('like_count' in responseObj) {
+                const serverLikeCount = responseObj.like_count;
                 
-                // Store the updated like state in sessionStorage
-                sessionStorage.setItem(`post_${postId}_liked`, String(newLiked));
-            } else {
-                // In a real implementation, there would be an unlike API
-                // This is a mock for demonstration purposes
-                console.log('Unlike post:', postId);
+                // Update the cache with the server's like count
+                cachedPosts = cachedPosts.map(post => {
+                    if (post.id === postId) {
+                        return {
+                            ...post,
+                            likes: serverLikeCount
+                        };
+                    }
+                    return post;
+                });
                 
-                // Update sessionStorage
-                sessionStorage.setItem(`post_${postId}_liked`, String(newLiked));
+                // Also update the current state
+                setAllPosts(cachedPosts);
             }
+            
+            // Sync current posts with updated liked state
+            syncLikedState(updatedAllPosts.filter(p => 
+                !activeFilter || p.tags.some(tag => tag.id === activeFilter)
+            ));
         } catch (error) {
             console.error('Error toggling post like:', error);
             
-            // Revert UI change if API call fails
-            setLikedPosts(prev => ({
-                ...prev,
-                [postId]: isCurrentlyLiked
-            }));
-            
-            // Update sessionStorage
-            sessionStorage.setItem(`post_${postId}_liked`, String(isCurrentlyLiked));
+            // Revert the optimistic update if there's an error
+            await fetchAllPosts(true);
         }
     };
 
@@ -290,45 +313,10 @@ const Forum = () => {
         });
     };
 
-    // We need to re-check session storage when the component regains focus
-    // This ensures updates from PostDetail are reflected if user navigates back
+    // Remove the focus effect since we're not using sessionStorage anymore
     useEffect(() => {
-        const handleFocus = () => {
-            // Re-sync with sessionStorage for any changes when the user returns to this page
-            const updatedLikedPosts = { ...likedPosts };
-            let needsUpdate = false;
-            
-            posts.forEach(post => {
-                const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
-                
-                if (storedLiked !== null) {
-                    const isLiked = storedLiked === 'true';
-                    if (updatedLikedPosts[post.id] !== isLiked) {
-                        updatedLikedPosts[post.id] = isLiked;
-                        needsUpdate = true;
-                    }
-                }
-            });
-            
-            if (needsUpdate) {
-                setLikedPosts({ ...updatedLikedPosts });
-                
-                // Also, trigger a refresh if it's been a while since the last fetch
-                const now = Date.now();
-                if (now - lastFetchTime > CACHE_DURATION) {
-                    fetchAllPosts();
-                }
-            }
-        };
-        
-        // Add event listener for when window regains focus
-        window.addEventListener('focus', handleFocus);
-        
-        // Cleanup
-        return () => {
-            window.removeEventListener('focus', handleFocus);
-        };
-    }, [posts, likedPosts]);
+        fetchAllPosts();
+    }, [location]);
 
     return (
         <div className="w-full py-12">
@@ -507,7 +495,7 @@ const Forum = () => {
                                                     <div className="flex items-center justify-center">
                                                         <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />
                                                     </div>
-                                                    Likes: 0
+                                                    Likes: {post.likes || 0}
                                                 </button>
                                             </div>
                                         </div>

@@ -60,8 +60,6 @@ const PostDetail = () => {
     const [post, setPost] = useState<APIPost | null>(null)
     const [loading, setLoading] = useState(true)
     const [liked, setLiked] = useState(false)
-    // Track original likes to maintain consistency
-    const [originalLikes, setOriginalLikes] = useState<number>(0)
     
     // Comment state
     const [commentText, setCommentText] = useState('')
@@ -73,15 +71,6 @@ const PostDetail = () => {
 
     // Calculate total pages for comments
     const totalCommentPages = Math.ceil(totalComments / commentsPerPage)
-
-    // Function to sync with sessionStorage
-    const syncWithStorage = useCallback(() => {
-        if (!post) return;
-        
-        // Store the updated like state in sessionStorage to keep Forum in sync
-        sessionStorage.setItem(`post_${post.id}_liked`, liked ? 'true' : 'false');
-        sessionStorage.setItem(`post_${post.id}_likes`, String(post.likes));
-    }, [post, liked]);
 
     // Fetch specific post when component mounts
     useEffect(() => {
@@ -140,52 +129,45 @@ const PostDetail = () => {
     // Fetch post data from API
     const fetchPost = async () => {
         if (!postId || isNaN(postIdNum)) {
+            console.log('[PostDetail] Invalid post ID, redirecting to forum');
             navigate('/forum');
             return;
         }
 
+        console.log(`[PostDetail] Fetching post with ID: ${postIdNum}`);
         setLoading(true);
         try {
             // Get post details using the new endpoint
             const postData = await apiClient.getPostDetail(postIdNum);
             
             if (postData) {
+                console.log('[PostDetail] Received post data:', postData);
                 // Transform API response format to match our component's format
                 const transformedPost: APIPost = {
                     id: postData.id,
                     title: postData.title,
                     content: postData.body, // API returns 'body' instead of 'content'
                     author: postData.author.username,
-                    likes: 0, // We'll get likes separately if needed
+                    likes: postData.likes || 0,
                     date: postData.created_at,
                     tags: postData.tags // Include tags from the API response
                 };
                 
+                console.log('[PostDetail] Transformed post data:', transformedPost);
                 setPost(transformedPost);
-                
-                // Store the original likes count for reference
-                setOriginalLikes(0); // Set to 0 until we implement likes fetching
-                
-                // Check if this post was previously liked from sessionStorage
-                const storedLiked = sessionStorage.getItem(`post_${postIdNum}_liked`);
-                
-                // If we have previously stored like state, use it
-                if (storedLiked !== null) {
-                    setLiked(storedLiked === 'true');
-                } else {
-                    // Reset the liked state if no previous state found
-                    setLiked(false);
-                }
+                setLiked(postData.liked || false);
             } else {
+                console.log('[PostDetail] Post not found, redirecting to forum');
                 // Post not found, redirect to forum
                 navigate('/forum');
             }
         } catch (error) {
-            console.error('Error fetching post:', error);
+            console.error('[PostDetail] Error fetching post:', error);
             // On error, redirect to forum
             navigate('/forum');
         } finally {
             setLoading(false);
+            console.log('[PostDetail] Finished loading post');
         }
     };
     
@@ -193,62 +175,51 @@ const PostDetail = () => {
     const handleLikeToggle = async () => {
         if (!post) return;
         
-        // Update UI optimistically
-        const newLiked = !liked;
-        setLiked(newLiked);
-        
-        // Calculate new like count
-        const likeDelta = newLiked ? 1 : -1;
-        const newLikeCount = post.likes + likeDelta;
-        
-        // Update post with new like count
-        setPost({ ...post, likes: newLikeCount });
-        
         try {
-            // Call API to update like status
-            if (newLiked) {
-                await apiClient.likeItem(post.id, "post");
-            } else {
-                // In a real implementation, there would be an unlike API
-                // This is a mock for demonstration purposes
-                console.log('Unlike post:', post.id);
-                // await apiClient.unlikeItem(post.id, "post");
+            console.log(`[PostDetail] Toggling like for post ID: ${post.id}`);
+            
+            // Optimistically update UI
+            const newLiked = !liked;
+            const likeDelta = newLiked ? 1 : -1;
+            
+            // Update state for immediate UI feedback
+            setLiked(newLiked);
+            setPost({
+                ...post,
+                likes: post.likes + likeDelta
+            });
+            
+            // Call API to toggle like status
+            const response = await apiClient.toggleLikePost(post.id);
+            console.log(`[PostDetail] Toggle like response:`, response);
+            
+            // If the response contains an updated like count, update to match server
+            const responseObj = response as any;
+            if ('like_count' in responseObj) {
+                const serverLikeCount = responseObj.like_count;
+                setPost(prevPost => {
+                    if (!prevPost) return null;
+                    return {
+                        ...prevPost,
+                        likes: serverLikeCount
+                    };
+                });
             }
-            
-            // Store the updated likes as the new "original" value
-            setOriginalLikes(newLikeCount);
-            
-            // Update sessionStorage immediately to keep state in sync
-            syncWithStorage();
         } catch (error) {
-            console.error('Error toggling post like:', error);
-            // Revert UI changes on error
-            setLiked(!newLiked);
-            const revertedLikeCount = post.likes - likeDelta;
-            setPost({ ...post, likes: revertedLikeCount });
+            console.error('[PostDetail] Error toggling post like:', error);
             
-            // Also revert in session storage
-            if (post) {
-                sessionStorage.setItem(`post_${post.id}_liked`, !newLiked ? 'true' : 'false');
-                sessionStorage.setItem(`post_${post.id}_likes`, String(revertedLikeCount));
-            }
+            // Revert optimistic update on error
+            setLiked(!liked);
+            setPost(prevPost => {
+                if (!prevPost) return null;
+                const likeDelta = liked ? 1 : -1;
+                return {
+                    ...prevPost,
+                    likes: prevPost.likes - likeDelta
+                };
+            });
         }
-    }
-    
-    // Store like state in sessionStorage when navigating away or when state changes
-    useEffect(() => {
-        syncWithStorage();
-    }, [post, liked, syncWithStorage]);
-    
-    // Make sure to sync on unmount as well to ensure Forum gets latest state
-    useEffect(() => {
-        return () => {
-            if (post) {
-                sessionStorage.setItem(`post_${post.id}_liked`, liked ? 'true' : 'false');
-                sessionStorage.setItem(`post_${post.id}_likes`, String(post.likes));
-            }
-        };
-    }, [post, liked]);
+    };
     
     // Handle comment submission
     const handleCommentSubmit = async (e: React.FormEvent) => {

@@ -96,6 +96,8 @@ export interface ForumPost {
   created_at: string;
   updated_at: string;
   tags: ForumTag[];
+  likes: number;
+  liked: boolean;
 }
 
 export interface ForumTag {
@@ -320,7 +322,23 @@ export const apiClient = {
     
     return fetchJson<PaginatedResponse<ForumPost>>(url, {
       method: "GET"
-    }, true);
+    }, true).then(response => {
+      console.log(`[API] Received forum posts:`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    });
   },
   
   getForumPostDetail: (postId: number) =>
@@ -329,10 +347,26 @@ export const apiClient = {
     }, true),
     
   // alias for getForumPostDetail for consistency
-  getPostDetail: (postId: number) =>
-    fetchJson<ForumPost>(`/forum/posts/${postId}/`, {
+  getPostDetail: (postId: number) => {
+    console.log(`[API] Fetching post details for post ID: ${postId}`);
+    return fetchJson<ForumPost>(`/forum/posts/${postId}/`, {
       method: "GET"
-    }, true),
+    }, true).then(response => {
+      console.log(`[API] Received post details for post ID ${postId}:`, response);
+      
+      // Check if backend is using like_count instead of likes
+      const responseObj = response as any;
+      if ('like_count' in responseObj && !('likes' in responseObj)) {
+        console.log('[API] Mapping like_count to likes for consistency');
+        responseObj.likes = responseObj.like_count;
+      }
+      
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error fetching post details for post ID ${postId}:`, error);
+      throw error;
+    });
+  },
     
   createForumPost: (postData: CreateForumPostRequest) =>
     fetchJson<ForumPost>("/forum/posts/", {
@@ -394,4 +428,23 @@ export const apiClient = {
     fetchJson<void>(`/forum/comments/${commentId}/`, {
       method: "DELETE"
     }, true),
+
+  
+  toggleLikePost: (postId: number) => {
+    console.log(`[API] Toggling like for post ID: ${postId}`);
+    return fetchJson<{ liked: boolean, like_count?: number }>(`/forum/posts/${postId}/like/`, {
+      method: "POST"
+    }, true).then(response => {
+      console.log(`[API] Toggle like response for post ID ${postId}:`, response);
+      // Check for like_count in the response
+      const responseObj = response as any;
+      if ('like_count' in responseObj) {
+        console.log(`[API] Like count from server: ${responseObj.like_count}`);
+      }
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error toggling like for post ID ${postId}:`, error);
+      throw error;
+    });
+  },
 };
