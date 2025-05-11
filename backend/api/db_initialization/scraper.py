@@ -13,9 +13,8 @@ from bs4 import BeautifulSoup
 # FatSecret API credentials
 CONSUMER_KEY = ""
 CONSUMER_SECRET = ""
-
 INPUT_FILE = "500_common_foods.json"
-OUTPUT_FILE = "enriched_foods.json"
+OUTPUT_FILE = "foods.json"
 RATE_LIMIT_DELAY = 1.2  # seconds between calls
 
 
@@ -168,7 +167,6 @@ def enrich_food_list():
 
     with open(INPUT_FILE, "r", encoding="utf-8") as f:
         food_list = json.load(f)
-
     for entry in food_list:
         food_name = entry["food_name"]
         category = entry["food_category"]

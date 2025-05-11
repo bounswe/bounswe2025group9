@@ -31,7 +31,7 @@ try:
             allergens=item.get("allergens", []),
             dietaryOptions=item.get("dietaryOptions", []),
             nutritionScore=item["nutritionScore"],
-            imageUrl=item.get("imageUrl", ""),
+            imageUrl=item.get("imageUrl"),
         )
 except Exception as e:
     print(f"An error occurred: {e}")
