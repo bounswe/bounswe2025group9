@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
-import { SignIn, UserPlus, SignOut } from '@phosphor-icons/react'
+import { SignIn, UserPlus, SignOut, GearSix } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 
 // navbar component
@@ -33,6 +33,10 @@ const Navbar = () => {
                         </Link>
                         <Link to="/forum" className="text-white hover:text-gray-300">
                             Forum
+                        </Link>
+                        <Link to="/admin" className="text-white hover:text-gray-300 flex items-center">
+                            <GearSix size={16} className="mr-1" />
+                            Admin
                         </Link>
                     </div>
                 )}
