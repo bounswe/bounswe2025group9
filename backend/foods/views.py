@@ -47,7 +47,7 @@ class FoodCatalog(ListAPIView):
             if not categories:
                 self.empty = True
                 return FoodEntry.objects.none()
-        return queryset.filter(category__in=categories)
+        return queryset.filter(category__in=categories).order_by("id")
 
     def list(self, request, *args, **kwargs):
         self.empty = False
