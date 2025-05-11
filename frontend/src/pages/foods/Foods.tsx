@@ -36,11 +36,18 @@ const Foods = () => {
     const [fetchSuccess, setFetchSuccess] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
+    const [count, setCount] = useState(0);
+    const [next, setNext] = useState<string | null>(null);
+    const [previous, setPrevious] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
 
-    const fetchFoods = async () => {
+    const fetchFoods = async (pageNum = 1) => {
         try {
-            const response = await apiClient.getFoods();
-            setFoods(response.results); // response is now a paginated response (count, next, previous, results)
+            const response = await apiClient.getFoods({ page: pageNum });
+            setFoods(response.results); // response is now a paginated response (count, next, previous,)
+            setCount(response.count || 0);
+            setNext(response.next || null);
+            setPrevious(response.previous || null);
             setFetchSuccess(true);
             console.log("Fetched foods:", response);
         } catch (error) {
@@ -49,15 +56,25 @@ const Foods = () => {
         }
     }
 
-    // Fetch foods when component mounts
     useEffect(() => {
-        fetchFoods();
-    }, []);
+        fetchFoods(page);
+    }, [page]);
 
-    // Filter foods based on search term
+    // Filter foods based on search term (client-side, after pagination)
     const filteredFoods = foods.filter(food => 
         food.name.toLowerCase().includes(searchTerm.toLowerCase())
     );
+
+    // Pagination controls
+    const pageSize = foods.length
+    const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
+
+    const handlePrev = () => {
+        if (previous && page > 1) setPage(page - 1);
+    };
+    const handleNext = () => {
+        if (next && page < totalPages) setPage(page + 1);
+    };
 
     return (
         <div className="py-12">
@@ -91,6 +108,7 @@ const Foods = () => {
 
                 </div>
                 {fetchSuccess ? (
+                        <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredFoods.length > 0 ?
                             (filteredFoods.map(food => (
@@ -102,7 +120,28 @@ const Foods = () => {
                             ))) : 
                             (<p className="col-span-full text-center nh-text">No foods found matching your search.</p>)
                         }
-                    </div>
+                        </div>
+                        {/* Pagination controls */}
+                        <div className="flex justify-center mt-8 gap-4">
+                            <button 
+                                className="nh-button-secondary px-4 py-2"
+                                onClick={handlePrev}
+                                disabled={!previous || page <= 1}
+                            >
+                                Previous
+                            </button>
+                            <span className="nh-text flex items-center">
+                                Page {page} of {totalPages}
+                            </span>
+                            <button 
+                                className="nh-button-secondary px-4 py-2"
+                                onClick={handleNext}
+                                disabled={!next || page >= totalPages}
+                            >
+                                Next
+                            </button>
+                        </div>
+                        </>
                     ) : (
                         <p className="col-span-full text-center nh-text">Error fetching foods. Please try again later.</p>
                 )}
@@ -117,4 +156,4 @@ const Foods = () => {
     )
 }
 
-export default Foods 
+export default Foods
