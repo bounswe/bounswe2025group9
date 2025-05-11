@@ -4,7 +4,7 @@
  * A flexible component for displaying forum posts with various interaction options.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
@@ -33,11 +33,6 @@ interface ForumPostProps {
    * Function to call when the comment button is pressed
    */
   onComment?: (post: ForumTopic) => void;
-  
-  /**
-   * Function to call when the share button is pressed
-   */
-  onShare?: (post: ForumTopic) => void;
   
   /**
    * Whether to show a truncated preview of the post content
@@ -76,7 +71,6 @@ const ForumPost: React.FC<ForumPostProps> = ({
   onPress,
   onLike,
   onComment,
-  onShare,
   preview = true,
   previewLines = 3,
   showTags = true,
@@ -84,6 +78,8 @@ const ForumPost: React.FC<ForumPostProps> = ({
   testID,
 }) => {
   const { theme, textStyles } = useTheme();
+  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [likesCount, setLikesCount] = useState(post.likesCount);
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -117,8 +113,11 @@ const ForumPost: React.FC<ForumPostProps> = ({
   
   // Handle like press
   const handleLike = () => {
+    setIsLiked(!isLiked);
+    setLikesCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
+    
     if (onLike) {
-      onLike(post);
+      onLike({ ...post, isLiked: !isLiked, likesCount: isLiked ? likesCount - 1 : likesCount + 1 });
     }
   };
   
@@ -126,13 +125,6 @@ const ForumPost: React.FC<ForumPostProps> = ({
   const handleComment = () => {
     if (onComment) {
       onComment(post);
-    }
-  };
-  
-  // Handle share press
-  const handleShare = () => {
-    if (onShare) {
-      onShare(post);
     }
   };
   
@@ -150,6 +142,12 @@ const ForumPost: React.FC<ForumPostProps> = ({
       </Text>
     </View>
   );
+  
+  // Create like button text style
+  const likeButtonTextStyle: TextStyle = {
+    ...styles.actionText,
+    ...(isLiked ? { color: theme.primary } : {})
+  };
   
   return (
     <Card
@@ -197,13 +195,13 @@ const ForumPost: React.FC<ForumPostProps> = ({
       {/* Footer with actions */}
       <View style={[styles.footer, { borderTopColor: theme.divider }]}>
         <Button
-          iconName={post.isLiked ? "thumb-up" : "thumb-up-outline"}
-          title={post.likesCount.toString()}
+          iconName={isLiked ? "thumb-up" : "thumb-up-outline"}
+          title={likesCount.toString()}
           variant="text"
           size="small"
           onPress={handleLike}
           style={styles.actionButton}
-          textStyle={styles.actionText}
+          textStyle={likeButtonTextStyle}
         />
         
         <Button
@@ -212,16 +210,6 @@ const ForumPost: React.FC<ForumPostProps> = ({
           variant="text"
           size="small"
           onPress={handleComment}
-          style={styles.actionButton}
-          textStyle={styles.actionText}
-        />
-        
-        <Button
-          iconName="share-outline"
-          title="Share"
-          variant="text"
-          size="small"
-          onPress={handleShare}
           style={styles.actionButton}
           textStyle={styles.actionText}
         />

@@ -59,27 +59,43 @@ export type FoodStackParamList = {
 };
 
 /**
- * Forum stack navigation parameters (for future implementation)
+ * Forum stack navigation parameters
  */
 export type ForumStackParamList = {
   /**
-   * Forum list screen with optional tag filter
+   * Forum list screen
    */
   ForumList: {
-    tag?: string;
-  };
+    action?: 'addPost';
+    postData?: SerializedForumPost;
+  } | undefined;
   
   /**
    * Forum post detail screen with post ID
    */
-  ForumDetail: {
-    id: number;
+  PostDetail: {
+    postId: number;
   };
   
   /**
-   * Create or edit forum post screen with optional post ID for editing
+   * Create new forum post screen
    */
-  ForumPost: {
-    id?: number;
-  };
+  CreatePost: undefined;
 };
+
+/**
+ * Serialized version of ForumTopic for navigation
+ */
+export interface SerializedForumPost {
+  id: number;
+  title: string;
+  content: string;
+  author: string;
+  authorId: number;
+  commentsCount: number;
+  likesCount: number;
+  isLiked: boolean;
+  tags: string[];
+  createdAt: string; // ISO date string
+  updatedAt?: string; // ISO date string
+}

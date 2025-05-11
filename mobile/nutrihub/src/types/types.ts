@@ -2,7 +2,7 @@
  * Common type definitions for the application
  */
 import { FOOD_CATEGORIES, DIETARY_OPTIONS, COMMON_ALLERGENS } from '../constants/foodConstants';
-import { POST_TAGS, REPORT_REASONS, POST_SORT_OPTIONS } from '../constants/forumConstants';
+import { POST_TAGS, POST_SORT_OPTIONS } from '../constants/forumConstants';
 
 /**
  * Theme type
@@ -54,7 +54,6 @@ export interface FoodFilters {
  * Forum-related types
  */
 export type PostTagType = typeof POST_TAGS[keyof typeof POST_TAGS];
-export type ReportReasonType = typeof REPORT_REASONS[keyof typeof REPORT_REASONS];
 export type PostSortOptionType = typeof POST_SORT_OPTIONS[keyof typeof POST_SORT_OPTIONS];
 
 export interface ForumTopic {
@@ -66,9 +65,20 @@ export interface ForumTopic {
   commentsCount: number;
   likesCount: number;
   isLiked?: boolean;
-  tags: PostTagType[];
+  tags: string[]; 
   createdAt: Date;
   updatedAt?: Date;
+}
+
+export interface Comment {
+  id: number;
+  postId: number;
+  content: string;
+  author: string;
+  authorId: number;
+  createdAt: Date;
+  likesCount: number;
+  isLiked?: boolean;
 }
 
 export interface ForumComment {
