@@ -9,6 +9,9 @@ let cachedPosts: ForumPost[] = [];
 let lastFetchTime = 0;
 const CACHE_DURATION = 60000; // 1 minute cache
 
+// local storage key for liked posts
+const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
+
 // Define tag colors based on tag name for consistent display
 const getTagStyle = (tagName: string) => {
     // Check for exact tag types from backend
@@ -64,10 +67,83 @@ const Forum = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [postsPerPage, setPostsPerPage] = useState(5);
     const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
+    const [previousPathname, setPreviousPathname] = useState<string | null>(null);
     
     // State for active filter
     const [activeFilter, setActiveFilter] = useState<number | null>(null);
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
+    
+    // Load liked posts from local storage on initial mount
+    useEffect(() => {
+        const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+        if (storedLikedPosts) {
+            try {
+                const parsedLikedPosts = JSON.parse(storedLikedPosts);
+                setLikedPosts(parsedLikedPosts);
+            } catch (error) {
+                console.error('Error parsing liked posts from localStorage:', error);
+                localStorage.removeItem(LIKED_POSTS_STORAGE_KEY);
+            }
+        }
+    }, []);
+
+    // Track previous location to detect navigation from PostDetail
+    useEffect(() => {
+        if (previousPathname?.startsWith('/forum/post/') && location.pathname === '/forum') {
+            console.log('Navigated back from post detail, updating cache consistency');
+            syncCacheWithLocalStorage();
+        }
+        setPreviousPathname(location.pathname);
+    }, [location.pathname]);
+    
+    // Sync cached posts with local storage likes when coming back from post detail
+    const syncCacheWithLocalStorage = () => {
+        const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+        if (!storedLikedPosts || cachedPosts.length === 0) return;
+        
+        try {
+            const parsedLikedPosts = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+            
+            // Check if any cached posts need updating based on local storage
+            let needsUpdate = false;
+            const updatedPosts = cachedPosts.map(post => {
+                // Check if the like status needs to be updated
+                const likeStatusChanged = parsedLikedPosts[post.id] !== undefined && post.liked !== parsedLikedPosts[post.id];
+                
+                if (likeStatusChanged) {
+                    needsUpdate = true;
+                    console.log(`[Forum] Post ${post.id} like status changed from ${post.liked} to ${parsedLikedPosts[post.id]}`);
+                    
+                    // Update like count based on the change
+                    let updatedLikes = post.likes || 0;
+                    if (parsedLikedPosts[post.id] && !post.liked) {
+                        // If liked in storage but not in cache, increment count
+                        updatedLikes += 1;
+                    } else if (!parsedLikedPosts[post.id] && post.liked) {
+                        // If not liked in storage but liked in cache, decrement count
+                        updatedLikes -= 1;
+                    }
+                    
+                    return {
+                        ...post,
+                        liked: parsedLikedPosts[post.id],
+                        likes: updatedLikes
+                    };
+                }
+                return post;
+            });
+            
+            // Only update cache if something changed
+            if (needsUpdate) {
+                console.log('Updating cached posts to match local storage like status');
+                cachedPosts = updatedPosts;
+                setAllPosts([...updatedPosts]);
+                setLikedPosts(parsedLikedPosts);
+            }
+        } catch (error) {
+            console.error('Error syncing cache with localStorage:', error);
+        }
+    };
     
     // Calculate total pages based on filtered posts count
     const totalPages = Math.ceil(totalCount / postsPerPage);
@@ -87,7 +163,6 @@ const Forum = () => {
             const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredPosts.length));
             
             setPosts(currentPosts);
-            syncLikedState(currentPosts);
         }
     }, [allPosts, currentPage, postsPerPage, activeFilter]);
     
@@ -100,7 +175,19 @@ const Forum = () => {
     useEffect(() => {
         // Check if we're coming back to the forum from somewhere else
         if (location.pathname === '/forum') {
-            fetchAllPosts();
+            if (previousPathname?.startsWith('/forum/post/')) {
+                // Coming back from post detail, sync first then maybe fetch
+                syncCacheWithLocalStorage();
+                
+                // Only fetch fresh data if cache is stale
+                const now = Date.now();
+                if (now - lastFetchTime >= CACHE_DURATION) {
+                    fetchAllPosts();
+                }
+            } else {
+                // Coming from elsewhere, fetch normally
+                fetchAllPosts();
+            }
         }
     }, [location]);
 
@@ -112,7 +199,9 @@ const Forum = () => {
         if (!forceRefresh && cachedPosts.length > 0 && now - lastFetchTime < CACHE_DURATION) {
             // use cached data if available and fresh
             console.log('Using cached forum posts data');
-            setAllPosts(cachedPosts);
+            
+            // Still sync with local storage to ensure likes are up to date
+            syncCacheWithLocalStorage();
             return;
         }
         
@@ -133,13 +222,57 @@ const Forum = () => {
             const response = await apiClient.getForumPosts(params);
             console.log(`Fetched ${response.results.length} posts, total: ${response.count}`);
             
+            // Update liked status based on local storage
+            const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+            let parsedLikedPosts: {[key: number]: boolean} = {};
+            
+            if (storedLikedPosts) {
+                try {
+                    parsedLikedPosts = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+                } catch (error) {
+                    console.error('Error parsing liked posts:', error);
+                }
+            }
+            
+            const updatedPosts = response.results.map(post => {
+                // Prioritize localStorage likes over server likes
+                const likedFromStorage = parsedLikedPosts[post.id] !== undefined;
+                return {
+                    ...post,
+                    liked: likedFromStorage ? parsedLikedPosts[post.id] : (post.liked || false)
+                };
+            });
+            
+            // If we have any likes in localStorage that differ from server, update local storage
+            if (storedLikedPosts) {
+                let updatedLikedPosts = { ...parsedLikedPosts };
+                let storageNeedsUpdate = false;
+                
+                response.results.forEach(post => {
+                    // If server has a like status but it's not in local storage, add it
+                    if (post.liked !== undefined && parsedLikedPosts[post.id] === undefined) {
+                        updatedLikedPosts[post.id] = post.liked;
+                        storageNeedsUpdate = true;
+                    }
+                });
+                
+                if (storageNeedsUpdate) {
+                    try {
+                        localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(updatedLikedPosts));
+                        setLikedPosts(updatedLikedPosts);
+                    } catch (error) {
+                        console.error('Error updating localStorage:', error);
+                    }
+                }
+            }
+            
             // Update cached posts
-            cachedPosts = response.results;
+            cachedPosts = updatedPosts;
             lastFetchTime = now;
             
             // If there are more posts than the page size, make additional requests
             if (response.count > response.results.length && response.next) {
-                const allResults = [...response.results];
+                const allResults = [...updatedPosts];
                 let nextUrl: string | null = response.next;
                 
                 while (nextUrl && allResults.length < response.count) {
@@ -155,7 +288,17 @@ const Forum = () => {
                                 page: pageNum
                             });
                             
-                            allResults.push(...nextPageResponse.results);
+                            // Update liked status for next page of posts
+                            const updatedNextPagePosts = nextPageResponse.results.map(post => {
+                                // Prioritize localStorage likes over server likes
+                                const likedFromStorage = parsedLikedPosts[post.id] !== undefined;
+                                return {
+                                    ...post,
+                                    liked: likedFromStorage ? parsedLikedPosts[post.id] : (post.liked || false)
+                                };
+                            });
+                            
+                            allResults.push(...updatedNextPagePosts);
                             nextUrl = nextPageResponse.next;
                         } else {
                             break;
@@ -209,18 +352,39 @@ const Forum = () => {
         setCurrentPage(1); // Reset to first page
     };
 
-    // helper function to sync liked state with post data
-    const syncLikedState = (postData: ForumPost[]) => {
-        // Create a new likedPosts state based on post data
-        const newLikedPosts: {[key: number]: boolean} = {};
-        
-        // Update the liked state based on post data
-        postData.forEach((post: ForumPost) => {
-            newLikedPosts[post.id] = post.liked || false;
-        });
-        
-        // Update state
-        setLikedPosts(newLikedPosts);
+    // Helper function to update local storage with liked posts
+    const updateLikedPostsStorage = (newLikedPosts: {[key: number]: boolean}) => {
+        try {
+            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(newLikedPosts));
+        } catch (error) {
+            console.error('Error saving liked posts to localStorage:', error);
+        }
+    };
+    
+    // Helper function to update a single post's like status in local storage
+    const updateSinglePostLikeInStorage = (postId: number, isLiked: boolean) => {
+        try {
+            const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+            let likedPostsMap = {};
+            
+            if (storedLikedPosts) {
+                likedPostsMap = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+            }
+            
+            // Update the liked status for this post
+            likedPostsMap = {
+                ...likedPostsMap,
+                [postId]: isLiked
+            };
+            
+            // Save to local storage
+            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPostsMap));
+            
+            return likedPostsMap;
+        } catch (error) {
+            console.error('Error saving liked posts to localStorage:', error);
+            return likedPosts; // Return current state
+        }
     };
 
     // Handle like toggling with API
@@ -232,11 +396,9 @@ const Forum = () => {
             const newLiked = !likedPosts[postId];
             const likeDelta = newLiked ? 1 : -1;
             
-            // Update liked posts state immediately for button UI
-            setLikedPosts(prev => ({
-                ...prev,
-                [postId]: newLiked
-            }));
+            // Update liked posts state immediately for button UI and storage
+            const updatedLikedPosts = updateSinglePostLikeInStorage(postId, newLiked);
+            setLikedPosts(updatedLikedPosts);
             
             // Optimistically update the UI first for immediate feedback
             const updatedAllPosts = allPosts.map(post => {
@@ -260,8 +422,31 @@ const Forum = () => {
             const response = await apiClient.toggleLikePost(postId);
             console.log(`[Forum] Toggle like response:`, response);
             
-            // If the response contains an updated like count, update the cache to match
+            // Check if the API response matches our expected state
             const responseObj = response as any;
+            if (responseObj.liked !== undefined && responseObj.liked !== newLiked) {
+                console.warn(`[Forum] Server liked state (${responseObj.liked}) doesn't match client state (${newLiked}). Updating to match server.`);
+                
+                // Update to match server state
+                const serverUpdatedLikedPosts = updateSinglePostLikeInStorage(postId, responseObj.liked);
+                setLikedPosts(serverUpdatedLikedPosts);
+                
+                // Also update the post in our cache
+                cachedPosts = cachedPosts.map(post => {
+                    if (post.id === postId) {
+                        return {
+                            ...post,
+                            liked: responseObj.liked,
+                            likes: responseObj.like_count || post.likes
+                        };
+                    }
+                    return post;
+                });
+                
+                setAllPosts(cachedPosts);
+            }
+            
+            // If the response contains an updated like count, update the cache to match
             if ('like_count' in responseObj) {
                 const serverLikeCount = responseObj.like_count;
                 
@@ -279,16 +464,30 @@ const Forum = () => {
                 // Also update the current state
                 setAllPosts(cachedPosts);
             }
-            
-            // Sync current posts with updated liked state
-            syncLikedState(updatedAllPosts.filter(p => 
-                !activeFilter || p.tags.some(tag => tag.id === activeFilter)
-            ));
         } catch (error) {
             console.error('Error toggling post like:', error);
             
+            // Get current liked state before error
+            const currentLiked = likedPosts[postId] || false;
+            
             // Revert the optimistic update if there's an error
-            await fetchAllPosts(true);
+            const revertedLikedPosts = updateSinglePostLikeInStorage(postId, currentLiked);
+            setLikedPosts(revertedLikedPosts);
+            
+            // Also revert the UI
+            const revertedAllPosts = allPosts.map(post => {
+                if (post.id === postId) {
+                    return {
+                        ...post,
+                        liked: currentLiked,
+                        likes: post.likes // Just use current like count to avoid math errors
+                    };
+                }
+                return post;
+            });
+            
+            cachedPosts = revertedAllPosts;
+            setAllPosts(revertedAllPosts);
         }
     };
 
@@ -312,11 +511,6 @@ const Forum = () => {
             day: 'numeric'
         });
     };
-
-    // Remove the focus effect since we're not using sessionStorage anymore
-    useEffect(() => {
-        fetchAllPosts();
-    }, [location]);
 
     return (
         <div className="w-full py-12">

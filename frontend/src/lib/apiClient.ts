@@ -148,9 +148,9 @@ const getAuthHeader = (): HeadersInit => {
   
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
-    console.log('Using auth token:', accessToken.substring(0, 10) + '...');
+    console.log('Using auth token:', accessToken.substring(0, 10) + '...', 'Token length:', accessToken.length);
   } else {
-    console.log('No auth token available');
+    console.log('No auth token available - API request will not be authenticated');
   }
   
   return headers;
@@ -162,12 +162,19 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
   const baseUrl = useRealBackend ? BACKEND_API_URL : MOCK_API_URL;
   const fullUrl = `${baseUrl}${url}`;
   
+  // Safely access header values
+  const authHeaderValue = typeof defaultHeaders === 'object' ? 
+    (defaultHeaders as Record<string, string>)['Authorization'] || 'No auth header' : 
+    'Headers not an object';
+    
+  const contentTypeValue = typeof defaultHeaders === 'object' ?
+    (defaultHeaders as Record<string, string>)['Content-Type'] || 'No content type' :
+    'Headers not an object';
+    
   console.log(`Making API request to: ${fullUrl}`, {
     method: options?.method || 'GET',
-    headers: {
-      ...defaultHeaders,
-      ...(options?.headers || {}),
-    }
+    authHeader: authHeaderValue.substring(0, 20) + '...',
+    contentType: contentTypeValue
   });
   
   try {
@@ -380,10 +387,27 @@ export const apiClient = {
       body: JSON.stringify(updateData)
     }, true),
     
-  getForumTags: () =>
-    fetchJson<ForumTag[]>("/forum/tags/", {
+  getForumTags: () => {
+    console.log('[API] Fetching available forum tags');
+    return fetchJson<ForumTag[] | { results: ForumTag[] }>("/forum/tags/", {
       method: "GET"
-    }, true),
+    }, true).then(response => {
+      console.log('[API] Received forum tags response:', response);
+      
+      // Handle both array and object with results property
+      if (Array.isArray(response)) {
+        return response;
+      } else if (response && typeof response === 'object' && 'results' in response) {
+        return response.results;
+      } else {
+        console.error('[API] Unexpected format for forum tags:', response);
+        return [];
+      }
+    }).catch(error => {
+      console.error('[API] Error fetching forum tags:', error);
+      return [];
+    });
+  },
     
   // comments
   getPostComments: (postId: number, params?: PaginationParams) => {
