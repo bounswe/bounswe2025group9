@@ -211,7 +211,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/foods?limit=10",
+					"raw": "http://localhost:8081/foods?limit=10&categories=Fruit,Protein",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -224,10 +224,14 @@
 						{
 							"key": "limit",
 							"value": "10"
+						},
+						{
+							"key": "categories",
+							"value": "Fruit,Protein"
 						}
 					]
 				},
-				"description": "Fetch a list of food entries. Use the 'limit' query parameter to specify the number of rows to return."
+				"description": "Fetch a list of food entries.\n\nQuery parameters:\n- limit: The maximum number of food entries to return (default 10).\n- categories: Comma-separated list of categories to filter (case-insensitive, e.g. 'Fruit,Protein').\n  If omitted or empty, all categories are returned. If any category is invalid, a warning is returned and only valid categories are used.\n\n"
 			},
 			"response": []
 		},
