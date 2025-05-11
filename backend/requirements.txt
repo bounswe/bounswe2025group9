@@ -4,3 +4,4 @@ mysqlclient >= 2.1.0
 PyJWT>=2.6.0
 djangorestframework_simplejwt>=5.2.2
 django-cors-headers>=4.3.1
+django-filter>=25.1
