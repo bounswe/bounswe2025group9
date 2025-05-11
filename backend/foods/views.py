@@ -29,6 +29,8 @@ class FoodCatalog(APIView):
         available_categories = list(
             FoodEntry.objects.values_list("category", flat=True).distinct()
         )
+        available_categories = [cat.lower() for cat in available_categories]
+
         categories_param = request.query_params.get("categories", "")
 
         warning = None
@@ -36,7 +38,7 @@ class FoodCatalog(APIView):
             categories = available_categories
         else:
             requested_categories = [
-                category.strip()
+                category.strip().lower()
                 for category in categories_param.split(",")
                 if category.strip()
             ]
