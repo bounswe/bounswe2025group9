@@ -423,5 +423,204 @@
 			},
 			"response": []
 		}
+        {
+          "name": "create_post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"My first post\",\n  \"body\": \"This is the body of my post.\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "list_posts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_post_detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_available_tags",
+          "request": {
+            "method": "GET",
+            "header": [
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/tags/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "tags", ""]
+            },
+            "description": "**Get available post tags**\n\nUse this endpoint to retrieve all predefined tags.\nEach tag object contains:\n\n- `id` (integer): used to assign tags when creating a post\n- `name` (string): human-readable tag label\n\nThe frontend should call this once to populate the tag selection UI.\n\n### Example response:\n```json\n[\n  { \"id\": 1, \"name\": \"Dietary tip\" },\n  { \"id\": 2, \"name\": \"Recipe\" },\n  { \"id\": 3, \"name\": \"Meal plan\" }\n]\n```"
+          }
+        },
+        {
+          "name": "create_post_with_tags",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Grilled Chicken Bowl\",\n  \"body\": \"High-protein recipe great for lunch.\",\n  \"tag_ids\": [1, 2]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""]
+            },
+            "description": "**Create a new forum post with tag assignments**\n\nTo create a post, provide:\n\n- `title` (string): title of the post\n- `body` (string): free-text content\n- `tag_ids` (array of integers): list of tag IDs to attach (from `/forum/tags/`)\n\nYou must be authenticated.\n\n### Example request body:\n```json\n{\n  \"title\": \"Grilled Chicken Bowl\",\n  \"body\": \"High-protein recipe great for lunch.\",\n  \"tag_ids\": [1, 2]\n}\n```"
+          }
+        },
+        {
+          "name": "filter_posts_by_single_tag",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/?tags=1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "tags", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "filter_posts_by_multiple_tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/?tags=1&tags=2",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "tags", "value": "1" },
+                { "key": "tags", "value": "2" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "filter_and_order_posts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/?tags=1&ordering=-created_at",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "tags", "value": "1" },
+                { "key": "ordering", "value": "-created_at" }
+              ]
+            }
+          }
+        }
 	]
 }
