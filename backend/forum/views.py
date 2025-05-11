@@ -1,8 +1,11 @@
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import viewsets, permissions, mixins, generics
+from rest_framework.response import Response
+from rest_framework import status
+from rest_framework import viewsets, permissions, mixins
 from rest_framework.filters import OrderingFilter
+from rest_framework.decorators import action
 
-from .models import Post, Tag, Comment
+from .models import Post, Tag, Comment, Like
 from .serializers import PostSerializer, TagSerializer, CommentSerializer
 
 
@@ -30,6 +33,23 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    @action(
+        detail=True,
+        methods=["post"],
+        url_path="like",
+        permission_classes=[permissions.IsAuthenticated],
+    )
+    def toggle_like(self, request, pk=None):
+        post = self.get_object()
+        user = request.user
+
+        like, created = Like.objects.get_or_create(post=post, user=user)
+        if not created:
+            like.delete()
+            return Response({"liked": False}, status=status.HTTP_200_OK)
+
+        return Response({"liked": True}, status=status.HTTP_201_CREATED)
 
 
 class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):

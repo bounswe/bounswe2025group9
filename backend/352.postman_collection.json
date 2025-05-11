@@ -787,6 +787,27 @@
             },
             "description": "**Update your own comment**\n\nSend a `PATCH` request to modify a comment’s body. Only the comment author can perform this action.\n\n### Example body:\n```json\n{\n  \"body\": \"Actually I changed my mind.\"\n}\n```\n\nReturns:\n- `200 OK` with updated comment\n- `403 Forbidden` if not the author"
           }
+        },
+        {
+          "name": "toggle_like_on_post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "http://127.0.0.1:8081/forum/posts/1/like/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", "1", "like", ""]
+            },
+            "description": "**Toggle like/unlike for a post**\n\nSend a `POST` request to like or unlike a post.\n\n- If the user hasn't liked the post → it creates a like and returns:\n```json\n{ \"liked\": true }\n```\n- If the user already liked it → it unlikes the post and returns:\n```json\n{ \"liked\": false }\n```\n\nReturns:\n- `201 Created` if a like was added\n- `200 OK` if a like was removed\n- `403 Forbidden` if user is not allowed\n- `401 Unauthorized` if not authenticated"
+          }
         }
 	]
 }
