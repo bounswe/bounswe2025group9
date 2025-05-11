@@ -5,35 +5,39 @@ import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 
 const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
-    return (
-        <div 
-            key={item.id} 
-            className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow w-full max-w-xs mx-auto"
-            onClick={onClick}
-        >
-            <div className="food-image-placeholder w-full h-40 bg-gray-100 flex justify-center items-center overflow-hidden rounded">
-                {item.imageUrl ? (
-                    <img
-                        src={item.imageUrl}
-                        alt={item.name}
-                        className="w-full h-full object-cover"
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                    />
-                ) : (
-                    <Hamburger size={64} weight="fill" className="text-primary opacity-50" />
-                )}
-            </div>
-            <div className="flex items-center mt-4">
-                <h3 className="nh-subtitle">{item.name}</h3>
-            </div>
-            <div className="mt-2">
-                <p className="nh-text">Category: {item.category}</p>
-                <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
-                <p className="nh-text">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
-                <p className="nh-text">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
-            </div>
-        </div>
-    );
+  return (
+    <div
+      key={item.id}
+      className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow w-full max-w-xs mx-auto flex flex-col"
+      onClick={onClick}
+    >
+      <div className="food-image-container h-60 w-full flex justify-center items-center mb-4 overflow-hidden">
+        {item.imageUrl ? (
+          <img
+            src={item.imageUrl}
+            alt={item.name}
+            className="object-contain h-full w-full rounded"
+            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+          />
+        ) : (
+          <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+            <Hamburger size={64} weight="fill" className="text-primary opacity-50" />
+          </div>
+        )}
+      </div>
+
+      <div className="flex items-center mt-4">
+        <h3 className="nh-subtitle">{item.name}</h3>
+      </div>
+
+      <div className="mt-2">
+        <p className="nh-text">Category: {item.category}</p>
+        <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
+        <p className="nh-text">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
+        <p className="nh-text">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
+      </div>
+    </div>
+  );
 }
 
 // foods page component (placeholder)
