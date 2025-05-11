@@ -48,10 +48,10 @@ class CommentTests(TestCase):
         )
         self.assertEqual(response.status_code, 200)
 
-        if data := response.data:
-            self.assertEqual(len(data), 2)
-            self.assertEqual(data[0]["body"], "First")
-            self.assertEqual(data[1]["body"], "Second")
+        if results := response.data.get("results"):
+            self.assertEqual(len(results), 2)
+            self.assertEqual(results[0]["body"], "First")
+            self.assertEqual(results[1]["body"], "Second")
 
     def test_user_can_delete_own_comment(self):
         comment = Comment.objects.create(
