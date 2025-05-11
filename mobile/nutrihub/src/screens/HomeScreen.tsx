@@ -16,6 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { SPACING } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import FeatureCard from '../components/common/FeatureCard';
 import { MainTabParamList } from '../navigation/types';
@@ -25,6 +26,16 @@ type HomeScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Home'
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { theme, textStyles } = useTheme();
+  const { user } = useAuth();
+
+  // Get user's display name
+  const getUserDisplayName = () => {
+    if (!user) return '';
+    if (user.name || user.surname) {
+      return `${user.name || ''} ${user.surname || ''}`.trim();
+    }
+    return user.username;
+  };
 
   const handleExploreFoods = () => {
     navigation.navigate('Food');
@@ -38,7 +49,9 @@ const HomeScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
-        <Text style={[styles.welcomeTitle, textStyles.heading1]}>Welcome to NutriHub</Text>
+        <Text style={[styles.welcomeTitle, textStyles.heading1]}>
+          Welcome{user ? `, ${getUserDisplayName()}` : ''} to NutriHub
+        </Text>
         <Text style={[styles.welcomeDescription, textStyles.body]}>
           Your complete nutrition platform for discovering healthy foods, sharing recipes, 
           and joining a community of health enthusiasts.

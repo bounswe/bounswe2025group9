@@ -25,8 +25,17 @@ const ForumStack = createNativeStackNavigator<ForumStackParamList>();
 // Custom header component
 const Header: React.FC<{ title?: string }> = ({ title }) => {
   const navigation = useNavigation<NavigationProp>();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { theme, themeType, toggleTheme, textStyles } = useTheme();
+
+  // Get display name from user's name and surname
+  const getDisplayName = () => {
+    if (!user) return '';
+    if (user.name && user.surname) {
+      return `${user.name} ${user.surname}`;
+    }
+    return user.username;
+  };
 
   return (
     <SafeAreaView edges={['top']} style={{ backgroundColor: theme.headerBackground }}>

@@ -65,7 +65,7 @@ export interface ForumTopic {
   commentsCount: number;
   likesCount: number;
   isLiked?: boolean;
-  tags: string[]; 
+  tags: PostTagType[];
   createdAt: Date;
   updatedAt?: Date;
 }
@@ -100,7 +100,8 @@ export interface User {
   id: number;
   username: string;
   email: string;
-  fullName?: string;
+  name?: string;
+  surname?: string;
   profilePicture?: string;
   dietaryPreferences?: DietaryOptionType[];
   allergens?: AllergenType[];

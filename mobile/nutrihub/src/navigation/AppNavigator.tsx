@@ -4,6 +4,8 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // Screen and Navigator Imports
 import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 // Type import for navigation parameters
 import { RootStackParamList } from './types'; 
@@ -45,14 +47,19 @@ const AppNavigator = () => {
       <Stack.Navigator
         screenOptions={{
           headerShown: false, // Hide the header globally for this stack
+          animation: 'slide_from_right', // Add smooth transitions
         }}
       >
         {isLoggedIn ? (
           // If logged in, display the main application navigator (Tabs)
           <Stack.Screen name="MainApp" component={MainTabNavigator} />
         ) : (
-          // If not logged in, display the Login screen
-          <Stack.Screen name="Login" component={LoginScreen} />
+          // If not logged in, display the authentication screens
+          <>
+            <Stack.Screen name="Login" component={LoginScreen} />
+            <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          </>
         )}
       </Stack.Navigator>
     </>

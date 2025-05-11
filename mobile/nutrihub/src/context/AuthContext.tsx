@@ -32,7 +32,7 @@ export interface AuthError {
 
 // Login credentials interface
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
@@ -41,7 +41,8 @@ export interface RegistrationData {
   email: string;
   username: string;
   password: string;
-  fullName?: string;
+  name?: string;
+  surname?: string;
 }
 
 // Authentication context interface
@@ -67,7 +68,7 @@ interface AuthContextType {
   error: AuthError | null;
   
   /**
-   * Log in with email and password
+   * Log in with username and password
    */
   login: (credentials: LoginCredentials) => Promise<void>;
   
@@ -100,7 +101,8 @@ const MOCK_USER: User = {
   id: 1,
   username: 'demouser',
   email: 'demo@example.com',
-  fullName: 'Demo User',
+  name: 'Demo',
+  surname: 'User',
   createdAt: new Date(),
 };
 
@@ -152,7 +154,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   /**
-   * Log in with email and password
+   * Log in with username and password
    */
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
@@ -160,17 +162,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     
     try {
       // Validate input
-      if (!credentials.email || !credentials.password) {
+      if (!credentials.username || !credentials.password) {
         throw {
           type: AuthErrorType.VALIDATION_ERROR,
-          message: 'Email and password are required',
+          message: 'Username and password are required',
         };
       }
       
       // Simulate API call delay
       await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // For demo purposes, accept any email/password combo that passes validation
+      // For demo purposes, accept any username/password combo that passes validation
       // In a real app, this would make an API call to authenticate
       
       // Store token and user data
@@ -225,7 +227,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         id: 1,
         username: data.username,
         email: data.email,
-        fullName: data.fullName,
+        name: data.name,
+        surname: data.surname,
         createdAt: new Date(),
       };
       
