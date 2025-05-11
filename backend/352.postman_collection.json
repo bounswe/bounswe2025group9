@@ -422,7 +422,7 @@
 				}
 			},
 			"response": []
-		}
+		},
         {
           "name": "create_post",
           "request": {
