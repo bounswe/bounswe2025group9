@@ -8,12 +8,20 @@ from foods.models import FoodEntry
 class FoodCatalogTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        # Create sample FoodEntry objects with categories
-        FoodEntry.objects.create(name="Apple", category="Fruit")
-        FoodEntry.objects.create(name="Banana", category="Fruit")
-        FoodEntry.objects.create(name="Carrot", category="Vegetable")
-        FoodEntry.objects.create(name="Potato", category="Vegetable")
-        FoodEntry.objects.create(name="Chicken", category="Meat")
+        # Create sample FoodEntry objects
+        for i in range(15):
+            FoodEntry.objects.create(
+                name=f"Food {i}",
+                servingSize=100,
+                caloriesPerServing=100,
+                proteinContent=10,
+                fatContent=5,
+                carbohydrateContent=20,
+                allergens=[],
+                dietaryOptions=[],
+                nutritionScore=5.0,
+                imageUrl=f"http://example.com/image{i}.jpg",
+            )
 
     def test_invalid_limit(self):
         """
@@ -37,7 +45,9 @@ class FoodCatalogTests(TestCase):
         """
         response = self.client.get(reverse("get_foods"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 5)  # Updated to match actual number of test entries
+        self.assertEqual(
+            len(response.data), 5
+        )  # Updated to match actual number of test entries
 
     def test_category_filtering(self):
         """
@@ -72,6 +82,8 @@ class FoodCatalogTests(TestCase):
         """
         Test that filtering by a nonexistent category returns an empty list.
         """
-        response = self.client.get(reverse("get_foods"), {"category": "NonexistentCategory"})
+        response = self.client.get(
+            reverse("get_foods"), {"category": "NonexistentCategory"}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
