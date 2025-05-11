@@ -25,7 +25,7 @@ services:
       context: ./backend
     container_name: django-app
     volumes:
-      - .:/project
+      - ./backend:/project
     ports:
       - "8081:9000"
     depends_on:
