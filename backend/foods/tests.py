@@ -110,7 +110,6 @@ class FoodCatalogTests(TestCase):
         response = self.client.get(
             reverse("get_foods"), {"category": "NonexistentCategory"}
         )
-        print("Response data in test_nonexistent_category: ", response.data)
         self.assertEqual(response.status_code, status.HTTP_206_PARTIAL_CONTENT)
         self.assertEqual(
             response.data["warning"],
