@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     "foods",
     "forum",
     "corsheaders",
+    'recipes',
 ]
 
 MIDDLEWARE = [

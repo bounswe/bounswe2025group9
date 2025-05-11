@@ -621,6 +621,74 @@
               ]
             }
           }
-        }
+        },
+		{
+		  "name": "get_all_recipes",
+		  "request": {
+		    "method": "GET",
+		    "header": [],
+		    "url": {
+		      "raw": "http://127.0.0.1:8081/api/recipes/",
+		      "protocol": "http",
+		      "host": ["127", "0", "0", "1"],
+		      "port": "8081",
+		      "path": ["api", "recipes"]
+		    }
+		  },
+		  "response": []
+		},
+		{
+		  "name": "get_single_recipe",
+		  "request": {
+		    "method": "GET",
+		    "header": [],
+		    "url": {
+		      "raw": "http://127.0.0.1:8081/api/recipes/1/",
+		      "protocol": "http",
+		      "host": ["127", "0", "0", "1"],
+		      "port": "8081",
+		      "path": ["api", "recipes", "1"]
+		    }
+		  },
+		  "response": []
+		},
+		{
+		  "name": "create_recipe",
+		  "request": {
+		    "method": "POST",
+		    "header": [
+		      {
+		        "key": "Authorization",
+		        "value": "Bearer {{access_token}}",
+		        "type": "text"
+		      },
+		      {
+		        "key": "Content-Type",
+		        "value": "application/json",
+		        "type": "text"
+		      }
+		    ],
+		    "body": {
+		      "mode": "raw",
+		      "raw": "{\n  \"title\": \"Oatmeal Pancakes\",\n  \"description\": \"Healthy high-fiber breakfast\",\n  \"ingredients\": \"oats, eggs, banana\",\n  \"instructions\": \"Blend and fry.\",\n  \"prep_time\": 5,\n  \"cook_time\": 10\n}",
+		      "options": {
+		        "raw": {
+		          "language": "json"
+		        }
+		      }
+		    },
+		    "url": {
+		      "raw": "http://127.0.0.1:8081/api/recipes/",
+		      "protocol": "http",
+		      "host": ["127", "0", "0", "1"],
+		      "port": "8081",
+		      "path": ["api", "recipes"]
+		    }
+		  },
+		  "response": []
+		}
+
+
+
 	]
 }
