@@ -73,7 +73,7 @@ def get_fatsecret_image_url(food_url: str) -> str:
 
     if response.status_code != 200:
         print(f"Failed to fetch page: {response.status_code}")
-        return None
+        return ""
 
     soup = BeautifulSoup(response.text, "html.parser")
     img = [
