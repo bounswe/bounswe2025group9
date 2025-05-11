@@ -1,13 +1,35 @@
 // forum page component
 import { useState, useEffect } from 'react'
-import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots } from '@phosphor-icons/react'
+import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
-import { apiClient, ForumPost } from '../../lib/apiClient'
+import { apiClient, ForumPost, ForumTag } from '../../lib/apiClient'
 
 // create a simple cache for posts
 let cachedPosts: ForumPost[] = [];
 let lastFetchTime = 0;
 const CACHE_DURATION = 60000; // 1 minute cache
+
+// Define tag colors based on tag name for consistent display
+const getTagStyle = (tagName: string) => {
+    // Check for exact tag types from backend
+    switch (tagName) {
+        case "Dietary tip":
+            return { bg: '#e6f7f2', text: '#0d7c5f' }; // Green
+        case "Recipe":
+            return { bg: '#f0e6ff', text: '#6200ee' }; // Purple
+        case "Meal plan":
+            return { bg: '#e6f0ff', text: '#0062cc' }; // Blue
+        default:
+            return { bg: '#f2f2f2', text: '#666666' }; // Grey (fallback)
+    }
+};
+
+// Hard-coded tag IDs for filtering
+const TAG_IDS = {
+    "Dietary tip": 1,
+    "Recipe": 2,
+    "Meal plan": 3
+};
 
 const Forum = () => {
     const location = useLocation();
@@ -16,6 +38,10 @@ const Forum = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const postsPerPage = 5;
     const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
+    
+    // State for active filter
+    const [activeFilter, setActiveFilter] = useState<number | null>(null);
+    const [filterLabel, setFilterLabel] = useState<string | null>(null);
     
     // Calculate total pages based on fetched posts
     const totalPages = Math.ceil(posts.length / postsPerPage);
@@ -34,31 +60,49 @@ const Forum = () => {
     }, [location]);
 
     // Get posts from API
-    const fetchPosts = async () => {
-        // check if cache is still valid
+    const fetchPosts = async (tagId?: number) => {
+        // check if cache is still valid and we're not changing filters
         const now = Date.now();
-        if (cachedPosts.length > 0 && now - lastFetchTime < CACHE_DURATION) {
+        if (
+            cachedPosts.length > 0 && 
+            now - lastFetchTime < CACHE_DURATION &&
+            tagId === undefined && 
+            activeFilter === null
+        ) {
             // use cached data if available and fresh
             console.log('Using cached forum posts data');
             syncLikedState(cachedPosts);
             return;
         }
         
-        // if not loading already and we have cached posts, use them while fetching
-        if (cachedPosts.length > 0 && !loading) {
-            setPosts(cachedPosts);
-        } else {
+        // If we're applying a filter, don't use cache
+        if (!loading) {
             setLoading(true);
         }
         
         try {
-            const data = await apiClient.getForumPosts({
+            // Prepare filter parameters
+            const params: { 
+                tags?: number, 
+                ordering: string 
+            } = {
                 ordering: '-created_at' // Sort by newest first
-            });
+            };
             
-            // update the cache
-            cachedPosts = data;
-            lastFetchTime = now;
+            // Add tag filter if specified
+            if (tagId !== undefined) {
+                params.tags = tagId;
+            } else if (activeFilter !== null) {
+                params.tags = activeFilter;
+            }
+            
+            const data = await apiClient.getForumPosts(params);
+            
+            // update the cache only if no filter is applied
+            if (tagId === undefined && activeFilter === null) {
+                cachedPosts = data;
+                lastFetchTime = now;
+            }
             
             // sync liked state with the new data
             syncLikedState(data);
@@ -72,6 +116,31 @@ const Forum = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Apply a tag filter
+    const handleFilterByTag = (tagId: number, tagName: string) => {
+        if (activeFilter === tagId) {
+            // If clicking the active filter, clear it
+            setActiveFilter(null);
+            setFilterLabel(null);
+            fetchPosts(undefined); // Reset to all posts
+        } else {
+            // Apply the new filter
+            setActiveFilter(tagId);
+            setFilterLabel(tagName);
+            fetchPosts(tagId);
+        }
+        // Reset to first page
+        setCurrentPage(1);
+    };
+
+    // Clear active filter
+    const clearFilter = () => {
+        setActiveFilter(null);
+        setFilterLabel(null);
+        fetchPosts(undefined);
+        setCurrentPage(1);
     };
 
     // helper function to sync liked state with post data
@@ -206,14 +275,74 @@ const Forum = () => {
     return (
         <div className="py-12">
             <div className="nh-container">
-                <div className="flex justify-between items-center mb-8 relative">
-                    <div className="w-full text-center">
-                        <h1 className="nh-title">Community Forum</h1>
+                <div className="mb-8">
+                    <h1 className="nh-title text-center mb-6">Community Forum</h1>
+
+                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
+                        <div className="flex flex-wrap gap-2 mb-4 sm:mb-0">
+                            {/* Filter buttons */}
+                            <button 
+                                onClick={() => handleFilterByTag(TAG_IDS["Dietary tip"], "Dietary tip")}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    activeFilter === TAG_IDS["Dietary tip"] 
+                                    ? 'bg-[#0d7c5f] text-white' 
+                                    : 'bg-[#e6f7f2] text-[#0d7c5f] hover:bg-[#d0efe6]'
+                                }`}
+                            >
+                                <Tag size={16} className="flex-shrink-0" />
+                                <span>Dietary Tips</span>
+                            </button>
+                            
+                            <button 
+                                onClick={() => handleFilterByTag(TAG_IDS["Recipe"], "Recipe")}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    activeFilter === TAG_IDS["Recipe"] 
+                                    ? 'bg-[#6200ee] text-white' 
+                                    : 'bg-[#f0e6ff] text-[#6200ee] hover:bg-[#e6d0ff]'
+                                }`}
+                            >
+                                <Tag size={16} className="flex-shrink-0" />
+                                <span>Recipes</span>
+                            </button>
+                            
+                            <button 
+                                onClick={() => handleFilterByTag(TAG_IDS["Meal plan"], "Meal plan")}
+                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+                                    activeFilter === TAG_IDS["Meal plan"] 
+                                    ? 'bg-[#0062cc] text-white' 
+                                    : 'bg-[#e6f0ff] text-[#0062cc] hover:bg-[#d0e6ff]'
+                                }`}
+                            >
+                                <Tag size={16} className="flex-shrink-0" />
+                                <span>Meal Plans</span>
+                            </button>
+                            
+                            {activeFilter !== null && (
+                                <button 
+                                    onClick={clearFilter}
+                                    className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
+                                >
+                                    <X size={16} className="flex-shrink-0" />
+                                    <span>Clear Filter</span>
+                                </button>
+                            )}
+                        </div>
+                        
+                        {/* New Post button */}
+                        <Link to="/forum/create" className="nh-button nh-button-primary flex items-center gap-2">
+                            <PlusCircle size={20} weight="fill" />
+                            New Post
+                        </Link>
                     </div>
-                    <Link to="/forum/create" className="nh-button nh-button-primary flex items-center gap-2 absolute right-0">
-                        <PlusCircle size={20} weight="fill" />
-                        New Post
-                    </Link>
+                    
+                    {/* Active filter indicator */}
+                    {filterLabel && (
+                        <div className="mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
+                            <p className="text-sm text-center">
+                                Showing posts tagged with: <span className="font-medium">{filterLabel}</span>
+                            </p>
+                        </div>
+                    )}
                 </div>
                 
                 {loading ? (
@@ -222,7 +351,12 @@ const Forum = () => {
                     </div>
                 ) : posts.length === 0 ? (
                     <div className="text-center my-12">
-                        <p className="text-lg">No posts found. Be the first to create a post!</p>
+                        <p className="text-lg">
+                            {activeFilter !== null 
+                                ? `No posts found with the selected tag. Try another filter or create a new post.` 
+                                : `No posts found. Be the first to create a post!`
+                            }
+                        </p>
                     </div>
                 ) : (
                     <div className="space-y-6 max-w-4xl mx-auto">
@@ -241,6 +375,26 @@ const Forum = () => {
                                     </div>
                                     <h3 className="nh-subtitle">{post.title}</h3>
                                 </div>
+                                
+                                {/* Tags */}
+                                {post.tags && post.tags.length > 0 && (
+                                    <div className="flex flex-wrap gap-2 mb-3">
+                                        {post.tags.map((tag) => {
+                                            const tagStyle = getTagStyle(tag.name);
+                                            return (
+                                                <div 
+                                                    key={tag.id} 
+                                                    className="flex items-center px-2 py-1 rounded-md text-xs font-medium z-20 relative" 
+                                                    style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
+                                                >
+                                                    <Tag size={12} className="mr-1" />
+                                                    {tag.name}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                )}
+                                
                                 <p className="nh-text mb-4">
                                     {post.body.length > 150 
                                         ? post.body.substring(0, 150) + '...' 

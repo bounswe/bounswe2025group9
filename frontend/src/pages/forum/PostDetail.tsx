@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { User, ThumbsUp, ChatText, ArrowLeft } from '@phosphor-icons/react'
-import { apiClient, ForumPost } from '../../lib/apiClient'
+import { User, ThumbsUp, ChatText, ArrowLeft, Tag } from '@phosphor-icons/react'
+import { apiClient, ForumPost, ForumTag } from '../../lib/apiClient'
 
 // Post interface for the data from API
 interface APIPost {
@@ -11,19 +11,33 @@ interface APIPost {
     author: string;
     likes: number;
     date: string;
+    tags: ForumTag[];
 }
 
 // Comment type definition
 interface Comment {
     id: number;
-    author: {
-        id: number;
-        username: string;
-    };
+    post: number;
+    author: string;
     body: string;
     created_at: string;
-    updated_at: string;
+    updated_at?: string;
 }
+
+// Define tag colors based on tag name for consistent display
+const getTagStyle = (tagName: string) => {
+    // Check for exact tag types from backend
+    switch (tagName) {
+        case "Dietary tip":
+            return { bg: '#e6f7f2', text: '#0d7c5f' }; // Green
+        case "Recipe":
+            return { bg: '#f0e6ff', text: '#6200ee' }; // Purple
+        case "Meal plan":
+            return { bg: '#e6f0ff', text: '#0062cc' }; // Blue
+        default:
+            return { bg: '#f2f2f2', text: '#666666' }; // Grey (fallback)
+    }
+};
 
 const PostDetail = () => {
     const { postId } = useParams<{ postId: string }>()
@@ -71,7 +85,18 @@ const PostDetail = () => {
         try {
             const commentsData = await apiClient.getPostComments(postIdNum);
             if (commentsData) {
-                setComments(commentsData);
+                // Transform API comments to match our interface if needed
+                const transformedComments = commentsData.map(comment => ({
+                    id: comment.id,
+                    post: comment.post,
+                    author: typeof comment.author === 'string' 
+                        ? comment.author 
+                        : comment.author.username,
+                    body: comment.body,
+                    created_at: comment.created_at,
+                    updated_at: comment.updated_at
+                }));
+                setComments(transformedComments);
             }
         } catch (error) {
             console.error('Error fetching comments:', error);
@@ -100,7 +125,8 @@ const PostDetail = () => {
                     content: postData.body, // API returns 'body' instead of 'content'
                     author: postData.author.username,
                     likes: 0, // We'll get likes separately if needed
-                    date: postData.created_at
+                    date: postData.created_at,
+                    tags: postData.tags // Include tags from the API response
                 };
                 
                 setPost(transformedPost);
@@ -205,8 +231,20 @@ const PostDetail = () => {
                 body: commentText
             });
             
+            // Transform the new comment to match our interface if needed
+            const transformedComment = {
+                id: newComment.id,
+                post: newComment.post,
+                author: typeof newComment.author === 'string'
+                    ? newComment.author
+                    : newComment.author.username,
+                body: newComment.body,
+                created_at: newComment.created_at,
+                updated_at: newComment.updated_at
+            };
+            
             // Add new comment to the list
-            setComments(prevComments => [newComment, ...prevComments])
+            setComments(prevComments => [transformedComment, ...prevComments])
             setCommentText('') // Clear the input
         } catch (error) {
             console.error('Error creating comment:', error);
@@ -286,6 +324,25 @@ const PostDetail = () => {
                         <h1 className="nh-title">{post.title}</h1>
                     </div>
                     
+                    {/* Tags */}
+                    {post.tags && post.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {post.tags.map((tag) => {
+                                const tagStyle = getTagStyle(tag.name);
+                                return (
+                                    <div 
+                                        key={tag.id} 
+                                        className="flex items-center px-3 py-1.5 rounded-md text-sm font-medium" 
+                                        style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
+                                    >
+                                        <Tag size={14} className="mr-1.5" />
+                                        {tag.name}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                    
                     <p className="nh-text mb-6">
                         {post.content}
                     </p>
@@ -316,22 +373,32 @@ const PostDetail = () => {
                     <div className="nh-card border border-gray-200 dark:border-gray-700 mb-6">
                         <h3 className="nh-subtitle mb-2">Add a Comment</h3>
                         <form onSubmit={handleCommentSubmit}>
-                            <div className="mb-4">
-                                <textarea 
-                                    className="w-full border rounded-md p-2 dark:bg-gray-800 dark:border-gray-700"
-                                    rows={3}
-                                    placeholder="Enter your comment here..."
-                                    value={commentText}
-                                    onChange={(e) => setCommentText(e.target.value)}
-                                    required
-                                ></textarea>
+                            <div className="flex items-start gap-3 mb-4">
+                                <div className="flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
+                                        <User size={18} className="text-primary" />
+                                    </div>
+                                </div>
+                                <div className="flex-grow">
+                                    <p className="font-semibold text-primary mb-2">You</p>
+                                    <textarea 
+                                        className="w-full border rounded-md p-3 dark:bg-gray-800 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary"
+                                        rows={3}
+                                        placeholder="Share your thoughts..."
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        required
+                                    ></textarea>
+                                </div>
                             </div>
-                            <button 
-                                type="submit" 
-                                className="nh-button nh-button-primary dark:bg-primary dark:text-white light:bg-[#0d7c5f] light:text-white"
-                            >
-                                Submit Comment
-                            </button>
+                            <div className="flex justify-end">
+                                <button 
+                                    type="submit" 
+                                    className="nh-button nh-button-primary dark:bg-primary dark:text-white light:bg-[#0d7c5f] light:text-white"
+                                >
+                                    Post Comment
+                                </button>
+                            </div>
                         </form>
                     </div>
                     
@@ -349,20 +416,25 @@ const PostDetail = () => {
                                 <div key={comment.id} className="nh-card border border-gray-200 dark:border-gray-700">
                                     <div className="flex items-start">
                                         <div className="flex-shrink-0 mr-3">
-                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                                <User size={16} className="text-gray-500" />
+                                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                <User size={18} className="text-gray-500" />
                                             </div>
                                         </div>
                                         <div className="flex-grow">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <p className="font-medium">{comment.author.username}</p>
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <h4 className="font-semibold text-primary">
+                                                    {comment.author}
+                                                </h4>
+                                                <span className="text-gray-400">•</span>
                                                 <span className="text-xs text-gray-500">
                                                     {formatDate(comment.created_at)}
                                                 </span>
                                             </div>
-                                            <p className="nh-text text-sm">
-                                                {comment.body}
-                                            </p>
+                                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                                                <p className="nh-text text-sm">
+                                                    {comment.body}
+                                                </p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
