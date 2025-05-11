@@ -3,7 +3,7 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // Screen and Navigator Imports
-import LoginScreen from '../screens/LoginScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 // Type import for navigation parameters
 import { RootStackParamList } from './types'; 
@@ -24,7 +24,7 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
 const AppNavigator = () => {
   // Consume authentication state from the context
   const { isLoggedIn, isLoading: authLoading } = useAuth();
-  const { colors, theme, isLoading: themeLoading } = useTheme();
+  const { themeType, theme, isLoading: themeLoading } = useTheme();
 
   // --- Handle Initial Loading State ---
   // While checking AsyncStorage for the token or theme, display a loading indicator
@@ -32,8 +32,8 @@ const AppNavigator = () => {
   
   if (isLoading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
-        <ActivityIndicator size="large" color={colors.accent} />
+      <View style={[styles.loadingContainer, { backgroundColor: theme.background }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
       </View>
     );
   }
@@ -41,7 +41,7 @@ const AppNavigator = () => {
   // --- Render Navigator based on Login State ---
   return (
     <>
-      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={themeType === 'dark' ? 'light' : 'dark'} />
       <Stack.Navigator
         screenOptions={{
           headerShown: false, // Hide the header globally for this stack
