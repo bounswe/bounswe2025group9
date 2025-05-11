@@ -14,6 +14,7 @@ class PostSerializer(serializers.ModelSerializer):
     tag_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all(), write_only=True, source="tags"
     )
+    like_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Post
@@ -24,10 +25,21 @@ class PostSerializer(serializers.ModelSerializer):
             "author",
             "tags",
             "tag_ids",
+            "like_count",
             "created_at",
             "updated_at",
         ]
-        read_only_fields = ["id", "author", "tags", "created_at", "updated_at"]
+        read_only_fields = [
+            "id",
+            "author",
+            "tags",
+            "like_count",
+            "created_at",
+            "updated_at",
+        ]
+
+    def get_like_count(self, obj):
+        return obj.likes.count()
 
 
 class CommentSerializer(serializers.ModelSerializer):
