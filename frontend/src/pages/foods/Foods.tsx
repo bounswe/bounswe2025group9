@@ -40,7 +40,7 @@ const Foods = () => {
     const fetchFoods = async () => {
         try {
             const response = await apiClient.getFoods();
-            setFoods(response);
+            setFoods(response.results); // response is now a paginated response (count, next, previous, results)
             setFetchSuccess(true);
             console.log("Fetched foods:", response);
         } catch (error) {
