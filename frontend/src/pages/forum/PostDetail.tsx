@@ -29,13 +29,25 @@ const getTagStyle = (tagName: string) => {
     // Check for exact tag types from backend
     switch (tagName) {
         case "Dietary tip":
-            return { bg: '#e6f7f2', text: '#0d7c5f' }; // Green
+            return { 
+                bg: 'var(--forum-dietary-bg)',
+                text: 'var(--forum-dietary-text)'
+            };
         case "Recipe":
-            return { bg: '#f0e6ff', text: '#6200ee' }; // Purple
+            return { 
+                bg: 'var(--forum-recipe-bg)',
+                text: 'var(--forum-recipe-text)'
+            };
         case "Meal plan":
-            return { bg: '#e6f0ff', text: '#0062cc' }; // Blue
+            return { 
+                bg: 'var(--forum-mealplan-bg)',
+                text: 'var(--forum-mealplan-text)'
+            };
         default:
-            return { bg: '#f2f2f2', text: '#666666' }; // Grey (fallback)
+            return { 
+                bg: 'var(--forum-default-bg)',
+                text: 'var(--forum-default-text)'
+            };
     }
 };
 
