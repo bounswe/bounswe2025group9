@@ -1,3 +1,9 @@
+/**
+ * HomeScreen
+ * 
+ * Main landing screen for the application, displaying key features.
+ */
+
 import React from 'react';
 import {
   View,
@@ -10,8 +16,7 @@ import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { SPACING } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
-import { createFontStyles } from '../constants/theme';
-import PrimaryButton from '../components/common/PrimaryButton';
+import Button from '../components/common/Button';
 import FeatureCard from '../components/common/FeatureCard';
 import { MainTabParamList } from '../navigation/types';
 
@@ -19,8 +24,7 @@ type HomeScreenNavigationProp = BottomTabNavigationProp<MainTabParamList, 'Home'
 
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
-  const { colors } = useTheme();
-  const fonts = createFontStyles(colors);
+  const { theme, textStyles } = useTheme();
 
   const handleExploreFoods = () => {
     navigation.navigate('Food');
@@ -31,22 +35,23 @@ const HomeScreen: React.FC = () => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         {/* Hero Section */}
-        <Text style={[styles.welcomeTitle, fonts.heading]}>Welcome to NutriHub</Text>
-        <Text style={[styles.welcomeDescription, fonts.body]}>
+        <Text style={[styles.welcomeTitle, textStyles.heading1]}>Welcome to NutriHub</Text>
+        <Text style={[styles.welcomeDescription, textStyles.body]}>
           Your complete nutrition platform for discovering healthy foods, sharing recipes, 
           and joining a community of health enthusiasts.
         </Text>
 
         <View style={styles.buttonContainer}>
-          <PrimaryButton 
+          <Button 
             title="Explore Foods" 
             onPress={handleExploreFoods} 
+            variant="primary"
           />
           <View style={{ width: SPACING.md }} />
-          <PrimaryButton 
+          <Button 
             title="Join Forum" 
             variant="secondary" 
             onPress={handleJoinForum} 
