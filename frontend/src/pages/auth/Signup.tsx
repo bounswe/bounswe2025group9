@@ -1,9 +1,11 @@
 import { UserPlus } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { apiClient } from '../../lib/apiClient'
+import { useNavigate } from 'react-router-dom'
 
 // signup page component (placeholder)
 const SignUp = () => {
+    const navigate = useNavigate()
     const [formData, setFormData] = useState({
         email: '',
         username: '',
@@ -136,7 +138,11 @@ const SignUp = () => {
                 })
                 console.log('signup successful')
                 setSignupSuccess(true)
-                // optionally redirect to login or auto-login
+                
+                // Redirect to login page after successful signup
+                setTimeout(() => {
+                    navigate('/login', { state: { message: 'Signup successful! Please login with your new account.' } })
+                }, 2000)
             } catch (err) {
                 console.error('signup failed:', err)
                 setSignupError('signup failed, please check your info')
