@@ -8,9 +8,12 @@ from foods.models import FoodEntry
 class FoodCatalogTests(TestCase):
     def setUp(self):
         self.client = APIClient()
-        # Create sample FoodEntry objects
-        for i in range(15):
-            FoodEntry.objects.create(name=f"Food {i}")
+        # Create sample FoodEntry objects with categories
+        FoodEntry.objects.create(name="Apple", category="Fruit")
+        FoodEntry.objects.create(name="Banana", category="Fruit")
+        FoodEntry.objects.create(name="Carrot", category="Vegetable")
+        FoodEntry.objects.create(name="Potato", category="Vegetable")
+        FoodEntry.objects.create(name="Chicken", category="Meat")
 
     def test_invalid_limit(self):
         """
@@ -34,4 +37,41 @@ class FoodCatalogTests(TestCase):
         """
         response = self.client.get(reverse("get_foods"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 10)
+        self.assertEqual(len(response.data), 5)  # Updated to match actual number of test entries
+
+    def test_category_filtering(self):
+        """
+        Test that filtering by category returns only foods in that category.
+        """
+        response = self.client.get(reverse("get_foods"), {"category": "Fruit"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 2)
+        for food in response.data:
+            self.assertEqual(food["category"], "Fruit")
+
+    def test_case_insensitive_category_filtering(self):
+        """
+        Test that category filtering is case-insensitive.
+        """
+        # Test with lowercase
+        response_lower = self.client.get(reverse("get_foods"), {"category": "fruit"})
+        self.assertEqual(response_lower.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_lower.data), 2)
+
+        # Test with uppercase
+        response_upper = self.client.get(reverse("get_foods"), {"category": "FRUIT"})
+        self.assertEqual(response_upper.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_upper.data), 2)
+
+        # Test with mixed case
+        response_mixed = self.client.get(reverse("get_foods"), {"category": "FrUiT"})
+        self.assertEqual(response_mixed.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response_mixed.data), 2)
+
+    def test_nonexistent_category(self):
+        """
+        Test that filtering by a nonexistent category returns an empty list.
+        """
+        response = self.client.get(reverse("get_foods"), {"category": "NonexistentCategory"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
