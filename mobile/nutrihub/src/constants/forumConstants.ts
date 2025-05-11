@@ -6,28 +6,9 @@
  * Post tag types for forum content
  */
 export const POST_TAGS = {
-    DIETARY_TIP: 'Dietary Tip',
+    NUTRITION_TIP: 'Nutrition Tip', 
     RECIPE: 'Recipe',
     MEAL_PLAN: 'Meal Plan'
-  } as const;
-  
-  /**
-   * Report reason types for reporting inappropriate content
-   */
-  export const REPORT_REASONS = {
-    SPAM: 'Spam',
-    MISINFORMATION: 'Misinformation',
-    INAPPROPRIATE_CONTENT: 'Inappropriate Content'
-  } as const;
-  
-  /**
-   * Moderation action types that can be taken on reported content
-   */
-  export const MODERATION_ACTIONS = {
-    WARNING: 'Warning',
-    POST_REMOVAL: 'Post Removal',
-    SUSPENSION: 'Account Suspension',
-    BAN: 'Account Ban'
   } as const;
   
   /**

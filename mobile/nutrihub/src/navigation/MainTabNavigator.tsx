@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SPACING, PALETTE } from '../constants/theme';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
@@ -8,8 +9,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import HomeScreen from '../screens/HomeScreen';
 import ForumScreen from '../screens/forum/ForumScreen';
+import PostDetailScreen from '../screens/forum/PostDetailScreen';
+import CreatePostScreen from '../screens/forum/CreatePostScreen';
 import FoodScreen from '../screens/food/FoodScreen';
-import { MainTabParamList, RootStackParamList } from './types';
+import { MainTabParamList, RootStackParamList, ForumStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -17,6 +20,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
+const ForumStack = createNativeStackNavigator<ForumStackParamList>();
 
 // Custom header component
 const Header: React.FC<{ title?: string }> = ({ title }) => {
@@ -75,6 +79,17 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
   );
 };
 
+// Forum Stack Navigator
+const ForumStackNavigator = () => {
+  return (
+    <ForumStack.Navigator screenOptions={{ headerShown: false }}>
+      <ForumStack.Screen name="ForumList" component={ForumScreen} />
+      <ForumStack.Screen name="PostDetail" component={PostDetailScreen} />
+      <ForumStack.Screen name="CreatePost" component={CreatePostScreen} />
+    </ForumStack.Navigator>
+  );
+};
+
 const MainTabNavigator = () => {
   const { theme } = useTheme();
   
@@ -117,7 +132,7 @@ const MainTabNavigator = () => {
         {/* Define Screens within the Tab Navigator */}
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Food" component={FoodScreen} />
-        <Tab.Screen name="Forum" component={ForumScreen} />
+        <Tab.Screen name="Forum" component={ForumStackNavigator} />
       </Tab.Navigator>
     </View>
   );
