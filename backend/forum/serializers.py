@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Post, Tag
+from .models import Post, Tag, Comment
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -28,3 +28,12 @@ class PostSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "author", "tags", "created_at", "updated_at"]
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.StringRelatedField(read_only=True)
+
+    class Meta:
+        model = Comment
+        fields = ["id", "post", "author", "body", "created_at"]
+        read_only_fields = ["id", "author", "created_at"]
