@@ -7,13 +7,14 @@ import urllib.parse
 import requests
 import json
 import re
+from bs4 import BeautifulSoup
+
 
 # FatSecret API credentials
 CONSUMER_KEY = ""
 CONSUMER_SECRET = ""
-
 INPUT_FILE = "500_common_foods.json"
-OUTPUT_FILE = "enriched_foods.json"
+OUTPUT_FILE = "foods.json"
 RATE_LIMIT_DELAY = 1.2  # seconds between calls
 
 
@@ -63,6 +64,26 @@ def make_request(method_name, extra_params):
     if response.status_code != 200:
         raise Exception(f"API Error: {response.status_code} - {response.text}")
     return response.json()
+
+
+def get_fatsecret_image_url(food_url: str) -> str:
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+    response = requests.get(food_url, headers=headers)
+
+    if response.status_code != 200:
+        print(f"Failed to fetch page: {response.status_code}")
+        return ""
+
+    soup = BeautifulSoup(response.text, "html.parser")
+    img = [
+        img["src"]
+        for td in soup.find_all("td")
+        for a in td.find_all("a")
+        for img in a.find_all("img", src=True)
+    ]
+    if len(img) <= 1:
+        return ""
+    return img[1]
 
 
 # ------------------- Parsing Helpers ------------------- #
@@ -146,7 +167,6 @@ def enrich_food_list():
 
     with open(INPUT_FILE, "r", encoding="utf-8") as f:
         food_list = json.load(f)
-
     for entry in food_list:
         food_name = entry["food_name"]
         category = entry["food_category"]
@@ -161,6 +181,7 @@ def enrich_food_list():
 
             food_id = foods[0]["food_id"]
             details = make_request("food.get", {"food_id": food_id})
+            image_url = get_fatsecret_image_url(details["food"]["food_url"])
             parsed = extract_food_info(details)
 
             if not parsed:
@@ -179,7 +200,7 @@ def enrich_food_list():
                     "allergens": [],
                     "dietaryOptions": [],
                     "nutritionScore": 0.0,
-                    "imageUrl": "",
+                    "imageUrl": image_url,
                 }
             )
 

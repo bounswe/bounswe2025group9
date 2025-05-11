@@ -3,14 +3,14 @@
     "name": "Originali Biscotti",
     "category": "Sweets & Snacks",
     "servingSize": 20.0,
-    "caloriesPerServing": 90.0,
+    "caloriesPerServing": 80.0,
     "proteinContent": 2.0,
-    "fatContent": 2.5,
-    "carbohydrateContent": 14.0,
+    "fatContent": 3.0,
+    "carbohydrateContent": 12.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.2,
-    "imageUrl": ""
+    "nutritionScore": 4.83,
+    "imageUrl": "https://m.ftscrt.com/food/266f0ad1-24a2-4ba0-afe0-ae1e533bc48e_sq.jpg"
   },
   {
     "name": "Raw Whole Pine Nuts",
@@ -22,7 +22,7 @@
     "carbohydrateContent": 1.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.3,
+    "nutritionScore": 4.88,
     "imageUrl": ""
   },
   {
@@ -35,8 +35,8 @@
     "carbohydrateContent": 9.32,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 5.64,
+    "imageUrl": "https://m.ftscrt.com/food/747c9b5d-604b-40f6-8f52-3fd6e3886882_sq.jpg"
   },
   {
     "name": "Cornmeal Mush made with Water",
@@ -48,21 +48,21 @@
     "carbohydrateContent": 19.69,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.4,
-    "imageUrl": ""
+    "nutritionScore": 4.75,
+    "imageUrl": "https://m.ftscrt.com/food/bcfdb7b9-6d67-4357-9001-2b635dafaa4c_sq.jpg"
   },
   {
     "name": "Coca-Cola Classic",
     "category": "Beverage",
     "servingSize": 240.0,
-    "caloriesPerServing": 90.0,
+    "caloriesPerServing": 100.0,
     "proteinContent": 0.0,
     "fatContent": 0.0,
     "carbohydrateContent": 27.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/fda11f4c-03a7-4eee-8768-9fe57bab4abe_sq.jpg"
   },
   {
     "name": "Bulgur (Cooked)",
@@ -74,8 +74,8 @@
     "carbohydrateContent": 18.58,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.5,
-    "imageUrl": ""
+    "nutritionScore": 5.51,
+    "imageUrl": "https://m.ftscrt.com/food/a55a1a8d-f26e-4073-a786-0f78879da6fe_sq.jpg"
   },
   {
     "name": "Pie",
@@ -87,8 +87,8 @@
     "carbohydrateContent": 34.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.8,
-    "imageUrl": ""
+    "nutritionScore": 3.36,
+    "imageUrl": "https://m.ftscrt.com/food/9a568988-cf86-4a85-a6d6-4726d67a414e_sq.jpg"
   },
   {
     "name": "Apricots",
@@ -100,8 +100,8 @@
     "carbohydrateContent": 11.12,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 6.34,
+    "imageUrl": "https://m.ftscrt.com/food/5122274a-04ff-4395-bc16-05686463a5f1_sq.jpg"
   },
   {
     "name": "Almonds",
@@ -113,8 +113,8 @@
     "carbohydrateContent": 19.74,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.6,
-    "imageUrl": ""
+    "nutritionScore": 6.56,
+    "imageUrl": "https://m.ftscrt.com/food/a0f320cd-1bcb-4b61-96db-dea4744d6e30_sq.jpg"
   },
   {
     "name": "Organic Ghee Clarified Butter",
@@ -126,8 +126,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/e1f586b4-abb8-4e4e-8a5c-ba4391d32e58_sq.jpg"
   },
   {
     "name": "Apple Juice",
@@ -139,8 +139,8 @@
     "carbohydrateContent": 11.68,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.9,
-    "imageUrl": ""
+    "nutritionScore": 4.04,
+    "imageUrl": "https://m.ftscrt.com/food/70833e15-8031-47bb-ad54-7a0df9a5a917_sq.jpg"
   },
   {
     "name": "Tomato Juice",
@@ -152,8 +152,8 @@
     "carbohydrateContent": 4.24,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
-    "imageUrl": ""
+    "nutritionScore": 4.78,
+    "imageUrl": "https://m.ftscrt.com/food/2545d60d-3768-47ed-af51-613f12b08548_sq.jpg"
   },
   {
     "name": "Mango Lassi",
@@ -165,7 +165,7 @@
     "carbohydrateContent": 32.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.2,
+    "nutritionScore": 7.83,
     "imageUrl": ""
   },
   {
@@ -178,8 +178,8 @@
     "carbohydrateContent": 13.71,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 5.29,
+    "imageUrl": "https://m.ftscrt.com/food/e78dc5be-e9b7-4868-a3b3-185cfbcb73ec_sq.jpg"
   },
   {
     "name": "Whole Milk",
@@ -191,21 +191,21 @@
     "carbohydrateContent": 4.52,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
-    "imageUrl": ""
+    "nutritionScore": 4.76,
+    "imageUrl": "https://m.ftscrt.com/food/f320985e-f67b-427e-a2c7-a1faddb5ac43_sq.jpg"
   },
   {
     "name": "Chocolate Pudding Snack Pack",
     "category": "Sweets & Snacks",
-    "servingSize": 99.0,
-    "caloriesPerServing": 110.0,
+    "servingSize": 92.0,
+    "caloriesPerServing": 100.0,
     "proteinContent": 1.0,
     "fatContent": 2.5,
-    "carbohydrateContent": 20.0,
+    "carbohydrateContent": 18.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.3,
-    "imageUrl": ""
+    "nutritionScore": 3.54,
+    "imageUrl": "https://m.ftscrt.com/food/91dae303-c75f-4c7d-9850-e1593bf03c33_sq.jpg"
   },
   {
     "name": "Organic Raw Kombucha (Bottle)",
@@ -217,7 +217,7 @@
     "carbohydrateContent": 16.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
+    "nutritionScore": 4.03,
     "imageUrl": ""
   },
   {
@@ -230,8 +230,8 @@
     "carbohydrateContent": 9.54,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.7,
-    "imageUrl": ""
+    "nutritionScore": 5.62,
+    "imageUrl": "https://m.ftscrt.com/food/74244166-9b85-4b9f-b39e-1110e728e08f_sq.jpg"
   },
   {
     "name": "Organic Tempeh - Original",
@@ -243,7 +243,7 @@
     "carbohydrateContent": 12.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.6,
+    "nutritionScore": 6.84,
     "imageUrl": ""
   },
   {
@@ -256,7 +256,7 @@
     "carbohydrateContent": 9.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.3,
+    "nutritionScore": 10.0,
     "imageUrl": ""
   },
   {
@@ -269,7 +269,7 @@
     "carbohydrateContent": 40.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
+    "nutritionScore": 6.98,
     "imageUrl": ""
   },
   {
@@ -282,8 +282,8 @@
     "carbohydrateContent": 9.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.0,
-    "imageUrl": ""
+    "nutritionScore": 5.38,
+    "imageUrl": "https://m.ftscrt.com/food/a11130d1-d9e8-4091-ba56-42aba9e7b208_sq.jpg"
   },
   {
     "name": "Pecan Nuts",
@@ -295,8 +295,8 @@
     "carbohydrateContent": 13.86,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
-    "imageUrl": ""
+    "nutritionScore": 4.68,
+    "imageUrl": "https://m.ftscrt.com/food/d9a823a6-d584-458d-816e-8d9b6beeb640_sq.jpg"
   },
   {
     "name": "Natural Raw Whole Flaxseed",
@@ -308,7 +308,7 @@
     "carbohydrateContent": 7.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
+    "nutritionScore": 6.43,
     "imageUrl": ""
   },
   {
@@ -321,8 +321,8 @@
     "carbohydrateContent": 7.55,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
-    "imageUrl": ""
+    "nutritionScore": 5.59,
+    "imageUrl": "https://m.ftscrt.com/food/32ee30e4-4c9e-4fab-b342-6dfdcc42d156_sq.jpg"
   },
   {
     "name": "Carrots",
@@ -334,8 +334,8 @@
     "carbohydrateContent": 9.58,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 5.63,
+    "imageUrl": "https://m.ftscrt.com/food/a8d0ec00-3e19-4b98-b773-e2240932943a_sq.jpg"
   },
   {
     "name": "Fennel Bulb",
@@ -347,7 +347,7 @@
     "carbohydrateContent": 2.97,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
+    "nutritionScore": 6.27,
     "imageUrl": ""
   },
   {
@@ -360,7 +360,7 @@
     "carbohydrateContent": 5.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.5,
+    "nutritionScore": 7.3,
     "imageUrl": ""
   },
   {
@@ -373,8 +373,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.7,
-    "imageUrl": ""
+    "nutritionScore": 6.76,
+    "imageUrl": "https://m.ftscrt.com/food/3377a299-1ae0-45e6-bbf6-033278b7a964_sq.jpg"
   },
   {
     "name": "Fruit Smoothie (made with Fruit or Fruit Juice only)",
@@ -386,8 +386,8 @@
     "carbohydrateContent": 15.96,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.1,
-    "imageUrl": ""
+    "nutritionScore": 4.08,
+    "imageUrl": "https://m.ftscrt.com/food/d724246b-fc9e-48f5-a763-c08af86e1eae_sq.jpg"
   },
   {
     "name": "Couscous",
@@ -399,7 +399,7 @@
     "carbohydrateContent": 23.11,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.6,
+    "nutritionScore": 5.58,
     "imageUrl": ""
   },
   {
@@ -412,8 +412,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/833d951b-2863-42f2-b9d1-1f1c339d91ec_sq.jpg"
   },
   {
     "name": "Turnip",
@@ -425,7 +425,7 @@
     "carbohydrateContent": 6.43,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
+    "nutritionScore": 6.29,
     "imageUrl": ""
   },
   {
@@ -438,7 +438,7 @@
     "carbohydrateContent": 2.19,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.7,
+    "nutritionScore": 6.65,
     "imageUrl": ""
   },
   {
@@ -451,7 +451,7 @@
     "carbohydrateContent": 8.95,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
+    "nutritionScore": 6.54,
     "imageUrl": ""
   },
   {
@@ -464,8 +464,8 @@
     "carbohydrateContent": 83.62,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 3.12,
+    "imageUrl": "https://m.ftscrt.com/food/5e5e1647-84cf-45fd-a128-23f93e454fad_sq.jpg"
   },
   {
     "name": "Roasted Salted Cashew Nuts",
@@ -477,8 +477,8 @@
     "carbohydrateContent": 30.16,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 6.12,
+    "imageUrl": "https://m.ftscrt.com/food/9c879ffc-3fce-4e16-be87-3fb243fee5de_sq.jpg"
   },
   {
     "name": "Butter",
@@ -490,8 +490,8 @@
     "carbohydrateContent": 0.06,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.6,
-    "imageUrl": ""
+    "nutritionScore": 3.85,
+    "imageUrl": "https://m.ftscrt.com/food/a8168cde-864a-4c93-9cb5-4d8f33f4ab61_sq.jpg"
   },
   {
     "name": "Latte Coffee",
@@ -503,8 +503,8 @@
     "carbohydrateContent": 3.03,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.2,
-    "imageUrl": ""
+    "nutritionScore": 4.65,
+    "imageUrl": "https://m.ftscrt.com/food/a6bea8f0-e8f4-4d20-882d-208f5c1858e9_sq.jpg"
   },
   {
     "name": "Raw Brazil Nuts",
@@ -516,7 +516,7 @@
     "carbohydrateContent": 2.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.8,
+    "nutritionScore": 5.2,
     "imageUrl": ""
   },
   {
@@ -529,8 +529,8 @@
     "carbohydrateContent": 17.17,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.4,
-    "imageUrl": ""
+    "nutritionScore": 5.63,
+    "imageUrl": "https://m.ftscrt.com/food/dc43e450-1e30-4f84-9656-39d1155fb7c6_sq.jpg"
   },
   {
     "name": "Ice Cream Cone",
@@ -542,7 +542,7 @@
     "carbohydrateContent": 29.26,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.4,
+    "nutritionScore": 3.56,
     "imageUrl": ""
   },
   {
@@ -555,8 +555,8 @@
     "carbohydrateContent": 0.67,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.8,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/3e8fe7a0-05bd-46c5-943d-9c6895c71897_sq.jpg"
   },
   {
     "name": "Celery",
@@ -568,8 +568,8 @@
     "carbohydrateContent": 2.97,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.27,
+    "imageUrl": "https://m.ftscrt.com/food/196e2f77-7ef7-4cb6-a342-42bbf5f8df39_sq.jpg"
   },
   {
     "name": "Papayas",
@@ -581,8 +581,8 @@
     "carbohydrateContent": 9.81,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.4,
-    "imageUrl": ""
+    "nutritionScore": 5.59,
+    "imageUrl": "https://m.ftscrt.com/food/7544bbd9-a9b7-40d3-9e25-9b9fea19e7d5_sq.jpg"
   },
   {
     "name": "Cultured Whole Buttermilk",
@@ -594,7 +594,7 @@
     "carbohydrateContent": 13.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
+    "nutritionScore": 4.77,
     "imageUrl": ""
   },
   {
@@ -607,7 +607,7 @@
     "carbohydrateContent": 24.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
+    "nutritionScore": 3.34,
     "imageUrl": ""
   },
   {
@@ -620,8 +620,8 @@
     "carbohydrateContent": 16.53,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
-    "imageUrl": ""
+    "nutritionScore": 5.62,
+    "imageUrl": "https://m.ftscrt.com/food/deaba08c-ee9e-46f4-b9ba-efed5a5f2aae_sq.jpg"
   },
   {
     "name": "Mayonnaise",
@@ -633,8 +633,8 @@
     "carbohydrateContent": 23.9,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.7,
-    "imageUrl": ""
+    "nutritionScore": 3.86,
+    "imageUrl": "https://m.ftscrt.com/food/6bb7a7f1-43d5-47d2-870a-71ba703883e7_sq.jpg"
   },
   {
     "name": "Energy Drink",
@@ -646,7 +646,7 @@
     "carbohydrateContent": 3.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
+    "nutritionScore": 4.03,
     "imageUrl": ""
   },
   {
@@ -659,8 +659,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.45,
+    "imageUrl": "https://m.ftscrt.com/food/109a75a4-559b-47db-ba5e-d6c266982841_sq.jpg"
   },
   {
     "name": "100% Vegetable Juice",
@@ -672,7 +672,7 @@
     "carbohydrateContent": 10.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
+    "nutritionScore": 4.78,
     "imageUrl": ""
   },
   {
@@ -685,7 +685,7 @@
     "carbohydrateContent": 23.57,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.5,
+    "nutritionScore": 5.55,
     "imageUrl": ""
   },
   {
@@ -698,8 +698,8 @@
     "carbohydrateContent": 3.63,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.3,
-    "imageUrl": ""
+    "nutritionScore": 6.49,
+    "imageUrl": "https://m.ftscrt.com/food/c4d5c317-8b6b-423b-98fd-a54434641589_sq.jpg"
   },
   {
     "name": "Cooked Lentils",
@@ -711,8 +711,8 @@
     "carbohydrateContent": 18.73,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.8,
-    "imageUrl": ""
+    "nutritionScore": 5.27,
+    "imageUrl": "https://m.ftscrt.com/food/d2f9b60d-6a0f-48d5-a796-59911e585c60_sq.jpg"
   },
   {
     "name": "Pork Chops (Top Loin, Boneless)",
@@ -724,8 +724,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.6,
-    "imageUrl": ""
+    "nutritionScore": 6.17,
+    "imageUrl": "https://m.ftscrt.com/food/d603d695-509f-4793-9a78-0bc7d6919f37_sq.jpg"
   },
   {
     "name": "Lemonade",
@@ -737,8 +737,8 @@
     "carbohydrateContent": 10.43,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.6,
-    "imageUrl": ""
+    "nutritionScore": 4.04,
+    "imageUrl": "https://m.ftscrt.com/food/e902c408-15f4-4d93-89ab-5dc3856a8d91_sq.jpg"
   },
   {
     "name": "Lettuce",
@@ -750,8 +750,8 @@
     "carbohydrateContent": 2.97,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.29,
+    "imageUrl": "https://m.ftscrt.com/food/acd74600-2e80-4c2b-bce9-08634a5bbded_sq.jpg"
   },
   {
     "name": "Fruit Punch",
@@ -763,7 +763,7 @@
     "carbohydrateContent": 32.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
+    "nutritionScore": 4.03,
     "imageUrl": ""
   },
   {
@@ -776,8 +776,8 @@
     "carbohydrateContent": 20.11,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 5.15,
+    "imageUrl": "https://m.ftscrt.com/food/b908f155-93f3-4432-863a-902aef451aec_sq.jpg"
   },
   {
     "name": "Yellow Corn Meal",
@@ -789,7 +789,7 @@
     "carbohydrateContent": 21.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
+    "nutritionScore": 5.27,
     "imageUrl": ""
   },
   {
@@ -802,7 +802,7 @@
     "carbohydrateContent": 44.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.5,
+    "nutritionScore": 4.87,
     "imageUrl": ""
   },
   {
@@ -815,7 +815,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.3,
+    "nutritionScore": 5.86,
     "imageUrl": ""
   },
   {
@@ -828,7 +828,7 @@
     "carbohydrateContent": 4.24,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
+    "nutritionScore": 4.74,
     "imageUrl": ""
   },
   {
@@ -841,8 +841,8 @@
     "carbohydrateContent": 18.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.1,
-    "imageUrl": ""
+    "nutritionScore": 6.33,
+    "imageUrl": "https://m.ftscrt.com/food/4f5f5d99-978d-4701-ab90-e6036db927df_sq.jpg"
   },
   {
     "name": "Sour Cream",
@@ -854,8 +854,8 @@
     "carbohydrateContent": 4.27,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.4,
-    "imageUrl": ""
+    "nutritionScore": 4.08,
+    "imageUrl": "https://m.ftscrt.com/food/92b5fa40-cad6-47ad-ac99-23ef8683dc5f_sq.jpg"
   },
   {
     "name": "Clotted Cream",
@@ -867,7 +867,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.0,
+    "nutritionScore": 3.77,
     "imageUrl": ""
   },
   {
@@ -880,21 +880,21 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.5,
-    "imageUrl": ""
+    "nutritionScore": 6.99,
+    "imageUrl": "https://m.ftscrt.com/food/b0ab0c4e-442a-4ddc-8ace-404d1907df8b_sq.jpg"
   },
   {
-    "name": "Whole Grain Cereal",
+    "name": "Toasted Whole Grain Oat Cereal",
     "category": "Grain",
-    "servingSize": 30.0,
-    "caloriesPerServing": 110.0,
-    "proteinContent": 2.0,
-    "fatContent": 1.0,
-    "carbohydrateContent": 23.0,
+    "servingSize": 28.0,
+    "caloriesPerServing": 100.0,
+    "proteinContent": 3.0,
+    "fatContent": 1.5,
+    "carbohydrateContent": 21.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.4,
-    "imageUrl": ""
+    "nutritionScore": 6.77,
+    "imageUrl": "https://m.ftscrt.com/food/210df819-19b6-4441-bbe0-1f59365f6358_sq.jpg"
   },
   {
     "name": "Korean Roasted Barley Tea",
@@ -906,7 +906,7 @@
     "carbohydrateContent": 1.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
+    "nutritionScore": 4.8,
     "imageUrl": ""
   },
   {
@@ -919,8 +919,8 @@
     "carbohydrateContent": 44.17,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.6,
-    "imageUrl": ""
+    "nutritionScore": 6.09,
+    "imageUrl": "https://m.ftscrt.com/food/90e69f15-47fc-4510-b10e-3e02a31f3471_sq.jpg"
   },
   {
     "name": "Gummy Bears",
@@ -932,8 +932,8 @@
     "carbohydrateContent": 98.9,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.8,
-    "imageUrl": ""
+    "nutritionScore": 3.03,
+    "imageUrl": "https://m.ftscrt.com/food/d785d6c4-0de3-44e1-9535-aec5bc10fd8f_sq.jpg"
   },
   {
     "name": "Plus Probiotic Juice Drink - Mango",
@@ -945,7 +945,7 @@
     "carbohydrateContent": 25.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.1,
+    "nutritionScore": 5.28,
     "imageUrl": ""
   },
   {
@@ -958,8 +958,8 @@
     "carbohydrateContent": 9.87,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.7,
-    "imageUrl": ""
+    "nutritionScore": 5.69,
+    "imageUrl": "https://m.ftscrt.com/food/9d2cedf6-fcc3-4e4f-8d75-ede9df15d3fb_sq.jpg"
   },
   {
     "name": "Veal Meat",
@@ -971,7 +971,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.4,
+    "nutritionScore": 5.97,
     "imageUrl": ""
   },
   {
@@ -984,8 +984,8 @@
     "carbohydrateContent": 19.56,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.94,
+    "imageUrl": "https://m.ftscrt.com/food/bcad84d7-6e79-46bb-bddc-ae6a108ef109_sq.jpg"
   },
   {
     "name": "Coconut Water",
@@ -997,8 +997,8 @@
     "carbohydrateContent": 3.71,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
-    "imageUrl": ""
+    "nutritionScore": 4.77,
+    "imageUrl": "https://m.ftscrt.com/food/b55243d3-7bad-4ccd-af90-325e2e7e6675_sq.jpg"
   },
   {
     "name": "Kale",
@@ -1010,8 +1010,8 @@
     "carbohydrateContent": 10.01,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.8,
-    "imageUrl": ""
+    "nutritionScore": 6.53,
+    "imageUrl": "https://m.ftscrt.com/food/a4334a0c-3a5c-4d46-a5de-d5b7c9f41fe1_sq.jpg"
   },
   {
     "name": "Crab",
@@ -1023,8 +1023,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.0,
-    "imageUrl": ""
+    "nutritionScore": 6.3,
+    "imageUrl": "https://m.ftscrt.com/food/dff1c3f9-8180-4d43-94a3-d02ac994c9fa_sq.jpg"
   },
   {
     "name": "Water",
@@ -1036,8 +1036,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 1.5,
+    "imageUrl": "https://m.ftscrt.com/food/374a0c93-57d9-4be3-a030-94f213d562ad_sq.jpg"
   },
   {
     "name": "Cantaloupe Melons",
@@ -1049,8 +1049,8 @@
     "carbohydrateContent": 8.16,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.8,
-    "imageUrl": ""
+    "nutritionScore": 5.62,
+    "imageUrl": "https://m.ftscrt.com/food/ec660bcb-a2e5-46ae-a4ea-e3bb412c17be_sq.jpg"
   },
   {
     "name": "Passion Fruit",
@@ -1062,8 +1062,8 @@
     "carbohydrateContent": 23.38,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
-    "imageUrl": ""
+    "nutritionScore": 5.75,
+    "imageUrl": "https://m.ftscrt.com/food/ca0121bc-e465-4bdc-ab6d-5ce4dc2f359d_sq.jpg"
   },
   {
     "name": "Tuna in Water (Canned)",
@@ -1075,8 +1075,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.1,
-    "imageUrl": ""
+    "nutritionScore": 6.85,
+    "imageUrl": "https://m.ftscrt.com/food/25fdb229-7e6f-44b8-a26b-0f15e7dbcdaf_sq.jpg"
   },
   {
     "name": "Cooked Soba Japanese Noodles",
@@ -1088,8 +1088,8 @@
     "carbohydrateContent": 21.44,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 5.71,
+    "imageUrl": "https://m.ftscrt.com/food/c9717586-1620-4735-bd8d-91b6528f7a64_sq.jpg"
   },
   {
     "name": "Hazelnut Spread",
@@ -1101,8 +1101,8 @@
     "carbohydrateContent": 22.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.5,
-    "imageUrl": ""
+    "nutritionScore": 4.71,
+    "imageUrl": "https://m.ftscrt.com/food/96cc5559-7e3b-4003-9d7b-aa549e459534_sq.jpg"
   },
   {
     "name": "High Protein Shake - Vanilla",
@@ -1114,8 +1114,8 @@
     "carbohydrateContent": 4.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 7.3,
+    "imageUrl": "https://m.ftscrt.com/food/a50f53ca-e80a-4cd5-9495-a76dae3e4e32_sq.jpg"
   },
   {
     "name": "Peanut Brittle",
@@ -1127,21 +1127,21 @@
     "carbohydrateContent": 71.24,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.2,
+    "nutritionScore": 3.92,
     "imageUrl": ""
   },
   {
     "name": "Pumpkin Seeds",
     "category": "Fats & Oils",
-    "servingSize": 30.0,
-    "caloriesPerServing": 190.0,
-    "proteinContent": 10.0,
-    "fatContent": 16.0,
-    "carbohydrateContent": 1.0,
+    "servingSize": 26.0,
+    "caloriesPerServing": 160.0,
+    "proteinContent": 8.0,
+    "fatContent": 12.0,
+    "carbohydrateContent": 4.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 7.43,
+    "imageUrl": "https://m.ftscrt.com/food/c72abc3b-9631-4e5f-b470-337dcb6722e4_sq.jpg"
   },
   {
     "name": "Tahini Sauce",
@@ -1153,7 +1153,7 @@
     "carbohydrateContent": 2.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
+    "nutritionScore": 4.51,
     "imageUrl": ""
   },
   {
@@ -1166,8 +1166,8 @@
     "carbohydrateContent": 3.4,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.27,
+    "imageUrl": "https://m.ftscrt.com/food/60a6dcfe-d897-4e04-8261-81f245f504b2_sq.jpg"
   },
   {
     "name": "Green String Beans",
@@ -1179,8 +1179,8 @@
     "carbohydrateContent": 7.13,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.2,
-    "imageUrl": ""
+    "nutritionScore": 6.38,
+    "imageUrl": "https://m.ftscrt.com/food/b7f0aacd-74af-4c5a-9aa6-fc64cbb712f9_sq.jpg"
   },
   {
     "name": "Cauliflower",
@@ -1192,8 +1192,8 @@
     "carbohydrateContent": 5.3,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.2,
-    "imageUrl": ""
+    "nutritionScore": 6.4,
+    "imageUrl": "https://m.ftscrt.com/food/871621fa-0726-4189-a0f9-05b308332558_sq.jpg"
   },
   {
     "name": "Grapeseed Oil",
@@ -1205,7 +1205,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
+    "nutritionScore": 3.77,
     "imageUrl": ""
   },
   {
@@ -1218,7 +1218,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.7,
+    "nutritionScore": 6.7,
     "imageUrl": ""
   },
   {
@@ -1231,8 +1231,8 @@
     "carbohydrateContent": 19.02,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.8,
-    "imageUrl": ""
+    "nutritionScore": 6.52,
+    "imageUrl": "https://m.ftscrt.com/food/b8835eb9-a820-4034-92b7-4ba7500942a0_sq.jpg"
   },
   {
     "name": "Shrimp",
@@ -1244,8 +1244,8 @@
     "carbohydrateContent": 1.24,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.8,
-    "imageUrl": ""
+    "nutritionScore": 7.06,
+    "imageUrl": "https://m.ftscrt.com/food/783e9677-f222-4e87-b80e-070e5844e3cc_sq.jpg"
   },
   {
     "name": "Sunflower Oil",
@@ -1257,8 +1257,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/744e0394-9d79-4751-8e77-ce5b6623c413_sq.jpg"
   },
   {
     "name": "Organic Tomato Meatball Soup",
@@ -1270,7 +1270,7 @@
     "carbohydrateContent": 22.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.3,
+    "nutritionScore": 9.6,
     "imageUrl": ""
   },
   {
@@ -1283,8 +1283,8 @@
     "carbohydrateContent": 7.68,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
-    "imageUrl": ""
+    "nutritionScore": 5.6,
+    "imageUrl": "https://m.ftscrt.com/food/dc600bc5-9083-4942-b611-2a4234f27a29_sq.jpg"
   },
   {
     "name": "Zucchini",
@@ -1296,8 +1296,8 @@
     "carbohydrateContent": 3.35,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.32,
+    "imageUrl": "https://m.ftscrt.com/food/5fe69f4c-afcd-47bb-b0e9-59aaad4c7c9e_sq.jpg"
   },
   {
     "name": "Garbanzo Beans",
@@ -1309,8 +1309,8 @@
     "carbohydrateContent": 20.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 5.16,
+    "imageUrl": "https://m.ftscrt.com/food/390180c8-9b72-4a8c-9203-3963a6373871_sq.jpg"
   },
   {
     "name": "Tomatoes",
@@ -1322,8 +1322,8 @@
     "carbohydrateContent": 3.92,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.29,
+    "imageUrl": "https://m.ftscrt.com/food/2cc60679-ca81-4f9e-8d3b-3a3090defe6a_sq.jpg"
   },
   {
     "name": "Soybean Oil",
@@ -1335,7 +1335,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
+    "nutritionScore": 3.77,
     "imageUrl": ""
   },
   {
@@ -1348,8 +1348,8 @@
     "carbohydrateContent": 11.94,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.2,
-    "imageUrl": ""
+    "nutritionScore": 5.65,
+    "imageUrl": "https://m.ftscrt.com/food/192e3878-caa0-4678-ac1e-bccc1fbb1280_sq.jpg"
   },
   {
     "name": "Grapes (Red or Green, European Type Varieties Such As Thompson Seedless)",
@@ -1361,8 +1361,8 @@
     "carbohydrateContent": 18.1,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.2,
-    "imageUrl": ""
+    "nutritionScore": 5.61,
+    "imageUrl": "https://m.ftscrt.com/food/006e04c0-c10a-4694-8927-3d5d5afa6f40_sq.jpg"
   },
   {
     "name": "Root Beer",
@@ -1374,8 +1374,8 @@
     "carbohydrateContent": 39.22,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/b9482b75-611b-4964-bf53-1018a946ba9e_sq.jpg"
   },
   {
     "name": "Cooked Artichoke (from Fresh)",
@@ -1387,8 +1387,8 @@
     "carbohydrateContent": 10.87,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.3,
-    "imageUrl": ""
+    "nutritionScore": 7.34,
+    "imageUrl": "https://m.ftscrt.com/food/ce092fe8-b9fe-44c6-a8f6-b5996a97ff6a_sq.jpg"
   },
   {
     "name": "Paneer",
@@ -1400,8 +1400,8 @@
     "carbohydrateContent": 1.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.43,
+    "imageUrl": "https://m.ftscrt.com/food/71be7730-eebd-4a12-a1d5-5c15557e6645_sq.jpg"
   },
   {
     "name": "Cheddar Cheese",
@@ -1413,8 +1413,8 @@
     "carbohydrateContent": 1.28,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.92,
+    "imageUrl": "https://m.ftscrt.com/food/c321822c-7c24-4034-a6e9-cf7de87b52fc_sq.jpg"
   },
   {
     "name": "Octopus",
@@ -1426,7 +1426,7 @@
     "carbohydrateContent": 2.2,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.5,
+    "nutritionScore": 5.79,
     "imageUrl": ""
   },
   {
@@ -1439,8 +1439,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/e1f586b4-abb8-4e4e-8a5c-ba4391d32e58_sq.jpg"
   },
   {
     "name": "Ice Cream",
@@ -1452,21 +1452,21 @@
     "carbohydrateContent": 24.4,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.0,
-    "imageUrl": ""
+    "nutritionScore": 4.52,
+    "imageUrl": "https://m.ftscrt.com/food/f610e69f-a398-4eb2-9fbe-912902fb0e5d_sq.jpg"
   },
   {
-    "name": "Plain Muffin",
+    "name": "Blueberry Muffins",
     "category": "Sweets & Snacks",
     "servingSize": 100.0,
-    "caloriesPerServing": 305.0,
-    "proteinContent": 7.63,
-    "fatContent": 10.87,
-    "carbohydrateContent": 43.77,
+    "caloriesPerServing": 277.0,
+    "proteinContent": 5.5,
+    "fatContent": 6.5,
+    "carbohydrateContent": 48.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.6,
-    "imageUrl": ""
+    "nutritionScore": 3.98,
+    "imageUrl": "https://m.ftscrt.com/food/930bfba0-203a-4f87-9114-fc9fadae2c3e_sq.jpg"
   },
   {
     "name": "Tangerine",
@@ -1478,8 +1478,8 @@
     "carbohydrateContent": 13.34,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.4,
-    "imageUrl": ""
+    "nutritionScore": 5.61,
+    "imageUrl": "https://m.ftscrt.com/food/87e24413-bf0b-48c5-922c-0ea5192912d7_sq.jpg"
   },
   {
     "name": "Cucumber (with Peel)",
@@ -1491,8 +1491,8 @@
     "carbohydrateContent": 3.63,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.26,
+    "imageUrl": "https://m.ftscrt.com/food/e8cb77fd-f37b-4e85-a102-dd9172c86624_sq.jpg"
   },
   {
     "name": "White Rice",
@@ -1504,8 +1504,8 @@
     "carbohydrateContent": 27.9,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
-    "imageUrl": ""
+    "nutritionScore": 4.8,
+    "imageUrl": "https://m.ftscrt.com/food/0e9c9094-1457-4d0b-9b61-64508d7d6bf7_sq.jpg"
   },
   {
     "name": "4% Small Curd Cottage Cheese",
@@ -1517,8 +1517,8 @@
     "carbohydrateContent": 5.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.2,
-    "imageUrl": ""
+    "nutritionScore": 5.18,
+    "imageUrl": "https://m.ftscrt.com/food/c382bfdb-b5e8-46b2-a91a-f096f85d991e_sq.jpg"
   },
   {
     "name": "Butter",
@@ -1530,21 +1530,21 @@
     "carbohydrateContent": 0.06,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.1,
-    "imageUrl": ""
+    "nutritionScore": 3.85,
+    "imageUrl": "https://m.ftscrt.com/food/a8168cde-864a-4c93-9cb5-4d8f33f4ab61_sq.jpg"
   },
   {
     "name": "Enriched White Bread",
     "category": "Grain",
     "servingSize": 26.0,
-    "caloriesPerServing": 60.0,
+    "caloriesPerServing": 70.0,
     "proteinContent": 2.0,
     "fatContent": 1.0,
-    "carbohydrateContent": 13.0,
+    "carbohydrateContent": 14.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.0,
-    "imageUrl": ""
+    "nutritionScore": 5.97,
+    "imageUrl": "https://m.ftscrt.com/food/bdaa961a-b918-4d16-ac5b-e04e02fcda30_sq.jpg"
   },
   {
     "name": "Candy",
@@ -1556,8 +1556,8 @@
     "carbohydrateContent": 95.71,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.8,
-    "imageUrl": ""
+    "nutritionScore": 3.03,
+    "imageUrl": "https://m.ftscrt.com/food/089bccbd-dd62-4e6f-a242-e5d1a3cc36f8_sq.jpg"
   },
   {
     "name": "Lollipops",
@@ -1569,7 +1569,7 @@
     "carbohydrateContent": 98.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.8,
+    "nutritionScore": 3.03,
     "imageUrl": ""
   },
   {
@@ -1582,8 +1582,8 @@
     "carbohydrateContent": 24.01,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.5,
-    "imageUrl": ""
+    "nutritionScore": 5.68,
+    "imageUrl": "https://m.ftscrt.com/food/ba4fa9cb-e72f-496e-8ddc-1aac0d04afd8_sq.jpg"
   },
   {
     "name": "Rice Krispies Treats",
@@ -1595,7 +1595,7 @@
     "carbohydrateContent": 8.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.8,
+    "nutritionScore": 3.43,
     "imageUrl": ""
   },
   {
@@ -1608,8 +1608,8 @@
     "carbohydrateContent": 27.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.45,
+    "imageUrl": "https://m.ftscrt.com/food/bcf51592-3b7a-41ea-8c5b-af0b724dcff9_sq.jpg"
   },
   {
     "name": "Potato Chips",
@@ -1621,8 +1621,8 @@
     "carbohydrateContent": 49.74,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
-    "imageUrl": ""
+    "nutritionScore": 3.42,
+    "imageUrl": "https://m.ftscrt.com/food/3ed893c1-4b02-4f02-bae5-8ad0f097d97a_sq.jpg"
   },
   {
     "name": "Organic Firm Tofu",
@@ -1634,7 +1634,7 @@
     "carbohydrateContent": 3.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.6,
+    "nutritionScore": 5.1,
     "imageUrl": ""
   },
   {
@@ -1647,8 +1647,8 @@
     "carbohydrateContent": 26.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.0,
-    "imageUrl": ""
+    "nutritionScore": 3.46,
+    "imageUrl": "https://m.ftscrt.com/food/af4de0ff-0e6e-4e4c-999f-0551abf2a1ae_sq.jpg"
   },
   {
     "name": "Herbal Tea",
@@ -1660,8 +1660,8 @@
     "carbohydrateContent": 0.47,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/43530514-264a-45fc-bfc0-44a9df2cc412_sq.jpg"
   },
   {
     "name": "Avocado",
@@ -1673,8 +1673,8 @@
     "carbohydrateContent": 1.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
-    "imageUrl": ""
+    "nutritionScore": 5.4,
+    "imageUrl": "https://m.ftscrt.com/food/8770e696-5f29-40b0-a5d1-519cde95eca5_sq.jpg"
   },
   {
     "name": "Pineapple",
@@ -1686,8 +1686,8 @@
     "carbohydrateContent": 12.63,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.3,
-    "imageUrl": ""
+    "nutritionScore": 5.59,
+    "imageUrl": "https://m.ftscrt.com/food/c71ad918-3778-4237-a68a-5f4b99ef8c34_sq.jpg"
   },
   {
     "name": "Yellow Cake (with Vanilla Frosting)",
@@ -1699,8 +1699,8 @@
     "carbohydrateContent": 58.8,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.5,
-    "imageUrl": ""
+    "nutritionScore": 4.18,
+    "imageUrl": "https://m.ftscrt.com/food/c965bf1e-8a6a-4fb2-a83c-69666ff95eb6_sq.jpg"
   },
   {
     "name": "Lamb",
@@ -1712,7 +1712,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.4,
+    "nutritionScore": 6.87,
     "imageUrl": ""
   },
   {
@@ -1725,8 +1725,8 @@
     "carbohydrateContent": 31.14,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/5ab80287-8175-47a8-b780-5301ed6cb68c_sq.jpg"
   },
   {
     "name": "Custard",
@@ -1738,8 +1738,8 @@
     "carbohydrateContent": 10.85,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.01,
+    "imageUrl": "https://m.ftscrt.com/food/b9281680-4ca8-44e7-b86b-303ba796e734_sq.jpg"
   },
   {
     "name": "Bison",
@@ -1751,8 +1751,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.5,
-    "imageUrl": ""
+    "nutritionScore": 6.07,
+    "imageUrl": "https://m.ftscrt.com/food/5e775b1d-b3cc-40fc-9010-85ceb6d58d9d_sq.jpg"
   },
   {
     "name": "Garlic",
@@ -1764,8 +1764,8 @@
     "carbohydrateContent": 33.06,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.6,
-    "imageUrl": ""
+    "nutritionScore": 6.84,
+    "imageUrl": "https://m.ftscrt.com/food/36e2e1a4-e589-4902-942a-5f459ae979dd_sq.jpg"
   },
   {
     "name": "Coffee",
@@ -1777,8 +1777,8 @@
     "carbohydrateContent": 0.04,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.0,
-    "imageUrl": ""
+    "nutritionScore": 4.71,
+    "imageUrl": "https://m.ftscrt.com/food/d23db188-14d5-4986-9811-0b5ec1efe769_sq.jpg"
   },
   {
     "name": "Parmesan Cheese (Shredded)",
@@ -1790,8 +1790,8 @@
     "carbohydrateContent": 3.41,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.0,
-    "imageUrl": ""
+    "nutritionScore": 7.03,
+    "imageUrl": "https://m.ftscrt.com/food/86b13953-16a1-4aa4-992c-b86b46869785_sq.jpg"
   },
   {
     "name": "Tea (Brewed)",
@@ -1803,8 +1803,8 @@
     "carbohydrateContent": 0.3,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/83e90392-7e05-4ad0-8e83-9c3bd822ff69_sq.jpg"
   },
   {
     "name": "Chia Seeds",
@@ -1816,7 +1816,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
+    "nutritionScore": 6.1,
     "imageUrl": ""
   },
   {
@@ -1829,8 +1829,8 @@
     "carbohydrateContent": 10.4,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.1,
+    "imageUrl": "https://m.ftscrt.com/food/eb8e482f-7d8b-4d93-9d2d-ae5dc55fbc80_sq.jpg"
   },
   {
     "name": "Grits",
@@ -1842,8 +1842,8 @@
     "carbohydrateContent": 9.55,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.3,
-    "imageUrl": ""
+    "nutritionScore": 4.64,
+    "imageUrl": "https://m.ftscrt.com/food/45e3fddd-5fa3-45e5-97f5-42a34cf7fbcc_sq.jpg"
   },
   {
     "name": "Green Peas",
@@ -1855,8 +1855,8 @@
     "carbohydrateContent": 14.46,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.74,
+    "imageUrl": "https://m.ftscrt.com/food/aee4ba02-828c-4c0d-8354-cceafcbf87fe_sq.jpg"
   },
   {
     "name": "Churros",
@@ -1868,8 +1868,8 @@
     "carbohydrateContent": 45.94,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.3,
-    "imageUrl": ""
+    "nutritionScore": 3.05,
+    "imageUrl": "https://m.ftscrt.com/food/518310cf-9110-4958-9ae9-b4372147c41d_sq.jpg"
   },
   {
     "name": "Movie Theater Butter Popcorn",
@@ -1881,8 +1881,8 @@
     "carbohydrateContent": 14.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.5,
-    "imageUrl": ""
+    "nutritionScore": 2.97,
+    "imageUrl": "https://m.ftscrt.com/food/fea745cc-e4e7-4d6e-8191-0ef232d84093_sq.jpg"
   },
   {
     "name": "Dulce De Leche",
@@ -1894,7 +1894,7 @@
     "carbohydrateContent": 21.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
+    "nutritionScore": 5.22,
     "imageUrl": ""
   },
   {
@@ -1907,8 +1907,8 @@
     "carbohydrateContent": 10.11,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 5.63,
+    "imageUrl": "https://m.ftscrt.com/food/edd0b79d-adb7-4a03-844d-79696d66c5b8_sq.jpg"
   },
   {
     "name": "Whole Wheat Bread",
@@ -1920,8 +1920,8 @@
     "carbohydrateContent": 47.14,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.4,
-    "imageUrl": ""
+    "nutritionScore": 6.61,
+    "imageUrl": "https://m.ftscrt.com/food/6a24d0fb-fdd5-4a5a-bcdc-a461d5c777e0_sq.jpg"
   },
   {
     "name": "Chocolate Chip Cookies (Soft Type)",
@@ -1933,8 +1933,8 @@
     "carbohydrateContent": 59.1,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.4,
-    "imageUrl": ""
+    "nutritionScore": 3.52,
+    "imageUrl": "https://m.ftscrt.com/food/ff64411f-0c08-4f8d-9e75-2a8888d33b6e_sq.jpg"
   },
   {
     "name": "Multigrain Bread",
@@ -1947,7 +1947,7 @@
     "allergens": [],
     "dietaryOptions": [],
     "nutritionScore": 6.2,
-    "imageUrl": ""
+    "imageUrl": "https://m.ftscrt.com/food/8079e7d8-39f7-4bf5-adb7-a3076dcfbb97_sq.jpg"
   },
   {
     "name": "Cooked Pumpkin",
@@ -1959,8 +1959,8 @@
     "carbohydrateContent": 7.94,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.9,
-    "imageUrl": ""
+    "nutritionScore": 6.44,
+    "imageUrl": "https://m.ftscrt.com/food/af76abbc-6cd9-4281-b2cf-e7ed6d9705c7_sq.jpg"
   },
   {
     "name": "Parsnips",
@@ -1972,7 +1972,7 @@
     "carbohydrateContent": 17.99,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
+    "nutritionScore": 5.65,
     "imageUrl": ""
   },
   {
@@ -1985,8 +1985,8 @@
     "carbohydrateContent": 2.34,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.6,
-    "imageUrl": ""
+    "nutritionScore": 6.57,
+    "imageUrl": "https://m.ftscrt.com/food/7110e378-577c-4b08-80f6-c9f4374910c9_sq.jpg"
   },
   {
     "name": "Rice Noodles (Cooked)",
@@ -1998,8 +1998,8 @@
     "carbohydrateContent": 24.9,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
-    "imageUrl": ""
+    "nutritionScore": 4.62,
+    "imageUrl": "https://m.ftscrt.com/food/8686768a-c44f-409f-a7e3-f8f1ae6c11e1_sq.jpg"
   },
   {
     "name": "Bagel",
@@ -2011,8 +2011,8 @@
     "carbohydrateContent": 50.5,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 6.2,
+    "imageUrl": "https://m.ftscrt.com/food/c1c991a6-2304-4c65-ba82-f689c22d2590_sq.jpg"
   },
   {
     "name": "Leek",
@@ -2024,7 +2024,7 @@
     "carbohydrateContent": 14.15,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.1,
+    "nutritionScore": 5.68,
     "imageUrl": ""
   },
   {
@@ -2037,8 +2037,8 @@
     "carbohydrateContent": 75.03,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 5.78,
+    "imageUrl": "https://m.ftscrt.com/food/9c719f42-f3d2-4fe2-9f55-858a46b63e20_sq.jpg"
   },
   {
     "name": "Pearled Barley (Cooked)",
@@ -2050,8 +2050,8 @@
     "carbohydrateContent": 28.22,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 4.76,
+    "imageUrl": "https://m.ftscrt.com/food/d26752c4-d779-4a25-8aa2-7f8b21d30ad2_sq.jpg"
   },
   {
     "name": "Mini Pretzels",
@@ -2063,8 +2063,8 @@
     "carbohydrateContent": 23.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
-    "imageUrl": ""
+    "nutritionScore": 4.77,
+    "imageUrl": "https://m.ftscrt.com/food/b8ee00d8-bfb3-401f-9367-26b80ae1d9da_sq.jpg"
   },
   {
     "name": "Quinoa (Cooked)",
@@ -2076,8 +2076,8 @@
     "carbohydrateContent": 26.35,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.2,
-    "imageUrl": ""
+    "nutritionScore": 5.7,
+    "imageUrl": "https://m.ftscrt.com/food/c9bc3fc8-f0d8-499c-9512-27040444ec7f_sq.jpg"
   },
   {
     "name": "Guava",
@@ -2089,8 +2089,8 @@
     "carbohydrateContent": 14.32,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.6,
-    "imageUrl": ""
+    "nutritionScore": 6.46,
+    "imageUrl": "https://m.ftscrt.com/food/3524ae6e-c39c-4b53-b997-12230963d793_sq.jpg"
   },
   {
     "name": "Organic Virgin Coconut Oil",
@@ -2102,8 +2102,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/7cfa9f51-08e4-4f5c-a4d3-6ffab547d6e7_sq.jpg"
   },
   {
     "name": "Chewy Granola Bars - Chocolate Chip",
@@ -2115,8 +2115,8 @@
     "carbohydrateContent": 19.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 3.82,
+    "imageUrl": "https://m.ftscrt.com/food/490a6c9a-294d-407a-a4eb-65174e006458_sq.jpg"
   },
   {
     "name": "Pears",
@@ -2128,8 +2128,8 @@
     "carbohydrateContent": 15.46,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 5.57,
+    "imageUrl": "https://m.ftscrt.com/food/8f83152e-f7b2-468c-8170-d1bb80e6f406_sq.jpg"
   },
   {
     "name": "Heavy Cream",
@@ -2141,8 +2141,8 @@
     "carbohydrateContent": 2.79,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
-    "imageUrl": ""
+    "nutritionScore": 3.97,
+    "imageUrl": "https://m.ftscrt.com/food/fc4b7cb4-547b-4c15-aad6-ca0453c56c0d_sq.jpg"
   },
   {
     "name": "Sardines in Oil (Canned)",
@@ -2154,8 +2154,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.5,
-    "imageUrl": ""
+    "nutritionScore": 6.5,
+    "imageUrl": "https://m.ftscrt.com/food/4f604891-70c7-4641-8aa4-066908cebeaa_sq.jpg"
   },
   {
     "name": "Scallops",
@@ -2167,8 +2167,8 @@
     "carbohydrateContent": 10.49,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.8,
-    "imageUrl": ""
+    "nutritionScore": 6.25,
+    "imageUrl": "https://m.ftscrt.com/food/29ed58b3-1c90-4aea-94d9-195708fe925e_sq.jpg"
   },
   {
     "name": "Black Beans (Canned)",
@@ -2180,20 +2180,20 @@
     "carbohydrateContent": 16.56,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.1,
-    "imageUrl": ""
+    "nutritionScore": 5.3,
+    "imageUrl": "https://m.ftscrt.com/food/7463565c-0d86-4283-b88a-db7bd0ceba5b_sq.jpg"
   },
   {
     "name": "Ricotta Cheese",
     "category": "Dairy",
-    "servingSize": 63.0,
-    "caloriesPerServing": 110.0,
-    "proteinContent": 7.0,
-    "fatContent": 8.0,
+    "servingSize": 55.0,
+    "caloriesPerServing": 90.0,
+    "proteinContent": 4.0,
+    "fatContent": 7.0,
     "carbohydrateContent": 2.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.1,
+    "nutritionScore": 5.16,
     "imageUrl": ""
   },
   {
@@ -2206,8 +2206,8 @@
     "carbohydrateContent": 6.53,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.8,
-    "imageUrl": ""
+    "nutritionScore": 5.28,
+    "imageUrl": "https://m.ftscrt.com/food/588d65d1-ce89-4f70-9eda-6311d13eaa1c_sq.jpg"
   },
   {
     "name": "Fruit Snacks",
@@ -2219,7 +2219,7 @@
     "carbohydrateContent": 30.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
+    "nutritionScore": 3.53,
     "imageUrl": ""
   },
   {
@@ -2232,7 +2232,7 @@
     "carbohydrateContent": 13.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.0,
+    "nutritionScore": 5.3,
     "imageUrl": ""
   },
   {
@@ -2245,8 +2245,8 @@
     "carbohydrateContent": 3.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.2,
-    "imageUrl": ""
+    "nutritionScore": 5.1,
+    "imageUrl": "https://m.ftscrt.com/food/8770d63d-90f6-406f-865e-553f9562691c_sq.jpg"
   },
   {
     "name": "Goats Cheese (Soft)",
@@ -2258,7 +2258,7 @@
     "carbohydrateContent": 0.89,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.4,
+    "nutritionScore": 6.29,
     "imageUrl": ""
   },
   {
@@ -2271,8 +2271,8 @@
     "carbohydrateContent": 20.11,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.2,
-    "imageUrl": ""
+    "nutritionScore": 5.15,
+    "imageUrl": "https://m.ftscrt.com/food/b908f155-93f3-4432-863a-902aef451aec_sq.jpg"
   },
   {
     "name": "Tilapia Fillets",
@@ -2284,8 +2284,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.8,
-    "imageUrl": ""
+    "nutritionScore": 6.09,
+    "imageUrl": "https://m.ftscrt.com/food/92f24805-2791-405b-aadf-3a004c50bdc9_sq.jpg"
   },
   {
     "name": "Blueberries",
@@ -2297,8 +2297,8 @@
     "carbohydrateContent": 14.49,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
-    "imageUrl": ""
+    "nutritionScore": 5.61,
+    "imageUrl": "https://m.ftscrt.com/food/ab4ddf73-88dc-45e1-9aca-84f776212892_sq.jpg"
   },
   {
     "name": "Roasted Potato",
@@ -2310,8 +2310,8 @@
     "carbohydrateContent": 20.06,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.3,
-    "imageUrl": ""
+    "nutritionScore": 5.9,
+    "imageUrl": "https://m.ftscrt.com/food/a3438262-923b-4714-b82d-5dcd875bb354_sq.jpg"
   },
   {
     "name": "Bananas",
@@ -2323,8 +2323,8 @@
     "carbohydrateContent": 22.84,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.4,
-    "imageUrl": ""
+    "nutritionScore": 5.64,
+    "imageUrl": "https://m.ftscrt.com/food/d8013155-9499-4b13-bcb5-77e5fa718312_sq.jpg"
   },
   {
     "name": "Ginger Ale",
@@ -2336,8 +2336,8 @@
     "carbohydrateContent": 8.77,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/f63c1fd2-99ce-48b7-a8f9-1c99f1a59eb9_sq.jpg"
   },
   {
     "name": "Sweetened Condensed Milk",
@@ -2349,7 +2349,7 @@
     "carbohydrateContent": 22.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.4,
+    "nutritionScore": 5.43,
     "imageUrl": ""
   },
   {
@@ -2362,7 +2362,7 @@
     "carbohydrateContent": 23.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.3,
+    "nutritionScore": 5.53,
     "imageUrl": ""
   },
   {
@@ -2375,7 +2375,7 @@
     "carbohydrateContent": 22.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.0,
+    "nutritionScore": 6.52,
     "imageUrl": ""
   },
   {
@@ -2388,8 +2388,8 @@
     "carbohydrateContent": 0.77,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.8,
-    "imageUrl": ""
+    "nutritionScore": 5.29,
+    "imageUrl": "https://m.ftscrt.com/food/dba1344c-ef13-431b-b27d-e70d09ca1d06_sq.jpg"
   },
   {
     "name": "Nougat with Almonds",
@@ -2401,8 +2401,8 @@
     "carbohydrateContent": 92.39,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 3.37,
+    "imageUrl": "https://m.ftscrt.com/food/4ce18556-535b-407a-961f-e84d1599f7f6_sq.jpg"
   },
   {
     "name": "Macarons",
@@ -2414,7 +2414,7 @@
     "carbohydrateContent": 12.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.5,
+    "nutritionScore": 4.08,
     "imageUrl": ""
   },
   {
@@ -2427,8 +2427,8 @@
     "carbohydrateContent": 10.54,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.5,
-    "imageUrl": ""
+    "nutritionScore": 5.6,
+    "imageUrl": "https://m.ftscrt.com/food/66b28a58-c57f-4513-9e60-3940e25b3a4b_sq.jpg"
   },
   {
     "name": "Soda",
@@ -2440,8 +2440,8 @@
     "carbohydrateContent": 9.77,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.6,
-    "imageUrl": ""
+    "nutritionScore": 4.04,
+    "imageUrl": "https://m.ftscrt.com/food/026e3b53-d41a-4417-976b-d351524cb2c3_sq.jpg"
   },
   {
     "name": "Classics Milk Chocolate Hot Cocoa Mix",
@@ -2453,8 +2453,8 @@
     "carbohydrateContent": 34.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.29,
+    "imageUrl": "https://m.ftscrt.com/food/122f74d3-d902-4071-b808-6d19306c93cf_sq.jpg"
   },
   {
     "name": "Lard",
@@ -2466,8 +2466,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/c4871b49-38f0-4a6a-bfb4-f8b665edf729_sq.jpg"
   },
   {
     "name": "Jewish Rye Bread - Seedless",
@@ -2479,8 +2479,8 @@
     "carbohydrateContent": 14.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.1,
-    "imageUrl": ""
+    "nutritionScore": 6.14,
+    "imageUrl": "https://m.ftscrt.com/food/f426a145-a8c7-4ffa-b82e-bdc613bc06c3_sq.jpg"
   },
   {
     "name": "Broccoli",
@@ -2492,8 +2492,8 @@
     "carbohydrateContent": 6.64,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
-    "imageUrl": ""
+    "nutritionScore": 6.88,
+    "imageUrl": "https://m.ftscrt.com/food/64a56c78-615a-483d-8130-fd1bd9193b70_sq.jpg"
   },
   {
     "name": "Turkey Breast Meat",
@@ -2505,8 +2505,8 @@
     "carbohydrateContent": 4.21,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.7,
-    "imageUrl": ""
+    "nutritionScore": 6.01,
+    "imageUrl": "https://m.ftscrt.com/food/3c1551d7-1e05-4e4f-83e4-523aa8c3710a_sq.jpg"
   },
   {
     "name": "Beef Tallow (Fat)",
@@ -2518,7 +2518,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
+    "nutritionScore": 3.77,
     "imageUrl": ""
   },
   {
@@ -2531,8 +2531,8 @@
     "carbohydrateContent": 19.94,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.5,
-    "imageUrl": ""
+    "nutritionScore": 5.54,
+    "imageUrl": "https://m.ftscrt.com/food/5f36dd80-b263-4c85-a702-d69deeab9bcc_sq.jpg"
   },
   {
     "name": "Plain Yogurt",
@@ -2544,8 +2544,8 @@
     "carbohydrateContent": 7.04,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 5.62,
+    "imageUrl": "https://m.ftscrt.com/food/23399c66-36c2-4f6d-acc8-d2b15d87bdb8_sq.jpg"
   },
   {
     "name": "Extra Creamy Whipped Cream",
@@ -2557,8 +2557,8 @@
     "carbohydrateContent": 1.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.0,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/454d46c7-5d8a-4d2c-9b23-d55783636cb1_sq.jpg"
   },
   {
     "name": "Doughnut",
@@ -2570,7 +2570,7 @@
     "carbohydrateContent": 47.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
+    "nutritionScore": 3.74,
     "imageUrl": ""
   },
   {
@@ -2583,7 +2583,7 @@
     "carbohydrateContent": 63.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.5,
+    "nutritionScore": 4.9,
     "imageUrl": ""
   },
   {
@@ -2596,8 +2596,8 @@
     "carbohydrateContent": 64.06,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.8,
-    "imageUrl": ""
+    "nutritionScore": 3.72,
+    "imageUrl": "https://m.ftscrt.com/food/70d47c9e-f08b-487d-a716-923e64083fe7_sq.jpg"
   },
   {
     "name": "Avocado",
@@ -2609,8 +2609,8 @@
     "carbohydrateContent": 1.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.5,
-    "imageUrl": ""
+    "nutritionScore": 3.9,
+    "imageUrl": "https://m.ftscrt.com/food/8770e696-5f29-40b0-a5d1-519cde95eca5_sq.jpg"
   },
   {
     "name": "Cooked Okra",
@@ -2622,8 +2622,8 @@
     "carbohydrateContent": 5.08,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 6.13,
+    "imageUrl": "https://m.ftscrt.com/food/90537d62-6c68-4549-be66-2ebb49cfa72b_sq.jpg"
   },
   {
     "name": "Olive Oil",
@@ -2635,8 +2635,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/d5b49a1b-c224-4933-b4d2-cf5e999730f7_sq.jpg"
   },
   {
     "name": "Cultured Whole Buttermilk",
@@ -2648,7 +2648,7 @@
     "carbohydrateContent": 13.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
+    "nutritionScore": 4.77,
     "imageUrl": ""
   },
   {
@@ -2661,8 +2661,8 @@
     "carbohydrateContent": 3.83,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.2,
-    "imageUrl": ""
+    "nutritionScore": 5.69,
+    "imageUrl": "https://m.ftscrt.com/food/121bd347-bbf8-40e2-bae2-b4307779af68_sq.jpg"
   },
   {
     "name": "Toasted Sesame Seeds",
@@ -2674,7 +2674,7 @@
     "carbohydrateContent": 2.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.3,
+    "nutritionScore": 5.2,
     "imageUrl": ""
   },
   {
@@ -2687,7 +2687,7 @@
     "carbohydrateContent": 66.83,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.2,
+    "nutritionScore": 3.93,
     "imageUrl": ""
   },
   {
@@ -2700,7 +2700,7 @@
     "carbohydrateContent": 33.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.5,
+    "nutritionScore": 4.03,
     "imageUrl": ""
   },
   {
@@ -2713,8 +2713,8 @@
     "carbohydrateContent": 14.46,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.0,
-    "imageUrl": ""
+    "nutritionScore": 5.24,
+    "imageUrl": "https://m.ftscrt.com/food/aee4ba02-828c-4c0d-8354-cceafcbf87fe_sq.jpg"
   },
   {
     "name": "Macadamia Nuts",
@@ -2726,8 +2726,8 @@
     "carbohydrateContent": 13.82,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.7,
-    "imageUrl": ""
+    "nutritionScore": 4.56,
+    "imageUrl": "https://m.ftscrt.com/food/f23fd353-5829-40be-9394-3ea14075330d_sq.jpg"
   },
   {
     "name": "Goat Meat (Cooked, Roasted)",
@@ -2739,7 +2739,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 8.7,
+    "nutritionScore": 7.41,
     "imageUrl": ""
   },
   {
@@ -2752,7 +2752,7 @@
     "carbohydrateContent": 4.41,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.9,
+    "nutritionScore": 5.41,
     "imageUrl": ""
   },
   {
@@ -2765,8 +2765,8 @@
     "carbohydrateContent": 27.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.0,
-    "imageUrl": ""
+    "nutritionScore": 6.26,
+    "imageUrl": "https://m.ftscrt.com/food/1e387d30-77c8-493e-a75e-0bd9b14c5324_sq.jpg"
   },
   {
     "name": "Flour Tortilla",
@@ -2778,8 +2778,8 @@
     "carbohydrateContent": 51.35,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.0,
-    "imageUrl": ""
+    "nutritionScore": 6.43,
+    "imageUrl": "https://m.ftscrt.com/food/0c410b10-138a-4814-b42d-49286bd3c1ff_sq.jpg"
   },
   {
     "name": "Frozen Yogurt",
@@ -2791,8 +2791,8 @@
     "carbohydrateContent": 19.62,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.0,
-    "imageUrl": ""
+    "nutritionScore": 5.17,
+    "imageUrl": "https://m.ftscrt.com/food/10faf3c0-9882-409b-8bc0-68d9429d0458_sq.jpg"
   },
   {
     "name": "Fig",
@@ -2804,8 +2804,8 @@
     "carbohydrateContent": 19.18,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.2,
-    "imageUrl": ""
+    "nutritionScore": 5.61,
+    "imageUrl": "https://m.ftscrt.com/food/fb66e20c-8509-402b-ae2a-ca7f6e7f51fd_sq.jpg"
   },
   {
     "name": "Margarine",
@@ -2817,8 +2817,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.6,
-    "imageUrl": ""
+    "nutritionScore": 3.83,
+    "imageUrl": "https://m.ftscrt.com/food/c504acd0-3dba-49fe-8cf3-e871bedda3d0_sq.jpg"
   },
   {
     "name": "Kiwi Fruit",
@@ -2830,8 +2830,8 @@
     "carbohydrateContent": 14.66,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.6,
-    "imageUrl": ""
+    "nutritionScore": 5.65,
+    "imageUrl": "https://m.ftscrt.com/food/007300d5-d861-41e3-8910-b14be86bdbcf_sq.jpg"
   },
   {
     "name": "Brownie",
@@ -2843,8 +2843,8 @@
     "carbohydrateContent": 62.54,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.8,
-    "imageUrl": ""
+    "nutritionScore": 4.31,
+    "imageUrl": "https://m.ftscrt.com/food/bc10ad1a-bb52-4c17-a7b5-461465fd1216_sq.jpg"
   },
   {
     "name": "Mountain Trail Mix",
@@ -2856,8 +2856,8 @@
     "carbohydrateContent": 15.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 4.77,
+    "imageUrl": "https://m.ftscrt.com/food/f0de1757-3383-4004-bb8d-9903a7e842b8_sq.jpg"
   },
   {
     "name": "Caffe Mocha (Tall)",
@@ -2869,7 +2869,7 @@
     "carbohydrateContent": 33.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
+    "nutritionScore": 7.83,
     "imageUrl": ""
   },
   {
@@ -2882,8 +2882,8 @@
     "carbohydrateContent": 6.03,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.3,
+    "imageUrl": "https://m.ftscrt.com/food/3fec0d3b-0dee-438b-b7ce-c120abb9b26a_sq.jpg"
   },
   {
     "name": "Rice Cakes - Lightly Salted",
@@ -2895,8 +2895,8 @@
     "carbohydrateContent": 8.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.3,
-    "imageUrl": ""
+    "nutritionScore": 5.09,
+    "imageUrl": "https://m.ftscrt.com/food/6de4dd7a-721c-449d-b0ad-8e39d6564885_sq.jpg"
   },
   {
     "name": "Salmon",
@@ -2908,8 +2908,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 7.7,
-    "imageUrl": ""
+    "nutritionScore": 6.2,
+    "imageUrl": "https://m.ftscrt.com/food/e14eaf83-aa44-4087-8c85-e4b2d323ffc7_sq.jpg"
   },
   {
     "name": "Beets",
@@ -2921,7 +2921,7 @@
     "carbohydrateContent": 9.56,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.2,
+    "nutritionScore": 6.36,
     "imageUrl": ""
   },
   {
@@ -2934,8 +2934,8 @@
     "carbohydrateContent": 0.47,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 4.03,
+    "imageUrl": "https://m.ftscrt.com/food/659575cb-40a7-49d7-b777-21aedd0057ef_sq.jpg"
   },
   {
     "name": "Mangos",
@@ -2947,8 +2947,8 @@
     "carbohydrateContent": 17.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 5.58,
+    "imageUrl": "https://m.ftscrt.com/food/877378df-d97d-4a51-9f55-e09f19c4e583_sq.jpg"
   },
   {
     "name": "Penne",
@@ -2960,8 +2960,8 @@
     "carbohydrateContent": 30.68,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.8,
-    "imageUrl": ""
+    "nutritionScore": 5.78,
+    "imageUrl": "https://m.ftscrt.com/food/a71e8b71-8d28-4677-ae00-399fbe5e7e21_sq.jpg"
   },
   {
     "name": "Swiss Chard",
@@ -2973,8 +2973,8 @@
     "carbohydrateContent": 3.74,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 6.78,
+    "imageUrl": "https://m.ftscrt.com/food/46af728a-500d-4697-802a-a8064ec87e4f_sq.jpg"
   },
   {
     "name": "Eggplant",
@@ -2986,8 +2986,8 @@
     "carbohydrateContent": 5.7,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 6.3,
+    "imageUrl": "https://m.ftscrt.com/food/58fbd9a2-e18c-4368-867a-f2d48569145f_sq.jpg"
   },
   {
     "name": "Asparagus",
@@ -2999,8 +2999,8 @@
     "carbohydrateContent": 3.88,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.7,
-    "imageUrl": ""
+    "nutritionScore": 6.82,
+    "imageUrl": "https://m.ftscrt.com/food/a49b69e8-0d61-48bf-968a-27e1fd6a5ca6_sq.jpg"
   },
   {
     "name": "Jet-Puffed Marshmallows",
@@ -3012,8 +3012,8 @@
     "carbohydrateContent": 24.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.5,
-    "imageUrl": ""
+    "nutritionScore": 3.38,
+    "imageUrl": "https://m.ftscrt.com/food/61c0b0d7-9dfa-4b00-9d10-e7f93e4c3669_sq.jpg"
   },
   {
     "name": "Vegetable Oil",
@@ -3025,8 +3025,8 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
-    "imageUrl": ""
+    "nutritionScore": 3.77,
+    "imageUrl": "https://m.ftscrt.com/food/cc5308cc-8255-49a2-8559-9913663509fd_sq.jpg"
   },
   {
     "name": "Cream Cheese",
@@ -3038,8 +3038,8 @@
     "carbohydrateContent": 2.66,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.1,
-    "imageUrl": ""
+    "nutritionScore": 4.52,
+    "imageUrl": "https://m.ftscrt.com/food/e2694446-8f26-4567-84db-907ae03d55de_sq.jpg"
   },
   {
     "name": "Hazelnuts Filberts",
@@ -3051,7 +3051,7 @@
     "carbohydrateContent": 16.7,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.9,
+    "nutritionScore": 5.26,
     "imageUrl": ""
   },
   {
@@ -3064,8 +3064,8 @@
     "carbohydrateContent": 67.8,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 3.9,
-    "imageUrl": ""
+    "nutritionScore": 3.72,
+    "imageUrl": "https://m.ftscrt.com/food/d5e2feaf-68e8-4c59-9060-f72780c4c19d_sq.jpg"
   },
   {
     "name": "Apples",
@@ -3077,8 +3077,8 @@
     "carbohydrateContent": 13.81,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 5.0,
-    "imageUrl": ""
+    "nutritionScore": 5.56,
+    "imageUrl": "https://m.ftscrt.com/food/31b082a0-6019-4c57-a779-834dc80e5975_sq.jpg"
   },
   {
     "name": "Oranges",
@@ -3090,8 +3090,8 @@
     "carbohydrateContent": 11.75,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 4.6,
-    "imageUrl": ""
+    "nutritionScore": 5.63,
+    "imageUrl": "https://m.ftscrt.com/food/2583c9cd-0437-447a-9b77-f389daa89f6c_sq.jpg"
   },
   {
     "name": "Cheddar Cheese",
@@ -3103,8 +3103,8 @@
     "carbohydrateContent": 1.28,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 6.5,
-    "imageUrl": ""
+    "nutritionScore": 6.92,
+    "imageUrl": "https://m.ftscrt.com/food/c321822c-7c24-4034-a6e9-cf7de87b52fc_sq.jpg"
   },
   {
     "name": "Palm Kernel Vegetable Oil",
@@ -3116,7 +3116,7 @@
     "carbohydrateContent": 0.0,
     "allergens": [],
     "dietaryOptions": [],
-    "nutritionScore": 2.0,
+    "nutritionScore": 3.77,
     "imageUrl": ""
   }
 ]
