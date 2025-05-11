@@ -1,7 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS } from '../constants/theme';
+import { SPACING } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { createFontStyles } from '../constants/theme';
 import ForumTopic from '../components/forum/ForumTopic';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
@@ -34,6 +36,9 @@ const FORUM_TOPICS = [
 ];
 
 const ForumScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
+
   const renderItem = ({ item }: { item: typeof FORUM_TOPICS[0] }) => (
     <ForumTopic
       id={item.id}
@@ -47,10 +52,10 @@ const ForumScreen: React.FC = () => {
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Community Forum</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.headerTitle, fonts.heading]}>Community Forum</Text>
+        <Text style={[styles.subtitle, fonts.caption]}>
           This is a placeholder for the Forum page. Implementation will come in the next phase.
         </Text>
       </View>
@@ -62,9 +67,11 @@ const ForumScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
       />
       
-      <TouchableOpacity style={styles.newPostButton}>
-        <Icon name="plus" size={20} color={COLORS.white} />
-        <Text style={styles.newPostText}>New Post</Text>
+      <TouchableOpacity 
+        style={[styles.newPostButton, { backgroundColor: colors.accent }]}
+      >
+        <Icon name="plus" size={20} color="#FFFFFF" />
+        <Text style={[styles.newPostText, { color: '#FFFFFF' }]}>New Post</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -73,18 +80,15 @@ const ForumScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   header: {
     padding: SPACING.md,
     alignItems: 'center',
   },
   headerTitle: {
-    ...FONTS.heading,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    ...FONTS.caption,
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
@@ -95,7 +99,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     right: SPACING.lg,
     bottom: SPACING.lg,
-    backgroundColor: COLORS.accent,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: SPACING.sm,
@@ -104,10 +107,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   newPostText: {
-    ...FONTS.body,
-    color: COLORS.white,
     fontWeight: 'bold',
     marginLeft: SPACING.xs,
+    fontSize: 16,
   },
 });
 

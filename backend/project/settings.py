@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from datetime import timedelta  # import this library top of the settings.py file
 from pathlib import Path
-import os
+import os, sys
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -22,7 +22,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-r4nD0m$eCreT_K3y!!@#"
+SECRET_KEY = os.environ.get(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-4@#&*j3!$@!v1g2z5@)7q0x8^9b6c3z1+4$@#&*j3!$@!v1g2z5@)7q0x8^9b6c3z1+",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -44,9 +47,13 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "accounts",
     "api",
+    "foods",
+    "forum",
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
+    "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -79,18 +86,26 @@ WSGI_APPLICATION = "project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.mysql",
-        "USER": os.environ.get("MYSQL_USER"),
-        "PASSWORD": os.environ.get("MYSQL_PASSWORD"),
-        "NAME": "mydb",
-        "HOST": "localhost",  # or 'db' if Django is also running in Docker
-        "PORT": "3306",
+if "test" in sys.argv:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": ":memory:",
+        }
     }
-}
-
-
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            "USER": os.getenv("MYSQL_USER", "django"),
+            "PASSWORD": os.getenv("MYSQL_PASSWORD", "djangopass"),
+            "NAME": os.getenv("MYSQL_DATABASE", "mydb"),
+            "HOST": os.getenv(
+                "MYSQL_HOST", "db"
+            ),  # changed from mysql-db to db to match docker-compose service name
+            "PORT": os.getenv("MYSQL_PORT", "3306"),
+        }
+    }
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
 
@@ -149,4 +164,27 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(days=30),
     "SLIDING_TOKEN_REFRESH_LIFETIME_LATE_USER": timedelta(days=1),
     "SLIDING_TOKEN_LIFETIME_LATE_USER": timedelta(days=30),
+    "BLACKLIST_AFTER_ROTATION": True,
 }
+
+# cors settings for development
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",  # vite development server
+    "http://127.0.0.1:5173",  # alternative localhost
+]
+
+# allow postman to make requests
+CORS_ALLOW_HEADERS = [
+    "accept",
+    "accept-encoding",
+    "authorization",
+    "content-type",
+    "dnt",
+    "origin",
+    "user-agent",
+    "x-csrftoken",
+    "x-requested-with",
+]
+
+# allow credentials (cookies, authorization headers)
+CORS_ALLOW_CREDENTIALS = True

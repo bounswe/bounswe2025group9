@@ -1,98 +1,120 @@
-import React from 'react';
-import {
-  TouchableOpacity,
-  Text,
-  StyleSheet,
-  TouchableOpacityProps,
-  ViewStyle,
+import React, { ReactNode } from 'react';
+import { 
+  StyleSheet, 
+  Text, 
+  TouchableOpacity, 
+  ViewStyle, 
   TextStyle,
-  StyleProp,
+  ActivityIndicator,
 } from 'react-native';
-import { COLORS, SPACING, FONTS } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
+import { SPACING } from '../../constants/theme';
 
-interface PrimaryButtonProps extends TouchableOpacityProps {
-  title: string;
-  variant?: 'primary' | 'secondary';
+interface PrimaryButtonProps {
+  title?: string;
+  onPress: () => void;
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'default' | 'large';
   fullWidth?: boolean;
-  style?: StyleProp<ViewStyle>;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+  disabled?: boolean;
+  children?: ReactNode;
 }
 
 const PrimaryButton: React.FC<PrimaryButtonProps> = ({
   title,
+  onPress,
   variant = 'primary',
+  size = 'default',
   fullWidth = false,
   style,
+  textStyle,
   disabled = false,
-  ...rest
+  children,
 }) => {
-  const containerStyles: StyleProp<ViewStyle>[] = [
-    styles.button,
-    variant === 'secondary' && styles.secondaryButton,
-    fullWidth && styles.fullWidth,
-    disabled && styles.disabledButton,
-    style,
-  ];
+  const { colors } = useTheme();
 
-  const textStyles: StyleProp<TextStyle>[] = [
-    styles.buttonText,
-    variant === 'secondary' && styles.secondaryButtonText,
-    disabled && styles.disabledButtonText,
-  ];
+  // Define button styles based on props
+  const getButtonStyle = (): ViewStyle => {
+    let buttonStyle: ViewStyle = {
+      opacity: disabled ? 0.7 : 1,
+    };
+
+    // Apply variant styles
+    if (variant === 'primary') {
+      buttonStyle.backgroundColor = colors.accent;
+    } else if (variant === 'secondary') {
+      buttonStyle.backgroundColor = colors.buttonSecondary;
+    } else if (variant === 'outline') {
+      buttonStyle.backgroundColor = 'transparent';
+      buttonStyle.borderWidth = 1;
+      buttonStyle.borderColor = colors.border;
+    }
+
+    // Apply size styles
+    if (size === 'large') {
+      buttonStyle.paddingVertical = SPACING.md;
+      buttonStyle.paddingHorizontal = SPACING.lg;
+    }
+
+    // Apply width style
+    if (fullWidth) {
+      buttonStyle.width = '100%';
+    }
+
+    return buttonStyle;
+  };
+
+  // Define text styles based on props
+  const getTextStyle = (): TextStyle => {
+    let textStyleBase: TextStyle = {
+      fontWeight: 'bold',
+      fontSize: size === 'large' ? 18 : 16,
+    };
+
+    // Apply variant text color
+    if (variant === 'primary') {
+      textStyleBase.color = '#FFFFFF';
+    } else if (variant === 'secondary') {
+      textStyleBase.color = colors.buttonSecondaryText;
+    } else if (variant === 'outline') {
+      textStyleBase.color = colors.text;
+    }
+
+    return textStyleBase;
+  };
 
   return (
     <TouchableOpacity
-      style={containerStyles}
-      activeOpacity={0.8}
+      style={[styles.button, getButtonStyle(), style]}
+      onPress={onPress}
       disabled={disabled}
+      activeOpacity={0.8}
       accessibilityRole="button"
-      {...rest}
+      accessibilityState={{ disabled }}
     >
-      <Text style={textStyles}>{title}</Text>
+      {title && (
+        <Text style={[styles.buttonText, getTextStyle(), textStyle]}>
+          {title}
+        </Text>
+      )}
+      {children}
     </TouchableOpacity>
   );
 };
 
-const styles = StyleSheet.create<{
-  button: ViewStyle;
-  secondaryButton: ViewStyle;
-  fullWidth: ViewStyle;
-  disabledButton: ViewStyle;
-  buttonText: TextStyle;
-  secondaryButtonText: TextStyle;
-  disabledButtonText: TextStyle;
-}>({
+const styles = StyleSheet.create({
   button: {
-    backgroundColor: COLORS.accent,
+    borderRadius: 8,
     paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.lg,
-    borderRadius: SPACING.xs,
+    paddingHorizontal: SPACING.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minWidth: SPACING.xxl, // use spacing constant instead of literal
-  },
-  secondaryButton: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: COLORS.accent,
-  },
-  fullWidth: {
-    width: '100%',
-  },
-  disabledButton: {
-    opacity: 0.6,
+    flexDirection: 'row',
   },
   buttonText: {
-    ...FONTS.body,            // use theme font
-    color: COLORS.white,
-    fontWeight: FONTS.body.fontWeight, // ensure bold if needed
-  },
-  secondaryButtonText: {
-    ...FONTS.body,
-    color: COLORS.accent,
-  },
-  disabledButtonText: {
-    ...FONTS.body,
-    color: COLORS.lightGray,
+    textAlign: 'center',
   },
 });
 

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { COLORS, FONTS, SPACING } from '../constants/theme';
+import { SPACING } from '../constants/theme';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import ForumScreen from '../screens/ForumScreen';
 import FoodScreen from '../screens/FoodScreen';
 import { MainTabParamList, RootStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -21,51 +22,52 @@ const Tab = createBottomTabNavigator<MainTabParamList>();
 const Header: React.FC<{ title?: string }> = ({ title }) => {
   const navigation = useNavigation<NavigationProp>();
   const { logout } = useAuth();
-  
-
-  const handleThemeToggle = () => {
-    
-    console.log("Theme toggle pressed - Implement logic");
-
-  };
+  const { colors, theme, toggleTheme } = useTheme();
 
   return (
-    <SafeAreaView edges={['top']} style={{ backgroundColor: COLORS.background }}>
-      <View style={styles.header}>
+    <SafeAreaView edges={['top']} style={{ backgroundColor: colors.headerBackground }}>
+      <View style={[styles.header, { backgroundColor: colors.headerBackground, borderBottomColor: colors.border }]}>
         <View style={styles.logoContainer}>
-          <Icon name="heart-pulse" size={24} color={COLORS.accent} />
-          <Text style={styles.logoText}>NutriHub</Text>
+          <Icon name="heart-pulse" size={24} color="#FFFFFF" />
+          <Text style={[styles.logoText, { color: colors.headerText }]}>NutriHub</Text>
         </View>
         
         <View style={styles.navContainer}>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navText}>Home</Text>
+            <Text style={[styles.navText, { color: colors.headerText }]}>Home</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navText}>Foods</Text>
+            <Text style={[styles.navText, { color: colors.headerText }]}>Foods</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navText}>Forum</Text>
+            <Text style={[styles.navText, { color: colors.headerText }]}>Forum</Text>
           </TouchableOpacity>
           <TouchableOpacity style={styles.navItem}>
-            <Text style={styles.navText}>API Examples [TEMPORARY]</Text>
+            <Text style={[styles.navText, { color: colors.headerText }]}>API Examples [TEMPORARY]</Text>
           </TouchableOpacity>
         </View>
         
         <View style={styles.rightContainer}>
-          
           {/* Theme Toggle Button */}
-
-          <TouchableOpacity style={styles.iconButton} onPress={handleThemeToggle} accessibilityRole="button" accessibilityLabel="Toggle theme">
-
-            <Icon name="theme-light-dark" size={22} color={COLORS.white} />
-          </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.actionButton}
+            style={styles.iconButton} 
+            onPress={toggleTheme}
+            accessibilityRole="button" 
+            accessibilityLabel="Toggle theme"
+          >
+            <Icon 
+              name={theme === 'dark' ? 'weather-sunny' : 'weather-night'} 
+              size={22} 
+              color={colors.headerText} 
+            />
+          </TouchableOpacity>
+          
+          <TouchableOpacity 
+            style={[styles.actionButton, { backgroundColor: '#FFFFFF' }]} // White button
             onPress={() => logout()}
           >
-            <Icon name="logout" size={18} color={COLORS.white} />
-            <Text style={styles.actionButtonText}>Log out</Text>
+            <Icon name="logout" size={18} color={colors.headerBackground} />
+            <Text style={[styles.actionButtonText, { color: colors.headerBackground }]}>Log out</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -73,27 +75,28 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
   );
 };
 
+
+
+
 const MainTabNavigator = () => {
+  const { colors, theme } = useTheme();
+  
   return (
-    <>
+    <View style={{ flex: 1 }}>
       <Header />
       <Tab.Navigator
         screenOptions={({ route }) => ({ 
           headerShown: false, 
-          tabBarActiveTintColor: COLORS.accent,
-          tabBarInactiveTintColor: COLORS.lightGray,
+          tabBarActiveTintColor: colors.accent,
+          tabBarInactiveTintColor: colors.textSecondary,
           tabBarStyle: {
-            backgroundColor: COLORS.darkCard,
-            borderTopColor: COLORS.darkGray, 
-            
-
+            backgroundColor: colors.tabBarColor,
+            borderTopColor: colors.border, 
           },
           tabBarLabelStyle: {
-
             paddingBottom: SPACING.xs, 
           },
           tabBarIcon: ({ color, size, focused }) => {
-
             let iconName: React.ComponentProps<typeof Icon>['name'];
             if (route.name === 'Home') {
               iconName = focused ? 'home' : 'home-outline';
@@ -113,10 +116,9 @@ const MainTabNavigator = () => {
         <Tab.Screen name="Food" component={FoodScreen} />
         <Tab.Screen name="Forum" component={ForumScreen} />
       </Tab.Navigator>
-    </>
+    </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   header: {
@@ -126,15 +128,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.md, 
     paddingVertical: SPACING.sm, 
     borderBottomWidth: 1,
-    borderBottomColor: COLORS.darkGray, 
-    backgroundColor: COLORS.background, 
   },
   logoContainer: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   logoText: {
-    color: COLORS.white,
     fontWeight: 'bold',
     fontSize: 18,
     marginLeft: SPACING.xs,
@@ -145,9 +144,7 @@ const styles = StyleSheet.create({
   navItem: {
     marginHorizontal: 8,
   },
-  navText: {
-    color: COLORS.white,
-  },
+  navText: {},
   rightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -156,7 +153,6 @@ const styles = StyleSheet.create({
     padding: SPACING.sm,
   },
   actionButton: {
-    backgroundColor: COLORS.accent,
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: SPACING.xs,
@@ -165,7 +161,7 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.sm,
   },
   actionButtonText: {
-    color: COLORS.white,
+    color: '#FFFFFF',
     marginLeft: SPACING.xs,
     fontWeight: 'bold',
     fontSize: 14,

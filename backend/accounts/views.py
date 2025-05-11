@@ -7,7 +7,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import UserSerializer
+from .serializers import UserSerializer, ChangePasswordSerializer
 from .services import register_user, list_users
 
 
@@ -37,11 +37,31 @@ class CreateUserView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class ChangePasswordView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ChangePasswordSerializer(
+            data=request.data, context={"request": request}
+        )
+        if serializer.is_valid():
+            user = request.user
+            user.set_password(
+                serializer.validated_data["new_password"]
+            )  # Hashes password internally
+            user.save()
+            return Response(
+                {"detail": "Password changed successfully"}, status=status.HTTP_200_OK
+            )
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
 class LogoutView(APIView):
     """
     POST /users/token/logout/
     Body: { "refresh": "<refresh_token>" }
     """
+
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
@@ -50,7 +70,7 @@ class LogoutView(APIView):
         if not refresh_token:
             return Response(
                 {"detail": "Refresh token is required."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
         try:
             token = RefreshToken(refresh_token)
@@ -59,5 +79,5 @@ class LogoutView(APIView):
         except Exception:
             return Response(
                 {"detail": "Invalid or expired refresh token."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )

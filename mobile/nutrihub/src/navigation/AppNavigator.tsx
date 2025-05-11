@@ -1,15 +1,16 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { View, ActivityIndicator, StyleSheet } from 'react-native'; // Import View and ActivityIndicator
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
 // Screen and Navigator Imports
 import LoginScreen from '../screens/LoginScreen';
 import MainTabNavigator from './MainTabNavigator';
 // Type import for navigation parameters
 import { RootStackParamList } from './types'; 
-// Hook to access authentication state
+// Hooks to access authentication and theme state
 import { useAuth } from '../context/AuthContext';
-import { COLORS } from '../constants/theme'; // Import COLORS for loader
+import { useTheme } from '../context/ThemeContext';
+import { StatusBar } from 'expo-status-bar';
 
 // Create the Stack Navigator instance with typed parameters
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -22,38 +23,39 @@ const Stack = createNativeStackNavigator<RootStackParamList>();
  */
 const AppNavigator = () => {
   // Consume authentication state from the context
-  const { isLoggedIn, isLoading } = useAuth();
+  const { isLoggedIn, isLoading: authLoading } = useAuth();
+  const { colors, theme, isLoading: themeLoading } = useTheme();
 
   // --- Handle Initial Loading State ---
-  // While checking AsyncStorage for the token, display a loading indicator
-  // to prevent flickering between Login and MainApp screens.
+  // While checking AsyncStorage for the token or theme, display a loading indicator
+  const isLoading = authLoading || themeLoading;
+  
   if (isLoading) {
     return (
-      <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={COLORS.accent} />
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.accent} />
       </View>
     );
   }
 
   // --- Render Navigator based on Login State ---
   return (
-    // Configure the Stack Navigator
-    <Stack.Navigator
-      screenOptions={{
-        headerShown: false, // Hide the header globally for this stack
-      }}
-    >
-      {isLoggedIn ? (
-        // If logged in, display the main application navigator (Tabs)
-        <Stack.Screen name="MainApp" component={MainTabNavigator} />
-      ) : (
-        // If not logged in, display the Login screen
-        <Stack.Screen name="Login" component={LoginScreen} />
-      )}
-      {/* Future note : You could add other screens here that are outside the main tabs */}
-      {/* but still part of the main stack, e.g., a common Settings screen */}
-      {/* <Stack.Screen name="Settings" component={SettingsScreen} /> */}
-    </Stack.Navigator>
+    <>
+      <StatusBar style={theme === 'dark' ? 'light' : 'dark'} />
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false, // Hide the header globally for this stack
+        }}
+      >
+        {isLoggedIn ? (
+          // If logged in, display the main application navigator (Tabs)
+          <Stack.Screen name="MainApp" component={MainTabNavigator} />
+        ) : (
+          // If not logged in, display the Login screen
+          <Stack.Screen name="Login" component={LoginScreen} />
+        )}
+      </Stack.Navigator>
+    </>
   );
 };
 
@@ -62,7 +64,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: COLORS.background, // Use background color from theme
   },
 });
 

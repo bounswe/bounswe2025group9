@@ -7,14 +7,16 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS, SPACING, FONTS } from '../constants/theme';
+import { SPACING } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
+import { createFontStyles } from '../constants/theme';
 // use the Expo-wrapped icon 
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 // pull the exact union of icon names
 type IconName = React.ComponentProps<typeof Icon>['name'];
 
-// define a typed shape for your data
+// define a typed shape
 type FoodItemType = {
   id: number;
   title: string;
@@ -33,31 +35,34 @@ const FOOD_ITEMS: FoodItemType[] = [
 ];
 
 const FoodScreen: React.FC = () => {
+  const { colors } = useTheme();
+  const fonts = createFontStyles(colors);
+
   const renderItem = ({ item }: { item: FoodItemType }) => (
     <TouchableOpacity
-      style={styles.itemContainer}
+      style={[styles.itemContainer, { backgroundColor: colors.card }]}
       onPress={() => console.log(`Selected food item: ${item.id}`)}
       activeOpacity={0.8}
       accessibilityRole="button"
     >
-      <View style={styles.iconContainer}>
-        <Icon name={item.iconName} size={32} color={COLORS.lightGray} />
+      <View style={[styles.iconContainer, { backgroundColor: colors.placeholder }]}>
+        <Icon name={item.iconName} size={32} color={colors.textSecondary} />
       </View>
       <View style={styles.textContainer}>
         <View style={styles.titleRow}>
-          <Icon name={item.iconName} size={16} color={COLORS.accent} />
-          <Text style={styles.itemTitle}>{item.title}</Text>
+          <Icon name={item.iconName} size={16} color={colors.accent} />
+          <Text style={[styles.itemTitle, { color: colors.text }]}>{item.title}</Text>
         </View>
-        <Text style={styles.itemDescription}>{item.description}</Text>
+        <Text style={[styles.itemDescription, { color: colors.textSecondary }]}>{item.description}</Text>
       </View>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Foods Catalog</Text>
-        <Text style={styles.subtitle}>
+        <Text style={[styles.headerTitle, fonts.heading]}>Foods Catalog</Text>
+        <Text style={[styles.subtitle, fonts.caption]}>
           This is a placeholder for the Foods catalog page. Implementation will come in the next phase.
         </Text>
       </View>
@@ -77,18 +82,15 @@ const FoodScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
   header: {
     padding: SPACING.md,
     alignItems: 'center',
   },
   headerTitle: {
-    ...FONTS.heading,
     marginBottom: SPACING.xs,
   },
   subtitle: {
-    ...FONTS.caption,
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
@@ -98,12 +100,10 @@ const styles = StyleSheet.create({
   itemContainer: {
     flex: 1,
     margin: SPACING.xs,
-    backgroundColor: COLORS.darkCard,
     borderRadius: SPACING.sm,
     overflow: 'hidden',
   },
   iconContainer: {
-    backgroundColor: COLORS.darkGray,
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
@@ -117,12 +117,12 @@ const styles = StyleSheet.create({
     marginBottom: SPACING.xs,
   },
   itemTitle: {
-    ...FONTS.subheading,
     fontSize: 16,
+    fontWeight: 'bold',
     marginLeft: SPACING.xs,
   },
   itemDescription: {
-    ...FONTS.caption,
+    fontSize: 14,
   },
 });
 
