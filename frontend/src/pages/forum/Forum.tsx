@@ -1,6 +1,6 @@
 // forum page component
 import { useState, useEffect } from 'react'
-import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X } from '@phosphor-icons/react'
+import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
 import { apiClient, ForumPost, ForumTag } from '../../lib/apiClient'
 
@@ -14,15 +14,71 @@ const getTagStyle = (tagName: string) => {
     // Check for exact tag types from backend
     switch (tagName) {
         case "Dietary tip":
-            return { bg: '#e6f7f2', text: '#0d7c5f' }; // Green
+            return { 
+                bg: 'var(--forum-dietary-bg)',
+                text: 'var(--forum-dietary-text)',
+                activeBg: 'var(--forum-dietary-active-bg)',
+                activeText: 'var(--forum-dietary-active-text)',
+                hoverBg: 'var(--forum-dietary-hover-bg)'
+            };
         case "Recipe":
-            return { bg: '#f0e6ff', text: '#6200ee' }; // Purple
+            return { 
+                bg: 'var(--forum-recipe-bg)',
+                text: 'var(--forum-recipe-text)',
+                activeBg: 'var(--forum-recipe-active-bg)',
+                activeText: 'var(--forum-recipe-active-text)',
+                hoverBg: 'var(--forum-recipe-hover-bg)'
+            };
         case "Meal plan":
-            return { bg: '#e6f0ff', text: '#0062cc' }; // Blue
+            return { 
+                bg: 'var(--forum-mealplan-bg)',
+                text: 'var(--forum-mealplan-text)',
+                activeBg: 'var(--forum-mealplan-active-bg)',
+                activeText: 'var(--forum-mealplan-active-text)',
+                hoverBg: 'var(--forum-mealplan-hover-bg)'
+            };
         default:
-            return { bg: '#f2f2f2', text: '#666666' }; // Grey (fallback)
+            return { 
+                bg: 'var(--forum-default-bg)',
+                text: 'var(--forum-default-text)',
+                activeBg: 'var(--forum-default-active-bg)',
+                activeText: 'var(--forum-default-active-text)',
+                hoverBg: 'var(--forum-default-hover-bg)'
+            };
     }
 };
+
+// define CSS variables for tag styling
+const tagStyles = `
+:root {
+    --dietary-bg: #d1fae5;
+    --dietary-text: #065f46;
+    --dietary-active-bg: #059669;
+    --dietary-active-text: white;
+    --dietary-hover-bg: #a7f3d0;
+    --dietary-dark-bg: #1a3a32;
+    --dietary-dark-text: #4eebc8;
+    --dietary-dark-hover-bg: #224a40;
+
+    --recipe-bg: #ede9fe;
+    --recipe-text: #5b21b6;
+    --recipe-active-bg: #7c3aed;
+    --recipe-active-text: white;
+    --recipe-hover-bg: #ddd6fe;
+    --recipe-dark-bg: #2a1a40;
+    --recipe-dark-text: #c48aff;
+    --recipe-dark-hover-bg: #3b2a51;
+
+    --mealplan-bg: #dbeafe;
+    --mealplan-text: #1e40af;
+    --mealplan-active-bg: #2563eb;
+    --mealplan-active-text: white;
+    --mealplan-hover-bg: #bfdbfe;
+    --mealplan-dark-bg: #1a2940;
+    --mealplan-dark-text: #80b3ff;
+    --mealplan-dark-hover-bg: #233552;
+}
+`;
 
 // Hard-coded tag IDs for filtering
 const TAG_IDS = {
@@ -273,204 +329,249 @@ const Forum = () => {
     }, [posts, likedPosts]);
 
     return (
-        <div className="py-12">
+        <div className="w-full py-12">
             <div className="nh-container">
-                <div className="mb-8">
-                    <h1 className="nh-title text-center mb-6">Community Forum</h1>
-
-                    <div className="flex flex-col sm:flex-row justify-between items-center mb-4">
-                        <div className="flex flex-wrap gap-2 mb-4 sm:mb-0">
-                            {/* Filter buttons */}
-                            <button 
-                                onClick={() => handleFilterByTag(TAG_IDS["Dietary tip"], "Dietary tip")}
-                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    activeFilter === TAG_IDS["Dietary tip"] 
-                                    ? 'bg-[#0d7c5f] text-white' 
-                                    : 'bg-[#e6f7f2] text-[#0d7c5f] hover:bg-[#d0efe6]'
-                                }`}
-                            >
-                                <Tag size={16} className="flex-shrink-0" />
-                                <span>Dietary Tips</span>
-                            </button>
-                            
-                            <button 
-                                onClick={() => handleFilterByTag(TAG_IDS["Recipe"], "Recipe")}
-                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    activeFilter === TAG_IDS["Recipe"] 
-                                    ? 'bg-[#6200ee] text-white' 
-                                    : 'bg-[#f0e6ff] text-[#6200ee] hover:bg-[#e6d0ff]'
-                                }`}
-                            >
-                                <Tag size={16} className="flex-shrink-0" />
-                                <span>Recipes</span>
-                            </button>
-                            
-                            <button 
-                                onClick={() => handleFilterByTag(TAG_IDS["Meal plan"], "Meal plan")}
-                                className={`flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium transition-colors ${
-                                    activeFilter === TAG_IDS["Meal plan"] 
-                                    ? 'bg-[#0062cc] text-white' 
-                                    : 'bg-[#e6f0ff] text-[#0062cc] hover:bg-[#d0e6ff]'
-                                }`}
-                            >
-                                <Tag size={16} className="flex-shrink-0" />
-                                <span>Meal Plans</span>
-                            </button>
-                            
-                            {activeFilter !== null && (
-                                <button 
-                                    onClick={clearFilter}
-                                    className="flex items-center gap-1 px-3 py-2 rounded-md text-sm font-medium bg-gray-200 text-gray-700 hover:bg-gray-300 transition-colors"
-                                >
-                                    <X size={16} className="flex-shrink-0" />
-                                    <span>Clear Filter</span>
-                                </button>
-                            )}
-                        </div>
-                        
-                        {/* New Post button */}
-                        <Link to="/forum/create" className="nh-button nh-button-primary flex items-center gap-2">
-                            <PlusCircle size={20} weight="fill" />
-                            New Post
-                        </Link>
-                    </div>
-                    
-                    {/* Active filter indicator */}
-                    {filterLabel && (
-                        <div className="mb-4 p-2 bg-gray-100 dark:bg-gray-800 rounded-md">
-                            <p className="text-sm text-center">
-                                Showing posts tagged with: <span className="font-medium">{filterLabel}</span>
-                            </p>
-                        </div>
-                    )}
+                <div className="mb-8 flex flex-col items-center">
+                    <h1 className="nh-title text-center">Community Forum</h1>
+                    <p className="nh-text text-lg max-w-2xl text text-center">
+                        Connect with others, share recipes, and get nutrition advice from our community.
+                    </p>
                 </div>
-                
-                {loading ? (
-                    <div className="text-center my-12">
-                        <p className="text-lg">Loading posts...</p>
-                    </div>
-                ) : posts.length === 0 ? (
-                    <div className="text-center my-12">
-                        <p className="text-lg">
-                            {activeFilter !== null 
-                                ? `No posts found with the selected tag. Try another filter or create a new post.` 
-                                : `No posts found. Be the first to create a post!`
-                            }
-                        </p>
-                    </div>
-                ) : (
-                    <div className="space-y-6 max-w-4xl mx-auto">
-                        {getCurrentPosts().map((post) => (
-                            <div key={post.id} className="nh-card relative">
-                                {/* Add clickable overlay that links to post detail */}
-                                <Link 
-                                    to={`/forum/post/${post.id}`}
-                                    className="absolute inset-0 z-10"
-                                    aria-label={`View post: ${post.title}`}
-                                />
+
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left column - Filters */}
+                    <div className="w-full md:w-1/5">
+                        <div className="sticky top-20">
+                            <h3 className="nh-subtitle mb-4 flex items-center gap-2">
+                                <Funnel size={20} weight="fill" className="text-primary" />
+                                Filter Posts
+                            </h3>
+                            <div className="flex flex-col gap-3">
+                                {/* Filter buttons */}
+                                <button 
+                                    onClick={() => handleFilterByTag(TAG_IDS["Dietary tip"], "Dietary tip")}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: activeFilter === TAG_IDS["Dietary tip"] 
+                                            ? getTagStyle("Dietary tip").activeBg 
+                                            : getTagStyle("Dietary tip").bg,
+                                        color: activeFilter === TAG_IDS["Dietary tip"] 
+                                            ? getTagStyle("Dietary tip").activeText 
+                                            : getTagStyle("Dietary tip").text
+                                    }}
+                                >
+                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Dietary Tips</span>
+                                </button>
                                 
-                                <div className="flex items-center mb-2">
-                                    <div className="mt-0.5 mr-2">
-                                        <ChatText size={20} weight="fill" className="text-primary flex-shrink-0" />
-                                    </div>
-                                    <h3 className="nh-subtitle">{post.title}</h3>
-                                </div>
+                                <button 
+                                    onClick={() => handleFilterByTag(TAG_IDS["Recipe"], "Recipe")}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: activeFilter === TAG_IDS["Recipe"] 
+                                            ? getTagStyle("Recipe").activeBg 
+                                            : getTagStyle("Recipe").bg,
+                                        color: activeFilter === TAG_IDS["Recipe"] 
+                                            ? getTagStyle("Recipe").activeText 
+                                            : getTagStyle("Recipe").text
+                                    }}
+                                >
+                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Recipes</span>
+                                </button>
                                 
-                                {/* Tags */}
-                                {post.tags && post.tags.length > 0 && (
-                                    <div className="flex flex-wrap gap-2 mb-3">
-                                        {post.tags.map((tag) => {
-                                            const tagStyle = getTagStyle(tag.name);
-                                            return (
-                                                <div 
-                                                    key={tag.id} 
-                                                    className="flex items-center px-2 py-1 rounded-md text-xs font-medium z-20 relative" 
-                                                    style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
-                                                >
-                                                    <Tag size={12} className="mr-1" />
-                                                    {tag.name}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
+                                <button 
+                                    onClick={() => handleFilterByTag(TAG_IDS["Meal plan"], "Meal plan")}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: activeFilter === TAG_IDS["Meal plan"] 
+                                            ? getTagStyle("Meal plan").activeBg 
+                                            : getTagStyle("Meal plan").bg,
+                                        color: activeFilter === TAG_IDS["Meal plan"] 
+                                            ? getTagStyle("Meal plan").activeText 
+                                            : getTagStyle("Meal plan").text
+                                    }}
+                                >
+                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Meal Plans</span>
+                                </button>
+                                
+                                {activeFilter !== null && (
+                                    <button 
+                                        onClick={clearFilter}
+                                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
+                                    >
+                                        <X size={18} weight="bold" className="flex-shrink-0" />
+                                        <span className="flex-grow text-center">Clear Filter</span>
+                                    </button>
                                 )}
-                                
-                                <p className="nh-text mb-4">
-                                    {post.body.length > 150 
-                                        ? post.body.substring(0, 150) + '...' 
-                                        : post.body}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Middle column - Posts */}
+                    <div className="w-full md:w-3/5">
+                        {/* Active filter indicator */}
+                        {filterLabel && (
+                            <div className="mb-6 p-3 bg-gray-800 dark:bg-gray-800 rounded-lg border border-gray-700">
+                                <p className="text-sm text-center nh-text">
+                                    Showing posts tagged with: <span className="font-medium">{filterLabel}</span>
                                 </p>
-                                <div className="flex justify-between items-center text-sm text-gray-500">
-                                    <span className="flex items-center gap-1">
-                                        <div className="mt-0.5">
-                                            <User size={16} className="flex-shrink-0" />
-                                        </div>
-                                        Posted by: {post.author.username} • {formatDate(post.created_at)}
-                                    </span>
-                                    <div className="flex items-center gap-4">
+                            </div>
+                        )}
+                        
+                        {loading ? (
+                            <div className="text-center my-12">
+                                <p className="text-lg">Loading posts...</p>
+                            </div>
+                        ) : posts.length === 0 ? (
+                            <div className="text-center my-12">
+                                <p className="text-lg">
+                                    {activeFilter !== null 
+                                        ? `No posts found with the selected tag. Try another filter or create a new post.` 
+                                        : `No posts found. Be the first to create a post!`
+                                    }
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {getCurrentPosts().map((post) => (
+                                    <div key={post.id} className="nh-card relative">
+                                        {/* Add clickable overlay that links to post detail */}
                                         <Link 
                                             to={`/forum/post/${post.id}`}
-                                            className="flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 relative z-20"
-                                        >
-                                            <div className="mt-0.5">
-                                                <ChatDots size={16} className="flex-shrink-0" />
+                                            className="absolute inset-0 z-10"
+                                            aria-label={`View post: ${post.title}`}
+                                        />
+                                        
+                                        <div className="flex items-center mb-2">
+                                            <div className="flex items-center justify-center mr-3">
+                                                <ChatText size={24} weight="fill" className="text-primary" />
                                             </div>
-                                            Comments
-                                        </Link>
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                handleLikeToggle(post.id);
-                                            }}
-                                            className={`flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${likedPosts[post.id] ? 'text-primary' : ''} relative z-20`}
-                                        >
-                                            <div className="mt-0.5">
-                                                <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />
+                                            <h3 className="nh-subtitle">{post.title}</h3>
+                                        </div>
+                                        
+                                        {/* Tags */}
+                                        {post.tags && post.tags.length > 0 && (
+                                            <div className="flex flex-wrap gap-2 mb-3">
+                                                {post.tags.map((tag) => {
+                                                    const tagStyle = getTagStyle(tag.name);
+                                                    return (
+                                                        <div 
+                                                            key={tag.id} 
+                                                            className="flex items-center px-2 py-1 rounded-md text-xs font-medium z-20 relative" 
+                                                            style={{ 
+                                                                backgroundColor: tagStyle.bg, 
+                                                                color: tagStyle.text 
+                                                            }}
+                                                        >
+                                                            <Tag size={12} className="mr-1" />
+                                                            {tag.name}
+                                                        </div>
+                                                    );
+                                                })}
                                             </div>
-                                            {/* Note: We'll need to update this when the backend adds likes */}
-                                            Likes: 0
-                                        </button>
+                                        )}
+                                        
+                                        <p className="nh-text mb-4">
+                                            {post.body.length > 150 
+                                                ? post.body.substring(0, 150) + '...' 
+                                                : post.body}
+                                        </p>
+                                        <div className="flex justify-between items-center text-sm text-gray-500">
+                                            <span className="flex items-center gap-1">
+                                                <div className="flex items-center justify-center">
+                                                    <User size={16} className="flex-shrink-0" />
+                                                </div>
+                                                Posted by: {post.author.username} • {formatDate(post.created_at)}
+                                            </span>
+                                            <div className="flex items-center gap-4">
+                                                <Link 
+                                                    to={`/forum/post/${post.id}`}
+                                                    className="flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 relative z-20"
+                                                >
+                                                    <div className="flex items-center justify-center">
+                                                        <ChatDots size={16} weight="fill" className="flex-shrink-0" />
+                                                    </div>
+                                                    Comments
+                                                </Link>
+                                                <button 
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        handleLikeToggle(post.id);
+                                                    }}
+                                                    className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 ${likedPosts[post.id] ? 'text-primary' : ''} relative z-20`}
+                                                >
+                                                    <div className="flex items-center justify-center">
+                                                        <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />
+                                                    </div>
+                                                    Likes: 0
+                                                </button>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
+                                ))}
                             </div>
-                        ))}
-                    </div>
-                )}
+                        )}
 
-                {/* Pagination - only show if we have posts and more than one page */}
-                {!loading && posts.length > 0 && totalPages > 1 && (
-                    <div className="flex justify-center items-center mt-8 gap-2">
-                        <button 
-                            onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                            disabled={currentPage === 1}
-                            className={`p-2 rounded-full ${currentPage === 1 ? 'text-gray-400 cursor-not-allowed' : 'text-primary hover:bg-gray-100'}`}
-                        >
-                            <CaretLeft size={20} weight="bold" />
-                        </button>
-                        
-                        {[...Array(totalPages)].map((_, index) => (
-                            <button
-                                key={index}
-                                onClick={() => handlePageChange(index + 1)}
-                                className={`w-8 h-8 rounded-full ${
-                                    currentPage === index + 1 
-                                    ? 'bg-[#0d7c5f] dark:bg-[#090909] text-white' 
-                                    : 'text-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 dark:text-gray-500'
-                                }`}
-                            >
-                                {index + 1}
-                            </button>
-                        ))}
-                        
-                        <button 
-                            onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                            disabled={currentPage === totalPages}
-                            className={`p-2 rounded-full ${currentPage === totalPages ? 'text-gray-400 cursor-not-allowed' : 'text-primary hover:bg-gray-100'}`}
-                        >
-                            <CaretRight size={20} weight="bold" />
-                        </button>
+                        {/* Pagination - only show if we have posts and more than one page */}
+                        {!loading && posts.length > 0 && totalPages > 1 && (
+                            <div className="flex justify-center items-center mt-10 gap-2">
+                                <button 
+                                    onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                                    disabled={currentPage === 1}
+                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${currentPage === 1 ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                                >
+                                    <CaretLeft size={20} weight="bold" />
+                                </button>
+                                
+                                {[...Array(totalPages)].map((_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handlePageChange(index + 1)}
+                                        className={`w-10 h-10 rounded-full transition-all ${
+                                            currentPage === index + 1 
+                                            ? 'bg-primary text-white shadow' 
+                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                        }`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                ))}
+                                
+                                <button 
+                                    onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                                    disabled={currentPage === totalPages}
+                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${currentPage === totalPages ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                                >
+                                    <CaretRight size={20} weight="bold" />
+                                </button>
+                            </div>
+                        )}
                     </div>
-                )}
+
+                    {/* Right column - Actions */}
+                    <div className="w-full md:w-1/5">
+                        <div className="sticky top-20 flex flex-col gap-4">
+                            <Link to="/forum/create" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium">
+                                <div className="flex items-center justify-center w-full">
+                                    <PlusCircle size={22} weight="fill" className="mr-2" />
+                                    New Post
+                                </div>
+                            </Link>
+                            
+                            <div className="nh-card rounded-lg shadow-md">
+                                <h3 className="nh-subtitle mb-3 text-sm">Forum Rules</h3>
+                                <ul className="nh-text text-xs space-y-2">
+                                    <li>• Be respectful to others</li>
+                                    <li>• Share verified nutrition info</li>
+                                    <li>• Use appropriate tags</li>
+                                    <li>• Ask questions clearly</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     )
