@@ -1,8 +1,9 @@
 {
 	"info": {
-		"_postman_id": "e5e61182-b6b0-467d-b391-a8364f08fc2c",
+		"_postman_id": "2b7a68d6-7c34-4f76-b021-1ee2ab69ece9",
 		"name": "352",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17560267"
 	},
 	"item": [
 		{
@@ -12,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n            \"username\": \"deneme11\",\r\n            \"password\": \"deneme123\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren21@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": []\r\n        }",
+					"raw": "{\r\n            \"username\": \"eren1\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren1@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": []\r\n        }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -23,7 +24,10 @@
 					"raw": "http://127.0.0.1:8081/users/create/",
 					"protocol": "http",
 					"host": [
-						"127.0.0.1"
+						"127",
+						"0",
+						"0",
+						"1"
 					],
 					"port": "8081",
 					"path": [
@@ -32,7 +36,7 @@
 						""
 					]
 				},
-				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8000/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
 			},
 			"response": []
 		},
@@ -43,7 +47,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"username\" : \"deneme11\", \"password\": \"deneme123\"}",
+					"raw": "{\"username\" : \"eren1\", \"password\": \"securepassword1235\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -54,7 +58,10 @@
 					"raw": "http://127.0.0.1:8081/users/token/",
 					"protocol": "http",
 					"host": [
-						"127.0.0.1"
+						"127",
+						"0",
+						"0",
+						"1"
 					],
 					"port": "8081",
 					"path": [
@@ -84,12 +91,15 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/token/refresh/",
+					"raw": "http://127.0.0.1:8081/users/token/refresh/",
 					"protocol": "http",
 					"host": [
-						"127.0.0.1"
+						"127",
+						"0",
+						"0",
+						"1"
 					],
-					"port": "8000",
+					"port": "8081",
 					"path": [
 						"users",
 						"token",
@@ -107,7 +117,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "// http://127.0.0.1:8000/users/login/ go to this page on browser \r\n// and use the information below to pass csrf check\r\n\r\n// Doesn't work anymore\r\n{\"username\" : \"ahmet\", \"password\": \"securepassword1235\"}",
+					"raw": "// http://127.0.0.1:8081/users/login/ go to this page on browser \r\n// and use the information below to pass csrf check\r\n\r\n// Doesn't work anymore\r\n{\"username\" : \"ahmet\", \"password\": \"securepassword1235\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -115,12 +125,15 @@
 					}
 				},
 				"url": {
-					"raw": "http://127.0.0.1:8000/users/login/",
+					"raw": "http://127.0.0.1:8081/users/login/",
 					"protocol": "http",
 					"host": [
-						"127.0.0.1"
+						"127",
+						"0",
+						"0",
+						"1"
 					],
-					"port": "8000",
+					"port": "8081",
 					"path": [
 						"users",
 						"login",
@@ -132,31 +145,27 @@
 		},
 		{
 			"name": "get_all_users_with_token",
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
 				"auth": {
 					"type": "bearer",
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2ODkwNzc0LCJpYXQiOjE3NDY4ODcxNzQsImp0aSI6Ijc5ODcyYmE0YTkzZTRlNWE4YWExY2U5NTI3ZTRkNTkwIiwidXNlcl9pZCI6MX0.OhISgn0t07PnvGJLNf02DSLnqa8ebCj23mBMYs4ax1o",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1MzU0NTgxLCJpYXQiOjE3NDUzNTA5ODEsImp0aSI6ImVjN2E3ZjBkZWZkMzQ1NDc5ZWFhOTNiOTNjNDI0YTUyIiwidXNlcl9pZCI6Mn0.9xlv1Y7Na_pEQbk0gNIpr4w7G1Z9LKUaV8FVW3x3oic",
 							"type": "string"
 						}
 					]
 				},
 				"method": "GET",
 				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "http://127.0.0.1:8081/users/",
 					"protocol": "http",
 					"host": [
-						"127.0.0.1"
+						"127",
+						"0",
+						"0",
+						"1"
 					],
 					"port": "8081",
 					"path": [
@@ -173,12 +182,15 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://127.0.0.1:8000/api/time?name=osman",
+					"raw": "http://127.0.0.1:8081/api/time?name=osman",
 					"protocol": "http",
 					"host": [
-						"127.0.0.1"
+						"127",
+						"0",
+						"0",
+						"1"
 					],
-					"port": "8000",
+					"port": "8081",
 					"path": [
 						"api",
 						"time"
@@ -194,7 +206,138 @@
 			"response": []
 		},
 		{
-			"name": "Change Password",
+			"name": "get_food_catalog",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/foods?limit=10",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"foods"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						}
+					]
+				},
+				"description": "Fetch a list of food entries. Use the 'limit' query parameter to specify the number of rows to return."
+			},
+			"response": []
+		},
+		{
+			"name": "create_post",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"title\": \"My first post\",\n  \"body\": \"This is the body of my post.\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/posts/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"forum",
+						"posts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "list_posts",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/posts/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"forum",
+						"posts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_post_detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/posts/1/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"forum",
+						"posts",
+						"1",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "change_password",
 			"request": {
 				"auth": {
 					"type": "bearer",
@@ -238,83 +381,6 @@
 				}
 			},
 			"response": []
-		},
-        {
-          "name": "create_post",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              },
-              {
-                "key": "Content-Type",
-                "value": "application/json",
-                "type": "text"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"My first post\",\n  \"body\": \"This is the body of my post.\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "http://127.0.0.1:8000/forum/posts/",
-              "protocol": "http",
-              "host": ["127.0.0.1"],
-              "port": "8000",
-              "path": ["forum", "posts"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "list_posts",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "http://127.0.0.1:8000/forum/posts/",
-              "protocol": "http",
-              "host": ["127.0.0.1"],
-              "port": "8000",
-              "path": ["forum", "posts"]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "get_post_detail",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{access_token}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "http://127.0.0.1:8000/forum/posts/1/",
-              "protocol": "http",
-              "host": ["127.0.0.1"],
-              "port": "8000",
-              "path": ["forum", "posts", "1"]
-            }
-          },
-          "response": []
-        }
+		}
 	]
 }
