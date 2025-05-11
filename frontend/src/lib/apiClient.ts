@@ -9,7 +9,7 @@ export interface Food {
   caloriesPerServing: number;
   proteinContent: number;
   fatContent: number;
-  carbohydratesContent: number;
+  carbohydrateContent: number;
   allergens: string[];
   dietaryOptions: string[];
   nutritionScore: number;
