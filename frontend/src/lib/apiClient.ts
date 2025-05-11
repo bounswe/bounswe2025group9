@@ -71,6 +71,19 @@ export interface UserResponse {
   allergens: any[];
 }
 
+// pagination types
+export interface PaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
+
+export interface PaginationParams {
+  page?: number;
+  page_size?: number;
+}
+
 // forum types
 export interface ForumPost {
   id: number;
@@ -262,7 +275,9 @@ export const apiClient = {
   getForumPosts: (params?: { 
     tags?: number | number[], 
     author?: number,
-    ordering?: string 
+    ordering?: string,
+    page?: number,
+    page_size?: number
   }) => {
     let url = "/forum/posts/";
     if (params) {
@@ -287,6 +302,15 @@ export const apiClient = {
         queryParams.append('ordering', params.ordering);
       }
       
+      // Handle pagination parameters
+      if (params.page !== undefined) {
+        queryParams.append('page', params.page.toString());
+      }
+      
+      if (params.page_size !== undefined) {
+        queryParams.append('page_size', params.page_size.toString());
+      }
+      
       // Add query string to URL if there are any parameters
       const queryString = queryParams.toString();
       if (queryString) {
@@ -294,7 +318,7 @@ export const apiClient = {
       }
     }
     
-    return fetchJson<ForumPost[]>(url, {
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
       method: "GET"
     }, true);
   },
@@ -328,10 +352,31 @@ export const apiClient = {
     }, true),
     
   // comments
-  getPostComments: (postId: number) =>
-    fetchJson<ForumComment[]>(`/forum/comments/?post=${postId}`, {
+  getPostComments: (postId: number, params?: PaginationParams) => {
+    let url = `/forum/comments/?post=${postId}`;
+    
+    if (params) {
+      const queryParams = new URLSearchParams();
+      
+      if (params.page !== undefined) {
+        queryParams.append('page', params.page.toString());
+      }
+      
+      if (params.page_size !== undefined) {
+        queryParams.append('page_size', params.page_size.toString());
+      }
+      
+      // Append pagination parameters if they exist
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `&${queryString}`;
+      }
+    }
+    
+    return fetchJson<PaginatedResponse<ForumComment>>(url, {
       method: "GET"
-    }, true),
+    }, true);
+  },
     
   createComment: (commentData: CreateCommentRequest) =>
     fetchJson<ForumComment>("/forum/comments/", {

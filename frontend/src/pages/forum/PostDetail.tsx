@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots } from '@phosphor-icons/react'
-import { apiClient, ForumPost, ForumTag } from '../../lib/apiClient'
+import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight } from '@phosphor-icons/react'
+import { apiClient, ForumPost, ForumTag, PaginatedResponse, ForumComment } from '../../lib/apiClient'
 
 // Post interface for the data from API
 interface APIPost {
@@ -67,6 +67,12 @@ const PostDetail = () => {
     const [commentText, setCommentText] = useState('')
     const [comments, setComments] = useState<Comment[]>([])
     const [loadingComments, setLoadingComments] = useState(false)
+    const [commentPage, setCommentPage] = useState(1)
+    const [totalComments, setTotalComments] = useState(0)
+    const commentsPerPage = 10 // Default comments per page
+
+    // Calculate total pages for comments
+    const totalCommentPages = Math.ceil(totalComments / commentsPerPage)
 
     // Function to sync with sessionStorage
     const syncWithStorage = useCallback(() => {
@@ -82,12 +88,12 @@ const PostDetail = () => {
         fetchPost();
     }, [postId]);
     
-    // Fetch comments when we have a valid post
+    // Fetch comments when we have a valid post or when page changes
     useEffect(() => {
         if (post) {
             fetchComments();
         }
-    }, [post]);
+    }, [post, commentPage]);
     
     // Fetch comments for the current post
     const fetchComments = async () => {
@@ -95,10 +101,17 @@ const PostDetail = () => {
         
         setLoadingComments(true);
         try {
-            const commentsData = await apiClient.getPostComments(postIdNum);
-            if (commentsData) {
+            const response = await apiClient.getPostComments(postIdNum, {
+                page: commentPage,
+                page_size: commentsPerPage
+            });
+            
+            if (response) {
+                // Update total comments count
+                setTotalComments(response.count);
+                
                 // Transform API comments to match our interface if needed
-                const transformedComments = commentsData.map(comment => ({
+                const transformedComments = response.results.map(comment => ({
                     id: comment.id,
                     post: comment.post,
                     author: typeof comment.author === 'string' 
@@ -115,6 +128,13 @@ const PostDetail = () => {
         } finally {
             setLoadingComments(false);
         }
+    };
+
+    // Handle comment page change
+    const handleCommentPageChange = (page: number) => {
+        setCommentPage(page);
+        // Scroll to comments section
+        document.getElementById('comments-section')?.scrollIntoView({ behavior: 'smooth' });
     };
 
     // Fetch post data from API
@@ -255,14 +275,22 @@ const PostDetail = () => {
                 updated_at: newComment.updated_at
             };
             
-            // Add new comment to the list
-            setComments(prevComments => [transformedComment, ...prevComments])
-            setCommentText('') // Clear the input
+            // Add the new comment to the list and clear the form
+            setComments([transformedComment, ...comments]);
+            setCommentText('');
+            
+            // Increment total comments count
+            setTotalComments(prev => prev + 1);
+            
+            // If not on the first page, go to first page to see the new comment
+            if (commentPage !== 1) {
+                setCommentPage(1);
+            }
         } catch (error) {
             console.error('Error creating comment:', error);
-            alert('Failed to post your comment. Please try again.');
+            alert('Failed to post comment. Please try again.');
         }
-    }
+    };
     
     // Format date for display
     const formatDate = (dateString: string) => {
@@ -422,6 +450,108 @@ const PostDetail = () => {
                                     </div>
                                 </div>
                             ))}
+                        </div>
+                    )}
+                    
+                    {/* Comment pagination */}
+                    {!loadingComments && totalComments > 0 && totalCommentPages > 1 && (
+                        <div className="flex justify-center items-center mt-6 gap-2">
+                            <button 
+                                onClick={() => handleCommentPageChange(Math.max(1, commentPage - 1))}
+                                disabled={commentPage === 1}
+                                className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${commentPage === 1 ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                            >
+                                <CaretLeft size={20} weight="bold" />
+                            </button>
+                            
+                            {totalCommentPages <= 5 ? (
+                                // Show all pages if 5 or fewer
+                                [...Array(totalCommentPages)].map((_, index) => (
+                                    <button
+                                        key={index}
+                                        onClick={() => handleCommentPageChange(index + 1)}
+                                        className={`w-10 h-10 rounded-full transition-all ${
+                                            commentPage === index + 1 
+                                            ? 'bg-primary text-white shadow' 
+                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                        }`}
+                                    >
+                                        {index + 1}
+                                    </button>
+                                ))
+                            ) : (
+                                // Show limited range of pages
+                                <>
+                                    {/* First page */}
+                                    <button
+                                        onClick={() => handleCommentPageChange(1)}
+                                        className={`w-10 h-10 rounded-full transition-all ${
+                                            commentPage === 1 
+                                            ? 'bg-primary text-white shadow' 
+                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                        }`}
+                                    >
+                                        1
+                                    </button>
+                                    
+                                    {/* Ellipsis for many pages */}
+                                    {commentPage > 3 && <span className="mx-1">...</span>}
+                                    
+                                    {/* Pages around current page */}
+                                    {Array.from(
+                                        { length: Math.min(3, totalCommentPages - 2) },
+                                        (_, i) => {
+                                            let pageNum;
+                                            if (commentPage <= 2) {
+                                                pageNum = i + 2; // Show 2, 3, 4
+                                            } else if (commentPage >= totalCommentPages - 1) {
+                                                pageNum = totalCommentPages - 3 + i; // Show last 3 pages before the last
+                                            } else {
+                                                pageNum = commentPage - 1 + i; // Show around current
+                                            }
+                                            
+                                            if (pageNum <= 1 || pageNum >= totalCommentPages) return null;
+                                            
+                                            return (
+                                                <button
+                                                    key={pageNum}
+                                                    onClick={() => handleCommentPageChange(pageNum)}
+                                                    className={`w-10 h-10 rounded-full transition-all ${
+                                                        commentPage === pageNum 
+                                                        ? 'bg-primary text-white shadow' 
+                                                        : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                                    }`}
+                                                >
+                                                    {pageNum}
+                                                </button>
+                                            );
+                                        }
+                                    )}
+                                    
+                                    {/* Ellipsis for many pages */}
+                                    {commentPage < totalCommentPages - 2 && <span className="mx-1">...</span>}
+                                    
+                                    {/* Last page */}
+                                    <button
+                                        onClick={() => handleCommentPageChange(totalCommentPages)}
+                                        className={`w-10 h-10 rounded-full transition-all ${
+                                            commentPage === totalCommentPages 
+                                            ? 'bg-primary text-white shadow' 
+                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                        }`}
+                                    >
+                                        {totalCommentPages}
+                                    </button>
+                                </>
+                            )}
+                            
+                            <button 
+                                onClick={() => handleCommentPageChange(Math.min(totalCommentPages, commentPage + 1))}
+                                disabled={commentPage === totalCommentPages}
+                                className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${commentPage === totalCommentPages ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                            >
+                                <CaretRight size={20} weight="bold" />
+                            </button>
                         </div>
                     )}
                     

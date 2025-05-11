@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
-import { apiClient, ForumPost, ForumTag } from '../../lib/apiClient'
+import { apiClient, ForumPost, ForumTag, PaginatedResponse } from '../../lib/apiClient'
 
 // create a simple cache for posts
 let cachedPosts: ForumPost[] = [];
@@ -57,98 +57,130 @@ const TAG_IDS = {
 
 const Forum = () => {
     const location = useLocation();
-    const [posts, setPosts] = useState<ForumPost[]>(cachedPosts); // initialize with cached posts
+    const [allPosts, setAllPosts] = useState<ForumPost[]>(cachedPosts); // store all posts
+    const [posts, setPosts] = useState<ForumPost[]>([]); // store current page posts
     const [loading, setLoading] = useState(cachedPosts.length === 0); // only show loading if no cached posts
+    const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const postsPerPage = 5;
+    const [postsPerPage, setPostsPerPage] = useState(5);
     const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
     
     // State for active filter
     const [activeFilter, setActiveFilter] = useState<number | null>(null);
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
     
-    // Calculate total pages based on fetched posts
-    const totalPages = Math.ceil(posts.length / postsPerPage);
+    // Calculate total pages based on filtered posts count
+    const totalPages = Math.ceil(totalCount / postsPerPage);
+    
+    // Apply pagination to filtered posts
+    useEffect(() => {
+        if (allPosts.length > 0) {
+            const filteredPosts = activeFilter 
+                ? allPosts.filter(post => post.tags.some(tag => tag.id === activeFilter))
+                : allPosts;
+                
+            setTotalCount(filteredPosts.length);
+            
+            // Get current page posts
+            const indexOfLastPost = currentPage * postsPerPage;
+            const indexOfFirstPost = indexOfLastPost - postsPerPage;
+            const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredPosts.length));
+            
+            setPosts(currentPosts);
+            syncLikedState(currentPosts);
+        }
+    }, [allPosts, currentPage, postsPerPage, activeFilter]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
-        fetchPosts();
+        fetchAllPosts();
     }, []);
 
     // Refresh data when navigating back to this page
     useEffect(() => {
         // Check if we're coming back to the forum from somewhere else
         if (location.pathname === '/forum') {
-            fetchPosts();
+            fetchAllPosts();
         }
     }, [location]);
 
-    // Get posts from API
-    const fetchPosts = async (tagId?: number) => {
-        // check if cache is still valid and we're not changing filters
+    // Get all posts from API
+    const fetchAllPosts = async () => {
+        // check if cache is still valid
         const now = Date.now();
         
-        // Force a fresh fetch when clearing filters
-        const isResettingFilters = tagId === undefined && activeFilter !== null;
-        
-        if (
-            !isResettingFilters &&
-            cachedPosts.length > 0 && 
-            now - lastFetchTime < CACHE_DURATION &&
-            tagId === undefined && 
-            activeFilter === null
-        ) {
+        if (cachedPosts.length > 0 && now - lastFetchTime < CACHE_DURATION) {
             // use cached data if available and fresh
             console.log('Using cached forum posts data');
-            syncLikedState(cachedPosts);
+            setAllPosts(cachedPosts);
             return;
         }
         
-        // If we're applying a filter, don't use cache
         if (!loading) {
             setLoading(true);
         }
         
         try {
-            // Prepare filter parameters
-            const params: { 
-                tags?: number, 
-                ordering: string 
-            } = {
-                ordering: '-created_at' // Sort by newest first
+            // Request all posts with a large page_size
+            const params = {
+                ordering: '-created_at', // Sort by newest first
+                page: 1,
+                page_size: 100 // Get a large number of posts in one request
             };
             
-            // Add tag filter if specified
-            if (tagId !== undefined) {
-                params.tags = tagId;
-            } else if (activeFilter !== null && !isResettingFilters) {
-                params.tags = activeFilter;
+            console.log(`Fetching all posts with params:`, params);
+            
+            const response = await apiClient.getForumPosts(params);
+            console.log(`Fetched ${response.results.length} posts, total: ${response.count}`);
+            
+            // Update cached posts
+            cachedPosts = response.results;
+            lastFetchTime = now;
+            
+            // If there are more posts than the page size, make additional requests
+            if (response.count > response.results.length && response.next) {
+                const allResults = [...response.results];
+                let nextUrl: string | null = response.next;
+                
+                while (nextUrl && allResults.length < response.count) {
+                    // Extract page from next URL
+                    try {
+                        const url = new URL(nextUrl);
+                        const page = url.searchParams.get('page');
+                        
+                        if (page) {
+                            const pageNum = parseInt(page);
+                            const nextPageResponse = await apiClient.getForumPosts({
+                                ...params,
+                                page: pageNum
+                            });
+                            
+                            allResults.push(...nextPageResponse.results);
+                            nextUrl = nextPageResponse.next;
+                        } else {
+                            break;
+                        }
+                    } catch (err) {
+                        console.error('Error parsing next URL:', err);
+                        break;
+                    }
+                }
+                
+                // Update with all fetched posts
+                cachedPosts = allResults;
+                console.log(`Fetched all ${allResults.length} posts`);
             }
             
-            // Log the request for debugging
-            console.log(`Fetching posts with params:`, params, `isResettingFilters: ${isResettingFilters}`);
-            
-            const data = await apiClient.getForumPosts(params);
-            console.log(`Fetched ${data.length} posts`);
-            
-            // update the cache only if no filter is applied or we're resetting filters
-            if ((tagId === undefined && activeFilter === null) || isResettingFilters) {
-                cachedPosts = data;
-                lastFetchTime = now;
-                console.log('Updated cache with all posts');
-            }
-            
-            // sync liked state with the new data
-            syncLikedState(data);
+            setAllPosts(cachedPosts);
         } catch (error) {
             console.error('Error fetching posts:', error);
             // if error and we have cached data, keep using it
             if (cachedPosts.length > 0) {
                 console.log('Using cached data due to fetch error');
-                syncLikedState(cachedPosts);
+                setAllPosts(cachedPosts);
             } else {
                 // Set empty posts array to prevent infinite loading state
-                syncLikedState([]);
+                setAllPosts([]);
             }
         } finally {
             setLoading(false);
@@ -161,14 +193,12 @@ const Forum = () => {
             // If clicking the active filter, clear it
             setActiveFilter(null);
             setFilterLabel(null);
-            fetchPosts(undefined); // Reset to all posts
         } else {
             // Apply the new filter
             setActiveFilter(tagId);
             setFilterLabel(tagName);
-            fetchPosts(tagId);
         }
-        // Reset to first page
+        // Reset to first page when changing filters
         setCurrentPage(1);
     };
 
@@ -176,9 +206,7 @@ const Forum = () => {
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
-        // Force a fresh fetch when clearing filters
-        fetchPosts(undefined);
-        setCurrentPage(1);
+        setCurrentPage(1); // Reset to first page
     };
 
     // helper function to sync liked state with post data
@@ -197,13 +225,7 @@ const Forum = () => {
         });
         
         // Update state
-        setPosts(postData);
         setLikedPosts(newLikedPosts);
-        
-        // Reset to first page when posts are refreshed (only if data actually changed)
-        if (JSON.stringify(postData) !== JSON.stringify(posts)) {
-            setCurrentPage(1);
-        }
     };
 
     // Handle like toggling with API
@@ -247,11 +269,9 @@ const Forum = () => {
         }
     };
 
-    // Get current posts for pagination
+    // Get current posts - not needed as we're now handling pagination in the useEffect
     const getCurrentPosts = () => {
-        const indexOfLastPost = currentPage * postsPerPage;
-        const indexOfFirstPost = indexOfLastPost - postsPerPage;
-        return posts.slice(indexOfFirstPost, indexOfFirstPost + postsPerPage);
+        return posts;
     };
 
     const handlePageChange = (page: number) => {
@@ -296,7 +316,7 @@ const Forum = () => {
                 // Also, trigger a refresh if it's been a while since the last fetch
                 const now = Date.now();
                 if (now - lastFetchTime > CACHE_DURATION) {
-                    fetchPosts();
+                    fetchAllPosts();
                 }
             }
         };
@@ -497,7 +517,7 @@ const Forum = () => {
                         )}
 
                         {/* Pagination - only show if we have posts and more than one page */}
-                        {!loading && posts.length > 0 && totalPages > 1 && (
+                        {!loading && totalCount > 0 && totalPages > 1 && (
                             <div className="flex justify-center items-center mt-10 gap-2">
                                 <button 
                                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
@@ -507,19 +527,86 @@ const Forum = () => {
                                     <CaretLeft size={20} weight="bold" />
                                 </button>
                                 
-                                {[...Array(totalPages)].map((_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handlePageChange(index + 1)}
-                                        className={`w-10 h-10 rounded-full transition-all ${
-                                            currentPage === index + 1 
-                                            ? 'bg-primary text-white shadow' 
-                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                        }`}
-                                    >
-                                        {index + 1}
-                                    </button>
-                                ))}
+                                {totalPages <= 5 ? (
+                                    // Show all pages if 5 or fewer
+                                    [...Array(totalPages)].map((_, index) => (
+                                        <button
+                                            key={index}
+                                            onClick={() => handlePageChange(index + 1)}
+                                            className={`w-10 h-10 rounded-full transition-all ${
+                                                currentPage === index + 1 
+                                                ? 'bg-primary text-white shadow' 
+                                                : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                            }`}
+                                        >
+                                            {index + 1}
+                                        </button>
+                                    ))
+                                ) : (
+                                    // Show limited range of pages
+                                    <>
+                                        {/* First page */}
+                                        <button
+                                            onClick={() => handlePageChange(1)}
+                                            className={`w-10 h-10 rounded-full transition-all ${
+                                                currentPage === 1 
+                                                ? 'bg-primary text-white shadow' 
+                                                : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                            }`}
+                                        >
+                                            1
+                                        </button>
+                                        
+                                        {/* Ellipsis for many pages */}
+                                        {currentPage > 3 && <span className="mx-1">...</span>}
+                                        
+                                        {/* Pages around current page */}
+                                        {Array.from(
+                                            { length: Math.min(3, totalPages - 2) },
+                                            (_, i) => {
+                                                let pageNum;
+                                                if (currentPage <= 2) {
+                                                    pageNum = i + 2; // Show 2, 3, 4
+                                                } else if (currentPage >= totalPages - 1) {
+                                                    pageNum = totalPages - 3 + i; // Show last 3 pages before the last
+                                                } else {
+                                                    pageNum = currentPage - 1 + i; // Show around current
+                                                }
+                                                
+                                                if (pageNum <= 1 || pageNum >= totalPages) return null;
+                                                
+                                                return (
+                                                    <button
+                                                        key={pageNum}
+                                                        onClick={() => handlePageChange(pageNum)}
+                                                        className={`w-10 h-10 rounded-full transition-all ${
+                                                            currentPage === pageNum 
+                                                            ? 'bg-primary text-white shadow' 
+                                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                                        }`}
+                                                    >
+                                                        {pageNum}
+                                                    </button>
+                                                );
+                                            }
+                                        )}
+                                        
+                                        {/* Ellipsis for many pages */}
+                                        {currentPage < totalPages - 2 && <span className="mx-1">...</span>}
+                                        
+                                        {/* Last page */}
+                                        <button
+                                            onClick={() => handlePageChange(totalPages)}
+                                            className={`w-10 h-10 rounded-full transition-all ${
+                                                currentPage === totalPages 
+                                                ? 'bg-primary text-white shadow' 
+                                                : 'text-gray-400 hover:bg-gray-800 hover:shadow'
+                                            }`}
+                                        >
+                                            {totalPages}
+                                        </button>
+                                    </>
+                                )}
                                 
                                 <button 
                                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
