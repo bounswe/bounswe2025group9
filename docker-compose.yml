@@ -15,23 +15,14 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
-      test:
-        [
-          "CMD",
-          "mysqladmin",
-          "ping",
-          "-h",
-          "localhost",
-          "-u",
-          "django",
-          "-pdjangopass",
-        ]
+      test: [ "CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "django", "-pdjangopass" ]
       interval: 5s
       timeout: 5s
       retries: 5
 
   web:
-    build: .
+    build:
+      context: ./backend
     container_name: django-app
     volumes:
       - .:/project
@@ -51,6 +42,15 @@ services:
       MYSQL_ROOT_PASSWORD: "rootpass"
       MYSQL_HOST: "db"
       MYSQL_PORT: "3306"
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: frontend-app
+    ports:
+      - "3000:3000" # Visit http://localhost:3000
+    depends_on:
+      - web
 
 volumes:
   mysql_data:

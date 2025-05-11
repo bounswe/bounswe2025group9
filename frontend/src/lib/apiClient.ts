@@ -102,7 +102,7 @@ export interface UserResponse {
 }
 
 // api base urls
-const BACKEND_API_URL = "http://localhost:8081";
+const BACKEND_API_URL = "http://web:9000";
 const MOCK_API_URL = "/api";
 
 // token storage
@@ -118,14 +118,14 @@ const getAuthHeader = (): HeadersInit => {
   const headers: HeadersInit = {
     "Content-Type": "application/json",
   };
-  
+
   if (accessToken) {
     headers["Authorization"] = `Bearer ${accessToken}`;
     console.log('Using auth token:', accessToken.substring(0, 10) + '...');
   } else {
     console.log('No auth token available');
   }
-  
+
   return headers;
 };
 
@@ -134,7 +134,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
   const defaultHeaders = getAuthHeader();
   const baseUrl = useRealBackend ? BACKEND_API_URL : MOCK_API_URL;
   const fullUrl = `${baseUrl}${url}`;
-  
+
   console.log(`Making API request to: ${fullUrl}`, {
     method: options?.method || 'GET',
     headers: {
@@ -142,7 +142,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       ...(options?.headers || {}),
     }
   });
-  
+
   try {
     const fetchOptions = {
       ...options,
@@ -152,7 +152,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       },
       credentials: 'include' as RequestCredentials, // Include cookies for CORS
     };
-    
+
     const response = await fetch(fullUrl, fetchOptions);
 
     if (!response.ok) {
@@ -170,7 +170,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       } catch (e) {
         console.error('Failed to read error response:', e);
       }
-      
+
       console.error(`API error (${response.status} ${response.statusText}):`, errorBody);
       throw new Error(`API error: ${response.status} ${response.statusText}`);
     }
@@ -197,7 +197,7 @@ export const apiClient = {
 
   // posts
   getPosts: () => fetchJson<Post[]>("/posts"),
-  
+
   createPost: (postData: CreatePostRequest) =>
     fetchJson<CreatePostResponse>("/posts/create", {
       method: "POST",
@@ -210,7 +210,7 @@ export const apiClient = {
       method: "POST",
       body: JSON.stringify({ username, password }),
     }, true),
-    
+
   refreshToken: (refresh: string) =>
     fetchJson<JwtResponse>("/users/token/refresh/", {
       method: "POST",
@@ -239,7 +239,7 @@ export const apiClient = {
     const url = "/users/profile/";
     console.log('Request URL:', BACKEND_API_URL + url);
     console.log('Auth headers:', getAuthHeader());
-    
+
     return fetchJson<UserResponse>(url, {
       method: "GET"
     }, true);
