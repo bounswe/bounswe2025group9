@@ -383,6 +383,47 @@
 			"response": []
 		},
 		{
+			"name": "logout",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2OTU1NjI5LCJpYXQiOjE3NDY5NTIwMjksImp0aSI6IjgyNTYxY2JhYzUwNDQ0NGE4ZWExOGZhZGVmZTMwZGYzIiwidXNlcl9pZCI6NH0.Ixpk0lYgHUwTPXAlbEljHxCppcbVy2IRCIyYRI17RCY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0NzAzODQyOSwiaWF0IjoxNzQ2OTUyMDI5LCJqdGkiOiI1NzdhZDNiZDJiZTk0NzE1OWFhYTI0ZWEzYjQ0NTE5YiIsInVzZXJfaWQiOjR9.mCMDLwWOdpcbeO8pH06IAPTLY0a6vySSrmxqcx2JZfc\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:8081/users/token/logout/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"token",
+						"logout",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+{
 			"name": "get_user_name",
 			"request": {
 				"auth": {

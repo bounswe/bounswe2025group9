@@ -10,7 +10,18 @@ class FoodCatalogTests(TestCase):
         self.client = APIClient()
         # Create sample FoodEntry objects
         for i in range(15):
-            FoodEntry.objects.create(name=f"Food {i}")
+            FoodEntry.objects.create(
+                name=f"Food {i}",
+                servingSize=100,
+                caloriesPerServing=100,
+                proteinContent=10,
+                fatContent=5,
+                carbohydrateContent=20,
+                allergens=[],
+                dietaryOptions=[],
+                nutritionScore=5.0,
+                imageUrl=f"http://example.com/image{i}.jpg",
+            )
 
     def test_invalid_limit(self):
         """
