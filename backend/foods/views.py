@@ -29,9 +29,12 @@ class FoodCatalog(APIView):
         available_categories = list(
             FoodEntry.objects.values_list("category", flat=True).distinct()
         )
-        available_categories = [cat.lower() for cat in available_categories]
+        available_categories_lc = [cat.lower() for cat in available_categories]
 
-        categories_param = request.query_params.get("categories", "")
+        # Accept both 'categories' and 'category' as query params
+        categories_param = request.query_params.get("categories", None)
+        if categories_param is None:
+            categories_param = request.query_params.get("category", "")
 
         warning = None
         if categories_param == "":
@@ -43,13 +46,22 @@ class FoodCatalog(APIView):
                 if category.strip()
             ]
             invalid_categories = [
-                cat for cat in requested_categories if cat not in available_categories
+                cat
+                for cat in requested_categories
+                if cat not in available_categories_lc
             ]
             categories = [
-                cat for cat in requested_categories if cat in available_categories
+                available_categories[i]
+                for i, cat in enumerate(available_categories_lc)
+                if cat in requested_categories
             ]
             if invalid_categories:
                 warning = f"Some categories are not available: {', '.join(invalid_categories)}"
+            # If no valid categories, return empty list
+            if not categories:
+                if warning:
+                    return Response({"warning": warning, "results": []}, status=206)
+                return Response([], status=200)
 
         print("final Categories:", categories)
         queryset = FoodEntry.objects.filter(category__in=categories)[:limit]
