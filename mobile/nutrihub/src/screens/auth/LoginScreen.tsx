@@ -14,7 +14,6 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
-  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -24,7 +23,7 @@ import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/common/Button';
 import TextInput from '../../components/common/TextInput';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { useAuth, AuthErrorType } from '../../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import useForm from '../../hooks/useForm';
 import { isNotEmpty, isValidUsername } from '../../utils/validation';
 import { RootStackParamList } from '../../navigation/types';
@@ -97,27 +96,12 @@ const LoginScreen: React.FC = () => {
   // Map authentication error type to user-friendly message
   const getErrorMessage = (): string | null => {
     if (!authError) return null;
-    
-    switch (authError.type) {
-      case AuthErrorType.INVALID_CREDENTIALS:
-        return 'Invalid username or password. Please try again.';
-      case AuthErrorType.NETWORK_ERROR:
-        return 'Unable to connect to server. Please check your internet connection.';
-      case AuthErrorType.VALIDATION_ERROR:
-        return authError.message;
-      default:
-        return 'An unexpected error occurred. Please try again later.';
-    }
+    return authError.message;
   };
   
   // Get form error for a field
   const getFieldError = (field: keyof LoginFormData): string | undefined => {
     return touched[field] ? errors[field] : undefined;
-  };
-  
-  // Handle navigation to forgot password
-  const handleForgotPassword = () => {
-    navigation.navigate('ForgotPassword');
   };
   
   // Handle navigation to sign up
@@ -188,18 +172,6 @@ const LoginScreen: React.FC = () => {
               testID="password-input"
               editable={!isSubmitting}
             />
-            
-            {/* Forgot Password Link */}
-            <TouchableOpacity 
-              style={styles.forgotPasswordContainer}
-              onPress={handleForgotPassword}
-              testID="forgot-password-button"
-              disabled={isSubmitting}
-            >
-              <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>
-                Forgot Password?
-              </Text>
-            </TouchableOpacity>
             
             {/* Login Button */}
             <Button
@@ -276,15 +248,8 @@ const styles = StyleSheet.create({
   formContainer: {
     marginBottom: SPACING.xl,
   },
-  forgotPasswordContainer: {
-    alignSelf: 'flex-end',
-    marginBottom: SPACING.lg,
-  },
-  forgotPasswordText: {
-    fontWeight: '500',
-  },
   loginButton: {
-    marginTop: SPACING.md,
+    marginTop: SPACING.lg,
   },
   signUpContainer: {
     flexDirection: 'row',

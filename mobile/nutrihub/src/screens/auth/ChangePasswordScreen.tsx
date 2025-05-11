@@ -1,7 +1,8 @@
+// src/screens/auth/ChangePasswordScreen.tsx
 /**
- * ForgotPasswordScreen
+ * ChangePasswordScreen
  * 
- * Screen for password recovery integrated with backend API.
+ * Screen for changing password when user is logged in.
  */
 
 import React, { useState } from 'react';
@@ -25,36 +26,56 @@ import TextInput from '../../components/common/TextInput';
 import Card from '../../components/common/Card';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import useForm from '../../hooks/useForm';
-import { isEmail, isNotEmpty } from '../../utils/validation';
+import { isNotEmpty, minLength } from '../../utils/validation';
 import { RootStackParamList } from '../../navigation/types';
 import { authService } from '../../services/api/auth.service';
+import { useAuth } from '../../context/AuthContext';
 
-type ForgotPasswordScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ForgotPassword'>;
+type ChangePasswordScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ChangePassword'>;
 
-interface ForgotPasswordFormData {
-  email: string;
+interface ChangePasswordFormData {
+  oldPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
 }
 
 /**
- * Forgot password screen component for password recovery
+ * Change password screen component
  */
-const ForgotPasswordScreen: React.FC = () => {
+const ChangePasswordScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
-  const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
-  const [isEmailSent, setIsEmailSent] = useState(false);
-  const [submittedEmail, setSubmittedEmail] = useState('');
+  const navigation = useNavigation<ChangePasswordScreenNavigationProp>();
+  const { isLoggedIn } = useAuth();
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isSuccess, setIsSuccess] = useState(false);
   
   // Define form validation rules
   const validationRules = {
-    email: [
+    oldPassword: [
       { 
         validator: (value: string) => isNotEmpty(value), 
-        message: 'Email is required' 
+        message: 'Current password is required' 
+      },
+    ],
+    newPassword: [
+      { 
+        validator: (value: string) => isNotEmpty(value), 
+        message: 'New password is required' 
       },
       { 
-        validator: (value: string) => isEmail(value), 
-        message: 'Please enter a valid email address' 
+        validator: (value: string) => minLength(value, 8), 
+        message: 'New password must be at least 8 characters' 
+      },
+    ],
+    confirmNewPassword: [
+      { 
+        validator: (value: string) => isNotEmpty(value), 
+        message: 'Please confirm your new password' 
+      },
+      { 
+        validator: (value: string, formValues?: any) => 
+          value === formValues?.newPassword, 
+        message: 'Passwords do not match' 
       },
     ],
   };
@@ -69,99 +90,85 @@ const ForgotPasswordScreen: React.FC = () => {
     handleSubmit, 
     isSubmitting,
     resetForm,
-  } = useForm<ForgotPasswordFormData>({
-    initialValues: { email: '' },
+  } = useForm<ChangePasswordFormData>({
+    initialValues: { 
+      oldPassword: '',
+      newPassword: '',
+      confirmNewPassword: '',
+    },
     validationRules,
     onSubmit: async (formValues) => {
       setApiError(null);
       try {
-        await authService.forgotPassword(formValues.email);
-        setSubmittedEmail(formValues.email);
-        setIsEmailSent(true);
+        await authService.changePassword({
+          old_password: formValues.oldPassword,
+          new_password: formValues.newPassword,
+        });
+        setIsSuccess(true);
       } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to send reset email';
+        const errorMessage = error instanceof Error ? error.message : 'Failed to change password';
         setApiError(errorMessage);
-        
-        // Show alert for network errors
-        if (errorMessage.includes('network') || errorMessage.includes('Network')) {
-          Alert.alert(
-            'Network Error',
-            'Unable to connect to server. Please check your internet connection.',
-            [{ text: 'OK' }]
-          );
-        }
       }
     },
   });
   
   // Get form error for a field
-  const getFieldError = (field: keyof ForgotPasswordFormData): string | undefined => {
+  const getFieldError = (field: keyof ChangePasswordFormData): string | undefined => {
     return touched[field] ? errors[field] : undefined;
   };
   
-  // Handle navigation to login
-  const handleNavigateToLogin = () => {
-    navigation.navigate('Login');
-  };
-  
-  // Handle resending email
-  const handleResendEmail = () => {
-    setIsEmailSent(false);
+  // Handle try again after success
+  const handleTryAgain = () => {
+    setIsSuccess(false);
     setApiError(null);
     resetForm();
   };
   
+  // Handle navigation to login if not logged in
+  React.useEffect(() => {
+    if (!isLoggedIn) {
+      navigation.navigate('Login');
+    }
+  }, [isLoggedIn, navigation]);
+  
   // Render success message
-  if (isEmailSent) {
+  if (isSuccess) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <TouchableOpacity 
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="arrow-left" size={24} color={theme.text} />
-          </TouchableOpacity>
-          
-          <View style={styles.successContainer}>
-            <View style={[styles.successIconContainer, { backgroundColor: theme.success + '20' }]}>
-              <Icon name="email-check" size={64} color={theme.success} />
-            </View>
-            
-            <Text style={[styles.successTitle, textStyles.heading2]}>Check Your Email</Text>
-            
-            <Text style={[styles.successText, textStyles.body]}>
-              We've sent password reset instructions to:
-            </Text>
-            
-            <Text style={[styles.emailText, textStyles.subtitle]}>
-              {submittedEmail}
-            </Text>
-            
-            <Card style={styles.infoCard}>
-              <Icon name="information-outline" size={20} color={theme.primary} style={styles.infoIcon} />
-              <Text style={[styles.infoText, textStyles.caption]}>
-                If you don't receive an email within 5 minutes, check your spam folder or try again with a different email address.
-              </Text>
-            </Card>
-            
-            <Button
-              title="Back to Login"
-              onPress={handleNavigateToLogin}
-              variant="primary"
-              fullWidth
-              style={styles.button}
-            />
-            
-            <Button
-              title="Resend Email"
-              onPress={handleResendEmail}
-              variant="outline"
-              fullWidth
-              style={styles.button}
-            />
+        <View style={styles.successContainer}>
+          <View style={[styles.successIconContainer, { backgroundColor: theme.success + '20' }]}>
+            <Icon name="check-circle" size={80} color={theme.success} />
           </View>
-        </ScrollView>
+          
+          <Text style={[styles.successTitle, textStyles.heading2]}>Password Changed!</Text>
+          
+          <Text style={[styles.successText, textStyles.body]}>
+            Your password has been successfully changed.
+          </Text>
+          
+          <Card style={styles.infoCard}>
+            <Icon name="information-outline" size={20} color={theme.primary} style={styles.infoIcon} />
+            <Text style={[styles.infoText, textStyles.caption]}>
+              For security reasons, you may need to login again on other devices.
+            </Text>
+          </Card>
+          
+          <Button
+            title="Done"
+            onPress={() => navigation.goBack()}
+            variant="primary"
+            fullWidth
+            style={styles.button}
+          />
+          
+          <Button
+            title="Change Password Again"
+            onPress={handleTryAgain}
+            variant="outline"
+            fullWidth
+            style={styles.button}
+          />
+        </View>
       </SafeAreaView>
     );
   }
@@ -188,10 +195,10 @@ const ForgotPasswordScreen: React.FC = () => {
               <Icon name="lock-reset" size={48} color={theme.primary} />
             </View>
             
-            <Text style={[styles.titleText, textStyles.heading2]}>Reset Password</Text>
+            <Text style={[styles.titleText, textStyles.heading2]}>Change Password</Text>
             
             <Text style={[styles.descriptionText, textStyles.body]}>
-              Enter your email address and we'll send you instructions to reset your password.
+              Please enter your current password and choose a new password.
             </Text>
           </View>
           
@@ -212,26 +219,54 @@ const ForgotPasswordScreen: React.FC = () => {
             </View>
           )}
           
-          {/* Reset Password Form */}
+          {/* Change Password Form */}
           <View style={styles.formContainer}>
-            {/* Email Input */}
+            {/* Current Password Input */}
             <TextInput
-              label="Email Address"
-              value={values.email}
-              onChangeText={handleChange('email')}
-              onBlur={handleBlur('email')}
-              error={getFieldError('email')}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              iconName="email-outline"
-              testID="email-input"
-              helperText="Enter the email address associated with your account"
+              label="Current Password"
+              value={values.oldPassword}
+              onChangeText={handleChange('oldPassword')}
+              onBlur={handleBlur('oldPassword')}
+              error={getFieldError('oldPassword')}
+              secureTextEntry
+              toggleSecureEntry
+              iconName="lock-outline"
+              testID="old-password-input"
+              editable={!isSubmitting}
+            />
+            
+            {/* New Password Input */}
+            <TextInput
+              label="New Password"
+              value={values.newPassword}
+              onChangeText={handleChange('newPassword')}
+              onBlur={handleBlur('newPassword')}
+              error={getFieldError('newPassword')}
+              secureTextEntry
+              toggleSecureEntry
+              iconName="lock-outline"
+              helperText="Must be at least 8 characters"
+              testID="new-password-input"
+              editable={!isSubmitting}
+            />
+            
+            {/* Confirm New Password Input */}
+            <TextInput
+              label="Confirm New Password"
+              value={values.confirmNewPassword}
+              onChangeText={handleChange('confirmNewPassword')}
+              onBlur={handleBlur('confirmNewPassword')}
+              error={getFieldError('confirmNewPassword')}
+              secureTextEntry
+              toggleSecureEntry
+              iconName="lock-check-outline"
+              testID="confirm-new-password-input"
               editable={!isSubmitting}
             />
             
             {/* Submit Button */}
             <Button
-              title="Send Reset Instructions"
+              title="Change Password"
               onPress={handleSubmit}
               loading={isSubmitting}
               disabled={isSubmitting}
@@ -241,18 +276,6 @@ const ForgotPasswordScreen: React.FC = () => {
               style={styles.submitButton}
               testID="submit-button"
             />
-          </View>
-          
-          {/* Back to Sign In Link */}
-          <View style={styles.signInContainer}>
-            <Text style={[styles.signInText, textStyles.body]}>Remember your password? </Text>
-            <TouchableOpacity 
-              onPress={handleNavigateToLogin}
-              testID="signin-button"
-              disabled={isSubmitting}
-            >
-              <Text style={[styles.signInLink, { color: theme.primary }]}>Sign In</Text>
-            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -314,16 +337,6 @@ const styles = StyleSheet.create({
   submitButton: {
     marginTop: SPACING.md,
   },
-  signInContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
-  },
-  signInText: {},
-  signInLink: {
-    fontWeight: 'bold',
-  },
   
   // Success screen styles
   successContainer: {
@@ -333,8 +346,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
   },
   successIconContainer: {
-    width: 120,
-    height: 120,
+    width: 160,
+    height: 160,
     borderRadius: BORDER_RADIUS.round,
     justifyContent: 'center',
     alignItems: 'center',
@@ -346,12 +359,7 @@ const styles = StyleSheet.create({
   },
   successText: {
     textAlign: 'center',
-    marginBottom: SPACING.sm,
-  },
-  emailText: {
-    textAlign: 'center',
     marginBottom: SPACING.xl,
-    fontWeight: 'bold',
   },
   infoCard: {
     flexDirection: 'row',
@@ -370,4 +378,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ForgotPasswordScreen;
+export default ChangePasswordScreen;

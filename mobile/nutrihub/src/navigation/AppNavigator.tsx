@@ -1,3 +1,4 @@
+// src/navigation/AppNavigator.tsx
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
@@ -5,7 +6,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 // Screen and Navigator Imports
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
-import ForgotPasswordScreen from '../screens/auth/ForgotPasswordScreen';
+import ChangePasswordScreen from '../screens/auth/ChangePasswordScreen';
 import MainTabNavigator from './MainTabNavigator';
 // Type import for navigation parameters
 import { RootStackParamList } from './types'; 
@@ -52,13 +53,15 @@ const AppNavigator = () => {
       >
         {isLoggedIn ? (
           // If logged in, display the main application navigator (Tabs)
-          <Stack.Screen name="MainApp" component={MainTabNavigator} />
+          <>
+            <Stack.Screen name="MainApp" component={MainTabNavigator} />
+            <Stack.Screen name="ChangePassword" component={ChangePasswordScreen} />
+          </>
         ) : (
           // If not logged in, display the authentication screens
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
-            <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
           </>
         )}
       </Stack.Navigator>

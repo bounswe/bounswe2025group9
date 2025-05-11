@@ -7,8 +7,8 @@
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User, AuthTokens } from '../types/types';
-import { authService, LoginCredentials, RegistrationData } from '../services/api/auth.service';
+import { User } from '../types/types';
+import { authService, LoginCredentials, RegistrationData, RegistrationResponse } from '../services/api/auth.service';
 
 // Storage keys
 const STORAGE_KEYS = {
@@ -39,7 +39,7 @@ interface AuthContextType {
   isLoading: boolean;
   error: AuthError | null;
   login: (credentials: LoginCredentials) => Promise<void>;
-  register: (data: RegistrationData) => Promise<void>;
+  register: (data: RegistrationData) => Promise<RegistrationResponse>;
   logout: () => Promise<void>;
   clearError: () => void;
   checkAuth: () => Promise<boolean>;
@@ -125,20 +125,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       const error = err as Error;
       let authError: AuthError;
       
-      if (error.message.includes('401') || error.message.includes('Invalid credentials')) {
+      if (error.message.includes('Invalid username or password')) {
         authError = {
           type: AuthErrorType.INVALID_CREDENTIALS,
-          message: 'Invalid username or password',
+          message: 'Invalid username or password. Please try again.',
         };
-      } else if (error.message.includes('network') || error.message.includes('Network')) {
+      } else if (error.message.toLowerCase().includes('network')) {
         authError = {
           type: AuthErrorType.NETWORK_ERROR,
-          message: 'Network error occurred. Please check your connection.',
+          message: 'Unable to connect to server. Please check your internet connection.',
         };
       } else {
         authError = {
           type: AuthErrorType.UNKNOWN_ERROR,
-          message: error.message || 'An unexpected error occurred',
+          message: 'An unexpected error occurred. Please try again.',
         };
       }
       
@@ -152,51 +152,44 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   /**
    * Register a new user
    */
-  const register = async (data: RegistrationData): Promise<void> => {
+  const register = async (data: RegistrationData): Promise<RegistrationResponse> => {
     setIsLoading(true);
     setError(null);
     
     try {
       // Register user
-      const userProfile = await authService.register(data);
+      const response = await authService.register(data);
       
-      // After successful registration, login with the same credentials
-      const tokens = await authService.login({
-        username: data.username,
-        password: data.password,
-      });
-      
-      // Store tokens
-      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.access);
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refresh);
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userProfile));
-      
-      // Update state
-      setUser(userProfile);
-      setIsLoggedIn(true);
+      // Don't log in the user, return success response
+      return response;
     } catch (err) {
       const error = err as Error;
       let authError: AuthError;
       
-      if (error.message.includes('409') || error.message.includes('already exists')) {
+      if (error.message.includes('Username already exists')) {
         authError = {
           type: AuthErrorType.USER_EXISTS,
-          message: 'User with this email or username already exists',
+          message: 'Username already exists. Please choose another one.',
         };
-      } else if (error.message.includes('validation') || error.message.includes('400')) {
+      } else if (error.message.includes('Email already exists')) {
+        authError = {
+          type: AuthErrorType.USER_EXISTS,
+          message: 'Email already exists. Please use another email address.',
+        };
+      } else if (error.message.includes('validation') || error.message.includes('Invalid registration data')) {
         authError = {
           type: AuthErrorType.VALIDATION_ERROR,
-          message: error.message,
+          message: 'Please check your input and try again.',
         };
-      } else if (error.message.includes('network') || error.message.includes('Network')) {
+      } else if (error.message.toLowerCase().includes('network')) {
         authError = {
           type: AuthErrorType.NETWORK_ERROR,
-          message: 'Network error occurred. Please check your connection.',
+          message: 'Unable to connect to server. Please check your internet connection.',
         };
       } else {
         authError = {
           type: AuthErrorType.UNKNOWN_ERROR,
-          message: error.message || 'An unexpected error occurred',
+          message: 'An unexpected error occurred. Please try again.',
         };
       }
       

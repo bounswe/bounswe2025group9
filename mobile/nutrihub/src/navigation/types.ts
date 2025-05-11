@@ -8,24 +8,9 @@
  * Root stack navigation parameters
  */
 export type RootStackParamList = {
-  /**
-   * Login screen with no parameters
-   */
   Login: undefined;
-  
-  /**
-   * Register screen with no parameters
-   */
   Register: undefined;
-  
-  /**
-   * Forgot password screen with no parameters
-   */
-  ForgotPassword: undefined;
-  
-  /**
-   * Main app navigator with no parameters
-   */
+  ChangePassword: undefined; // Changed from ForgotPassword
   MainApp: undefined;
 };
 

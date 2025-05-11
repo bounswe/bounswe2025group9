@@ -1,10 +1,11 @@
+// src/screens/auth/RegisterScreen.tsx
 /**
  * RegisterScreen
  * 
  * Screen for user registration integrated with backend API.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -13,6 +14,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -21,6 +23,7 @@ import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/common/Button';
 import TextInput from '../../components/common/TextInput';
+import Card from '../../components/common/Card';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useAuth, AuthErrorType } from '../../context/AuthContext';
 import useForm from '../../hooks/useForm';
@@ -45,6 +48,8 @@ const RegisterScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { register, error: authError, clearError } = useAuth();
+  const [registrationSuccess, setRegistrationSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   
   // Clear error when component unmounts
   useEffect(() => {
@@ -143,14 +148,22 @@ const RegisterScreen: React.FC = () => {
     validationRules,
     onSubmit: async (formValues) => {
       try {
-        await register({
+        const result = await register({
           name: formValues.name,
           surname: formValues.surname,
           username: formValues.username,
           email: formValues.email,
           password: formValues.password,
         });
-        // Navigation will be handled automatically by AuthContext
+        
+        // Show success message
+        setRegistrationSuccess(true);
+        setSuccessMessage(result.message || 'Registration successful! Please login with your credentials.');
+        
+        // Navigate to login after 2 seconds
+        setTimeout(() => {
+          navigation.navigate('Login');
+        }, 2000);
       } catch (error) {
         // Error is handled by the auth context and displayed below
         console.log('Registration failed');
@@ -161,17 +174,7 @@ const RegisterScreen: React.FC = () => {
   // Map authentication error type to user-friendly message
   const getErrorMessage = (): string | null => {
     if (!authError) return null;
-    
-    switch (authError.type) {
-      case AuthErrorType.USER_EXISTS:
-        return 'This email or username is already taken. Please choose another.';
-      case AuthErrorType.NETWORK_ERROR:
-        return 'Unable to connect to server. Please check your internet connection.';
-      case AuthErrorType.VALIDATION_ERROR:
-        return authError.message;
-      default:
-        return 'An unexpected error occurred. Please try again later.';
-    }
+    return authError.message;
   };
   
   // Get form error for a field
@@ -183,6 +186,33 @@ const RegisterScreen: React.FC = () => {
   const handleNavigateToLogin = () => {
     navigation.navigate('Login');
   };
+  
+  // Render success screen
+  if (registrationSuccess) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.successContainer}>
+          <View style={[styles.successIconContainer, { backgroundColor: theme.success + '20' }]}>
+            <Icon name="check-circle" size={80} color={theme.success} />
+          </View>
+          
+          <Text style={[styles.successTitle, textStyles.heading2]}>Registration Successful!</Text>
+          
+          <Text style={[styles.successText, textStyles.body]}>
+            {successMessage}
+          </Text>
+          
+          <Button
+            title="Go to Login"
+            onPress={() => navigation.navigate('Login')}
+            variant="primary"
+            fullWidth
+            style={styles.successButton}
+          />
+        </View>
+      </SafeAreaView>
+    );
+  }
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -416,6 +446,34 @@ const styles = StyleSheet.create({
   },
   nameField: {
     flex: 1,
+  },
+  
+  // Success screen styles
+  successContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: SPACING.xl,
+  },
+  successIconContainer: {
+    width: 160,
+    height: 160,
+    borderRadius: BORDER_RADIUS.round,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: SPACING.xl,
+  },
+  successTitle: {
+    textAlign: 'center',
+    marginBottom: SPACING.md,
+  },
+  successText: {
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.lg,
+  },
+  successButton: {
+    minWidth: 200,
   },
 });
 

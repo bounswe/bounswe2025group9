@@ -31,17 +31,46 @@ export interface ChangePasswordData {
   new_password: string;
 }
 
+export interface RegistrationResponse {
+  success: boolean;
+  message?: string;
+  user?: User;
+}
+
 export const authService = {
   async login(credentials: LoginCredentials): Promise<TokenResponse> {
     const response = await apiClient.post<TokenResponse>('/users/token/', credentials);
-    if (response.error) throw new Error(response.error);
+    if (response.error) {
+      // Check for specific error messages from backend
+      if (response.status === 401) {
+        throw new Error('Invalid username or password');
+      }
+      throw new Error(response.error);
+    }
     return response.data!;
   },
 
-  async register(data: RegistrationData): Promise<User> {
+  async register(data: RegistrationData): Promise<RegistrationResponse> {
     const response = await apiClient.post<User>('/users/create/', data);
-    if (response.error) throw new Error(response.error);
-    return response.data!;
+    if (response.error) {
+      // Check for specific error messages
+      if (response.status === 400) {
+        // Parse validation errors
+        if (response.error.includes('username')) {
+          throw new Error('Username already exists');
+        }
+        if (response.error.includes('email')) {
+          throw new Error('Email already exists');
+        }
+        throw new Error('Invalid registration data');
+      }
+      throw new Error(response.error);
+    }
+    return {
+      success: true,
+      message: 'Registration successful! Please login with your credentials.',
+      user: response.data
+    };
   },
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
@@ -66,15 +95,22 @@ export const authService = {
   },
 
   async changePassword(data: ChangePasswordData): Promise<void> {
-    const response = await apiClient.post('/users/change-password/', data);
-    if (response.error) throw new Error(response.error);
-  },
-
-  // Note: There's no forgot password endpoint in the Postman collection
-  // You'll need to implement this on the backend or remove this functionality
-  async forgotPassword(email: string): Promise<void> {
-    // This endpoint doesn't exist in the Postman collection
-    // You can either implement it on the backend or handle it differently
-    throw new Error('Password reset functionality not implemented');
+    const config = {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    };
+    
+    const formData = new FormData();
+    formData.append('old_password', data.old_password);
+    formData.append('new_password', data.new_password);
+    
+    const response = await apiClient.post('/users/change-password/', formData, config);
+    if (response.error) {
+      if (response.status === 400) {
+        throw new Error('Current password is incorrect');
+      }
+      throw new Error(response.error);
+    }
   },
 };
