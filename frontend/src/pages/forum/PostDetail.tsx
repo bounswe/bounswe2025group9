@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ChatText, ArrowLeft } from '@phosphor-icons/react'
-import { apiClient } from '../../lib/apiClient'
+import { apiClient, ForumPost } from '../../lib/apiClient'
 
 // Post interface for the data from API
 interface APIPost {
@@ -16,9 +16,13 @@ interface APIPost {
 // Comment type definition
 interface Comment {
     id: number;
-    author: string;
-    content: string;
-    timestamp: Date;
+    author: {
+        id: number;
+        username: string;
+    };
+    body: string;
+    created_at: string;
+    updated_at: string;
 }
 
 const PostDetail = () => {
@@ -35,16 +39,8 @@ const PostDetail = () => {
     
     // Comment state
     const [commentText, setCommentText] = useState('')
-    const [comments, setComments] = useState<Comment[]>(() => {
-        // Generate initial placeholder comments
-        const commentCount = Math.floor(Math.random() * 12) + 3
-        return Array(commentCount).fill(null).map((_, index) => ({
-            id: index,
-            author: `Commenter${index + 1}`,
-            content: 'This is a placeholder for comment content. The actual implementation will display real comments from the community.',
-            timestamp: new Date(Date.now() - Math.random() * 10000000000)
-        }))
-    })
+    const [comments, setComments] = useState<Comment[]>([])
+    const [loadingComments, setLoadingComments] = useState(false)
 
     // Function to sync with sessionStorage
     const syncWithStorage = useCallback(() => {
@@ -59,6 +55,30 @@ const PostDetail = () => {
     useEffect(() => {
         fetchPost();
     }, [postId]);
+    
+    // Fetch comments when we have a valid post
+    useEffect(() => {
+        if (post) {
+            fetchComments();
+        }
+    }, [post]);
+    
+    // Fetch comments for the current post
+    const fetchComments = async () => {
+        if (!postId || isNaN(postIdNum)) return;
+        
+        setLoadingComments(true);
+        try {
+            const commentsData = await apiClient.getPostComments(postIdNum);
+            if (commentsData) {
+                setComments(commentsData);
+            }
+        } catch (error) {
+            console.error('Error fetching comments:', error);
+        } finally {
+            setLoadingComments(false);
+        }
+    };
 
     // Fetch post data from API
     const fetchPost = async () => {
@@ -69,14 +89,24 @@ const PostDetail = () => {
 
         setLoading(true);
         try {
-            const allPosts = await apiClient.getPosts();
-            const foundPost = allPosts.find(p => p.id === postIdNum);
+            // Get post details using the new endpoint
+            const postData = await apiClient.getPostDetail(postIdNum);
             
-            if (foundPost) {
-                setPost(foundPost);
+            if (postData) {
+                // Transform API response format to match our component's format
+                const transformedPost: APIPost = {
+                    id: postData.id,
+                    title: postData.title,
+                    content: postData.body, // API returns 'body' instead of 'content'
+                    author: postData.author.username,
+                    likes: 0, // We'll get likes separately if needed
+                    date: postData.created_at
+                };
+                
+                setPost(transformedPost);
                 
                 // Store the original likes count for reference
-                setOriginalLikes(foundPost.likes);
+                setOriginalLikes(0); // Set to 0 until we implement likes fetching
                 
                 // Check if this post was previously liked from sessionStorage
                 const storedLiked = sessionStorage.getItem(`post_${postIdNum}_liked`);
@@ -94,6 +124,8 @@ const PostDetail = () => {
             }
         } catch (error) {
             console.error('Error fetching post:', error);
+            // On error, redirect to forum
+            navigate('/forum');
         } finally {
             setLoading(false);
         }
@@ -161,23 +193,25 @@ const PostDetail = () => {
     }, [post, liked]);
     
     // Handle comment submission
-    const handleCommentSubmit = (e: React.FormEvent) => {
+    const handleCommentSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         
-        if (commentText.trim() === '') return
+        if (commentText.trim() === '' || !post) return
         
-        // Add new comment to the beginning of the list
-        const newComment: Comment = {
-            id: comments.length,
-            author: 'You', // Current user
-            content: commentText,
-            timestamp: new Date()
+        try {
+            // Call API to create comment
+            const newComment = await apiClient.createComment({
+                post: post.id,
+                body: commentText
+            });
+            
+            // Add new comment to the list
+            setComments(prevComments => [newComment, ...prevComments])
+            setCommentText('') // Clear the input
+        } catch (error) {
+            console.error('Error creating comment:', error);
+            alert('Failed to post your comment. Please try again.');
         }
-        
-        setComments(prevComments => [newComment, ...prevComments])
-        setCommentText('') // Clear the input
-        
-        // In a real implementation, this would call an API to save the comment
     }
     
     // Format date for display
@@ -301,30 +335,40 @@ const PostDetail = () => {
                         </form>
                     </div>
                     
-                    <div className="space-y-4">
-                        {comments.map((comment) => (
-                            <div key={comment.id} className="nh-card border border-gray-200 dark:border-gray-700">
-                                <div className="flex items-start">
-                                    <div className="flex-shrink-0 mr-3">
-                                        <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                            <User size={16} className="text-gray-500" />
+                    {loadingComments ? (
+                        <div className="text-center py-4">
+                            <p>Loading comments...</p>
+                        </div>
+                    ) : comments.length === 0 ? (
+                        <div className="text-center py-4">
+                            <p>No comments yet. Be the first to comment!</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {comments.map((comment) => (
+                                <div key={comment.id} className="nh-card border border-gray-200 dark:border-gray-700">
+                                    <div className="flex items-start">
+                                        <div className="flex-shrink-0 mr-3">
+                                            <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                                <User size={16} className="text-gray-500" />
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="flex-grow">
-                                        <div className="flex justify-between items-center mb-1">
-                                            <p className="font-medium">{comment.author}</p>
-                                            <span className="text-xs text-gray-500">
-                                                {comment.timestamp.toLocaleString()}
-                                            </span>
+                                        <div className="flex-grow">
+                                            <div className="flex justify-between items-center mb-1">
+                                                <p className="font-medium">{comment.author.username}</p>
+                                                <span className="text-xs text-gray-500">
+                                                    {formatDate(comment.created_at)}
+                                                </span>
+                                            </div>
+                                            <p className="nh-text text-sm">
+                                                {comment.body}
+                                            </p>
                                         </div>
-                                        <p className="nh-text text-sm">
-                                            {comment.content}
-                                        </p>
                                     </div>
                                 </div>
-                            </div>
-                        ))}
-                    </div>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

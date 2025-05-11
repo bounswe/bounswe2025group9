@@ -4,10 +4,15 @@ import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots }
 import { Link, useLocation } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
 
+// create a simple cache for posts
+let cachedPosts: ForumPost[] = [];
+let lastFetchTime = 0;
+const CACHE_DURATION = 60000; // 1 minute cache
+
 const Forum = () => {
     const location = useLocation();
-    const [posts, setPosts] = useState<ForumPost[]>([]);
-    const [loading, setLoading] = useState(true);
+    const [posts, setPosts] = useState<ForumPost[]>(cachedPosts); // initialize with cached posts
+    const [loading, setLoading] = useState(cachedPosts.length === 0); // only show loading if no cached posts
     const [currentPage, setCurrentPage] = useState(1);
     const postsPerPage = 5;
     const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
@@ -30,38 +35,67 @@ const Forum = () => {
 
     // Get posts from API
     const fetchPosts = async () => {
-        setLoading(true);
+        // check if cache is still valid
+        const now = Date.now();
+        if (cachedPosts.length > 0 && now - lastFetchTime < CACHE_DURATION) {
+            // use cached data if available and fresh
+            console.log('Using cached forum posts data');
+            syncLikedState(cachedPosts);
+            return;
+        }
+        
+        // if not loading already and we have cached posts, use them while fetching
+        if (cachedPosts.length > 0 && !loading) {
+            setPosts(cachedPosts);
+        } else {
+            setLoading(true);
+        }
+        
         try {
             const data = await apiClient.getForumPosts({
                 ordering: '-created_at' // Sort by newest first
             });
             
-            // Create a new likedPosts state based on sessionStorage
-            const newLikedPosts: {[key: number]: boolean} = {};
+            // update the cache
+            cachedPosts = data;
+            lastFetchTime = now;
             
-            // Check sessionStorage for any likes that were set in PostDetail or previously in Forum
-            const updatedPosts = data.map((post: ForumPost) => {
-                const storedLikes = sessionStorage.getItem(`post_${post.id}_likes`);
-                const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
-                
-                // Update the liked state
-                if (storedLiked) {
-                    newLikedPosts[post.id] = storedLiked === 'true';
-                }
-                
-                return post;
-            });
-            
-            // Update state
-            setPosts(updatedPosts);
-            setLikedPosts(newLikedPosts);
-            
-            // Reset to first page when posts are refreshed
-            setCurrentPage(1);
+            // sync liked state with the new data
+            syncLikedState(data);
         } catch (error) {
             console.error('Error fetching posts:', error);
+            // if error and we have cached data, keep using it
+            if (cachedPosts.length > 0) {
+                console.log('Using cached data due to fetch error');
+                syncLikedState(cachedPosts);
+            }
         } finally {
             setLoading(false);
+        }
+    };
+
+    // helper function to sync liked state with post data
+    const syncLikedState = (postData: ForumPost[]) => {
+        // Create a new likedPosts state based on sessionStorage
+        const newLikedPosts: {[key: number]: boolean} = {};
+        
+        // Check sessionStorage for any likes that were set in PostDetail or previously in Forum
+        postData.forEach((post: ForumPost) => {
+            const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
+            
+            // Update the liked state
+            if (storedLiked) {
+                newLikedPosts[post.id] = storedLiked === 'true';
+            }
+        });
+        
+        // Update state
+        setPosts(postData);
+        setLikedPosts(newLikedPosts);
+        
+        // Reset to first page when posts are refreshed (only if data actually changed)
+        if (JSON.stringify(postData) !== JSON.stringify(posts)) {
+            setCurrentPage(1);
         }
     };
 
@@ -151,6 +185,12 @@ const Forum = () => {
             
             if (needsUpdate) {
                 setLikedPosts({ ...updatedLikedPosts });
+                
+                // Also, trigger a refresh if it's been a while since the last fetch
+                const now = Date.now();
+                if (now - lastFetchTime > CACHE_DURATION) {
+                    fetchPosts();
+                }
             }
         };
         
@@ -187,7 +227,14 @@ const Forum = () => {
                 ) : (
                     <div className="space-y-6 max-w-4xl mx-auto">
                         {getCurrentPosts().map((post) => (
-                            <div key={post.id} className="nh-card">
+                            <div key={post.id} className="nh-card relative">
+                                {/* Add clickable overlay that links to post detail */}
+                                <Link 
+                                    to={`/forum/post/${post.id}`}
+                                    className="absolute inset-0 z-10"
+                                    aria-label={`View post: ${post.title}`}
+                                />
+                                
                                 <div className="flex items-center mb-2">
                                     <div className="mt-0.5 mr-2">
                                         <ChatText size={20} weight="fill" className="text-primary flex-shrink-0" />
@@ -209,7 +256,7 @@ const Forum = () => {
                                     <div className="flex items-center gap-4">
                                         <Link 
                                             to={`/forum/post/${post.id}`}
-                                            className="flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700"
+                                            className="flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 relative z-20"
                                         >
                                             <div className="mt-0.5">
                                                 <ChatDots size={16} className="flex-shrink-0" />
@@ -217,8 +264,11 @@ const Forum = () => {
                                             Comments
                                         </Link>
                                         <button 
-                                            onClick={() => handleLikeToggle(post.id)}
-                                            className={`flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${likedPosts[post.id] ? 'text-primary' : ''}`}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                handleLikeToggle(post.id);
+                                            }}
+                                            className={`flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${likedPosts[post.id] ? 'text-primary' : ''} relative z-20`}
                                         >
                                             <div className="mt-0.5">
                                                 <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />

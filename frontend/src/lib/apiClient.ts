@@ -304,6 +304,12 @@ export const apiClient = {
       method: "GET"
     }, true),
     
+  // alias for getForumPostDetail for consistency
+  getPostDetail: (postId: number) =>
+    fetchJson<ForumPost>(`/forum/posts/${postId}/`, {
+      method: "GET"
+    }, true),
+    
   createForumPost: (postData: CreateForumPostRequest) =>
     fetchJson<ForumPost>("/forum/posts/", {
       method: "POST",
