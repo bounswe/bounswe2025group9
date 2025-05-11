@@ -102,10 +102,13 @@ export interface User {
   email: string;
   name?: string;
   surname?: string;
-  profilePicture?: string;
-  dietaryPreferences?: DietaryOptionType[];
-  allergens?: AllergenType[];
-  isProfessional?: boolean;
-  professionalRole?: 'dietitian' | 'store_owner';
-  createdAt: Date;
+  address?: string;
+  tags?: string[];
+  allergens?: string[];
+  createdAt?: Date;
+}
+
+export interface AuthTokens {
+  access: string;
+  refresh: string;
 }

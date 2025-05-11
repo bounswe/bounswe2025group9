@@ -1,7 +1,7 @@
 /**
  * ForgotPasswordScreen
  * 
- * Screen for password recovery.
+ * Screen for password recovery integrated with backend API.
  */
 
 import React, { useState } from 'react';
@@ -13,6 +13,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -26,6 +27,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import useForm from '../../hooks/useForm';
 import { isEmail, isNotEmpty } from '../../utils/validation';
 import { RootStackParamList } from '../../navigation/types';
+import { authService } from '../../services/api/auth.service';
 
 type ForgotPasswordScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'ForgotPassword'>;
 
@@ -41,6 +43,7 @@ const ForgotPasswordScreen: React.FC = () => {
   const navigation = useNavigation<ForgotPasswordScreenNavigationProp>();
   const [isEmailSent, setIsEmailSent] = useState(false);
   const [submittedEmail, setSubmittedEmail] = useState('');
+  const [apiError, setApiError] = useState<string | null>(null);
   
   // Define form validation rules
   const validationRules = {
@@ -70,15 +73,23 @@ const ForgotPasswordScreen: React.FC = () => {
     initialValues: { email: '' },
     validationRules,
     onSubmit: async (formValues) => {
+      setApiError(null);
       try {
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        
-        // For demo purposes, always succeed
+        await authService.forgotPassword(formValues.email);
         setSubmittedEmail(formValues.email);
         setIsEmailSent(true);
       } catch (error) {
-        console.error('Password reset error:', error);
+        const errorMessage = error instanceof Error ? error.message : 'Failed to send reset email';
+        setApiError(errorMessage);
+        
+        // Show alert for network errors
+        if (errorMessage.includes('network') || errorMessage.includes('Network')) {
+          Alert.alert(
+            'Network Error',
+            'Unable to connect to server. Please check your internet connection.',
+            [{ text: 'OK' }]
+          );
+        }
       }
     },
   });
@@ -96,6 +107,7 @@ const ForgotPasswordScreen: React.FC = () => {
   // Handle resending email
   const handleResendEmail = () => {
     setIsEmailSent(false);
+    setApiError(null);
     resetForm();
   };
   
@@ -165,6 +177,7 @@ const ForgotPasswordScreen: React.FC = () => {
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
+            disabled={isSubmitting}
           >
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
@@ -182,6 +195,23 @@ const ForgotPasswordScreen: React.FC = () => {
             </Text>
           </View>
           
+          {/* API Error Message */}
+          {apiError && (
+            <View style={[
+              styles.errorContainer, 
+              { 
+                backgroundColor: theme.errorContainerBg,
+                borderLeftWidth: 3,
+                borderLeftColor: theme.error
+              }
+            ]}>
+              <Icon name="alert-circle" size={20} color={theme.error} />
+              <Text style={[styles.errorMessageText, { color: theme.error }]}>
+                {apiError}
+              </Text>
+            </View>
+          )}
+          
           {/* Reset Password Form */}
           <View style={styles.formContainer}>
             {/* Email Input */}
@@ -196,6 +226,7 @@ const ForgotPasswordScreen: React.FC = () => {
               iconName="email-outline"
               testID="email-input"
               helperText="Enter the email address associated with your account"
+              editable={!isSubmitting}
             />
             
             {/* Submit Button */}
@@ -218,6 +249,7 @@ const ForgotPasswordScreen: React.FC = () => {
             <TouchableOpacity 
               onPress={handleNavigateToLogin}
               testID="signin-button"
+              disabled={isSubmitting}
             >
               <Text style={[styles.signInLink, { color: theme.primary }]}>Sign In</Text>
             </TouchableOpacity>
@@ -264,6 +296,17 @@ const styles = StyleSheet.create({
   descriptionText: {
     textAlign: 'center',
     paddingHorizontal: SPACING.lg,
+  },
+  errorContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.lg,
+  },
+  errorMessageText: {
+    marginLeft: SPACING.sm,
+    flex: 1,
   },
   formContainer: {
     marginBottom: SPACING.xl,

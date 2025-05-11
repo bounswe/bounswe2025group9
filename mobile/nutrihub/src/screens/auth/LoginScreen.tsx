@@ -1,10 +1,11 @@
+// src/screens/auth/LoginScreen.tsx
 /**
  * LoginScreen
  * 
- * Screen for user authentication.
+ * Screen for user authentication integrated with backend API.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -13,6 +14,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -22,12 +24,17 @@ import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/common/Button';
 import TextInput from '../../components/common/TextInput';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { useAuth, AuthErrorType, LoginCredentials } from '../../context/AuthContext';
+import { useAuth, AuthErrorType } from '../../context/AuthContext';
 import useForm from '../../hooks/useForm';
 import { isNotEmpty, isValidUsername } from '../../utils/validation';
 import { RootStackParamList } from '../../navigation/types';
 
 type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
+
+interface LoginFormData {
+  username: string;
+  password: string;
+}
 
 /**
  * Login screen component for user authentication
@@ -37,7 +44,14 @@ const LoginScreen: React.FC = () => {
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { login, error: authError, clearError } = useAuth();
   
-  // Define form validation rules with proper typing
+  // Clear error when component unmounts
+  useEffect(() => {
+    return () => {
+      clearError();
+    };
+  }, [clearError]);
+  
+  // Define form validation rules
   const validationRules = {
     username: [
       { 
@@ -66,15 +80,16 @@ const LoginScreen: React.FC = () => {
     handleBlur, 
     handleSubmit, 
     isSubmitting 
-  } = useForm<LoginCredentials>({
+  } = useForm<LoginFormData>({
     initialValues: { username: '', password: '' },
     validationRules,
     onSubmit: async (formValues) => {
       try {
         await login(formValues);
+        // Navigation will be handled automatically by AuthContext
       } catch (error) {
-        // Error is handled by the auth context
-        console.log('Login error handled by context');
+        // Error is handled by the auth context and displayed below
+        console.log('Login failed');
       }
     },
   });
@@ -96,7 +111,7 @@ const LoginScreen: React.FC = () => {
   };
   
   // Get form error for a field
-  const getFieldError = (field: keyof LoginCredentials): string | undefined => {
+  const getFieldError = (field: keyof LoginFormData): string | undefined => {
     return touched[field] ? errors[field] : undefined;
   };
   
@@ -157,6 +172,7 @@ const LoginScreen: React.FC = () => {
               autoCapitalize="none"
               iconName="account-outline"
               testID="username-input"
+              editable={!isSubmitting}
             />
             
             {/* Password Input */}
@@ -170,6 +186,7 @@ const LoginScreen: React.FC = () => {
               toggleSecureEntry
               iconName="lock-outline"
               testID="password-input"
+              editable={!isSubmitting}
             />
             
             {/* Forgot Password Link */}
@@ -177,6 +194,7 @@ const LoginScreen: React.FC = () => {
               style={styles.forgotPasswordContainer}
               onPress={handleForgotPassword}
               testID="forgot-password-button"
+              disabled={isSubmitting}
             >
               <Text style={[styles.forgotPasswordText, { color: theme.primary }]}>
                 Forgot Password?
@@ -203,6 +221,7 @@ const LoginScreen: React.FC = () => {
             <TouchableOpacity 
               onPress={handleSignUp}
               testID="signup-button"
+              disabled={isSubmitting}
             >
               <Text style={[styles.signUpLink, { color: theme.primary }]}>Sign Up</Text>
             </TouchableOpacity>

@@ -1,10 +1,10 @@
 /**
  * RegisterScreen
  * 
- * Screen for user registration.
+ * Screen for user registration integrated with backend API.
  */
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/common/Button';
 import TextInput from '../../components/common/TextInput';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { useAuth, AuthErrorType, RegistrationData } from '../../context/AuthContext';
+import { useAuth, AuthErrorType } from '../../context/AuthContext';
 import useForm from '../../hooks/useForm';
 import { isEmail, isNotEmpty, minLength, isValidUsername } from '../../utils/validation';
 import { RootStackParamList } from '../../navigation/types';
@@ -45,6 +45,13 @@ const RegisterScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { register, error: authError, clearError } = useAuth();
+  
+  // Clear error when component unmounts
+  useEffect(() => {
+    return () => {
+      clearError();
+    };
+  }, [clearError]);
   
   // Define form validation rules
   const validationRules = {
@@ -136,18 +143,17 @@ const RegisterScreen: React.FC = () => {
     validationRules,
     onSubmit: async (formValues) => {
       try {
-        // Prepare registration data
-        const registrationData: RegistrationData = {
+        await register({
           name: formValues.name,
           surname: formValues.surname,
           username: formValues.username,
           email: formValues.email,
           password: formValues.password,
-        };
-        await register(registrationData);
+        });
+        // Navigation will be handled automatically by AuthContext
       } catch (error) {
-        // Error is handled by the auth context
-        console.log('Registration error handled by context');
+        // Error is handled by the auth context and displayed below
+        console.log('Registration failed');
       }
     },
   });
@@ -189,6 +195,7 @@ const RegisterScreen: React.FC = () => {
           <TouchableOpacity 
             style={styles.backButton}
             onPress={() => navigation.goBack()}
+            disabled={isSubmitting}
           >
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
@@ -235,6 +242,7 @@ const RegisterScreen: React.FC = () => {
                   error={getFieldError('name')}
                   iconName="account-outline"
                   testID="name-input"
+                  editable={!isSubmitting}
                 />
               </View>
               
@@ -248,6 +256,7 @@ const RegisterScreen: React.FC = () => {
                   error={getFieldError('surname')}
                   iconName="account-outline"
                   testID="surname-input"
+                  editable={!isSubmitting}
                 />
               </View>
             </View>
@@ -262,6 +271,7 @@ const RegisterScreen: React.FC = () => {
               autoCapitalize="none"
               iconName="at"
               testID="username-input"
+              editable={!isSubmitting}
             />
             
             {/* Email Input */}
@@ -275,6 +285,7 @@ const RegisterScreen: React.FC = () => {
               autoCapitalize="none"
               iconName="email-outline"
               testID="email-input"
+              editable={!isSubmitting}
             />
             
             {/* Password Input */}
@@ -289,6 +300,7 @@ const RegisterScreen: React.FC = () => {
               iconName="lock-outline"
               testID="password-input"
               helperText="Must be at least 8 characters"
+              editable={!isSubmitting}
             />
             
             {/* Confirm Password Input */}
@@ -302,6 +314,7 @@ const RegisterScreen: React.FC = () => {
               toggleSecureEntry
               iconName="lock-check-outline"
               testID="confirm-password-input"
+              editable={!isSubmitting}
             />
             
             {/* Register Button */}
@@ -324,6 +337,7 @@ const RegisterScreen: React.FC = () => {
             <TouchableOpacity 
               onPress={handleNavigateToLogin}
               testID="signin-button"
+              disabled={isSubmitting}
             >
               <Text style={[styles.signInLink, { color: theme.primary }]}>Sign In</Text>
             </TouchableOpacity>

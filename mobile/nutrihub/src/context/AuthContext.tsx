@@ -2,16 +2,18 @@
  * Authentication Context
  * 
  * Provides authentication state and functions to the app.
- * This context manages user login, logout, registration, and authentication state.
+ * Integrated with backend API using axios.
  */
 
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { User } from '../types/types';
+import { User, AuthTokens } from '../types/types';
+import { authService, LoginCredentials, RegistrationData } from '../services/api/auth.service';
 
 // Storage keys
 const STORAGE_KEYS = {
-  AUTH_TOKEN: 'auth_token',
+  ACCESS_TOKEN: 'access_token',
+  REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
 };
 
@@ -30,81 +32,21 @@ export interface AuthError {
   message: string;
 }
 
-// Login credentials interface
-export interface LoginCredentials {
-  username: string;
-  password: string;
-}
-
-// Registration data interface
-export interface RegistrationData {
-  email: string;
-  username: string;
-  password: string;
-  name?: string;
-  surname?: string;
-}
-
 // Authentication context interface
 interface AuthContextType {
-  /**
-   * Current authenticated user, or null if not logged in
-   */
   user: User | null;
-  
-  /**
-   * Whether the user is logged in
-   */
   isLoggedIn: boolean;
-  
-  /**
-   * Whether authentication is in a loading state
-   */
   isLoading: boolean;
-  
-  /**
-   * Current authentication error, if any
-   */
   error: AuthError | null;
-  
-  /**
-   * Log in with username and password
-   */
   login: (credentials: LoginCredentials) => Promise<void>;
-  
-  /**
-   * Register a new user
-   */
   register: (data: RegistrationData) => Promise<void>;
-  
-  /**
-   * Log out the current user
-   */
   logout: () => Promise<void>;
-  
-  /**
-   * Reset authentication error
-   */
   clearError: () => void;
-  
-  /**
-   * Check if a user is authenticated (validate token)
-   */
   checkAuth: () => Promise<boolean>;
 }
 
 // Create context with undefined initial value
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-// Mock user data for development (to be replaced with actual API)
-const MOCK_USER: User = {
-  id: 1,
-  username: 'demouser',
-  email: 'demo@example.com',
-  name: 'Demo',
-  surname: 'User',
-  createdAt: new Date(),
-};
 
 /**
  * Authentication provider component
@@ -128,14 +70,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      // Get stored token and user data
-      const token = await AsyncStorage.getItem(STORAGE_KEYS.AUTH_TOKEN);
-      const userData = await AsyncStorage.getItem(STORAGE_KEYS.USER_DATA);
+      const accessToken = await AsyncStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
       
-      if (token && userData) {
-        // Parse user data
-        const parsedUser = JSON.parse(userData) as User;
-        setUser(parsedUser);
+      if (accessToken) {
+        // Get user profile with the token
+        const userProfile = await authService.getUserProfile();
+        setUser(userProfile);
         setIsLoggedIn(true);
         return true;
       } else {
@@ -144,7 +84,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         return false;
       }
     } catch (err) {
-      console.error('Failed to check authentication status:', err);
+      console.error('Auth check failed:', err);
+      // Token invalid, clear storage
+      await AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      await AsyncStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
+      await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
       setUser(null);
       setIsLoggedIn(false);
       return false;
@@ -161,40 +105,45 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     
     try {
-      // Validate input
-      if (!credentials.username || !credentials.password) {
-        throw {
-          type: AuthErrorType.VALIDATION_ERROR,
-          message: 'Username and password are required',
+      // Get tokens
+      const tokens = await authService.login(credentials);
+      
+      // Store tokens
+      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.access);
+      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refresh);
+      
+      // Get user profile
+      const userProfile = await authService.getUserProfile();
+      
+      // Store user data
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userProfile));
+      
+      // Update state
+      setUser(userProfile);
+      setIsLoggedIn(true);
+    } catch (err) {
+      const error = err as Error;
+      let authError: AuthError;
+      
+      if (error.message.includes('401') || error.message.includes('Invalid credentials')) {
+        authError = {
+          type: AuthErrorType.INVALID_CREDENTIALS,
+          message: 'Invalid username or password',
+        };
+      } else if (error.message.includes('network') || error.message.includes('Network')) {
+        authError = {
+          type: AuthErrorType.NETWORK_ERROR,
+          message: 'Network error occurred. Please check your connection.',
+        };
+      } else {
+        authError = {
+          type: AuthErrorType.UNKNOWN_ERROR,
+          message: error.message || 'An unexpected error occurred',
         };
       }
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, accept any username/password combo that passes validation
-      // In a real app, this would make an API call to authenticate
-      
-      // Store token and user data
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, 'demo-token');
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(MOCK_USER));
-      
-      // Update state
-      setUser(MOCK_USER);
-      setIsLoggedIn(true);
-    } catch (err) {
-      const authError = err as AuthError;
-      
-      if (authError.type) {
-        setError(authError);
-      } else {
-        setError({
-          type: AuthErrorType.UNKNOWN_ERROR,
-          message: 'An unexpected error occurred during login',
-        });
-      }
-      
-      throw err;
+      setError(authError);
+      throw authError;
     } finally {
       setIsLoading(false);
     }
@@ -208,50 +157,51 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setError(null);
     
     try {
-      // Validate input
-      if (!data.email || !data.username || !data.password) {
-        throw {
+      // Register user
+      const userProfile = await authService.register(data);
+      
+      // After successful registration, login with the same credentials
+      const tokens = await authService.login({
+        username: data.username,
+        password: data.password,
+      });
+      
+      // Store tokens
+      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.access);
+      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refresh);
+      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userProfile));
+      
+      // Update state
+      setUser(userProfile);
+      setIsLoggedIn(true);
+    } catch (err) {
+      const error = err as Error;
+      let authError: AuthError;
+      
+      if (error.message.includes('409') || error.message.includes('already exists')) {
+        authError = {
+          type: AuthErrorType.USER_EXISTS,
+          message: 'User with this email or username already exists',
+        };
+      } else if (error.message.includes('validation') || error.message.includes('400')) {
+        authError = {
           type: AuthErrorType.VALIDATION_ERROR,
-          message: 'Email, username, and password are required',
+          message: error.message,
+        };
+      } else if (error.message.includes('network') || error.message.includes('Network')) {
+        authError = {
+          type: AuthErrorType.NETWORK_ERROR,
+          message: 'Network error occurred. Please check your connection.',
+        };
+      } else {
+        authError = {
+          type: AuthErrorType.UNKNOWN_ERROR,
+          message: error.message || 'An unexpected error occurred',
         };
       }
       
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // For demo purposes, always succeed
-      // In a real app, this would make an API call to register
-      
-      // Create user object
-      const newUser: User = {
-        id: 1,
-        username: data.username,
-        email: data.email,
-        name: data.name,
-        surname: data.surname,
-        createdAt: new Date(),
-      };
-      
-      // Store token and user data
-      await AsyncStorage.setItem(STORAGE_KEYS.AUTH_TOKEN, 'demo-token');
-      await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(newUser));
-      
-      // Update state
-      setUser(newUser);
-      setIsLoggedIn(true);
-    } catch (err) {
-      const authError = err as AuthError;
-      
-      if (authError.type) {
-        setError(authError);
-      } else {
-        setError({
-          type: AuthErrorType.UNKNOWN_ERROR,
-          message: 'An unexpected error occurred during registration',
-        });
-      }
-      
-      throw err;
+      setError(authError);
+      throw authError;
     } finally {
       setIsLoading(false);
     }
@@ -264,16 +214,25 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     setIsLoading(true);
     
     try {
-      // Remove stored token and user data
-      await AsyncStorage.removeItem(STORAGE_KEYS.AUTH_TOKEN);
+      // Get refresh token for logout
+      const refreshToken = await AsyncStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
+      
+      if (refreshToken) {
+        // Call logout endpoint
+        await authService.logout(refreshToken);
+      }
+    } catch (err) {
+      // Continue with logout even if API call fails
+      console.error('Logout API call failed:', err);
+    } finally {
+      // Always clear local storage
+      await AsyncStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
+      await AsyncStorage.removeItem(STORAGE_KEYS.REFRESH_TOKEN);
       await AsyncStorage.removeItem(STORAGE_KEYS.USER_DATA);
       
       // Update state
       setUser(null);
       setIsLoggedIn(false);
-    } catch (err) {
-      console.error('Failed to log out:', err);
-    } finally {
       setIsLoading(false);
     }
   };
