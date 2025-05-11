@@ -14,8 +14,8 @@ class TaggingTests(TestCase):
         self.client = APIClient()
         self.client.force_authenticate(user=self.user)
 
-        self.tag1 = Tag.objects.create(name="Dietary tip")
-        self.tag2 = Tag.objects.create(name="Recipe")
+        self.tag1, _ = Tag.objects.get_or_create(name="Dietary tip")
+        self.tag2, _ = Tag.objects.get_or_create(name="Recipe")
 
         self.post1 = Post.objects.create(
             title="Apple tips", body="Use fiber-rich fruits", author=self.user
