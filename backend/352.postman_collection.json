@@ -381,6 +381,38 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "get_user_name",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8081/users/profile/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"profile",
+						""
+					]
+				},
+				"description": "Get the current user's profile information including name using their authentication token"
+			},
+			"response": []
 		}
 	]
 }
