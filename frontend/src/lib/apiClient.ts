@@ -183,10 +183,16 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: () => fetchJson<Food[]>("/foods", {
+  getFoods: (params?: { page?: number }) => {
+    let url = "/foods";
+    // set page number
+    if (params && params.page) {
+      url += `?page=${params.page}`;
+    }
+    return fetchJson<Food[]>(url, {
       method: "GET",
-    },
-    true),
+    }, true);
+  },
 
   proposeFood: (proposal: FoodProposal) =>
     fetchJson<FoodProposalResponse>("/foods/propose", {
