@@ -12,10 +12,11 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
   TouchableOpacity,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import Button from '../../components/common/Button';
@@ -23,25 +24,29 @@ import TextInput from '../../components/common/TextInput';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useAuth, AuthErrorType, LoginCredentials } from '../../context/AuthContext';
 import useForm from '../../hooks/useForm';
-import { isEmail, isNotEmpty } from '../../utils/validation';
+import { isNotEmpty, isValidUsername } from '../../utils/validation';
+import { RootStackParamList } from '../../navigation/types';
+
+type LoginScreenNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Login'>;
 
 /**
  * Login screen component for user authentication
  */
 const LoginScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const navigation = useNavigation<LoginScreenNavigationProp>();
   const { login, error: authError, clearError } = useAuth();
   
   // Define form validation rules with proper typing
   const validationRules = {
-    email: [
+    username: [
       { 
         validator: (value: string) => isNotEmpty(value), 
-        message: 'Email is required' 
+        message: 'Username is required' 
       },
       { 
-        validator: (value: string) => isEmail(value), 
-        message: 'Please enter a valid email address' 
+        validator: (value: string) => isValidUsername(value), 
+        message: 'Username can only contain letters, numbers, underscores, and hyphens' 
       },
     ],
     password: [
@@ -62,7 +67,7 @@ const LoginScreen: React.FC = () => {
     handleSubmit, 
     isSubmitting 
   } = useForm<LoginCredentials>({
-    initialValues: { email: '', password: '' },
+    initialValues: { username: '', password: '' },
     validationRules,
     onSubmit: async (formValues) => {
       try {
@@ -80,7 +85,7 @@ const LoginScreen: React.FC = () => {
     
     switch (authError.type) {
       case AuthErrorType.INVALID_CREDENTIALS:
-        return 'Invalid email or password. Please try again.';
+        return 'Invalid username or password. Please try again.';
       case AuthErrorType.NETWORK_ERROR:
         return 'Unable to connect to server. Please check your internet connection.';
       case AuthErrorType.VALIDATION_ERROR:
@@ -95,23 +100,14 @@ const LoginScreen: React.FC = () => {
     return touched[field] ? errors[field] : undefined;
   };
   
-  // Handle forgotten password
+  // Handle navigation to forgot password
   const handleForgotPassword = () => {
-    Alert.alert(
-      'Reset Password',
-      'This feature will be implemented in a future update.',
-      [{ text: 'OK' }]
-    );
+    navigation.navigate('ForgotPassword');
   };
   
-  // Handle sign up navigation
+  // Handle navigation to sign up
   const handleSignUp = () => {
-    // Navigation would be handled here in a real app
-    Alert.alert(
-      'Sign Up',
-      'The sign up screen will be implemented in a future update.',
-      [{ text: 'OK' }]
-    );
+    navigation.navigate('Register');
   };
   
   return (
@@ -151,17 +147,16 @@ const LoginScreen: React.FC = () => {
           
           {/* Login Form */}
           <View style={styles.formContainer}>
-            {/* Email Input */}
+            {/* Username Input */}
             <TextInput
-              label="Email"
-              value={values.email}
-              onChangeText={handleChange('email')}
-              onBlur={handleBlur('email')}
-              error={getFieldError('email')}
-              keyboardType="email-address"
+              label="Username"
+              value={values.username}
+              onChangeText={handleChange('username')}
+              onBlur={handleBlur('username')}
+              error={getFieldError('username')}
               autoCapitalize="none"
-              iconName="email-outline"
-              testID="email-input"
+              iconName="account-outline"
+              testID="username-input"
             />
             
             {/* Password Input */}

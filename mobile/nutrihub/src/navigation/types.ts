@@ -14,6 +14,16 @@ export type RootStackParamList = {
   Login: undefined;
   
   /**
+   * Register screen with no parameters
+   */
+  Register: undefined;
+  
+  /**
+   * Forgot password screen with no parameters
+   */
+  ForgotPassword: undefined;
+  
+  /**
    * Main app navigator with no parameters
    */
   MainApp: undefined;
@@ -95,7 +105,7 @@ export interface SerializedForumPost {
   commentsCount: number;
   likesCount: number;
   isLiked: boolean;
-  tags: string[];
+  tags: string[]; // PostTagType[]
   createdAt: string; // ISO date string
   updatedAt?: string; // ISO date string
 }
