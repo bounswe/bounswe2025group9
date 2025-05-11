@@ -41,36 +41,6 @@ export interface FoodProposalResponse {
   nutritionScore: number;
 }
 
-export interface Post {
-  id: number;
-  title: string;
-  content: string;
-  author: string;
-  likes: number;
-  date: string;
-  type: 'recipe' | 'nutrition_tip';
-}
-
-export interface PostIngredient {
-  id: number;
-  foodId: number;
-  foodName: string;
-  amount: number;
-}
-
-export interface CreatePostRequest {
-  type: 'recipe' | 'nutrition_tip';
-  title: string;
-  content?: string;  // For nutrition tips
-  ingredients?: PostIngredient[];  // For recipes
-  instructions?: string;  // For recipes
-}
-
-export interface CreatePostResponse {
-  message: string;
-  post: Post;
-}
-
 export interface AuthResponse {
   id: number;
   email: string;
@@ -99,6 +69,48 @@ export interface UserResponse {
   address: string;
   tags: any[];
   allergens: any[];
+}
+
+// forum types
+export interface ForumPost {
+  id: number;
+  title: string;
+  body: string;
+  author: {
+    id: number;
+    username: string;
+  };
+  created_at: string;
+  updated_at: string;
+  tags: ForumTag[];
+}
+
+export interface ForumTag {
+  id: number;
+  name: string;
+}
+
+export interface ForumComment {
+  id: number;
+  post: number;
+  author: {
+    id: number;
+    username: string;
+  };
+  body: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateForumPostRequest {
+  title: string;
+  body: string;
+  tag_ids?: number[];
+}
+
+export interface CreateCommentRequest {
+  post: number;
+  body: string;
 }
 
 // api base urls
@@ -195,15 +207,6 @@ export const apiClient = {
       body: JSON.stringify(proposal),
     }),
 
-  // posts
-  getPosts: () => fetchJson<Post[]>("/posts"),
-  
-  createPost: (postData: CreatePostRequest) =>
-    fetchJson<CreatePostResponse>("/posts/create", {
-      method: "POST",
-      body: JSON.stringify(postData),
-    }),
-
   // auth - use real backend
   login: (username: string, password: string) =>
     fetchJson<JwtResponse>("/users/token/", {
@@ -254,4 +257,90 @@ export const apiClient = {
 
   getItemLikes: (itemType: "foods" | "posts", itemId: number) =>
     fetchJson<LikeResponse>(`/likes/${itemType}/${itemId}`),
+    
+  // forum - use real backend
+  getForumPosts: (params?: { 
+    tags?: number | number[], 
+    author?: number,
+    ordering?: string 
+  }) => {
+    let url = "/forum/posts/";
+    if (params) {
+      const queryParams = new URLSearchParams();
+      
+      // Handle tags parameter (can be single or multiple)
+      if (params.tags) {
+        if (Array.isArray(params.tags)) {
+          params.tags.forEach(tag => queryParams.append('tags', tag.toString()));
+        } else {
+          queryParams.append('tags', params.tags.toString());
+        }
+      }
+      
+      // Handle author parameter
+      if (params.author) {
+        queryParams.append('author', params.author.toString());
+      }
+      
+      // Handle ordering parameter
+      if (params.ordering) {
+        queryParams.append('ordering', params.ordering);
+      }
+      
+      // Add query string to URL if there are any parameters
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    
+    return fetchJson<ForumPost[]>(url, {
+      method: "GET"
+    }, true);
+  },
+  
+  getForumPostDetail: (postId: number) =>
+    fetchJson<ForumPost>(`/forum/posts/${postId}/`, {
+      method: "GET"
+    }, true),
+    
+  createForumPost: (postData: CreateForumPostRequest) =>
+    fetchJson<ForumPost>("/forum/posts/", {
+      method: "POST",
+      body: JSON.stringify(postData)
+    }, true),
+    
+  updateForumPost: (postId: number, updateData: Partial<CreateForumPostRequest>) =>
+    fetchJson<ForumPost>(`/forum/posts/${postId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData)
+    }, true),
+    
+  getForumTags: () =>
+    fetchJson<ForumTag[]>("/forum/tags/", {
+      method: "GET"
+    }, true),
+    
+  // comments
+  getPostComments: (postId: number) =>
+    fetchJson<ForumComment[]>(`/forum/comments/?post=${postId}`, {
+      method: "GET"
+    }, true),
+    
+  createComment: (commentData: CreateCommentRequest) =>
+    fetchJson<ForumComment>("/forum/comments/", {
+      method: "POST",
+      body: JSON.stringify(commentData)
+    }, true),
+    
+  updateComment: (commentId: number, body: string) =>
+    fetchJson<ForumComment>(`/forum/comments/${commentId}/`, {
+      method: "PATCH",
+      body: JSON.stringify({ body })
+    }, true),
+    
+  deleteComment: (commentId: number) =>
+    fetchJson<void>(`/forum/comments/${commentId}/`, {
+      method: "DELETE"
+    }, true),
 };

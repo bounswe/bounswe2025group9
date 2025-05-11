@@ -2,21 +2,11 @@
 import { useState, useEffect } from 'react'
 import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
-import { apiClient, Post } from '../../lib/apiClient'
-
-interface APIPost {
-    id: number;
-    title: string;
-    content: string;
-    author: string;
-    likes: number;
-    date: string;
-    type?: 'recipe' | 'nutrition_tip';
-}
+import { apiClient, ForumPost } from '../../lib/apiClient'
 
 const Forum = () => {
     const location = useLocation();
-    const [posts, setPosts] = useState<APIPost[]>([]);
+    const [posts, setPosts] = useState<ForumPost[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const postsPerPage = 5;
@@ -42,20 +32,17 @@ const Forum = () => {
     const fetchPosts = async () => {
         setLoading(true);
         try {
-            const data = await apiClient.getPosts();
+            const data = await apiClient.getForumPosts({
+                ordering: '-created_at' // Sort by newest first
+            });
             
             // Create a new likedPosts state based on sessionStorage
             const newLikedPosts: {[key: number]: boolean} = {};
             
             // Check sessionStorage for any likes that were set in PostDetail or previously in Forum
-            const updatedPosts = data.map(post => {
+            const updatedPosts = data.map((post: ForumPost) => {
                 const storedLikes = sessionStorage.getItem(`post_${post.id}_likes`);
                 const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
-                
-                // If we have stored like information, update the post
-                if (storedLikes) {
-                    post.likes = parseInt(storedLikes);
-                }
                 
                 // Update the liked state
                 if (storedLiked) {
@@ -65,13 +52,8 @@ const Forum = () => {
                 return post;
             });
             
-            // Sort posts by date in descending order (newest first)
-            const sortedPosts = updatedPosts.sort((a, b) => {
-                return new Date(b.date).getTime() - new Date(a.date).getTime();
-            });
-            
             // Update state
-            setPosts(sortedPosts);
+            setPosts(updatedPosts);
             setLikedPosts(newLikedPosts);
             
             // Reset to first page when posts are refreshed
@@ -96,31 +78,19 @@ const Forum = () => {
         }));
         
         try {
-            // Update the posts with new like count
-            setPosts(posts.map(post => {
-                if (post.id === postId) {
-                    const newLikeCount = post.likes + (newLiked ? 1 : -1);
-                    
-                    // Store the updated like state and count in sessionStorage immediately
-                    sessionStorage.setItem(`post_${postId}_liked`, String(newLiked));
-                    sessionStorage.setItem(`post_${postId}_likes`, String(newLikeCount));
-                    
-                    return {
-                        ...post,
-                        likes: newLikeCount
-                    };
-                }
-                return post;
-            }));
-            
             // Call the API to like/unlike the post
             if (newLiked) {
                 await apiClient.likeItem(postId, "post");
+                
+                // Store the updated like state in sessionStorage
+                sessionStorage.setItem(`post_${postId}_liked`, String(newLiked));
             } else {
                 // In a real implementation, there would be an unlike API
                 // This is a mock for demonstration purposes
                 console.log('Unlike post:', postId);
-                // await apiClient.unlikeItem(postId, "post");
+                
+                // Update sessionStorage
+                sessionStorage.setItem(`post_${postId}_liked`, String(newLiked));
             }
         } catch (error) {
             console.error('Error toggling post like:', error);
@@ -131,22 +101,8 @@ const Forum = () => {
                 [postId]: isCurrentlyLiked
             }));
             
-            // Also revert the like count and sessionStorage
-            setPosts(posts.map(post => {
-                if (post.id === postId) {
-                    const originalLikeCount = post.likes + (isCurrentlyLiked ? 0 : newLiked ? -1 : 1);
-                    
-                    // Update sessionStorage
-                    sessionStorage.setItem(`post_${postId}_liked`, String(isCurrentlyLiked));
-                    sessionStorage.setItem(`post_${postId}_likes`, String(originalLikeCount));
-                    
-                    return {
-                        ...post,
-                        likes: originalLikeCount
-                    };
-                }
-                return post;
-            }));
+            // Update sessionStorage
+            sessionStorage.setItem(`post_${postId}_liked`, String(isCurrentlyLiked));
         }
     };
 
@@ -183,7 +139,6 @@ const Forum = () => {
             
             posts.forEach(post => {
                 const storedLiked = sessionStorage.getItem(`post_${post.id}_liked`);
-                const storedLikes = sessionStorage.getItem(`post_${post.id}_likes`);
                 
                 if (storedLiked !== null) {
                     const isLiked = storedLiked === 'true';
@@ -192,19 +147,10 @@ const Forum = () => {
                         needsUpdate = true;
                     }
                 }
-                
-                if (storedLikes !== null) {
-                    const likeCount = parseInt(storedLikes);
-                    if (post.likes !== likeCount) {
-                        post.likes = likeCount;
-                        needsUpdate = true;
-                    }
-                }
             });
             
             if (needsUpdate) {
                 setLikedPosts({ ...updatedLikedPosts });
-                setPosts([...posts]);
             }
         };
         
@@ -249,16 +195,16 @@ const Forum = () => {
                                     <h3 className="nh-subtitle">{post.title}</h3>
                                 </div>
                                 <p className="nh-text mb-4">
-                                    {post.content.length > 150 
-                                        ? post.content.substring(0, 150) + '...' 
-                                        : post.content}
+                                    {post.body.length > 150 
+                                        ? post.body.substring(0, 150) + '...' 
+                                        : post.body}
                                 </p>
                                 <div className="flex justify-between items-center text-sm text-gray-500">
                                     <span className="flex items-center gap-1">
                                         <div className="mt-0.5">
                                             <User size={16} className="flex-shrink-0" />
                                         </div>
-                                        Posted by: {post.author} • {formatDate(post.date)}
+                                        Posted by: {post.author.username} • {formatDate(post.created_at)}
                                     </span>
                                     <div className="flex items-center gap-4">
                                         <Link 
@@ -277,7 +223,8 @@ const Forum = () => {
                                             <div className="mt-0.5">
                                                 <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />
                                             </div>
-                                            Likes: {post.likes || 0}
+                                            {/* Note: We'll need to update this when the backend adds likes */}
+                                            Likes: 0
                                         </button>
                                     </div>
                                 </div>
