@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, Plus, Minus, MagnifyingGlass, X } from '@phosphor-icons/react'
-import { apiClient, Food, CreatePostRequest, PostIngredient } from '../../lib/apiClient'
+import { apiClient, CreatePostRequest, PostIngredient } from '../../lib/apiClient'
 
 // Local interfaces for this component
 interface FoodItem {
@@ -9,24 +9,24 @@ interface FoodItem {
     name: string;
 }
 
-// Post interfaces
-interface PostBase {
-    type: 'recipe' | 'nutrition_tip';
-    title: string;
-}
-
-interface RecipePost extends PostBase {
-    type: 'recipe';
-    ingredients: PostIngredient[];
-    instructions: string;
-}
-
-interface NutritionTipPost extends PostBase {
-    type: 'nutrition_tip';
-    content: string;
-}
-
-type PostData = RecipePost | NutritionTipPost;
+// // Post interfaces
+// interface PostBase {
+//     type: 'recipe' | 'nutrition_tip';
+//     title: string;
+// }
+//
+// interface RecipePost extends PostBase {
+//     type: 'recipe';
+//     ingredients: PostIngredient[];
+//     instructions: string;
+// }
+//
+// interface NutritionTipPost extends PostBase {
+//     type: 'nutrition_tip';
+//     content: string;
+// }
+//
+// type PostData = RecipePost | NutritionTipPost;
 
 const CreatePost = () => {
     const navigate = useNavigate();
@@ -78,7 +78,7 @@ const CreatePost = () => {
             const data = await apiClient.getFoods();
             
             // Transform foods into simpler format for our select dropdowns
-            const foodItems: FoodItem[] = data.map(food => ({
+            const foodItems = data.results.map(food => ({
                 id: food.id,
                 name: food.name
             }));

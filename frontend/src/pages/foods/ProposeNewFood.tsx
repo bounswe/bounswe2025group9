@@ -4,16 +4,9 @@ import {
   Button,
   Container,
   TextField,
-  Typography,
   Grid,
   Paper,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Divider,
   Alert,
-  SelectChangeEvent,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 
@@ -83,7 +76,7 @@ const ProposeNewFood: React.FC = () => {
         navigate('/foods');
       }, 2000);
     } catch (err) {
-      setError('Failed to submit food proposal. Please try again.');
+      setError(`Failed to submit food proposal. Please try again. ${err} `);
     }
   };
 

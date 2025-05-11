@@ -222,7 +222,7 @@ export const handlers = [
 
   // POST /api/signup
   http.post("/api/signup", async ({ request }) => {
-    const { email, password, username } =
+    const { email, username } =
       (await request.json()) as SignupRequest;
 
     // Check if user already exists

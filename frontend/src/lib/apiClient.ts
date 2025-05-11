@@ -1,5 +1,11 @@
 // api client for making requests to our mock api
 
+export interface PaginationResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+}
 // types
 export interface Food {
   id: number;
@@ -189,7 +195,7 @@ export const apiClient = {
     if (params && params.page) {
       url += `?page=${params.page}`;
     }
-    return fetchJson<Food[]>(url, {
+    return fetchJson<PaginationResponse<Food>>(url, {
       method: "GET",
     }, true);
   },

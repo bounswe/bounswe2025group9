@@ -31,7 +31,7 @@ const PostDetail = () => {
     const [loading, setLoading] = useState(true)
     const [liked, setLiked] = useState(false)
     // Track original likes to maintain consistency
-    const [originalLikes, setOriginalLikes] = useState<number>(0)
+    const [, setOriginalLikes] = useState<number>(0)
     
     // Comment state
     const [commentText, setCommentText] = useState('')

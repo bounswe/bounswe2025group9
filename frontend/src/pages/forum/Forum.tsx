@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
-import { apiClient, Post } from '../../lib/apiClient'
+import { apiClient } from '../../lib/apiClient'
 
 interface APIPost {
     id: number;

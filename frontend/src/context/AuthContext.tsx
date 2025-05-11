@@ -1,5 +1,5 @@
 import { createContext, useState, useContext, ReactNode, useEffect } from 'react';
-import { apiClient, JwtResponse, setAccessToken, UserResponse } from '../lib/apiClient';
+import { apiClient, setAccessToken, UserResponse } from '../lib/apiClient';
 
 // auth context type definition
 interface AuthContextType {
@@ -34,7 +34,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   // tokens stored in memory and localStorage
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
-  const [refreshToken, setRefreshToken] = useState<string | null>(null);
+  const [, setRefreshToken] = useState<string | null>(null);
   
   // check auth status on mount
   useEffect(() => {
