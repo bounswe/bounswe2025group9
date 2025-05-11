@@ -6,47 +6,56 @@ import { useAuth } from '../context/AuthContext'
 
 // navbar component
 const Navbar = () => {
-    const { isAuthenticated, logout } = useAuth()
+    const { isAuthenticated, logout, user } = useAuth()
     const navigate = useNavigate()
     
     const handleLogout = () => {
         logout()
-        navigate('/')
+        navigate('/login')
     }
     
     return (
         <nav className="nh-navbar py-2">
             <div className="nh-container flex justify-between items-center">
-                <Link to="/" className="flex items-center">
+                <Link to={isAuthenticated ? "/" : "/login"} className="flex items-center">
                     <Logo className="text-white" />
                 </Link>
 
-                <div className="hidden md:flex space-x-10">
-                    <Link to="/" className="text-white hover:text-gray-300">
-                        Home
-                    </Link>
-                    <Link to="/foods" className="text-white hover:text-gray-300">
-                        Foods
-                    </Link>
-                    <Link to="/forum" className="text-white hover:text-gray-300">
-                        Forum
-                    </Link>
-                    <Link to="/api-examples" className="text-white hover:text-gray-300">
-                        API Examples [TEMPORARY]
-                    </Link>
-                </div>
+                {isAuthenticated && (
+                    <div className="hidden md:flex space-x-10">
+                        <Link to="/" className="text-white hover:text-gray-300">
+                            Home
+                        </Link>
+                        <Link to="/foods" className="text-white hover:text-gray-300">
+                            Foods
+                        </Link>
+                        <Link to="/forum" className="text-white hover:text-gray-300">
+                            Forum
+                        </Link>
+                        <Link to="/api-examples" className="text-white hover:text-gray-300">
+                            API Examples [TEMPORARY]
+                        </Link>
+                    </div>
+                )}
 
                 <div className="flex items-center space-x-5">
                     <ThemeToggle />
                     <div className="flex space-x-2">
                         {isAuthenticated ? (
-                            <button 
-                                onClick={handleLogout}
-                                className="nh-button nh-button-primary flex items-center gap-1 w-30"
-                            >
-                                <SignOut size={16} weight="fill" className="inline-block mr-2" />
-                                Logout
-                            </button>
+                            <>
+                                {user && (
+                                    <div className="text-white mr-4 flex items-center">
+                                        Welcome, {user.name || user.username || 'User'}
+                                    </div>
+                                )}
+                                <button 
+                                    onClick={handleLogout}
+                                    className="nh-button nh-button-primary flex items-center gap-1 w-30"
+                                >
+                                    <SignOut size={16} weight="fill" className="inline-block mr-2" />
+                                    Logout
+                                </button>
+                            </>
                         ) : (
                             <>
                                 <Link to="/login" className="nh-button nh-button-primary flex items-center gap-1 w-30">

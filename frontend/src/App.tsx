@@ -10,6 +10,7 @@ import ApiExample from './pages/ApiExample'
 import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
 import { AuthProvider } from './context/AuthContext'
+import ProtectedRoute from './components/ProtectedRoute'
 
 // app component with react-router setup
 function App() {
@@ -18,15 +19,21 @@ function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            <Route index element={<Home />} />
-            <Route path="foods" element={<Foods />} />
-            <Route path="foods/propose" element={<ProposeNewFood />} />
-            <Route path="forum" element={<Forum />} />
-            <Route path="api-examples" element={<ApiExample />} />
-            <Route path="forum/post/:postId" element={<PostDetail />} />
-            <Route path="forum/create" element={<CreatePost />} />
+            {/* Public Routes - only login and signup */}
             <Route path="login" element={<Login />} />
             <Route path="signup" element={<Signup />} />
+            
+            {/* Protected Routes - all other routes including home */}
+            <Route element={<ProtectedRoute />}>
+              <Route index element={<Home />} />
+              <Route path="foods" element={<Foods />} />
+              <Route path="foods/propose" element={<ProposeNewFood />} />
+              <Route path="forum" element={<Forum />} />
+              <Route path="forum/post/:postId" element={<PostDetail />} />
+              <Route path="forum/create" element={<CreatePost />} />
+              <Route path="api-examples" element={<ApiExample />} />
+            </Route>
+            
             <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
           </Route>
         </Routes>
