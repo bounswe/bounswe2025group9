@@ -45,7 +45,9 @@ class FoodCatalogTests(TestCase):
         """
         response = self.client.get(reverse("get_foods"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 5)  # Updated to match actual number of test entries
+        self.assertEqual(
+            len(response.data), 5
+        )  # Updated to match actual number of test entries
 
     def test_category_filtering(self):
         """
@@ -80,6 +82,8 @@ class FoodCatalogTests(TestCase):
         """
         Test that filtering by a nonexistent category returns an empty list.
         """
-        response = self.client.get(reverse("get_foods"), {"category": "NonexistentCategory"})
+        response = self.client.get(
+            reverse("get_foods"), {"category": "NonexistentCategory"}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
