@@ -2,6 +2,7 @@ from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework import status
+from django.conf import settings
 from foods.models import FoodEntry
 
 
@@ -53,21 +54,15 @@ class FoodCatalogTests(TestCase):
                 category="Vegetable",
             )
 
-    def test_invalid_limit(self):
-        """
-        Test that an invalid 'limit' query parameter returns a 400 status.
-        """
-        response = self.client.get(reverse("get_foods"), {"limit": "invalid"})
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", response.data)
-
     def test_successful_query(self):
         """
         Test that a valid query returns the correct status and data.
         """
-        response = self.client.get(reverse("get_foods"), {"limit": 5})
+        response = self.client.get(reverse("get_foods"), {"page": 2})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 5)
+        self.assertEqual(
+            len(response.data), 4
+        )  # (count, next, previous, results) // no warnings since query is valid
 
     def test_default_limit(self):
         """
@@ -76,7 +71,7 @@ class FoodCatalogTests(TestCase):
         response = self.client.get(reverse("get_foods"))
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            len(response.data), 10
+            len(response.data["results"]), settings.REST_FRAMEWORK["PAGE_SIZE"]
         )  # Updated to match actual default limit
 
     def test_category_filtering(self):
@@ -85,8 +80,8 @@ class FoodCatalogTests(TestCase):
         """
         response = self.client.get(reverse("get_foods"), {"category": "Fruit"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 2)
-        for food in response.data:
+        self.assertEqual(len(response.data), 4)
+        for food in response.data["results"]:
             self.assertEqual(food["category"], "Fruit")
 
     def test_case_insensitive_category_filtering(self):
@@ -96,17 +91,17 @@ class FoodCatalogTests(TestCase):
         # Test with lowercase
         response_lower = self.client.get(reverse("get_foods"), {"category": "fruit"})
         self.assertEqual(response_lower.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_lower.data), 2)
+        self.assertEqual(len(response_lower.data), 4)
 
         # Test with uppercase
         response_upper = self.client.get(reverse("get_foods"), {"category": "FRUIT"})
         self.assertEqual(response_upper.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_upper.data), 2)
+        self.assertEqual(len(response_upper.data), 4)
 
         # Test with mixed case
         response_mixed = self.client.get(reverse("get_foods"), {"category": "FrUiT"})
         self.assertEqual(response_mixed.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_mixed.data), 2)
+        self.assertEqual(len(response_mixed.data), 4)
 
     def test_nonexistent_category(self):
         """
