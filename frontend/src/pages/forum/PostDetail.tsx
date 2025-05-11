@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { User, ThumbsUp, ChatText, ArrowLeft, Tag } from '@phosphor-icons/react'
+import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots } from '@phosphor-icons/react'
 import { apiClient, ForumPost, ForumTag } from '../../lib/apiClient'
 
 // Post interface for the data from API
@@ -271,10 +271,10 @@ const PostDetail = () => {
 
     if (loading) {
         return (
-            <div className="py-12">
+            <div className="w-full py-12">
                 <div className="nh-container">
                     <div className="mb-6">
-                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6">
+                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6 py-3 rounded-lg shadow-sm hover:shadow transition-all px-4">
                             <ArrowLeft size={20} weight="bold" />
                             Back to Forum
                         </Link>
@@ -289,10 +289,10 @@ const PostDetail = () => {
 
     if (!post) {
         return (
-            <div className="py-12">
+            <div className="w-full py-12">
                 <div className="nh-container">
                     <div className="mb-6">
-                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6">
+                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6 py-3 rounded-lg shadow-sm hover:shadow transition-all px-4">
                             <ArrowLeft size={20} weight="bold" />
                             Back to Forum
                         </Link>
@@ -306,20 +306,20 @@ const PostDetail = () => {
     }
 
     return (
-        <div className="py-12">
+        <div className="w-full py-12">
             <div className="nh-container">
                 <div className="mb-6">
-                    <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6">
+                    <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6 py-3 rounded-lg shadow-sm hover:shadow transition-all px-4">
                         <ArrowLeft size={20} weight="bold" />
                         Back to Forum
                     </Link>
                 </div>
                 
                 {/* Post */}
-                <div className="nh-card mb-8">
+                <div className="nh-card mb-8 rounded-lg shadow-md">
                     <div className="flex items-center mb-4">
-                        <div className="mt-0.5 mr-2">
-                            <ChatText size={24} weight="fill" className="text-primary flex-shrink-0" />
+                        <div className="flex items-center justify-center mr-3">
+                            <ChatText size={24} weight="fill" className="text-primary" />
                         </div>
                         <h1 className="nh-title">{post.title}</h1>
                     </div>
@@ -335,7 +335,7 @@ const PostDetail = () => {
                                         className="flex items-center px-3 py-1.5 rounded-md text-sm font-medium" 
                                         style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
                                     >
-                                        <Tag size={14} className="mr-1.5" />
+                                        <Tag size={14} weight="fill" className="mr-1.5" />
                                         {tag.name}
                                     </div>
                                 );
@@ -349,16 +349,16 @@ const PostDetail = () => {
                     
                     <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4">
                         <span className="flex items-center gap-1">
-                            <div className="mt-0.5">
+                            <div className="flex items-center justify-center">
                                 <User size={16} className="flex-shrink-0" />
                             </div>
                             Posted by: {post.author} • {formatDate(post.date)}
                         </span>
                         <button 
                             onClick={handleLikeToggle}
-                            className={`flex items-center gap-1 transition-colors duration-200 hover:opacity-80 rounded-md px-2 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 ${liked ? 'text-primary' : ''}`}
+                            className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 ${liked ? 'text-primary' : ''}`}
                         >
-                            <div className="mt-0.5">
+                            <div className="flex items-center justify-center">
                                 <ThumbsUp size={16} weight={liked ? "fill" : "regular"} className="flex-shrink-0" />
                             </div>
                             Likes: {post.likes}
@@ -368,39 +368,10 @@ const PostDetail = () => {
                 
                 {/* Comments Section */}
                 <div className="mb-6">
-                    <h2 className="nh-subtitle mb-4">Comments ({comments.length})</h2>
-                    {/* Add Comment Form */}
-                    <div className="nh-card border border-gray-200 dark:border-gray-700 mb-6">
-                        <h3 className="nh-subtitle mb-2">Add a Comment</h3>
-                        <form onSubmit={handleCommentSubmit}>
-                            <div className="flex items-start gap-3 mb-4">
-                                <div className="flex-shrink-0">
-                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
-                                        <User size={18} className="text-primary" />
-                                    </div>
-                                </div>
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-primary mb-2">You</p>
-                                    <textarea 
-                                        className="w-full border rounded-md p-3 dark:bg-gray-800 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary"
-                                        rows={3}
-                                        placeholder="Share your thoughts..."
-                                        value={commentText}
-                                        onChange={(e) => setCommentText(e.target.value)}
-                                        required
-                                    ></textarea>
-                                </div>
-                            </div>
-                            <div className="flex justify-end">
-                                <button 
-                                    type="submit" 
-                                    className="nh-button nh-button-primary dark:bg-primary dark:text-white light:bg-[#0d7c5f] light:text-white"
-                                >
-                                    Post Comment
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                    <h2 className="nh-subtitle mb-4 flex items-center gap-2">
+                        <ChatDots size={20} weight="fill" className="text-primary" />
+                        Comments ({comments.length})
+                    </h2>
                     
                     {loadingComments ? (
                         <div className="text-center py-4">
@@ -411,13 +382,13 @@ const PostDetail = () => {
                             <p>No comments yet. Be the first to comment!</p>
                         </div>
                     ) : (
-                        <div className="space-y-4">
+                        <div className="space-y-4 mb-8">
                             {comments.map((comment) => (
-                                <div key={comment.id} className="nh-card border border-gray-200 dark:border-gray-700">
+                                <div key={comment.id} className="nh-card rounded-lg shadow-sm border border-gray-700">
                                     <div className="flex items-start">
                                         <div className="flex-shrink-0 mr-3">
                                             <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                                <User size={18} className="text-gray-500" />
+                                                <User size={18} weight="fill" className="text-gray-500" />
                                             </div>
                                         </div>
                                         <div className="flex-grow">
@@ -430,7 +401,7 @@ const PostDetail = () => {
                                                     {formatDate(comment.created_at)}
                                                 </span>
                                             </div>
-                                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md">
+                                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                                                 <p className="nh-text text-sm">
                                                     {comment.body}
                                                 </p>
@@ -441,6 +412,40 @@ const PostDetail = () => {
                             ))}
                         </div>
                     )}
+                    
+                    {/* Add Comment Form - Moved below comments */}
+                    <div className="nh-card rounded-lg shadow-md border border-gray-700">
+                        <h3 className="nh-subtitle mb-4">Add a Comment</h3>
+                        <form onSubmit={handleCommentSubmit}>
+                            <div className="flex items-start gap-3 mb-4">
+                                <div className="flex-shrink-0">
+                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
+                                        <User size={18} weight="fill" className="text-primary" />
+                                    </div>
+                                </div>
+                                <div className="flex-grow">
+                                    <p className="font-semibold text-primary mb-2">You</p>
+                                    <textarea 
+                                        className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                                        rows={3}
+                                        placeholder="Share your thoughts..."
+                                        value={commentText}
+                                        onChange={(e) => setCommentText(e.target.value)}
+                                        required
+                                    ></textarea>
+                                </div>
+                            </div>
+                            <div className="flex justify-end">
+                                <button 
+                                    type="submit" 
+                                    className="nh-button nh-button-primary py-3 px-4 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2"
+                                >
+                                    <ChatDots size={18} weight="fill" />
+                                    Post Comment
+                                </button>
+                            </div>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
