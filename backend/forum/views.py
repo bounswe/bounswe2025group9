@@ -7,7 +7,6 @@ from rest_framework.decorators import action
 from fuzzywuzzy import fuzz
 import logging
 
-
 from .models import Post, Tag, Comment, Like, Recipe, RecipeIngredient
 from .serializers import (
     PostSerializer,
