@@ -96,7 +96,7 @@ const Login = () => {
                 <div className="max-w-md mx-auto nh-card">
                     <div className="text-center mb-4">
                         <div className="inline-flex items-center justify-center">
-                            <SignIn size={28} weight="bold" className="text-primary mr-2" aria-hidden="true" />
+                            <SignIn size={28} weight="bold" className="text-primary mr-2 mb-3" aria-hidden="true" />
                             <h2 className="nh-title">Login</h2>
                         </div>
                     </div>
