@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight } from '@phosphor-icons/react'
 import { apiClient,  ForumTag } from '../../lib/apiClient'
+import { useAuth } from '../../context/AuthContext'
 
 // local storage key for liked posts - use the same key as Forum component
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -59,6 +60,8 @@ const PostDetail = () => {
     const { postId } = useParams<{ postId: string }>()
     const postIdNum = parseInt(postId || '0')
     const navigate = useNavigate()
+    const { user } = useAuth();
+    const username = user?.username || 'anonymous';
     
     // Post state
     const [post, setPost] = useState<APIPost | null>(null)
@@ -81,35 +84,45 @@ const PostDetail = () => {
         const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
         if (storedLikedPosts && postIdNum) {
             try {
-                const parsedLikedPosts = JSON.parse(storedLikedPosts);
+                const parsedData = JSON.parse(storedLikedPosts);
+                const userLikedPosts = parsedData[username] || {};
                 // Set initial liked state from local storage if available
-                if (parsedLikedPosts[postIdNum] !== undefined) {
-                    setLiked(parsedLikedPosts[postIdNum]);
+                if (userLikedPosts[postIdNum] !== undefined) {
+                    setLiked(userLikedPosts[postIdNum]);
                 }
             } catch (error) {
                 console.error('Error parsing liked posts from localStorage:', error);
             }
         }
-    }, [postIdNum]);
+    }, [postIdNum, username]);
     
     // Helper function to update local storage
     const updateLikedPostsStorage = (postId: number, isLiked: boolean) => {
         try {
             const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
-            let likedPosts = {};
+            let allUsersLikedPosts: {[username: string]: {[postId: number]: boolean}} = {};
             
             if (storedLikedPosts) {
-                likedPosts = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+                allUsersLikedPosts = JSON.parse(storedLikedPosts);
             }
             
+            // Get current user's liked posts or create empty object
+            const userLikedPosts = allUsersLikedPosts[username] || {};
+            
             // Update the liked status for this post
-            likedPosts = {
-                ...likedPosts,
+            const updatedUserLikedPosts = {
+                ...userLikedPosts,
                 [postId]: isLiked
             };
             
+            // Update the entire structure with the user's data
+            const updatedAllUsersLikedPosts = {
+                ...allUsersLikedPosts,
+                [username]: updatedUserLikedPosts
+            };
+            
             // Save to local storage
-            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
+            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(updatedAllUsersLikedPosts));
         } catch (error) {
             console.error('Error saving liked posts to localStorage:', error);
         }
@@ -203,10 +216,11 @@ const PostDetail = () => {
                 const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
                 if (storedLikedPosts) {
                     try {
-                        const parsedLikedPosts = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+                        const parsedData = JSON.parse(storedLikedPosts);
+                        const userLikedPosts = parsedData[username] || {};
                         // If we have this post in local storage, use that value
-                        if (parsedLikedPosts[postIdNum] !== undefined) {
-                            const localLiked = parsedLikedPosts[postIdNum];
+                        if (userLikedPosts[postIdNum] !== undefined) {
+                            const localLiked = userLikedPosts[postIdNum];
                             
                             
                             // Always trust local storage for liked state

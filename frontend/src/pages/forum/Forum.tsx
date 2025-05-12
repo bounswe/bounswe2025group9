@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
+import { useAuth } from '../../context/AuthContext'
 
 // create a simple cache for posts
 let cachedPosts: ForumPost[] = [];
@@ -60,6 +61,8 @@ const TAG_IDS = {
 
 const Forum = () => {
     const location = useLocation();
+    const { user } = useAuth();
+    const username = user?.username || 'anonymous';
     const [allPosts, setAllPosts] = useState<ForumPost[]>(cachedPosts); // store all posts
     const [posts, setPosts] = useState<ForumPost[]>([]); // store current page posts
     const [loading, setLoading] = useState(cachedPosts.length === 0); // only show loading if no cached posts
@@ -78,14 +81,16 @@ const Forum = () => {
         const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
         if (storedLikedPosts) {
             try {
-                const parsedLikedPosts = JSON.parse(storedLikedPosts);
-                setLikedPosts(parsedLikedPosts);
+                const parsedData = JSON.parse(storedLikedPosts);
+                // get user-specific liked posts or empty object if not found
+                const userLikedPosts = parsedData[username] || {};
+                setLikedPosts(userLikedPosts);
             } catch (error) {
                 console.error('Error parsing liked posts from localStorage:', error);
                 localStorage.removeItem(LIKED_POSTS_STORAGE_KEY);
             }
         }
-    }, []);
+    }, [username]);
 
     // Track previous location to detect navigation from PostDetail
     useEffect(() => {
@@ -102,31 +107,32 @@ const Forum = () => {
         if (!storedLikedPosts || cachedPosts.length === 0) return;
         
         try {
-            const parsedLikedPosts = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+            const parsedData = JSON.parse(storedLikedPosts);
+            const userLikedPosts = parsedData[username] || {};
             
             // Check if any cached posts need updating based on local storage
             let needsUpdate = false;
             const updatedPosts = cachedPosts.map(post => {
                 // Check if the like status needs to be updated
-                const likeStatusChanged = parsedLikedPosts[post.id] !== undefined && post.liked !== parsedLikedPosts[post.id];
+                const likeStatusChanged = userLikedPosts[post.id] !== undefined && post.liked !== userLikedPosts[post.id];
                 
                 if (likeStatusChanged) {
                     needsUpdate = true;
-                    console.log(`[Forum] Post ${post.id} like status changed from ${post.liked} to ${parsedLikedPosts[post.id]}`);
+                    console.log(`[Forum] Post ${post.id} like status changed from ${post.liked} to ${userLikedPosts[post.id]}`);
                     
                     // Update like count based on the change
                     let updatedLikes = post.likes || 0;
-                    if (parsedLikedPosts[post.id] && !post.liked) {
+                    if (userLikedPosts[post.id] && !post.liked) {
                         // If liked in storage but not in cache, increment count
                         updatedLikes += 1;
-                    } else if (!parsedLikedPosts[post.id] && post.liked) {
+                    } else if (!userLikedPosts[post.id] && post.liked) {
                         // If not liked in storage but liked in cache, decrement count
                         updatedLikes -= 1;
                     }
                     
                     return {
                         ...post,
-                        liked: parsedLikedPosts[post.id],
+                        liked: userLikedPosts[post.id],
                         likes: updatedLikes
                     };
                 }
@@ -138,7 +144,7 @@ const Forum = () => {
                 console.log('Updating cached posts to match local storage like status');
                 cachedPosts = updatedPosts;
                 setAllPosts([...updatedPosts]);
-                setLikedPosts(parsedLikedPosts);
+                setLikedPosts(userLikedPosts);
             }
         } catch (error) {
             console.error('Error syncing cache with localStorage:', error);
@@ -366,22 +372,31 @@ const Forum = () => {
     const updateSinglePostLikeInStorage = (postId: number, isLiked: boolean) => {
         try {
             const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
-            let likedPostsMap = {};
+            let allUsersLikedPosts: {[username: string]: {[postId: number]: boolean}} = {};
             
             if (storedLikedPosts) {
-                likedPostsMap = JSON.parse(storedLikedPosts) as {[key: number]: boolean};
+                allUsersLikedPosts = JSON.parse(storedLikedPosts);
             }
             
+            // get current user's liked posts or create empty object
+            const userLikedPosts = allUsersLikedPosts[username] || {};
+            
             // Update the liked status for this post
-            likedPostsMap = {
-                ...likedPostsMap,
+            const updatedUserLikedPosts = {
+                ...userLikedPosts,
                 [postId]: isLiked
             };
             
-            // Save to local storage
-            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPostsMap));
+            // Update the entire structure with the user's data
+            const updatedAllUsersLikedPosts = {
+                ...allUsersLikedPosts,
+                [username]: updatedUserLikedPosts
+            };
             
-            return likedPostsMap;
+            // Save to local storage
+            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(updatedAllUsersLikedPosts));
+            
+            return updatedUserLikedPosts;
         } catch (error) {
             console.error('Error saving liked posts to localStorage:', error);
             return likedPosts; // Return current state
