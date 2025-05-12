@@ -1,6 +1,6 @@
 import { SignIn, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 
 // login page component
@@ -329,9 +329,9 @@ const Login = () => {
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                             Don't have an account?{' '}
-                            <a href="/signup" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
+                            <Link to="/signup" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
                                 Sign up
-                            </a>
+                            </Link>
                         </p>
                     </div>
                 </div>

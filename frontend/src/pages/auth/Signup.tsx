@@ -1,7 +1,7 @@
 import { UserPlus, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { apiClient } from '../../lib/apiClient'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 // signup page component (placeholder)
 const SignUp = () => {
@@ -576,9 +576,9 @@ const SignUp = () => {
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
                             Already have an account?{' '}
-                            <a href="/login" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
+                            <Link to="/login" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
                                 Sign in
-                            </a>
+                            </Link>
                         </p>
                     </div>
                 </div>
