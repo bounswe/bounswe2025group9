@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight } from '@phosphor-icons/react'
-import { apiClient, ForumPost, ForumTag, PaginatedResponse, ForumComment } from '../../lib/apiClient'
+import { apiClient,  ForumTag } from '../../lib/apiClient'
 
 // local storage key for liked posts - use the same key as Forum component
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -207,12 +207,7 @@ const PostDetail = () => {
                         // If we have this post in local storage, use that value
                         if (parsedLikedPosts[postIdNum] !== undefined) {
                             const localLiked = parsedLikedPosts[postIdNum];
-                            const serverLiked = postData.liked || false;
                             
-                            // Important: Only adjust likes count if API hasn't processed our like yet.
-                            // This prevents double-counting when moving between Forum and PostDetail.
-                            // Forum component already updated the backend, so API should reflect the correct count.
-                            // We do NOT need to manually adjust the count in most cases.
                             
                             // Always trust local storage for liked state
                             transformedPost.liked = localLiked;

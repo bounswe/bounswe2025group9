@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import { User, ThumbsUp, ChatText, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel } from '@phosphor-icons/react'
 import { Link, useLocation } from 'react-router-dom'
-import { apiClient, ForumPost, ForumTag, PaginatedResponse } from '../../lib/apiClient'
+import { apiClient, ForumPost } from '../../lib/apiClient'
 
 // create a simple cache for posts
 let cachedPosts: ForumPost[] = [];
@@ -65,7 +65,7 @@ const Forum = () => {
     const [loading, setLoading] = useState(cachedPosts.length === 0); // only show loading if no cached posts
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [postsPerPage, setPostsPerPage] = useState(5);
+    const [postsPerPage, ] = useState(5);
     const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
     const [previousPathname, setPreviousPathname] = useState<string | null>(null);
     
@@ -175,6 +175,15 @@ const Forum = () => {
     useEffect(() => {
         // Check if we're coming back to the forum from somewhere else
         if (location.pathname === '/forum') {
+            // Check if we need to force refresh posts
+            const shouldRefresh = location.state?.refreshPosts;
+            
+            if (shouldRefresh) {
+                console.log('Forcing refresh of forum posts due to new post creation');
+                fetchAllPosts(true); // Force refresh
+                return;
+            }
+            
             if (previousPathname?.startsWith('/forum/post/')) {
                 // Coming back from post detail, sync first then maybe fetch
                 syncCacheWithLocalStorage();
@@ -352,15 +361,7 @@ const Forum = () => {
         setCurrentPage(1); // Reset to first page
     };
 
-    // Helper function to update local storage with liked posts
-    const updateLikedPostsStorage = (newLikedPosts: {[key: number]: boolean}) => {
-        try {
-            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(newLikedPosts));
-        } catch (error) {
-            console.error('Error saving liked posts to localStorage:', error);
-        }
-    };
-    
+
     // Helper function to update a single post's like status in local storage
     const updateSinglePostLikeInStorage = (postId: number, isLiked: boolean) => {
         try {

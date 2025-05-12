@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Plus, Minus, MagnifyingGlass, X, Tag, WarningCircle } from '@phosphor-icons/react'
+import { ArrowLeft, Tag, WarningCircle } from '@phosphor-icons/react'
 import { apiClient, ForumTag, CreateForumPostRequest } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 
@@ -24,6 +24,7 @@ const CreatePost = () => {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [validationError, setValidationError] = useState('');
+    const [successMessage, setSuccessMessage] = useState('');
     
     // Check authentication status when component mounts
     useEffect(() => {
@@ -161,8 +162,13 @@ const CreatePost = () => {
             const response = await apiClient.createForumPost(postData);
             console.log('Post created:', response);
             
-            // Navigate back to forum
-            navigate('/forum');
+            // Show success message
+            setSuccessMessage('Post created successfully! Redirecting to forum...');
+            
+            // Force refresh forum posts by navigating with a state parameter
+            setTimeout(() => {
+                navigate('/forum', { state: { refreshPosts: true } });
+            }, 2000);
         } catch (error) {
             console.error('Error creating post:', error);
             setValidationError('Failed to create post. Please try again.');
@@ -210,6 +216,13 @@ const CreatePost = () => {
                         <p className="mb-4 text-sm">
                             Posting as: <span className="font-semibold">{user.username}</span>
                         </p>
+                    )}
+                    
+                    {/* Display success message if present */}
+                    {successMessage && (
+                        <div className="bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 text-green-700 dark:text-green-400 px-4 py-3 rounded-md mb-6 flex items-start gap-2">
+                            <span>{successMessage}</span>
+                        </div>
                     )}
                     
                     {/* Display validation error if present */}
