@@ -23,7 +23,7 @@ const Navbar = () => {
                     </Link>
                 </div>
 
-                {isAuthenticated && (
+                {isAuthenticated ? (
                     <div className="flex justify-center space-x-10">
                         <Link to="/" className="text-white hover:text-gray-300">
                             Home
@@ -34,6 +34,10 @@ const Navbar = () => {
                         <Link to="/forum" className="text-white hover:text-gray-300">
                             Forum
                         </Link>
+                    </div>
+                ) : (
+                    <div className="flex justify-center">
+                        {/* Empty center column when not authenticated */}
                     </div>
                 )}
 
