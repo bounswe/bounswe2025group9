@@ -1,5 +1,5 @@
-import { UserPlus } from '@phosphor-icons/react'
-import { useState } from 'react'
+import { UserPlus, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
+import { useState, useEffect } from 'react'
 import { apiClient } from '../../lib/apiClient'
 import { useNavigate } from 'react-router-dom'
 
@@ -26,6 +26,21 @@ const SignUp = () => {
     })
     const [signupError, setSignupError] = useState('')
     const [signupSuccess, setSignupSuccess] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [passwordFocused, setPasswordFocused] = useState(false)
+
+    // password validation criteria
+    const passwordCriteria = {
+        minLength: formData.password.length >= 8,
+        hasUppercase: /[A-Z]/.test(formData.password),
+        hasLowercase: /[a-z]/.test(formData.password),
+        hasNumber: /\d/.test(formData.password),
+        passwordsMatch: formData.password === formData.confirmPassword && formData.confirmPassword !== ''
+    }
+
+    // check if all password criteria are met
+    const allCriteriaMet = Object.values(passwordCriteria).every(criteria => criteria)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -39,6 +54,14 @@ const SignUp = () => {
                 ...prev,
                 [name]: ''
             }))
+        }
+    }
+
+    const togglePasswordVisibility = (field: 'password' | 'confirmPassword') => {
+        if (field === 'password') {
+            setShowPassword(prev => !prev)
+        } else {
+            setShowConfirmPassword(prev => !prev)
         }
     }
 
@@ -76,11 +99,8 @@ const SignUp = () => {
         if (!formData.password) {
             newErrors.password = 'Password is required'
             isValid = false
-        } else if (formData.password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters'
-            isValid = false
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-            newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+        } else if (!allCriteriaMet) {
+            newErrors.password = 'Password does not meet all requirements'
             isValid = false
         }
 
@@ -150,13 +170,22 @@ const SignUp = () => {
         }
     }
 
+    // icon for password criteria display
+    const criteriaIcon = (met: boolean) => {
+        return met ? (
+            <Check size={16} weight="bold" style={{ color: 'var(--color-success)' }} />
+        ) : (
+            <X size={16} weight="bold" style={{ color: 'var(--color-error)' }} />
+        )
+    }
+
     return (
         <div className="py-12">
             <div className="nh-container">
                 <div className="max-w-md mx-auto nh-card">
                     <div className="text-center mb-4">
-                        <div className="inline-flex items-center">
-                            <UserPlus size={28} weight="bold" className="text-primary mr-2" />
+                        <div className="inline-flex items-center justify-center">
+                            <UserPlus size={28} weight="bold" className="text-primary mr-2" aria-hidden="true" />
                             <h2 className="nh-title">Sign Up</h2>
                         </div>
                     </div>
@@ -248,19 +277,72 @@ const SignUp = () => {
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.password ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Create a password"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    onFocus={() => setPasswordFocused(true)}
+                                    onBlur={() => setPasswordFocused(false)}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
+                                        errors.password ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Create a password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => togglePasswordVisibility('password')}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? (
+                                        <EyeSlash size={20} weight="regular" />
+                                    ) : (
+                                        <Eye size={20} weight="regular" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && (
                                 <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                            )}
+                            
+                            {/* password criteria checklist */}
+                            {(passwordFocused || formData.password.length > 0) && (
+                                <div className="mt-2 p-2 rounded-md transition-colors" style={{
+                                    backgroundColor: 'var(--color-bg-tertiary)',
+                                    borderWidth: '1px',
+                                    borderColor: 'var(--color-gray-700)',
+                                    borderStyle: 'solid'
+                                }}>
+                                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>Password must have:</p>
+                                    <ul className="space-y-1">
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.minLength)}
+                                            <span className={`ml-2 ${passwordCriteria.minLength ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least 8 characters
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.hasUppercase)}
+                                            <span className={`ml-2 ${passwordCriteria.hasUppercase ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least one uppercase letter
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.hasLowercase)}
+                                            <span className={`ml-2 ${passwordCriteria.hasLowercase ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least one lowercase letter
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.hasNumber)}
+                                            <span className={`ml-2 ${passwordCriteria.hasNumber ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least one number
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
                             )}
                         </div>
 
@@ -268,17 +350,38 @@ const SignUp = () => {
                             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
                                 Confirm Password
                             </label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Confirm your password"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
+                                        errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Confirm your password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => togglePasswordVisibility('confirmPassword')}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeSlash size={20} weight="regular" />
+                                    ) : (
+                                        <Eye size={20} weight="regular" />
+                                    )}
+                                </button>
+                            </div>
+                            {formData.confirmPassword && (
+                                <div className="flex items-center mt-1">
+                                    {criteriaIcon(passwordCriteria.passwordsMatch)}
+                                    <span className={`ml-2 text-sm ${passwordCriteria.passwordsMatch ? 'text-success' : 'text-error'}`}>
+                                        {passwordCriteria.passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                                    </span>
+                                </div>
+                            )}
                             {errors.confirmPassword && (
                                 <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
                             )}
@@ -313,19 +416,19 @@ const SignUp = () => {
                     </form>
 
                     {signupError && (
-                        <p className="mt-2 text-sm text-red-500 text-center">{signupError}</p>
+                        <p className="mt-2 text-sm text-error text-center">{signupError}</p>
                     )}
                     {signupSuccess && (
-                        <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-md text-center">
+                        <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-success rounded-md text-center">
                             <p className="font-medium">Signup successful!</p>
                             <p className="text-sm mt-1">Redirecting to login page...</p>
                         </div>
                     )}
 
                     <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                             Already have an account?{' '}
-                            <a href="/login" className="text-primary hover:text-primary-dark">
+                            <a href="/login" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
                                 Sign in
                             </a>
                         </p>

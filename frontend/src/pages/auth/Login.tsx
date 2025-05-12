@@ -1,4 +1,4 @@
-import { SignIn } from '@phosphor-icons/react'
+import { SignIn, Eye, EyeSlash } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
@@ -20,6 +20,7 @@ const Login = () => {
     const [loginError, setLoginError] = useState('')
     const [successMessage, setSuccessMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
 
     // Check for success message in location state when component mounts
     useEffect(() => {
@@ -43,6 +44,10 @@ const Login = () => {
                 [name]: ''
             }))
         }
+    }
+
+    const togglePasswordVisibility = () => {
+        setShowPassword(prev => !prev)
     }
 
     const validateForm = () => {
@@ -93,14 +98,14 @@ const Login = () => {
             <div className="nh-container">
                 <div className="max-w-md mx-auto nh-card">
                     <div className="text-center mb-4">
-                        <div className="inline-flex items-center">
-                            <SignIn size={28} weight="bold" className="text-primary mr-2" />
+                        <div className="inline-flex items-center justify-center">
+                            <SignIn size={28} weight="bold" className="text-primary mr-2" aria-hidden="true" />
                             <h2 className="nh-title">Login</h2>
                         </div>
                     </div>
                     
                     {successMessage && (
-                        <div className="mb-4 p-3 bg-green-100 text-green-800 rounded-md">
+                        <div className="mb-4 p-3 bg-green-100 dark:bg-green-900/30 text-success rounded-md">
                             {successMessage}
                         </div>
                     )}
@@ -130,17 +135,30 @@ const Login = () => {
                             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.password ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Enter your password"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
+                                        errors.password ? 'border-red-500' : 'border-gray-300'
+                                    }`}
+                                    placeholder="Enter your password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={togglePasswordVisibility}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? (
+                                        <EyeSlash size={20} weight="regular" />
+                                    ) : (
+                                        <Eye size={20} weight="regular" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && (
                                 <p className="mt-1 text-sm text-red-500">{errors.password}</p>
                             )}
@@ -156,13 +174,13 @@ const Login = () => {
                     </form>
 
                     {loginError && (
-                        <p className="mt-2 text-sm text-red-500 text-center">{loginError}</p>
+                        <p className="mt-2 text-sm text-error text-center">{loginError}</p>
                     )}
 
                     <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                             Don't have an account?{' '}
-                            <a href="/signup" className="text-primary hover:text-primary-dark">
+                            <a href="/signup" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
                                 Sign up
                             </a>
                         </p>
