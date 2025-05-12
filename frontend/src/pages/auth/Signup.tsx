@@ -12,8 +12,7 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         name: '',
-        surname: '',
-        address: ''
+        surname: ''
     })
     const [errors, setErrors] = useState({
         email: '',
@@ -21,8 +20,7 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         name: '',
-        surname: '',
-        address: ''
+        surname: ''
     })
     const [signupError, setSignupError] = useState('')
     const [signupErrors, setSignupErrors] = useState<{[key: string]: string}>({})
@@ -74,8 +72,7 @@ const SignUp = () => {
             password: '',
             confirmPassword: '',
             name: '',
-            surname: '',
-            address: ''
+            surname: ''
         }
 
         // Email validation
@@ -122,12 +119,6 @@ const SignUp = () => {
             isValid = false
         }
 
-        // Address validation
-        if (!formData.address) {
-            newErrors.address = 'Address is required'
-            isValid = false
-        }
-
         setErrors(newErrors)
         return isValid
     }
@@ -145,8 +136,7 @@ const SignUp = () => {
                     surname: formData.surname,
                     email: formData.email,
                     password: formData.password,
-                    confirmPassword: formData.confirmPassword,
-                    address: formData.address
+                    confirmPassword: formData.confirmPassword
                 })
                 await apiClient.signup({
                     username: formData.username,
@@ -154,7 +144,6 @@ const SignUp = () => {
                     name: formData.name,
                     surname: formData.surname,
                     email: formData.email,
-                    address: formData.address,
                     tags: [],
                     allergens: []
                 })
@@ -506,29 +495,6 @@ const SignUp = () => {
                                 <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.confirmPassword}
-                                </p>
-                            )}
-                        </div>
-
-                        <div>
-                            <label htmlFor="address" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Address
-                            </label>
-                            <input
-                                type="text"
-                                id="address"
-                                name="address"
-                                value={formData.address}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.address ? 'border-red-500' : 'border-gray-500'
-                                }`}
-                                placeholder="Enter your address"
-                            />
-                            {errors.address && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
-                                    <X size={14} weight="bold" className="mr-1" />
-                                    {errors.address}
                                 </p>
                             )}
                         </div>
