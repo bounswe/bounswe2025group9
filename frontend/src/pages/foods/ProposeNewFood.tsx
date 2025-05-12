@@ -76,7 +76,7 @@ const ProposeNewFood: React.FC = () => {
         navigate('/foods');
       }, 2000);
     } catch (err) {
-      setError('Failed to submit food proposal. Please try again.');
+      setError(`Failed to submit food proposal. Please try again. ${err} `);
     }
   };
 
