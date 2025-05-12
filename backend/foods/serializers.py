@@ -1,4 +1,4 @@
-from foods.models import FoodEntry
+from foods.models import FoodEntry, FoodProposal
 from rest_framework.serializers import ModelSerializer
 
 
@@ -6,4 +6,10 @@ from rest_framework.serializers import ModelSerializer
 class FoodEntrySerializer(ModelSerializer):
     class Meta:
         model = FoodEntry
+        fields = "__all__"
+
+
+class FoodProosalSerializer(ModelSerializer):
+    class Meta:
+        model = FoodProposal
         fields = "__all__"
