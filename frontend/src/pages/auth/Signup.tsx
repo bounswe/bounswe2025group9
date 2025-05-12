@@ -193,7 +193,7 @@ const SignUp = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="name" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                     First Name
                                 </label>
                                 <input
@@ -203,17 +203,17 @@ const SignUp = () => {
                                     value={formData.name}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.name ? 'border-red-500' : 'border-gray-300'
+                                        errors.name ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Enter your first name"
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                                    <p className="mt-1 text-sm text-error">{errors.name}</p>
                                 )}
                             </div>
 
                             <div>
-                                <label htmlFor="surname" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="surname" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                     Last Name
                                 </label>
                                 <input
@@ -223,18 +223,18 @@ const SignUp = () => {
                                     value={formData.surname}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.surname ? 'border-red-500' : 'border-gray-300'
+                                        errors.surname ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Enter your last name"
                                 />
                                 {errors.surname && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.surname}</p>
+                                    <p className="mt-1 text-sm text-error">{errors.surname}</p>
                                 )}
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Email
                             </label>
                             <input
@@ -244,17 +244,17 @@ const SignUp = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.email ? 'border-red-500' : 'border-gray-300'
+                                    errors.email ? 'border-red-500' : 'border-gray-500'
                                 }`}
                                 placeholder="Enter your email"
                             />
                             {errors.email && (
-                                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                                <p className="mt-1 text-sm text-error">{errors.email}</p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="username" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Username
                             </label>
                             <input
@@ -264,17 +264,17 @@ const SignUp = () => {
                                 value={formData.username}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.username ? 'border-red-500' : 'border-gray-300'
+                                    errors.username ? 'border-red-500' : 'border-gray-500'
                                 }`}
                                 placeholder="Choose a username"
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm text-red-500">{errors.username}</p>
+                                <p className="mt-1 text-sm text-error">{errors.username}</p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Password
                             </label>
                             <div className="relative">
@@ -287,7 +287,7 @@ const SignUp = () => {
                                     onFocus={() => setPasswordFocused(true)}
                                     onBlur={() => setPasswordFocused(false)}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.password ? 'border-red-500' : 'border-gray-300'
+                                        errors.password ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Create a password"
                                 />
@@ -304,7 +304,7 @@ const SignUp = () => {
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                                <p className="mt-1 text-sm text-error">{errors.password}</p>
                             )}
                             
                             {/* password criteria checklist */}
@@ -347,7 +347,7 @@ const SignUp = () => {
                         </div>
 
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Confirm Password
                             </label>
                             <div className="relative">
@@ -358,7 +358,7 @@ const SignUp = () => {
                                     value={formData.confirmPassword}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
+                                        errors.confirmPassword ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Confirm your password"
                                 />
@@ -383,12 +383,12 @@ const SignUp = () => {
                                 </div>
                             )}
                             {errors.confirmPassword && (
-                                <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+                                <p className="mt-1 text-sm text-error">{errors.confirmPassword}</p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="address" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Address
                             </label>
                             <input
@@ -398,12 +398,12 @@ const SignUp = () => {
                                 value={formData.address}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.address ? 'border-red-500' : 'border-gray-300'
+                                    errors.address ? 'border-red-500' : 'border-gray-500'
                                 }`}
                                 placeholder="Enter your address"
                             />
                             {errors.address && (
-                                <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                                <p className="mt-1 text-sm text-error">{errors.address}</p>
                             )}
                         </div>
 

@@ -109,7 +109,7 @@ const Login = () => {
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="username" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Username
                             </label>
                             <input
@@ -119,17 +119,17 @@ const Login = () => {
                                 value={formData.username}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.username ? 'border-red-500' : 'border-gray-300'
+                                    errors.username ? 'border-red-500' : 'border-gray-500'
                                 }`}
                                 placeholder="Enter your username"
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm text-red-500">{errors.username}</p>
+                                <p className="mt-1 text-sm text-error">{errors.username}</p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Password
                             </label>
                             <div className="relative">
@@ -140,7 +140,7 @@ const Login = () => {
                                     value={formData.password}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.password ? 'border-red-500' : 'border-gray-300'
+                                        errors.password ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Enter your password"
                                 />
@@ -157,7 +157,7 @@ const Login = () => {
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                                <p className="mt-1 text-sm text-error">{errors.password}</p>
                             )}
                         </div>
 
