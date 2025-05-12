@@ -5,6 +5,8 @@ from foods.models import FoodEntry
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from foods.serializers import FoodEntrySerializer
 from rest_framework.generics import ListAPIView
+import requests
+from rest_framework.decorators import api_view, permission_classes
 
 
 class FoodCatalog(ListAPIView):
@@ -77,3 +79,36 @@ class FoodCatalog(ListAPIView):
                 data = {"warning": warning, "results": data}
             return Response(data, status=206)
         return Response(data)
+
+
+# get food_name as parameter
+# make api call to https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}
+# check if the response is not empty
+# return meals/strMeal and
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def suggest_recipe(request):
+    food_name = request.query_params.get("food_name", "")
+    if not food_name:
+        return Response({"error": "food_name parameter is required."}, status=400)
+
+    url = f"https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        meals = data.get("meals")
+        if not meals:
+            return Response(
+                {"warning": "No recipe found for the given food name.", "results": []},
+                status=404,
+            )
+        meal = meals[0]
+        return Response(
+            {
+                "Meal": meal.get("strMeal"),
+                "Instructions": meal.get("strInstructions"),
+            }
+        )
+    except requests.RequestException as e:
+        return Response({"error": f"Failed to fetch recipe: {str(e)}"}, status=500)
