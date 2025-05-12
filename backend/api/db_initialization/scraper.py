@@ -16,7 +16,8 @@ CONSUMER_SECRET = ""
 INPUT_FILE = "500_common_foods.json"
 OUTPUT_FILE = "foods.json"
 RATE_LIMIT_DELAY = 1.2  # seconds between calls
-
+CONSUMER_KEY = "c67c15786eee4f9e8174e0fc06fe36fc"
+CONSUMER_SECRET = "05d6b078ff42420b892ed2c1d542cc24"
 
 def get_oauth_params():
     """
