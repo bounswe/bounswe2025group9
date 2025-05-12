@@ -25,6 +25,7 @@ const SignUp = () => {
         address: ''
     })
     const [signupError, setSignupError] = useState('')
+    const [signupErrors, setSignupErrors] = useState<{[key: string]: string}>({})
     const [signupSuccess, setSignupSuccess] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
     const [showConfirmPassword, setShowConfirmPassword] = useState(false)
@@ -135,6 +136,7 @@ const SignUp = () => {
         e.preventDefault()
         if (validateForm()) {
             setSignupError('')
+            setSignupErrors({})
             setSignupSuccess(false)
             try {
                 console.log('attempting signup with data:', {
@@ -163,9 +165,112 @@ const SignUp = () => {
                 setTimeout(() => {
                     navigate('/login')
                 }, 1500)
-            } catch (err) {
+            } catch (err: any) {
                 console.error('signup failed:', err)
-                setSignupError('signup failed, please check your info')
+                
+                // Add more detailed logging to see the exact error structure
+                console.log('Error object:', err);
+                console.log('Error response:', err.response);
+                console.log('Error message:', err.message);
+                console.log('Error data:', err.data);
+                
+                // Check if error has data property (from our custom error in apiClient)
+                if (err.data) {
+                    const errorData = err.data;
+                    setSignupErrors(errorData);
+                    
+                    // Get the first error field
+                    const firstErrorField = Object.keys(errorData)[0];
+                    
+                    if (firstErrorField && errorData[firstErrorField]) {
+                        const errorMessages = errorData[firstErrorField];
+                        let errorMessage = '';
+                        
+                        if (Array.isArray(errorMessages) && errorMessages.length > 0) {
+                            errorMessage = errorMessages[0];
+                        } else if (typeof errorMessages === 'string') {
+                            errorMessage = errorMessages;
+                        }
+                        
+                        if (errorMessage) {
+                            setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
+                            return;
+                        }
+                    }
+                    
+                    // If we couldn't extract a specific message but have error data
+                    setSignupError('Signup failed. Please check your information and try again.');
+                    return;
+                }
+                
+                // Handle different types of errors
+                if (err.message && err.message.includes('API error')) {
+                    // Extract the actual error from the API error message
+                    try {
+                        // If the error message itself contains JSON
+                        if (err.response && err.response.data) {
+                            const errorData = err.response.data;
+                            setSignupErrors(errorData);
+                            
+                            // Get the first error field
+                            const firstErrorField = Object.keys(errorData)[0];
+                            
+                            if (firstErrorField && errorData[firstErrorField]) {
+                                const errorMessages = errorData[firstErrorField];
+                                let errorMessage = '';
+                                
+                                if (Array.isArray(errorMessages) && errorMessages.length > 0) {
+                                    errorMessage = errorMessages[0];
+                                } else if (typeof errorMessages === 'string') {
+                                    errorMessage = errorMessages;
+                                }
+                                
+                                if (errorMessage) {
+                                    setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (parseErr) {
+                        console.error('Error parsing error message:', parseErr);
+                    }
+                    
+                    // If we couldn't extract a specific error, use the original message
+                    setSignupError(err.message);
+                } else if (err.response && err.response.data) {
+                    const errorData = err.response.data;
+                    
+                    if (typeof errorData === 'object') {
+                        setSignupErrors(errorData);
+                        
+                        // Get the first error field
+                        const firstErrorField = Object.keys(errorData)[0];
+                        
+                        if (firstErrorField) {
+                            // Handle array or string error messages
+                            const errorMessages = errorData[firstErrorField];
+                            let errorMessage = '';
+                            
+                            if (Array.isArray(errorMessages) && errorMessages.length > 0) {
+                                errorMessage = errorMessages[0];
+                            } else if (typeof errorMessages === 'string') {
+                                errorMessage = errorMessages;
+                            }
+                            
+                            if (errorMessage) {
+                                setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
+                            } else {
+                                setSignupError('Signup failed. Please check your information and try again.');
+                            }
+                        } else {
+                            setSignupError('Signup failed. Please check your information and try again.');
+                        }
+                    } else {
+                        setSignupError('Signup failed. Please check your information and try again.');
+                    }
+                } else {
+                    setSignupError('Network error. Please try again later.');
+                }
             }
         }
     }
@@ -208,7 +313,10 @@ const SignUp = () => {
                                     placeholder="Enter your first name"
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm text-error">{errors.name}</p>
+                                    <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                        <X size={14} weight="bold" className="mr-1" />
+                                        {errors.name}
+                                    </p>
                                 )}
                             </div>
 
@@ -228,7 +336,10 @@ const SignUp = () => {
                                     placeholder="Enter your last name"
                                 />
                                 {errors.surname && (
-                                    <p className="mt-1 text-sm text-error">{errors.surname}</p>
+                                    <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                        <X size={14} weight="bold" className="mr-1" />
+                                        {errors.surname}
+                                    </p>
                                 )}
                             </div>
                         </div>
@@ -249,7 +360,10 @@ const SignUp = () => {
                                 placeholder="Enter your email"
                             />
                             {errors.email && (
-                                <p className="mt-1 text-sm text-error">{errors.email}</p>
+                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.email}
+                                </p>
                             )}
                         </div>
 
@@ -269,7 +383,10 @@ const SignUp = () => {
                                 placeholder="Choose a username"
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm text-error">{errors.username}</p>
+                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.username}
+                                </p>
                             )}
                         </div>
 
@@ -304,7 +421,10 @@ const SignUp = () => {
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm text-error">{errors.password}</p>
+                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.password}
+                                </p>
                             )}
                             
                             {/* password criteria checklist */}
@@ -383,7 +503,10 @@ const SignUp = () => {
                                 </div>
                             )}
                             {errors.confirmPassword && (
-                                <p className="mt-1 text-sm text-error">{errors.confirmPassword}</p>
+                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.confirmPassword}
+                                </p>
                             )}
                         </div>
 
@@ -403,7 +526,10 @@ const SignUp = () => {
                                 placeholder="Enter your address"
                             />
                             {errors.address && (
-                                <p className="mt-1 text-sm text-error">{errors.address}</p>
+                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.address}
+                                </p>
                             )}
                         </div>
 
@@ -415,12 +541,34 @@ const SignUp = () => {
                         </button>
                     </form>
 
-                    {signupError && (
-                        <p className="mt-2 text-sm text-error text-center">{signupError}</p>
+                    {/* Show either the general error message OR the field-specific errors, not both */}
+                    {signupError && Object.keys(signupErrors).length === 0 && (
+                        <p className="mt-2 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-2 rounded-md flex items-center justify-center">
+                            <X size={16} weight="bold" className="mr-1" />
+                            {signupError}
+                        </p>
                     )}
+                    
+                    {/* Field-specific backend errors */}
+                    {Object.keys(signupErrors).length > 0 && (
+                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
+       
+                            <ul className="list-disc pl-5 text-sm text-error">
+                                {Object.entries(signupErrors).map(([field, message]) => (
+                                    <li key={field}>
+                                        <span className="capitalize">{field}</span>: {Array.isArray(message) ? message[0] : message}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    
                     {signupSuccess && (
                         <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-success rounded-md text-center">
-                            <p className="font-medium">Signup successful!</p>
+                            <p className="font-medium flex items-center justify-center">
+                                <Check size={18} weight="bold" className="mr-1" />
+                                Signup successful!
+                            </p>
                             <p className="text-sm mt-1">Redirecting to login page...</p>
                         </div>
                     )}

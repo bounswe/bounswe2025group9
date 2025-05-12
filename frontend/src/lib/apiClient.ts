@@ -193,12 +193,15 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 
     if (!response.ok) {
       let errorBody = 'No error details available';
+      let errorData = null;
+      
       try {
         const errorText = await response.text();
         errorBody = errorText;
         // Try parsing as JSON if possible
         try {
           const errorJson = JSON.parse(errorText);
+          errorData = errorJson;
           errorBody = JSON.stringify(errorJson, null, 2);
         } catch {
           // Not JSON, use as is
@@ -208,7 +211,17 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       }
       
       console.error(`API error (${response.status} ${response.statusText}):`, errorBody);
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      
+      // Create a custom error with the error data attached
+      const error = new Error(`API error: ${response.status} ${response.statusText}`);
+      // @ts-ignore - Adding custom property to Error object
+      error.status = response.status;
+      // @ts-ignore - Adding custom property to Error object
+      error.statusText = response.statusText;
+      // @ts-ignore - Adding custom property to Error object
+      error.data = errorData;
+      
+      throw error;
     }
 
     const data = await response.json();
