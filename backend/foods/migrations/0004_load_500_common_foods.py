@@ -18,6 +18,7 @@ def load_data(apps, schema_editor):
         data = json.load(f)
 
     try:
+        FoodEntry = apps.get_model("foods", "FoodEntry")
         for item in data:
             """Create a FoodEntry object for each item in the JSON file and save it to the database."""
             FoodEntry.objects.create(
@@ -28,24 +29,27 @@ def load_data(apps, schema_editor):
                 proteinContent=item["proteinContent"],
                 fatContent=item["fatContent"],
                 carbohydrateContent=item["carbohydrateContent"],
-                allergens=item.get("allergens", []),
                 dietaryOptions=item.get("dietaryOptions", []),
                 nutritionScore=item["nutritionScore"],
                 imageUrl=item.get("imageUrl"),
             )
-
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
         print("Food data loading completed.")
 
 
+def backwards(apps, schema_editor):
+    FoodEntry = apps.get_model("foods", "FoodEntry")
+    FoodEntry.objects.all().delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("foods", "0002_allergen_remove_foodentry_allergens_and_more"),
+        ("foods", "0003_foodproposal"),
     ]
 
     operations = [
-        migrations.RunPython(load_data),
+        migrations.RunPython(load_data, backwards),
     ]

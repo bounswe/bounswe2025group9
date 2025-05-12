@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("foods", "0003_load_500_common_foods"),
+        ("foods", "0002_allergen_remove_foodentry_allergens_and_more"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
