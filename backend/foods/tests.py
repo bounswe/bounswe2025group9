@@ -11,48 +11,51 @@ class FoodCatalogTests(TestCase):
         self.client = APIClient()
         # Create sample FoodEntry objects
         for i in range(15):
-            FoodEntry.objects.create(
+            food = FoodEntry.objects.create(
                 name=f"Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
                 proteinContent=10,
                 fatContent=5,
                 carbohydrateContent=20,
-                allergens=[],
-                dietaryOptions=[],
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image{i}.jpg",
             )
+            food.allergens.set([])
+            food.dietaryOptions = []
+            food.save()
         # Create 2 FoodEntry objects with category "Fruit"
         for i in range(2):
-            FoodEntry.objects.create(
+            food = FoodEntry.objects.create(
                 name=f"Fruit Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
                 proteinContent=10,
                 fatContent=5,
                 carbohydrateContent=20,
-                allergens=[],
-                dietaryOptions=[],
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image_fruit_{i}.jpg",
                 category="Fruit",
             )
+            food.allergens.set([])
+            food.dietaryOptions = []
+            food.save()
         # Create 13 FoodEntry objects with category "Vegetable"
         for i in range(13):
-            FoodEntry.objects.create(
+            food = FoodEntry.objects.create(
                 name=f"Vegetable Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
                 proteinContent=10,
                 fatContent=5,
                 carbohydrateContent=20,
-                allergens=[],
-                dietaryOptions=[],
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image_veg_{i}.jpg",
                 category="Vegetable",
             )
+            food.allergens.set([])
+            food.dietaryOptions = []
+            food.save()
 
     def test_successful_query(self):
         """
