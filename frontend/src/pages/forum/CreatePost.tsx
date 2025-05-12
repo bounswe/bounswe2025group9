@@ -1,17 +1,16 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { ArrowLeft, Tag, WarningCircle } from '@phosphor-icons/react'
+import { ArrowLeft, WarningCircle } from '@phosphor-icons/react'
 import { apiClient, ForumTag, CreateForumPostRequest } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 
-// Required tag IDs (Dietary tip or Recipe)
-const REQUIRED_TAG_IDS = [1, 2];
-const TAG_NAMES = {
+// required post types
+const POST_TYPES = {
   1: "Dietary tip",
   2: "Recipe"
 };
 
-// Only these tags are allowed to be selected
+// only these tags are allowed to be selected
 const ALLOWED_TAG_IDS = [1, 2];
 
 const CreatePost = () => {
@@ -19,8 +18,8 @@ const CreatePost = () => {
     const { isAuthenticated, getAccessToken, user } = useAuth();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
-    const [tags, setTags] = useState<ForumTag[]>([]);
-    const [selectedTagIds, setSelectedTagIds] = useState<number[]>([1]); // Default to Dietary tip
+    const [, setTags] = useState<ForumTag[]>([]);
+    const [selectedTagId, setSelectedTagId] = useState<number>(1); // default to dietary tip
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [validationError, setValidationError] = useState('');
@@ -77,44 +76,16 @@ const CreatePost = () => {
         }
     };
     
-    // Toggle tag selection with validation
-    const toggleTag = (tagId: number) => {
-        // Don't allow toggling tags that aren't in the allowed list
+    // select tag (radio button style selection)
+    const selectTag = (tagId: number) => {
+        // only allow selecting from allowed tags
         if (!ALLOWED_TAG_IDS.includes(tagId)) {
             return;
         }
         
-        setSelectedTagIds(prevSelectedTags => {
-            let newSelectedTags: number[];
-            
-            if (prevSelectedTags.includes(tagId)) {
-                // User is trying to deselect a tag
-                newSelectedTags = prevSelectedTags.filter(id => id !== tagId);
-                
-                // Check if we're removing the last required tag
-                const hasRequiredTag = newSelectedTags.some(id => REQUIRED_TAG_IDS.includes(id));
-                if (!hasRequiredTag) {
-                    // Don't allow removing if it's the last required tag
-                    setValidationError(`At least one of "${TAG_NAMES[1]}" or "${TAG_NAMES[2]}" is required.`);
-                    return prevSelectedTags; // Return original tags, preventing removal
-                }
-            } else {
-                // User is adding a tag - just add it
-                newSelectedTags = [...prevSelectedTags, tagId];
-            }
-            
-            // Clear validation error if there's at least one required tag
-            const hasRequiredTag = newSelectedTags.some(id => REQUIRED_TAG_IDS.includes(id));
-            if (hasRequiredTag) {
-                setValidationError('');
-            }
-            
-            return newSelectedTags;
-        });
+        setSelectedTagId(tagId);
+        setValidationError('');
     };
-    
-    // Check if a required tag was selected
-    const hasRequiredTag = selectedTagIds.some(id => REQUIRED_TAG_IDS.includes(id));
     
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
@@ -129,12 +100,6 @@ const CreatePost = () => {
         
         if (title.trim() === '' || content.trim() === '') {
             setValidationError('Please fill in all required fields');
-            return;
-        }
-        
-        // Make sure at least one required tag is selected
-        if (!hasRequiredTag) {
-            setValidationError(`At least one of "${TAG_NAMES[1]}" or "${TAG_NAMES[2]}" is required.`);
             return;
         }
         
@@ -153,7 +118,7 @@ const CreatePost = () => {
             const postData: CreateForumPostRequest = {
                 title,
                 body: content,
-                tag_ids: selectedTagIds // Always include tag_ids
+                tag_ids: [selectedTagId] // include only the selected tag
             };
             
             console.log('Submitting post with data:', postData);
@@ -249,51 +214,33 @@ const CreatePost = () => {
                             />
                         </div>
                         
-                        {/* Tags Selection - Moved before content for visibility */}
+                        {/* Post Type Selection - required radio button style selection */}
                         <div className="mb-6">
                             <label className="block mb-2 nh-subtitle text-base">
-                                Tags <span className="text-red-500">*</span>
+                                Post Type <span className="text-red-500">*</span>
                                 <span className="text-sm font-normal ml-2 text-gray-500">
-                                    (At least one of "Dietary tip" or "Recipe" is required)
+                                    (Required - select one)
                                 </span>
                             </label>
                             {loading ? (
-                                <p>Loading tags...</p>
+                                <p>Loading post types...</p>
                             ) : (
-                                <div className="flex flex-wrap gap-2">
-                                    {Array.isArray(tags) && tags.length > 0 ? (
-                                        tags.map(tag => {
-                                            // Highlight required tags
-                                            const isRequiredTag = REQUIRED_TAG_IDS.includes(tag.id);
-                                            // Check if this tag is allowed to be selected
-                                            const isAllowed = ALLOWED_TAG_IDS.includes(tag.id);
-                                            
-                                            return (
-                                                <button
-                                                    key={tag.id}
-                                                    type="button"
-                                                    onClick={() => toggleTag(tag.id)}
-                                                    disabled={!isAllowed}
-                                                    className={`flex items-center px-3 py-1.5 rounded-md text-sm font-medium transition-all
-                                                        ${!isAllowed 
-                                                            ? 'opacity-50 cursor-not-allowed bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400'
-                                                            : selectedTagIds.includes(tag.id)
-                                                                ? 'bg-primary text-white'
-                                                                : isRequiredTag 
-                                                                    ? 'bg-gray-200 dark:bg-gray-700 border-2 border-primary text-gray-800 dark:text-gray-200'
-                                                                    : 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200'
-                                                        }`}
-                                                >
-                                                    <Tag size={14} weight="fill" className="mr-1.5" />
-                                                    {tag.name}
-                                                    {isRequiredTag && !selectedTagIds.includes(tag.id) && 
-                                                        <span className="ml-1 text-red-500">*</span>}
-                                                </button>
-                                            );
-                                        })
-                                    ) : (
-                                        <p className="text-gray-500">No tags available</p>
-                                    )}
+                                <div className="flex flex-col space-y-2">
+                                    {Object.entries(POST_TYPES).map(([id, name]) => {
+                                        const tagId = parseInt(id);
+                                        return (
+                                            <label key={tagId} className="flex items-center space-x-2 cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name="postType"
+                                                    checked={selectedTagId === tagId}
+                                                    onChange={() => selectTag(tagId)}
+                                                    className="form-radio text-primary h-5 w-5"
+                                                />
+                                                <span className="text-base">{name}</span>
+                                            </label>
+                                        );
+                                    })}
                                 </div>
                             )}
                         </div>
@@ -316,7 +263,7 @@ const CreatePost = () => {
                             <button 
                                 type="submit" 
                                 className="nh-button nh-button-primary px-6 py-2"
-                                disabled={submitting || loading || !hasRequiredTag}
+                                disabled={submitting || loading}
                             >
                                 {submitting ? 'Posting...' : 'Create Post'}
                             </button>
