@@ -1,5 +1,5 @@
 import { UserPlus, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { apiClient } from '../../lib/apiClient'
 import { useNavigate } from 'react-router-dom'
 
