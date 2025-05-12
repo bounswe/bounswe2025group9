@@ -6,11 +6,11 @@ import Signup from './pages/auth/Signup'
 import Foods from './pages/foods/Foods'
 import ProposeNewFood from './pages/foods/ProposeNewFood'
 import Forum from './pages/forum/Forum'
-import ApiExample from './pages/ApiExample'
 import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import AdminRedirect from './pages/admin/AdminRedirect'
 
 // app component with react-router setup
 function App() {
@@ -31,7 +31,7 @@ function App() {
               <Route path="forum" element={<Forum />} />
               <Route path="forum/post/:postId" element={<PostDetail />} />
               <Route path="forum/create" element={<CreatePost />} />
-              <Route path="api-examples" element={<ApiExample />} />
+              <Route path="admin" element={<AdminRedirect />} />
             </Route>
             
             <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />

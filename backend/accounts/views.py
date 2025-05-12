@@ -73,6 +73,7 @@ class UserProfileView(APIView):
         serializer = UserSerializer(user)
         return Response(serializer.data)
 
+
 class LogoutView(APIView):
     """
     POST /users/token/logout/

@@ -21,7 +21,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import { apiClient } from '../../lib/apiClient'
+import { apiClient, Food, PaginationResponse } from '../../lib/apiClient'
 import Foods from './Foods'
 import '@testing-library/jest-dom'
 
@@ -56,16 +56,26 @@ describe('Foods Page', () => {
     })
 
     it('displays food items when fetch is successful', async () => {
-        const mockFoods = [{
+        const results: Food[] = [{
             id: 1,
             name: 'Test Food',
             category: 'Test Category',
-            nutrition: { calories: 100, protein: 10, carbohydrates: 20, fat: 5, vitamins: {}, minerals: {} },
             nutritionScore: 8.5,
-            dietaryTags: ['test'],
-            perUnit: '100g',
-            imageUrl: 'test.jpg'
-        }]
+            imageUrl: 'test.jpg',
+            servingSize: 0,
+            caloriesPerServing: 0,
+            proteinContent: 0,
+            fatContent: 0,
+            carbohydrateContent: 0,
+            allergens: [],
+            dietaryOptions: []
+        } ]
+        const mockFoods: PaginationResponse<Food> = {
+            results,
+            count: 1,
+            next: null,
+            previous: null
+        }
         
         vi.mocked(apiClient.getFoods).mockResolvedValueOnce(mockFoods)
         renderWithRouter(<Foods />)
