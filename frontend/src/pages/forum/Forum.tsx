@@ -1,6 +1,6 @@
 // forum page component
 import { useState, useEffect } from 'react'
-import { User, ThumbsUp,PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel } from '@phosphor-icons/react'
+import { User, ThumbsUp, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel, MagnifyingGlass } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
@@ -75,6 +75,12 @@ const Forum = () => {
     const [activeFilter, setActiveFilter] = useState<number | null>(null);
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
     
+    // Search related state
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [searchResults, setSearchResults] = useState<ForumPost[]>([]);
+    const [searchResultsCount, setSearchResultsCount] = useState<number>(0);
+    
     // helper to get liked posts for the current user from local storage
     const getUserLikedPostsFromStorage = (): {[key: number]: boolean} => {
         const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
@@ -113,7 +119,17 @@ const Forum = () => {
     
     // Apply pagination to filtered posts
     useEffect(() => {
-        if (allPosts.length > 0) {
+        if (isSearching) {
+            // When searching, use search results instead of allPosts
+            setTotalCount(searchResultsCount);
+            
+            // Get current page posts from search results
+            const indexOfLastPost = currentPage * postsPerPage;
+            const indexOfFirstPost = indexOfLastPost - postsPerPage;
+            const currentPosts = searchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, searchResults.length));
+            
+            setPosts(currentPosts);
+        } else if (allPosts.length > 0) {
             const filteredPosts = activeFilter 
                 ? allPosts.filter(post => post.tags.some(tag => tag.id === activeFilter))
                 : allPosts;
@@ -127,7 +143,7 @@ const Forum = () => {
             
             setPosts(currentPosts);
         }
-    }, [allPosts, currentPage, postsPerPage, activeFilter]);
+    }, [allPosts, currentPage, postsPerPage, activeFilter, isSearching, searchResults, searchResultsCount]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
@@ -239,6 +255,64 @@ const Forum = () => {
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
+        setCurrentPage(1); // Reset to first page
+        
+        // Clear search if active
+        if (isSearching) {
+            clearSearch();
+        }
+    };
+
+    // Handle searching for posts
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!searchQuery.trim()) {
+            // If search query is empty, clear search
+            clearSearch();
+            return;
+        }
+        
+        setLoading(true);
+        setIsSearching(true);
+        setCurrentPage(1); // Reset to first page for search results
+        
+        try {
+            const response = await apiClient.searchForumPosts(searchQuery);
+            console.log(`[Forum] Search results for "${searchQuery}":`, response);
+            
+            // Use local storage as the primary source of truth for liked status
+            const userLikedPosts = getUserLikedPostsFromStorage();
+            
+            const searchPosts = response.results.map(post => ({
+                ...post,
+                liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+            }));
+            
+            setSearchResults(searchPosts);
+            setSearchResultsCount(response.count);
+            
+            // Clear any active filter when searching
+            if (activeFilter) {
+                setActiveFilter(null);
+                setFilterLabel(null);
+            }
+        } catch (error) {
+            console.error('[Forum] Error searching for posts:', error);
+            // Keep showing current posts on error
+            setSearchResults([]);
+            setSearchResultsCount(0);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Clear search results and return to normal view
+    const clearSearch = () => {
+        setSearchQuery('');
+        setIsSearching(false);
+        setSearchResults([]);
+        setSearchResultsCount(0);
         setCurrentPage(1); // Reset to first page
     };
 
@@ -472,7 +546,7 @@ const Forum = () => {
                                     <span className="flex-grow text-center">Meal Plans</span>
                                 </button>
                                 
-                                {activeFilter !== null && (
+                                {activeFilter !== null && !isSearching && (
                                     <button 
                                         onClick={clearFilter}
                                         className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -487,8 +561,62 @@ const Forum = () => {
 
                     {/* Middle column - Posts */}
                     <div className="w-full md:w-3/5">
+                        {/* Search bar - moved inside the middle column */}
+                        <div className="mb-6">
+                            <form onSubmit={handleSearch} className="flex gap-2">
+                                <div className="relative flex-grow">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <MagnifyingGlass size={20} className="text-gray-500" />
+                                    </div>
+                                    <input
+                                        type="search"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full p-3 pl-10 border rounded-lg bg-gray-800 border-gray-700 placeholder-gray-400 focus:ring-primary focus:border-primary"
+                                        placeholder="Search posts by title..."
+                                        aria-label="Search posts"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={clearSearch}
+                                            className="absolute inset-y-0 right-0 flex items-center pr-3"
+                                        >
+                                            <X size={20} className="text-gray-500 hover:text-gray-300" />
+                                        </button>
+                                    )}
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-3 nh-button nh-button-primary rounded-lg flex items-center"
+                                >
+                                    Search
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {/* Display search status */}
+                        {isSearching && (
+                            <div className="mb-6 p-3 bg-gray-800 dark:bg-gray-800 rounded-lg border border-gray-700">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm nh-text">
+                                        {searchResultsCount > 0 
+                                            ? `Found ${searchResultsCount} results for "${searchQuery}"` 
+                                            : `No results found for "${searchQuery}"`}
+                                    </p>
+                                    <button
+                                        onClick={clearSearch}
+                                        className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
+                                    >
+                                        <X size={16} weight="bold" />
+                                        Clear search
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        
                         {/* Active filter indicator */}
-                        {filterLabel && (
+                        {filterLabel && !isSearching && (
                             <div className="mb-6 p-3 bg-gray-800 dark:bg-gray-800 rounded-lg border border-gray-700">
                                 <p className="text-sm text-center nh-text">
                                     Showing posts tagged with: <span className="font-medium">{filterLabel}</span>
