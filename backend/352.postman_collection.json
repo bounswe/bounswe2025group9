@@ -236,6 +236,35 @@
 			"response": []
 		},
 		{
+			"name": "fuzzy_search_posts",
+			"request": {
+			  "method": "GET",
+			  "header": [
+				{
+				  "key": "Authorization",
+				  "value": "Bearer {{access_token}}",
+				  "type": "text"
+				}
+			  ],
+			  "url": {
+				"raw": "http://127.0.0.1:8081/forum/posts/search/?q=vegetarian",
+				"protocol": "http",
+				"host": ["127.0.0.1"],
+				"port": "8081",
+				"path": ["forum", "posts", "search", ""],
+				"query": [
+				  {
+					"key": "q",
+					"value": "vegetarian",
+					"description": "Search term for fuzzy matching post titles"
+				  }
+				]
+			  },
+			  "description": "**Search posts using fuzzy matching**\n\nSearches post titles using fuzzy matching with a similarity threshold of 50%.\n\nQuery parameter:\n- `q`: The search term to match against post titles\n\nReturns posts where the title matches the search term with a similarity score >= 50%.\nResults are sorted by similarity score (highest first).\n\nExample response:\n```json\n{\n  \"results\": [\n    {\n      \"id\": 1,\n      \"title\": \"Best vegetarian alternatives for meat?\",\n      \"body\": \"I've been trying to cut down on meat consumption...\",\n      \"author\": \"Berkay Bile5n\",\n      \"tags\": [\n        { \"id\": 1, \"name\": \"Dietary tip\" },\n        { \"id\": 2, \"name\": \"Recipe\" }\n      ],\n      \"like_count\": 0,\n      \"created_at\": \"2025-05-12T15:54:54.584200Z\",\n      \"updated_at\": \"2025-05-12T15:54:54.584259Z\"\n    }\n  ],\n  \"count\": 1\n}\n```"
+			},
+			"response": []
+		},
+		{
 			"name": "create_post",
 			"request": {
 				"method": "POST",
