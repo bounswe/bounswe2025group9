@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from foods.models import FoodEntry
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from foods.serializers import FoodEntrySerializer
+from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
 from rest_framework.generics import ListAPIView
+from rest_framework import status
 
 
 class FoodCatalog(ListAPIView):
@@ -77,3 +78,14 @@ class FoodCatalog(ListAPIView):
                 data = {"warning": warning, "results": data}
             return Response(data, status=206)
         return Response(data)
+
+
+class FoodProposalSubmitView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = FoodProposalSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(proposedBy=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
