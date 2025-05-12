@@ -33,6 +33,31 @@
   --color-error: #dc2626; /* red-600 - darker for dark mode */
   --color-info: #0284c7; /* sky-600 - darker for dark mode */
 
+  /* Forum tag colors - dark mode */
+  --forum-dietary-bg: #1a3a32;
+  --forum-dietary-text: #4eebc8;
+  --forum-dietary-active-bg: #0d7c5f;
+  --forum-dietary-active-text: white;
+  --forum-dietary-hover-bg: #224a40;
+
+  --forum-recipe-bg: #2a1a40;
+  --forum-recipe-text: #c48aff;
+  --forum-recipe-active-bg: #6200ee;
+  --forum-recipe-active-text: white;
+  --forum-recipe-hover-bg: #3b2a51;
+
+  --forum-mealplan-bg: #1a2940;
+  --forum-mealplan-text: #80b3ff;
+  --forum-mealplan-active-bg: #0062cc;
+  --forum-mealplan-active-text: white;
+  --forum-mealplan-hover-bg: #233552;
+
+  --forum-default-bg: #333333;
+  --forum-default-text: #bbbbbb;
+  --forum-default-active-bg: #555555;
+  --forum-default-active-text: white;
+  --forum-default-hover-bg: #444444;
+
   /* gray scale */
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -108,6 +133,31 @@
   --color-warning: #eab308; /* yellow-500 */
   --color-error: #ef4444; /* red-500 */
   --color-info: #0ea5e9; /* sky-500 */
+
+  /* Forum tag colors - light mode */
+  --forum-dietary-bg: #d1fae5;
+  --forum-dietary-text: #065f46;
+  --forum-dietary-active-bg: #059669;
+  --forum-dietary-active-text: white;
+  --forum-dietary-hover-bg: #a7f3d0;
+
+  --forum-recipe-bg: #ede9fe;
+  --forum-recipe-text: #5b21b6;
+  --forum-recipe-active-bg: #7c3aed;
+  --forum-recipe-active-text: white;
+  --forum-recipe-hover-bg: #ddd6fe;
+
+  --forum-mealplan-bg: #dbeafe;
+  --forum-mealplan-text: #1e40af;
+  --forum-mealplan-active-bg: #2563eb;
+  --forum-mealplan-active-text: white;
+  --forum-mealplan-hover-bg: #bfdbfe;
+
+  --forum-default-bg: #f2f2f2;
+  --forum-default-text: #666666;
+  --forum-default-active-bg: #888888;
+  --forum-default-active-text: white;
+  --forum-default-hover-bg: #e5e5e5;
 
   /* shadows for light mode */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

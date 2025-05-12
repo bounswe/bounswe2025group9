@@ -16,13 +16,15 @@ const Navbar = () => {
     
     return (
         <nav className="nh-navbar py-2">
-            <div className="nh-container flex justify-between items-center">
-                <Link to={isAuthenticated ? "/" : "/login"} className="flex items-center">
-                    <Logo className="text-white" />
-                </Link>
+            <div className="nh-container grid grid-cols-3 items-center">
+                <div>
+                    <Link to={isAuthenticated ? "/" : "/login"} className="flex items-center">
+                        <Logo className="text-white" />
+                    </Link>
+                </div>
 
-                {isAuthenticated && (
-                    <div className="hidden md:flex space-x-10">
+                {isAuthenticated ? (
+                    <div className="flex justify-center space-x-10">
                         <Link to="/" className="text-white hover:text-gray-300">
                             Home
                         </Link>
@@ -33,9 +35,13 @@ const Navbar = () => {
                             Forum
                         </Link>
                     </div>
+                ) : (
+                    <div className="flex justify-center">
+                        {/* Empty center column when not authenticated */}
+                    </div>
                 )}
 
-                <div className="flex items-center space-x-5">
+                <div className="flex items-center space-x-5 justify-end">
                     <ThemeToggle />
                     <div className="flex space-x-2">
                         {isAuthenticated ? (

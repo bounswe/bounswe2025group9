@@ -144,9 +144,6 @@ const SignUp = () => {
                     navigate('/login')
                 }, 1500)
             } catch (err) {
-                if (err instanceof Error) {
-                    setSignupError(err.message)
-                }
                 console.error('signup failed:', err)
                 setSignupError('signup failed, please check your info')
             }
@@ -157,11 +154,11 @@ const SignUp = () => {
         <div className="py-12">
             <div className="nh-container">
                 <div className="max-w-md mx-auto nh-card">
-                    <div className="flex items-center justify-center mb-4">
-                        <div className="flex items-center justify-center mr-2">
-                            <UserPlus size={28} weight="bold" className="text-primary flex-shrink-0" />
+                    <div className="text-center mb-4">
+                        <div className="inline-flex items-center">
+                            <UserPlus size={28} weight="bold" className="text-primary mr-2" />
+                            <h2 className="nh-title">Sign Up</h2>
                         </div>
-                        <h2 className="nh-title text-center">Sign Up</h2>
                     </div>
                     
                     <form onSubmit={handleSubmit} className="space-y-4">
@@ -309,7 +306,7 @@ const SignUp = () => {
 
                         <button
                             type="submit"
-                            className="w-full py-2 px-4 bg-primary text-slate-500 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+                            className="nh-button nh-button-primary w-full"
                         >
                             Create Account
                         </button>
