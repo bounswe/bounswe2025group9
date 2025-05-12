@@ -144,6 +144,9 @@ const SignUp = () => {
                     navigate('/login')
                 }, 1500)
             } catch (err) {
+                if (err instanceof Error) {
+                    setSignupError(err.message)
+                }
                 console.error('signup failed:', err)
                 setSignupError('signup failed, please check your info')
             }
@@ -306,7 +309,7 @@ const SignUp = () => {
 
                         <button
                             type="submit"
-                            className="w-full py-2 px-4 bg-primary text-white rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
+                            className="w-full py-2 px-4 bg-primary text-slate-500 rounded-md hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 transition-colors"
                         >
                             Create Account
                         </button>
