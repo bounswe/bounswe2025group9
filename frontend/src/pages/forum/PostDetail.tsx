@@ -1,23 +1,17 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight } from '@phosphor-icons/react'
-import { apiClient,  ForumTag } from '../../lib/apiClient'
+import { apiClient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+// import shared cache functions
+import { getPostFromCache, setPostInCache, updatePostLikeStatusInCache } from '../../lib/postCache';
 
-// local storage key for liked posts - use the same key as Forum component
+// local storage key for liked posts - reuse same key
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
 
-// Post interface for the data from API
-interface APIPost {
-    id: number;
-    title: string;
-    content: string;
-    author: string;
-    likes: number;
-    date: string;
-    tags: ForumTag[];
-    liked?: boolean;
-}
+
+// Use ForumPost from apiClient directly
+import { ForumPost } from '../../lib/apiClient';
 
 // Comment type definition
 interface Comment {
@@ -63,10 +57,9 @@ const PostDetail = () => {
     const { user } = useAuth();
     const username = user?.username || 'anonymous';
     
-    // Post state
-    const [post, setPost] = useState<APIPost | null>(null)
+    // Post state - use ForumPost type
+    const [post, setPost] = useState<ForumPost | null>(null)
     const [loading, setLoading] = useState(true)
-    const [liked, setLiked] = useState(false)
     
     // Comment state
     const [commentText, setCommentText] = useState('')
@@ -79,24 +72,7 @@ const PostDetail = () => {
     // Calculate total pages for comments
     const totalCommentPages = Math.ceil(totalComments / commentsPerPage)
 
-    // Load liked posts from local storage on component mount
-    useEffect(() => {
-        const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
-        if (storedLikedPosts && postIdNum) {
-            try {
-                const parsedData = JSON.parse(storedLikedPosts);
-                const userLikedPosts = parsedData[username] || {};
-                // Set initial liked state from local storage if available
-                if (userLikedPosts[postIdNum] !== undefined) {
-                    setLiked(userLikedPosts[postIdNum]);
-                }
-            } catch (error) {
-                console.error('Error parsing liked posts from localStorage:', error);
-            }
-        }
-    }, [postIdNum, username]);
-    
-    // Helper function to update local storage
+    // Helper function to update local storage (keep for consistency)
     const updateLikedPostsStorage = (postId: number, isLiked: boolean) => {
         try {
             const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
@@ -190,6 +166,15 @@ const PostDetail = () => {
             return;
         }
 
+        // 1. Try fetching from cache first
+        const cachedPost = getPostFromCache(postIdNum, username);
+        if (cachedPost) {
+            console.log(`[PostDetail] Cache hit for post ID: ${postIdNum}`);
+            setPost(cachedPost);
+            setLoading(false);
+            return; // exit if cache hit is successful
+        }
+
         console.log(`[PostDetail] Fetching post with ID: ${postIdNum}`);
         setLoading(true);
         try {
@@ -197,22 +182,20 @@ const PostDetail = () => {
             const postData = await apiClient.getPostDetail(postIdNum);
             
             if (postData) {
-                console.log('[PostDetail] Received post data:', postData);
-                // Transform API response format to match our component's format
-                const transformedPost: APIPost = {
-                    id: postData.id,
-                    title: postData.title,
-                    content: postData.body, // API returns 'body' instead of 'content'
-                    author: postData.author.username,
-                    likes: (postData as any).like_count || postData.likes || 0, // Prefer like_count if available
-                    date: postData.created_at,
-                    tags: postData.tags, // Include tags from the API response
-                    liked: postData.liked || false
+                console.log('[PostDetail] Received post data from API:', postData);
+
+                // Ensure the fetched post data conforms to ForumPost structure
+                const fetchedPost: ForumPost = {
+                    ...postData,
+                    // Ensure likes field exists, map from like_count if necessary (apiClient might already handle this)
+                    likes: (postData as any).like_count ?? postData.likes ?? 0,
+                    // ensure author is object
+                    author: typeof postData.author === 'string' ? { id: 0, username: postData.author } : postData.author, // Handle potential string author if transformation failed earlier
                 };
-                
-                console.log('[PostDetail] Transformed post data:', transformedPost);
-                
-                // Check local storage for liked status
+
+                console.log('[PostDetail] Using ForumPost data structure:', fetchedPost);
+
+                // Check local storage for liked status (redundant if cache handles this, but safe fallback)
                 const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
                 if (storedLikedPosts) {
                     try {
@@ -221,28 +204,25 @@ const PostDetail = () => {
                         // If we have this post in local storage, use that value
                         if (userLikedPosts[postIdNum] !== undefined) {
                             const localLiked = userLikedPosts[postIdNum];
-                            
-                            
-                            // Always trust local storage for liked state
-                            transformedPost.liked = localLiked;
-                            setLiked(localLiked);
+                            fetchedPost.liked = localLiked;
                         } else {
-                            // No local storage entry for this post, create one
-                            setLiked(transformedPost.liked || false);
-                            updateLikedPostsStorage(postIdNum, transformedPost.liked || false);
+                            // No local storage entry for this post, create one based on API data
+                            updateLikedPostsStorage(postIdNum, fetchedPost.liked || false);
                         }
                     } catch (error) {
                         console.error('Error parsing liked posts from localStorage:', error);
-                        setLiked(transformedPost.liked || false);
-                        updateLikedPostsStorage(postIdNum, transformedPost.liked || false);
+                        // Fallback: use API data and update storage
+                        updateLikedPostsStorage(postIdNum, fetchedPost.liked || false);
                     }
                 } else {
-                    // No local storage data, use API response
-                    setLiked(transformedPost.liked || false);
-                    updateLikedPostsStorage(postIdNum, transformedPost.liked || false);
+                    // No local storage data, use API response and initialize storage
+                    updateLikedPostsStorage(postIdNum, fetchedPost.liked || false);
                 }
                 
-                setPost(transformedPost);
+                // Set the post state
+                setPost(fetchedPost);
+                // Add/update the post in the shared cache
+                setPostInCache(fetchedPost, username);
             } else {
                 console.log('[PostDetail] Post not found, redirecting to forum');
                 // Post not found, redirect to forum
@@ -263,54 +243,74 @@ const PostDetail = () => {
         if (!post) return;
         
         try {
-            console.log(`[PostDetail] Toggling like for post ID: ${post.id}`);
+            console.log(`[PostDetail] Toggling like for post ID: ${post.id}. Current liked: ${post.liked}`);
             
             // Optimistic update for better UX
-            const newLikedState = !liked;
+            const newLikedState = !post.liked;
             const newLikeCount = post.likes + (newLikedState ? 1 : -1);
             
+            // Update local storage first
+            updateLikedPostsStorage(post.id, newLikedState);
+            
             // Update state immediately for responsive UI
-            setLiked(newLikedState);
             setPost({
                 ...post,
                 liked: newLikedState,
                 likes: newLikeCount
             });
             
-            // Update local storage
-            updateLikedPostsStorage(post.id, newLikedState);
+            // Update the shared cache
+            updatePostLikeStatusInCache(post.id, newLikedState, newLikeCount, username);
             
             // Call API to toggle like status
             const response = await apiClient.toggleLikePost(post.id);
             console.log(`[PostDetail] Toggle like response:`, response);
-            
+
             // If the server response doesn't match our optimistic update, correct it
             const responseObj = response as any;
-            if (responseObj.liked !== undefined && responseObj.liked !== newLikedState) {
-                console.warn(`[PostDetail] Server liked state (${responseObj.liked}) differs from local state (${newLikedState})`);
-                // Trust local storage over server for consistency with Forum.tsx
-                // We already updated local storage above
+            const serverLiked = responseObj.liked;
+            const serverLikeCount = responseObj.like_count;
+
+            let finalLiked = newLikedState;
+            let finalLikeCount = newLikeCount;
+
+            if (serverLiked !== undefined && serverLiked !== newLikedState) {
+                console.warn(`[PostDetail] Server liked state (${serverLiked}) differs from local state (${newLikedState})`);
+                finalLiked = serverLiked;
+                // Re-update local storage if server differs
+                updateLikedPostsStorage(post.id, finalLiked);
             }
             
-            // If the server provides a like count directly, we could use it here
-            // But for consistency with our local state management, we'll stick with our calculated count
+            if (serverLikeCount !== undefined && serverLikeCount !== newLikeCount) {
+                console.warn(`[PostDetail] Server like count (${serverLikeCount}) differs from optimistic count (${newLikeCount})`);
+                finalLikeCount = serverLikeCount;
+            }
+            
+            // Correct the state and cache if there was a mismatch
+            if (finalLiked !== newLikedState || finalLikeCount !== newLikeCount) {
+                setPost(prevPost => prevPost ? { ...prevPost, liked: finalLiked, likes: finalLikeCount } : null);
+                updatePostLikeStatusInCache(post.id, finalLiked, finalLikeCount, username);
+            }
             
         } catch (error) {
             console.error('[PostDetail] Error toggling post like:', error);
             // On error, revert to previous state
             if (post) {
-                const revertLikedState = !liked;
-                const revertLikeCount = post.likes + (revertLikedState ? 1 : -1);
+                // Determine the state before the failed toggle
+                const revertedLikedState = !post.liked;
+                const likeDelta = revertedLikedState ? 1 : -1; // If it was true before fail, delta is +1
+                const revertLikeCount = post.likes - likeDelta; // Revert the optimistic count change
                 
-                setLiked(revertLikedState);
                 setPost({
                     ...post,
-                    liked: revertLikedState,
+                    liked: revertedLikedState,
                     likes: revertLikeCount
                 });
                 
                 // Revert local storage too
-                updateLikedPostsStorage(post.id, revertLikedState);
+                updateLikedPostsStorage(post.id, revertedLikedState);
+                // Revert cache
+                updatePostLikeStatusInCache(post.id, revertedLikedState, revertLikeCount, username);
             }
         }
     };
@@ -449,7 +449,7 @@ const PostDetail = () => {
                     )}
                     
                     <p className="nh-text mb-6">
-                        {post.content}
+                        {post.body}
                     </p>
                     
                     <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4">
@@ -457,14 +457,14 @@ const PostDetail = () => {
                             <div className="flex items-center justify-center">
                                 <User size={16} className="flex-shrink-0" />
                             </div>
-                            Posted by: {post.author} • {formatDate(post.date)}
+                            Posted by: {post.author.username} • {formatDate(post.created_at)}
                         </span>
                         <button 
                             onClick={handleLikeToggle}
-                            className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 ${liked ? 'text-primary' : ''}`}
+                            className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 ${post.liked ? 'text-primary' : ''}`}
                         >
                             <div className="flex items-center justify-center">
-                                <ThumbsUp size={16} weight={liked ? "fill" : "regular"} className="flex-shrink-0" />
+                                <ThumbsUp size={16} weight={post.liked ? "fill" : "regular"} className="flex-shrink-0" />
                             </div>
                             Likes: {post.likes}
                         </button>
