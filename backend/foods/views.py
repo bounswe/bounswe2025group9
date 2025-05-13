@@ -26,6 +26,8 @@ class FoodCatalog(ListAPIView):
         if search_term:
             # Filter by name or description containing the search term (case-insensitive)
             queryset = queryset.filter(Q(name__icontains=search_term))
+            if queryset.count() == 0:
+                self.warning = f'No records found for search term: "{search_term}"'
 
         categories_param = self.request.query_params.get("category", None)
         if categories_param is None:
