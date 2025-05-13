@@ -1,10 +1,11 @@
-// api client for making requests to our mock api
-
-export interface PaginationResponse<T> {
+// api client for making requests to our apis
+export interface PaginatedResponseWithStatus<T> {
   count: number;
   next: string | null;
   previous: string | null;
   results: T[];
+  status?: number;
+  warning?: string;
 }
 // types
 export interface Food {
@@ -193,12 +194,15 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 
     if (!response.ok) {
       let errorBody = 'No error details available';
+      let errorData = null;
+      
       try {
         const errorText = await response.text();
         errorBody = errorText;
         // Try parsing as JSON if possible
         try {
           const errorJson = JSON.parse(errorText);
+          errorData = errorJson;
           errorBody = JSON.stringify(errorJson, null, 2);
         } catch {
           // Not JSON, use as is
@@ -208,7 +212,17 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       }
       
       console.error(`API error (${response.status} ${response.statusText}):`, errorBody);
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      
+      // Create a custom error with the error data attached
+      const error = new Error(`API error: ${response.status} ${response.statusText}`);
+      // @ts-ignore - Adding custom property to Error object
+      error.status = response.status;
+      // @ts-ignore - Adding custom property to Error object
+      error.statusText = response.statusText;
+      // @ts-ignore - Adding custom property to Error object
+      error.data = errorData;
+      
+      throw error;
     }
 
     const data = await response.json();
@@ -223,13 +237,20 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number }) => {
+  getFoods: (params?: { page?: number, search?: string}) => {
     let url = "/foods";
-    // set page number
+    const queryParams = new URLSearchParams();
     if (params && params.page) {
-      url += `?page=${params.page}`;
+      queryParams.append('page', params.page.toString());
     }
-    return fetchJson<PaginationResponse<Food>>(url, {
+    if (params && params.search) {
+      queryParams.append('search', params.search);
+    }
+    const queryString = queryParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    return fetchJson<PaginatedResponseWithStatus<Food>>(url, {
       method: "GET",
     }, true);
   },
@@ -480,6 +501,48 @@ export const apiClient = {
     }).catch(error => {
       console.error(`[API] Error toggling like for post ID ${postId}:`, error);
       throw error;
+    });
+  },
+
+  // search forum posts with fuzzy matching
+  searchForumPosts: (query: string) => {
+    console.log(`[API] Searching for posts with query: "${query}"`);
+    const url = `/forum/posts/search/?q=${encodeURIComponent(query)}`;
+    
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received search results for query "${query}":`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error searching for posts with query "${query}":`, error);
+      throw error;
+    });
+  },
+  
+  // logout endpoint
+  logout: (refreshToken: string) => {
+    console.log('[API] Logging out on the server');
+    return fetchJson<void>("/users/token/logout/", {
+      method: "POST",
+      body: JSON.stringify({ refresh: refreshToken }),
+    }, true).catch(error => {
+      console.error('[API] Error during logout:', error);
+      // Even if the server logout fails, we want to continue with the local logout
+      // Just log the error but don't throw
     });
   },
 };
