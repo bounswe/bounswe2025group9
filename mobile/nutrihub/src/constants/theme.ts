@@ -39,15 +39,15 @@ export const getValidIconName = (
 export const PALETTE = {
   // Core brand colors
   PRIMARY: {
-    DEFAULT: '#0B7A5C', // Main brand green
-    LIGHT: '#12A97F',
-    DARK: '#06624A',
+    DEFAULT: '#3b82f6', // Main brand blue (matching frontend --color-primary)
+    LIGHT: '#dbeafe', // Lighter blue (matching frontend --color-primary-light)
+    DARK: '#2563eb', // Darker blue (matching frontend --color-primary-hover)
     CONTRAST: '#FFFFFF', // Text on primary color
   },
   
   // Secondary/accent colors
   ACCENT: {
-    DEFAULT: '#3B82F6', // Blue accent
+    DEFAULT: '#3B82F6', // Blue accent (matching frontend --color-primary)
     LIGHT: '#60A5FA',
     DARK: '#2563EB',
     CONTRAST: '#FFFFFF', // Text on accent color
@@ -57,38 +57,39 @@ export const PALETTE = {
   NEUTRAL: {
     WHITE: '#FFFFFF',
     BLACK: '#000000',
-    GRAY_100: '#F9FAFB', // Lightest gray
-    GRAY_200: '#F3F4F6',
-    GRAY_300: '#E5E7EB',
-    GRAY_400: '#D1D5DB',
-    GRAY_500: '#9CA3AF',
-    GRAY_600: '#6B7280',
-    GRAY_700: '#4B5563',
-    GRAY_800: '#1F2937',
-    GRAY_900: '#111827', // Darkest gray
+    GRAY_50: '#f9fafb', // Matching frontend --color-gray-50
+    GRAY_100: '#F3F4F6', // Matching frontend --color-gray-100
+    GRAY_200: '#E5E7EB', // Matching frontend --color-gray-200
+    GRAY_300: '#D1D5DB', // Matching frontend --color-gray-300
+    GRAY_400: '#9CA3AF', // Matching frontend --color-gray-400
+    GRAY_500: '#6B7280', // Matching frontend --color-gray-500
+    GRAY_600: '#4B5563', // Matching frontend --color-gray-600
+    GRAY_700: '#374151', // Matching frontend --color-gray-700
+    GRAY_800: '#1F2937', // Matching frontend --color-gray-800
+    GRAY_900: '#111827', // Matching frontend --color-gray-900
   },
   
   // Semantic colors for feedback/state
   SUCCESS: {
-    DEFAULT: '#10B981', // Brighter green for better visibility
+    DEFAULT: '#059669', // Matching frontend --color-success (dark theme)
     LIGHT: '#D1FAE5',
     DARK: '#065F46',
     CONTRAST: '#FFFFFF',
   },
   WARNING: {
-    DEFAULT: '#F59E0B', // Brighter orange
+    DEFAULT: '#d97706', // Matching frontend --color-warning (dark theme)
     LIGHT: '#FEF3C7',
     DARK: '#B45309',
     CONTRAST: '#000000', // Black text on warning
   },
   ERROR: {
-    DEFAULT: '#EF4444', // Brighter red
+    DEFAULT: '#dc2626', // Matching frontend --color-error (dark theme)
     LIGHT: '#FEE2E2',
     DARK: '#B91C1C',
     CONTRAST: '#FFFFFF',
   },
   INFO: {
-    DEFAULT: '#3B82F6', // Same as accent
+    DEFAULT: '#0284c7', // Matching frontend --color-info (dark theme)
     LIGHT: '#DBEAFE',
     DARK: '#1D4ED8',
     CONTRAST: '#FFFFFF',
@@ -104,25 +105,25 @@ export const PALETTE = {
   
   // Dark mode specific
   DARK: {
-    BACKGROUND: '#121212',
-    SURFACE: '#1E1E1E',
-    SURFACE_ELEVATED: '#2C2C2C',
+    BACKGROUND: '#090909', // Matching frontend --color-bg-primary (dark)
+    SURFACE: '#121212', // Matching frontend --color-bg-secondary (dark)
+    SURFACE_ELEVATED: '#1a1a1a', // Matching frontend --color-bg-tertiary (dark)
     BORDER: '#333333',
-    TEXT: '#FFFFFF',
-    TEXT_SECONDARY: '#E5E7EB', // NEUTRAL.GRAY_300
-    TEXT_DISABLED: '#9CA3AF', // NEUTRAL.GRAY_500
+    TEXT: '#e5e7eb', // Matching frontend --color-light (dark)
+    TEXT_SECONDARY: '#d1d5db', // Matching frontend --color-light-hover (dark)
+    TEXT_DISABLED: '#9CA3AF', // NEUTRAL.GRAY_400
     DIVIDER: 'rgba(255, 255, 255, 0.15)',
   },
   
   // Light mode specific
   LIGHT: {
-    BACKGROUND: '#FEF3C7', // AMBER.DEFAULT
-    SURFACE: '#FFFFFF', // NEUTRAL.WHITE
-    SURFACE_VARIANT: '#F9FAFB', // NEUTRAL.GRAY_100
+    BACKGROUND: '#fffbeb', // Matching frontend --color-bg-primary (light)
+    SURFACE: '#fffdf7', // Matching frontend --color-bg-secondary (light)
+    SURFACE_VARIANT: '#fef9c3', // Matching frontend --color-bg-tertiary (light)
     BORDER: 'rgba(0, 0, 0, 0.1)',
-    TEXT: '#111827', // NEUTRAL.GRAY_900
-    TEXT_SECONDARY: '#4B5563', // NEUTRAL.GRAY_700
-    TEXT_DISABLED: '#9CA3AF', // NEUTRAL.GRAY_500
+    TEXT: '#111827', // Matching frontend --color-light (light)
+    TEXT_SECONDARY: '#1f2937', // Matching frontend --color-light-hover (light)
+    TEXT_DISABLED: '#9CA3AF', // NEUTRAL.GRAY_400
     DIVIDER: 'rgba(0, 0, 0, 0.15)',
   },
 
@@ -339,41 +340,49 @@ export const TYPOGRAPHY = {
     fontSize: 32,
     fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 40,
+    fontFamily: 'Poppins_700Bold',
   },
   heading2: {
     fontSize: 28,
     fontWeight: '700' as TextStyle['fontWeight'],
     lineHeight: 36,
+    fontFamily: 'Poppins_700Bold',
   },
   heading3: {
     fontSize: 24,
     fontWeight: '600' as TextStyle['fontWeight'],
     lineHeight: 32,
+    fontFamily: 'Poppins_600SemiBold',
   },
   heading4: {
     fontSize: 20,
     fontWeight: '600' as TextStyle['fontWeight'],
     lineHeight: 28,
+    fontFamily: 'Poppins_600SemiBold',
   },
   subtitle: {
     fontSize: 18,
     fontWeight: '600' as TextStyle['fontWeight'],
     lineHeight: 24,
+    fontFamily: 'Poppins_600SemiBold',
   },
   body: {
     fontSize: 16,
     fontWeight: '400' as TextStyle['fontWeight'],
     lineHeight: 24,
+    fontFamily: 'Poppins_400Regular',
   },
   caption: {
     fontSize: 14,
     fontWeight: '400' as TextStyle['fontWeight'],
     lineHeight: 20,
+    fontFamily: 'Poppins_400Regular',
   },
   small: {
     fontSize: 12,
     fontWeight: '400' as TextStyle['fontWeight'],
     lineHeight: 16,
+    fontFamily: 'Poppins_400Regular',
   },
 } as const;
 
