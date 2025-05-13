@@ -1,4 +1,5 @@
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from rest_framework.test import APITestCase, APIClient
 from rest_framework import status
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -24,7 +25,7 @@ class ChangePasswordTests(APITestCase):
             HTTP_AUTHORIZATION=f"Bearer {str(refresh.access_token)}"
         )
 
-        self.url = "/users/change-password/"
+        self.url = reverse("change-password")
 
     def test_change_password_success(self):
         """

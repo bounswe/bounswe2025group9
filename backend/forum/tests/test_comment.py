@@ -1,6 +1,7 @@
 from typing import cast
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework.views import Response
 from forum.models import Post, Comment
@@ -24,10 +25,11 @@ class CommentTests(TestCase):
 
     def test_create_comment(self):
         self.client.force_authenticate(user=self.user1)
+        url = reverse("comment-list")
         response = cast(
             Response,
             self.client.post(
-                "/forum/comments/",
+                url,
                 {"post": self.post.id, "body": "Nice post!"},
                 format="json",
             ),
@@ -43,9 +45,8 @@ class CommentTests(TestCase):
         Comment.objects.create(post=self.post, author=self.user2, body="Second")
 
         self.client.force_authenticate(user=self.user2)
-        response = cast(
-            Response, self.client.get(f"/forum/comments/?post={self.post.id}")
-        )
+        url = reverse("comment-list") + f"?post={self.post.id}"
+        response = cast(Response, self.client.get(url))
         self.assertEqual(response.status_code, 200)
 
         if results := response.data.get("results"):
@@ -59,7 +60,8 @@ class CommentTests(TestCase):
         )
 
         self.client.force_authenticate(user=self.user1)
-        response = cast(Response, self.client.delete(f"/forum/comments/{comment.id}/"))
+        url = reverse("comment-detail", args=[comment.id])
+        response = cast(Response, self.client.delete(url))
         self.assertEqual(response.status_code, 204)
         self.assertEqual(Comment.objects.count(), 0)
 
@@ -69,6 +71,7 @@ class CommentTests(TestCase):
         )
 
         self.client.force_authenticate(user=self.user2)
-        response = cast(Response, self.client.delete(f"/forum/comments/{comment.id}/"))
+        url = reverse("comment-detail", args=[comment.id])
+        response = cast(Response, self.client.delete(url))
         self.assertEqual(response.status_code, 403)
         self.assertEqual(Comment.objects.count(), 1)
