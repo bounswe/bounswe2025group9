@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight } from '@phosphor-icons/react'
-import { apiClient } from '../../lib/apiClient'
+import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, CookingPot, Scales, Fire } from '@phosphor-icons/react'
+import { apiClient, Recipe } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 // import shared cache functions
 import { getPostFromCache, setPostInCache, updatePostLikeStatusInCache } from '../../lib/postCache';
@@ -61,6 +61,10 @@ const PostDetail = () => {
     const [post, setPost] = useState<ForumPost | null>(null)
     const [loading, setLoading] = useState(true)
     
+    // Recipe state
+    const [recipe, setRecipe] = useState<Recipe | null>(null)
+    const [loadingRecipe, setLoadingRecipe] = useState(false)
+    
     // Comment state
     const [commentText, setCommentText] = useState('')
     const [comments, setComments] = useState<Comment[]>([])
@@ -113,6 +117,10 @@ const PostDetail = () => {
     useEffect(() => {
         if (post) {
             fetchComments();
+            // Check if post has a recipe
+            if (post.has_recipe) {
+                fetchRecipe();
+            }
         }
     }, [post, commentPage]);
     
@@ -148,6 +156,22 @@ const PostDetail = () => {
             console.error('Error fetching comments:', error);
         } finally {
             setLoadingComments(false);
+        }
+    };
+
+    // Fetch recipe for the post
+    const fetchRecipe = async () => {
+        if (!postId || isNaN(postIdNum)) return;
+        
+        setLoadingRecipe(true);
+        try {
+            const recipeData = await apiClient.getRecipeForPost(postIdNum);
+            console.log('[PostDetail] Received recipe data:', recipeData);
+            setRecipe(recipeData);
+        } catch (error) {
+            console.error('Error fetching recipe:', error);
+        } finally {
+            setLoadingRecipe(false);
         }
     };
 
@@ -374,6 +398,77 @@ const PostDetail = () => {
         window.scrollTo(0, 0)
     }, [])
 
+    // Render recipe section
+    const renderRecipe = () => {
+        if (!recipe) return null;
+        
+        return (
+            <div className="nh-card mb-6 rounded-lg shadow-md">
+                <div className="flex items-center mb-4">
+                    <div className="flex items-center justify-center mr-3">
+                        <CookingPot size={24} weight="fill" className="text-primary" />
+                    </div>
+                    <h2 className="nh-subtitle">Recipe Details</h2>
+                </div>
+                
+                {/* Nutritional Information */}
+                <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                        <div className="flex justify-center mb-1">
+                            <Fire size={20} weight="fill" className="text-red-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_calories)} kcal</div>
+                        <div className="text-xs text-gray-500">Calories</div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                        <div className="flex justify-center mb-1">
+                            <Scales size={20} weight="fill" className="text-blue-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_protein)}g</div>
+                        <div className="text-xs text-gray-500">Protein</div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                        <div className="flex justify-center mb-1">
+                            <Scales size={20} weight="fill" className="text-yellow-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_fat)}g</div>
+                        <div className="text-xs text-gray-500">Fat</div>
+                    </div>
+                    <div className="bg-gray-50 dark:bg-gray-800 p-3 rounded-lg text-center">
+                        <div className="flex justify-center mb-1">
+                            <Scales size={20} weight="fill" className="text-green-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_carbohydrates)}g</div>
+                        <div className="text-xs text-gray-500">Carbs</div>
+                    </div>
+                </div>
+                
+                {/* Ingredients */}
+                <div className="mb-6">
+                    <h3 className="font-semibold text-lg mb-2">Ingredients</h3>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                        {recipe.ingredients.map((ingredient, index) => (
+                            <li key={index} className="text-gray-800 dark:text-gray-200">
+                                <span className="font-medium">{ingredient.food_name}</span> - {ingredient.amount}g
+                                <span className="text-xs text-gray-500 ml-1">
+                                    ({ingredient.protein?.toFixed(1)}g protein, {ingredient.fat?.toFixed(1)}g fat, {ingredient.carbs?.toFixed(1)}g carbs)
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                
+                {/* Cooking Instructions */}
+                <div>
+                    <h3 className="font-semibold text-lg mb-2">Instructions</h3>
+                    <div className="whitespace-pre-line text-gray-800 dark:text-gray-200 bg-gray-50 dark:bg-gray-800 p-4 rounded-lg">
+                        {recipe.instructions}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="w-full py-12">
@@ -470,6 +565,21 @@ const PostDetail = () => {
                         </button>
                     </div>
                 </div>
+                
+                {/* Recipe Section - Show if post has recipe and recipe is loaded */}
+                {post.has_recipe && (
+                    loadingRecipe ? (
+                        <div className="mb-8 text-center py-4">
+                            <p>Loading recipe details...</p>
+                        </div>
+                    ) : recipe ? (
+                        renderRecipe()
+                    ) : (
+                        <div className="mb-8 text-center py-4">
+                            <p>Recipe information could not be loaded.</p>
+                        </div>
+                    )
+                )}
                 
                 {/* Comments Section */}
                 <div className="mb-6">
