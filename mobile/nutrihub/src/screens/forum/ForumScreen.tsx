@@ -5,7 +5,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -15,56 +15,10 @@ import ForumPost from '../../components/forum/ForumPost';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { ForumTopic } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
+import { forumService, ApiTag } from '../../services/api/forum.service';
 
 type ForumScreenNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'ForumList'>;
 type ForumScreenRouteProp = RouteProp<ForumStackParamList, 'ForumList'>;
-
-// Mock data for forum topics
-const INITIAL_FORUM_TOPICS: ForumTopic[] = [
-  {
-    id: 1,
-    title: 'Best vegetarian alternatives for meat?',
-    content: 'I\'ve been trying to cut down on meat consumption. What are your favorite plant-based alternatives that actually taste good? I\'ve tried tofu and tempeh, but I\'m looking for more options that have good texture and can absorb flavors well. Any recommendations for brands or preparation methods would be greatly appreciated!',
-    author: 'healthyeater22',
-    authorId: 101,
-    commentsCount: 3,
-    likesCount: 24,
-    isLiked: false,
-    tags: ['Nutrition Tip'],
-    createdAt: new Date('2023-10-15T11:30:00Z'),
-  },
-  {
-    id: 2,
-    title: 'Quick & Healthy Breakfast Smoothie',
-    content: 'Here\'s my go-to morning smoothie recipe that keeps me full until lunch!\n\nIngredients:\n- 1 banana\n- 1 cup spinach\n- 1/2 cup Greek yogurt\n- 1 tbsp almond butter\n- 1 cup almond milk\n- 1 tbsp chia seeds\n\nInstructions:\n1. Add all ingredients to a blender\n2. Blend until smooth\n3. Enjoy immediately!\n\nThis gives you about 15g of protein and tons of nutrients. What are your favorite smoothie combinations?',
-    author: 'smoothielover',
-    authorId: 102,
-    commentsCount: 8,
-    likesCount: 45,
-    isLiked: true,
-    tags: ['Recipe'],
-    createdAt: new Date('2023-10-14T08:15:00Z'),
-  },
-  {
-    id: 3,
-    title: 'Hidden sources of added sugar',
-    content: 'Did you know that many "healthy" foods contain hidden sugars? Here are some surprising sources:\n\n• Granola bars (up to 12g per bar!)\n• Flavored yogurt\n• Instant oatmeal\n• Salad dressings\n• Pasta sauces\n\nAlways check the nutrition labels and look for terms like "evaporated cane juice," "brown rice syrup," or anything ending in "-ose". What other hidden sugar sources have you discovered?',
-    author: 'nutritionnerd',
-    authorId: 103,
-    commentsCount: 12,
-    likesCount: 67,
-    isLiked: false,
-    tags: ['Nutrition Tip'],
-    createdAt: new Date('2023-10-13T15:45:00Z'),
-  },
-];
-
-// Convert serialized post to ForumTopic
-const deserializePost = (serializedPost: SerializedForumPost): ForumTopic => ({
-  ...serializedPost,
-  createdAt: new Date(serializedPost.createdAt),
-  updatedAt: serializedPost.updatedAt ? new Date(serializedPost.updatedAt) : undefined,
-});
 
 /**
  * Forum screen component displaying community posts
@@ -73,7 +27,39 @@ const ForumScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<ForumScreenNavigationProp>();
   const route = useRoute<ForumScreenRouteProp>();
-  const [posts, setPosts] = useState<ForumTopic[]>(INITIAL_FORUM_TOPICS);
+  const [posts, setPosts] = useState<ForumTopic[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
+  const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
+
+  // Fetch tags and posts
+  useEffect(() => {
+    const fetchTagsAndPosts = async () => {
+      setLoading(true);
+      try {
+        // Fetch tags first
+        const tags = await forumService.getTags();
+        setAvailableTags(tags);
+        
+        // Then fetch posts
+        try {
+          const fetchedPosts = await forumService.getPosts();
+          setPosts(fetchedPosts);
+        } catch (err) {
+          console.error('Error fetching posts:', err);
+          setError('Failed to load posts. Please try again later.');
+        }
+      } catch (err) {
+        setError('Failed to load forum content. Please try again later.');
+        console.error('Error fetching forum data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchTagsAndPosts();
+  }, []);
 
   // Handle new post from navigation params
   useEffect(() => {
@@ -85,18 +71,63 @@ const ForumScreen: React.FC = () => {
     }
   }, [route.params, navigation]);
 
+  // Fetch posts when filters change
+  useEffect(() => {
+    const fetchFilteredPosts = async () => {
+      if (selectedTagIds.length === 0) {
+        // If no filters, fetch all posts
+        try {
+          const fetchedPosts = await forumService.getPosts();
+          setPosts(fetchedPosts);
+        } catch (err) {
+          console.error('Error fetching posts:', err);
+        }
+      } else {
+        // Fetch filtered posts
+        try {
+          const filteredPosts = await forumService.getPosts(selectedTagIds);
+          setPosts(filteredPosts);
+        } catch (err) {
+          console.error('Error fetching filtered posts:', err);
+        }
+      }
+    };
+
+    // Only run this effect if we're not in the initial loading state
+    if (!loading) {
+      setLoading(true);
+      fetchFilteredPosts().finally(() => setLoading(false));
+    }
+  }, [selectedTagIds]);
+
+  // Convert serialized post to ForumTopic
+  const deserializePost = (serializedPost: SerializedForumPost): ForumTopic => ({
+    ...serializedPost,
+    createdAt: new Date(serializedPost.createdAt),
+    updatedAt: serializedPost.updatedAt ? new Date(serializedPost.updatedAt) : undefined,
+  });
+
   // Handle post press
   const handlePostPress = (post: ForumTopic) => {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
   // Handle post like
-  const handlePostLike = (updatedPost: ForumTopic) => {
-    setPosts(prevPosts => 
-      prevPosts.map(post => 
-        post.id === updatedPost.id ? updatedPost : post
-      )
-    );
+  const handlePostLike = async (post: ForumTopic) => {
+    try {
+      const isLiked = await forumService.toggleLike(post.id);
+      setPosts(prevPosts => 
+        prevPosts.map(p => 
+          p.id === post.id ? {
+            ...p,
+            isLiked,
+            likesCount: isLiked ? p.likesCount + 1 : p.likesCount - 1
+          } : p
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling like:', err);
+    }
   };
 
   // Handle post comment
@@ -109,6 +140,40 @@ const ForumScreen: React.FC = () => {
     navigation.navigate('CreatePost');
   };
 
+  // Toggle tag filter - select only one tag or clear if already selected
+  const toggleTagFilter = (tagId: number) => {
+    // If loading, don't allow filtering
+    if (loading) return;
+    
+    setLoading(true);
+    setSelectedTagIds(prev => {
+      // Create new selected tags array
+      const newSelectedTags = prev.includes(tagId) ? [] : [tagId];
+      
+      // Fetch posts with the new filter
+      forumService.getPosts(newSelectedTags)
+        .then(fetchedPosts => {
+          setPosts(fetchedPosts);
+        })
+        .catch(err => {
+          console.error('Error filtering posts:', err);
+          setError('Failed to filter posts. Please try again.');
+        })
+        .finally(() => setLoading(false));
+      
+      return newSelectedTags;
+    });
+  };
+
+  // Find tag by name or ID
+  const findTagByName = (name: string): ApiTag | undefined => {
+    if (!availableTags || !Array.isArray(availableTags)) {
+      console.warn('availableTags is not an array in findTagByName:', availableTags);
+      return undefined;
+    }
+    return availableTags.find(tag => tag && tag.name && tag.name.toLowerCase() === name.toLowerCase());
+  };
+
   // Render forum post
   const renderItem = ({ item }: { item: ForumTopic }) => (
     <ForumPost
@@ -119,13 +184,163 @@ const ForumScreen: React.FC = () => {
     />
   );
 
+  if (loading && posts.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
+          <Text style={[styles.subtitle, textStyles.caption]}>
+            Join discussions about nutrition, recipes, and healthy eating.
+          </Text>
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={[styles.loadingText, textStyles.body]}>Loading posts...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (error && posts.length === 0) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.header}>
+          <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
+          <Text style={[styles.subtitle, textStyles.caption]}>
+            Join discussions about nutrition, recipes, and healthy eating.
+          </Text>
+        </View>
+        <View style={styles.errorContainer}>
+          <Icon name="alert-circle" size={48} color={theme.error} />
+          <Text style={[styles.errorText, textStyles.body]}>{error}</Text>
+          <TouchableOpacity
+            style={[styles.retryButton, { backgroundColor: theme.primary }]}
+            onPress={() => {
+              setError(null);
+              setLoading(true);
+              forumService.getPosts()
+                .then(posts => setPosts(posts))
+                .catch(err => setError('Failed to load posts. Please try again.'))
+                .finally(() => setLoading(false));
+            }}
+          >
+            <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
         <Text style={[styles.subtitle, textStyles.caption]}>
-          Join discussions about nutrition, recipes, and healthy eating.
+          Connect with others, share recipes, and get nutrition advice from our community.
         </Text>
+      </View>
+      
+      {/* Filter Posts Section */}
+      <View style={styles.filtersContainer}>
+        <View style={styles.filterHeader}>
+          <Icon name="filter-variant" size={18} color={theme.text} />
+          <Text style={[styles.filterHeaderText, textStyles.body]}>Filter Posts</Text>
+        </View>
+        
+        <View style={styles.filterOptions}>
+          {/* Dietary Tips */}
+          <TouchableOpacity
+            style={[
+              styles.filterOption,
+              selectedTagIds.includes(findTagByName('Dietary tip')?.id || -1) && { 
+                backgroundColor: theme.primary 
+              }
+            ]}
+            onPress={() => {
+              const tag = findTagByName('Dietary tip');
+              if (tag && tag.id) toggleTagFilter(tag.id);
+            }}
+          >
+            <Icon
+              name="food-apple" 
+              size={16}
+              color={selectedTagIds.includes(findTagByName('Dietary tip')?.id || -1) ? 
+                '#fff' : theme.text}
+            />
+            <Text
+              style={[
+                styles.filterOptionText,
+                selectedTagIds.includes(findTagByName('Dietary tip')?.id || -1) && {
+                  color: '#fff'
+                }
+              ]}
+            >
+              Dietary Tips
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Recipes */}
+          <TouchableOpacity
+            style={[
+              styles.filterOption,
+              selectedTagIds.includes(findTagByName('Recipe')?.id || -1) && { 
+                backgroundColor: theme.primary 
+              }
+            ]}
+            onPress={() => {
+              const tag = findTagByName('Recipe');
+              if (tag && tag.id) toggleTagFilter(tag.id);
+            }}
+          >
+            <Icon
+              name="chef-hat" 
+              size={16}
+              color={selectedTagIds.includes(findTagByName('Recipe')?.id || -1) ? 
+                '#fff' : theme.text}
+            />
+            <Text
+              style={[
+                styles.filterOptionText,
+                selectedTagIds.includes(findTagByName('Recipe')?.id || -1) && {
+                  color: '#fff'
+                }
+              ]}
+            >
+              Recipes
+            </Text>
+          </TouchableOpacity>
+          
+          {/* Meal Plans */}
+          <TouchableOpacity
+            style={[
+              styles.filterOption,
+              selectedTagIds.includes(findTagByName('Meal plan')?.id || -1) && { 
+                backgroundColor: theme.primary 
+              }
+            ]}
+            onPress={() => {
+              const tag = findTagByName('Meal plan');
+              if (tag && tag.id) toggleTagFilter(tag.id);
+            }}
+          >
+            <Icon
+              name="calendar-text" 
+              size={16}
+              color={selectedTagIds.includes(findTagByName('Meal plan')?.id || -1) ? 
+                '#fff' : theme.text}
+            />
+            <Text
+              style={[
+                styles.filterOptionText,
+                selectedTagIds.includes(findTagByName('Meal plan')?.id || -1) && {
+                  color: '#fff'
+                }
+              ]}
+            >
+              Meal Plans
+            </Text>
+          </TouchableOpacity>
+        </View>
       </View>
       
       <FlatList
@@ -134,6 +349,32 @@ const ForumScreen: React.FC = () => {
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
+        refreshing={loading}
+        onRefresh={() => {
+          setLoading(true);
+          if (selectedTagIds.length > 0) {
+            forumService.getPosts(selectedTagIds)
+              .then(posts => setPosts(posts))
+              .catch(err => console.error('Error refreshing posts:', err))
+              .finally(() => setLoading(false));
+          } else {
+            forumService.getPosts()
+              .then(posts => setPosts(posts))
+              .catch(err => console.error('Error refreshing posts:', err))
+              .finally(() => setLoading(false));
+          }
+        }}
+        ListEmptyComponent={
+          <View style={styles.emptyContainer}>
+            <Icon name="forum-outline" size={64} color={theme.textSecondary} />
+            <Text style={[styles.emptyTitle, textStyles.heading4]}>No posts found</Text>
+            <Text style={[styles.emptyText, textStyles.body]}>
+              {selectedTagIds.length > 0
+                ? 'Try adjusting your filters or be the first to post in this category!'
+                : 'Be the first to start a discussion!'}
+            </Text>
+          </View>
+        }
       />
       
       <TouchableOpacity 
@@ -162,8 +403,82 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.md,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.md,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  errorText: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.lg,
+    textAlign: 'center',
+  },
+  retryButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 50,
+  },
+  retryButtonText: {
+    fontWeight: 'bold',
+  },
+  filtersContainer: {
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  filterHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  filterHeaderText: {
+    marginLeft: SPACING.xs,
+    fontWeight: '600',
+  },
+  filterOptions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  filterOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E6F2EA',
+    paddingVertical: SPACING.xs,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: 16,
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  filterOptionText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
+  },
   listContent: {
     padding: SPACING.md,
+    paddingBottom: 80, // Extra padding at bottom to account for new post button
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.xl,
+  },
+  emptyTitle: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  emptyText: {
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
   },
   newPostButton: {
     position: 'absolute',
