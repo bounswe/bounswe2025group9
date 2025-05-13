@@ -119,8 +119,22 @@ const Forum = () => {
     
     // Apply pagination to filtered posts
     useEffect(() => {
-        if (isSearching) {
-            // When searching, use search results instead of allPosts
+        if (isSearching && activeFilter) {
+            // When both searching and filtering, show intersection
+            const filteredSearchResults = searchResults.filter(post => 
+                post.tags.some(tag => tag.id === activeFilter)
+            );
+            
+            setTotalCount(filteredSearchResults.length);
+            
+            // Get current page posts from filtered search results
+            const indexOfLastPost = currentPage * postsPerPage;
+            const indexOfFirstPost = indexOfLastPost - postsPerPage;
+            const currentPosts = filteredSearchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredSearchResults.length));
+            
+            setPosts(currentPosts);
+        } else if (isSearching) {
+            // When only searching, use search results
             setTotalCount(searchResultsCount);
             
             // Get current page posts from search results
@@ -130,6 +144,7 @@ const Forum = () => {
             
             setPosts(currentPosts);
         } else if (allPosts.length > 0) {
+            // When only filtering or no filters, use allPosts
             const filteredPosts = activeFilter 
                 ? allPosts.filter(post => post.tags.some(tag => tag.id === activeFilter))
                 : allPosts;
@@ -292,11 +307,7 @@ const Forum = () => {
             setSearchResults(searchPosts);
             setSearchResultsCount(response.count);
             
-            // Clear any active filter when searching
-            if (activeFilter) {
-                setActiveFilter(null);
-                setFilterLabel(null);
-            }
+            // Don't clear active filter when searching - allow both to be active
         } catch (error) {
             console.error('[Forum] Error searching for posts:', error);
             // Keep showing current posts on error
@@ -566,13 +577,13 @@ const Forum = () => {
                             <form onSubmit={handleSearch} className="flex gap-2">
                                 <div className="relative flex-grow">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                                        <MagnifyingGlass size={20} className="text-gray-500" />
+                                        <MagnifyingGlass size={20} style={{ color: 'var(--forum-search-icon)' }} />
                                     </div>
                                     <input
                                         type="search"
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
-                                        className="w-full p-3 pl-10 border rounded-lg bg-gray-800 border-gray-700 placeholder-gray-400 focus:ring-primary focus:border-primary"
+                                        className="w-full p-2 pl-10 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
                                         placeholder="Search posts by title..."
                                         aria-label="Search posts"
                                     />
@@ -582,7 +593,7 @@ const Forum = () => {
                                             onClick={clearSearch}
                                             className="absolute inset-y-0 right-0 flex items-center pr-3"
                                         >
-                                            <X size={20} className="text-gray-500 hover:text-gray-300" />
+                                            <X size={20} style={{ color: 'var(--forum-search-icon)' }} />
                                         </button>
                                     )}
                                 </div>
@@ -597,11 +608,11 @@ const Forum = () => {
                         
                         {/* Display search status */}
                         {isSearching && (
-                            <div className="mb-6 p-3 bg-gray-800 dark:bg-gray-800 rounded-lg border border-gray-700">
+                            <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm nh-text">
                                         {searchResultsCount > 0 
-                                            ? `Found ${searchResultsCount} results for "${searchQuery}"` 
+                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${activeFilter ? ' (filtered by tag)' : ''}` 
                                             : `No results found for "${searchQuery}"`}
                                     </p>
                                     <button
@@ -616,11 +627,20 @@ const Forum = () => {
                         )}
                         
                         {/* Active filter indicator */}
-                        {filterLabel && !isSearching && (
-                            <div className="mb-6 p-3 bg-gray-800 dark:bg-gray-800 rounded-lg border border-gray-700">
-                                <p className="text-sm text-center nh-text">
-                                    Showing posts tagged with: <span className="font-medium">{filterLabel}</span>
-                                </p>
+                        {filterLabel && (
+                            <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm nh-text">
+                                        Filtered by tag: <span className="font-medium">{filterLabel}</span>
+                                    </p>
+                                    <button
+                                        onClick={clearFilter}
+                                        className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
+                                    >
+                                        <X size={16} weight="bold" />
+                                        Clear filter
+                                    </button>
+                                </div>
                             </div>
                         )}
                         
