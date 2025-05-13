@@ -59,6 +59,7 @@ class FoodCatalog(ListAPIView):
     def list(self, request, *args, **kwargs):
         self.empty = False
         queryset = self.filter_queryset(self.get_queryset())
+        search_term = request.query_params.get("search", "").strip()
 
         page = self.paginate_queryset(queryset)
         if hasattr(self, "empty") and self.empty:
@@ -67,6 +68,12 @@ class FoodCatalog(ListAPIView):
             if warning:
                 return Response({"warning": warning, "results": []}, status=206)
             return Response({"results": []}, status=200)
+
+        # If no results after filtering (including search), return 204 No Content
+        if queryset.count() == 0:
+            return Response(
+                {"warning": f"No result for {search_term}", "results": []}, status=204
+            )
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)

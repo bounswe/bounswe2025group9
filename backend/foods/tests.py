@@ -115,3 +115,24 @@ class FoodCatalogTests(TestCase):
             response.data["warning"],
             "Some categories are not available: nonexistentcategory",
         )
+
+    def test_search_returns_successful(self):
+        response = self.client.get(reverse("get_foods"), {"search": "frUit"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(
+            any("Fruit" in food["name"] for food in response.data.get("results", []))
+        )
+
+    def test_no_search_result(self):
+        response = self.client.get(reverse("get_foods"), {"search": "nonexistentfood"})
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data.get("results", [])), 0)
+
+    def test_search_with_category(self):
+        response = self.client.get(
+            reverse("get_foods"), {"search": "Food 1", "category": "Fruit"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data.get("results", [])
+        self.assertTrue(all(food["category"] == "Fruit" for food in results))
+        self.assertTrue(any("Fruit Food" in food["name"] for food in results))
