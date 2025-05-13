@@ -146,6 +146,35 @@
   color: #334155; /* slate-700 - darker than default for better contrast */
 }
 
+/* forum components */
+.nh-forum-search {
+  background-color: var(--forum-search-bg);
+  border-color: var(--forum-search-border);
+  color: var(--forum-search-text);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* hide default browser search clear button */
+.nh-forum-search::-webkit-search-cancel-button {
+  display: none;
+}
+
+.nh-forum-search::placeholder {
+  color: var(--forum-search-placeholder);
+}
+
+.nh-forum-search:focus {
+  border-color: var(--forum-search-focus-border);
+  outline-color: var(--forum-search-focus-ring);
+}
+
+.nh-forum-filter-container {
+  background-color: var(--forum-filter-container-bg);
+  border-color: var(--forum-filter-container-border);
+  color: var(--forum-filter-container-text);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
 /* navbar and footer */
 .nh-navbar {
   background-color: var(--color-dark);

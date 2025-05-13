@@ -495,6 +495,35 @@ export const apiClient = {
       throw error;
     });
   },
+
+  // search forum posts with fuzzy matching
+  searchForumPosts: (query: string) => {
+    console.log(`[API] Searching for posts with query: "${query}"`);
+    const url = `/forum/posts/search/?q=${encodeURIComponent(query)}`;
+    
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received search results for query "${query}":`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error searching for posts with query "${query}":`, error);
+      throw error;
+    });
+  },
   
   // logout endpoint
   logout: (refreshToken: string) => {
