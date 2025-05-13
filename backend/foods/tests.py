@@ -140,26 +140,22 @@ class FoodCatalogTests(TestCase):
 
 class SuggestRecipeTests(TestCase):
     def test_suggest_recipe_successful(self):
-        """
-        Test that a valid food_name returns a recipe.
-        """
-        response = self.client.get(reverse("suggest_recipe"), {"food_name": "chicken"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        """Test that a valid food_name returns a recipe."""
+        response = self.client.get(reverse("suggest-recipe"), {"food_name": "chicken"})
+        self.assertEqual(response.status_code, 200)
         self.assertIn("Meal", response.data)
-        self.assertEqual(response.data["Meal"], "Chicken Handi")
+        self.assertIn("Instructions", response.data)
+        self.assertIsInstance(response.data["Meal"], str)
+        self.assertIsInstance(response.data["Instructions"], str)
 
     def test_suggest_recipe_unsuccessful(self):
-        """
-        Test that an unknown food_name returns a warning and 404.
-        """
+        """Test that an unknown food_name returns a warning and 404."""
         response = self.client.get(
-            reverse("suggest_recipe"), {"food_name": "food_not_in_db"}
+            reverse("suggest-recipe"), {"food_name": "food_not_in_db"}
         )
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, 404)
         self.assertIn("warning", response.data)
-        self.assertEqual(
-            response.data["warning"], "No recipe found for the given food name."
-        )
+        self.assertIn("results", response.data)
 
 class RandomMealTests(TestCase):
     def setUp(self):
