@@ -21,7 +21,6 @@ import { useNavigate } from 'react-router-dom';
 import { FoodProposal, apiClient } from '../../lib/apiClient';
 
 // Add proper types for MUI components
-import { GridProps } from '@mui/material/Grid';
 
 const ITEM_HEIGHT = 48;
 const ITEM_PADDING_TOP = 8;
@@ -180,7 +179,7 @@ const ProposeNewFood: React.FC = () => {
         imageUrl: imageUrl || undefined,
       };
       
-      const response = await apiClient.proposeFood(proposal);
+      await apiClient.proposeFood(proposal);
       setSuccess('Food proposal submitted successfully!');
       
       // Clear form or redirect after success
