@@ -44,6 +44,8 @@ const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
     const [fetchSuccess, setFetchSuccess] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
+    const [shouldFetch, setShouldFetch] = useState(true);
+    const [lastSearchedTerm, setLastSearchedTerm] = useState('');
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [count, setCount] = useState(0);
     const [next, setNext] = useState<string | null>(null);
@@ -77,7 +79,6 @@ const Foods = () => {
                 setFetchSuccess(true);
                 setWarning(response.warning || `No foods found for "${searchTerm}".`);
             }
-
         } catch (error) {
             console.error('Error fetching foods:', error);
             setFetchSuccess(false);
@@ -86,22 +87,39 @@ const Foods = () => {
     }
 
     useEffect(() => {
-        fetchFoods(page, searchTerm);
-    }, [page, searchTerm]);
+        if (shouldFetch) {
+            fetchFoods(page, searchTerm);
+            setShouldFetch(false);
+        }
+    }, [page, shouldFetch, searchTerm]);
+
+    // Initial load on component mount
+    useEffect(() => {
+        fetchFoods(1, '');
+    }, []);
 
     const pageSize = foods.length
     const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
 
     const handlePrev = () => {
-        if (previous && page > 1) setPage(page - 1);
+        if (previous && page > 1) {
+            setPage(page - 1);
+            setShouldFetch(true);
+        }
     };
+    
     const handleNext = () => {
-        if (next && page < totalPages) setPage(page + 1);
+        if (next && page < totalPages) {
+            setPage(page + 1);
+            setShouldFetch(true);
+        }
     };
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         setPage(1);
+        setShouldFetch(true);
+        setLastSearchedTerm(searchTerm);
     };
 
     return (
@@ -121,7 +139,7 @@ const Foods = () => {
                             value={searchTerm}
                             onChange={(e) => {
                                 setSearchTerm(e.target.value);
-                                setPage(1);
+                                // No automatic search on change anymore
                             }}
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -131,9 +149,12 @@ const Foods = () => {
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button type="submit" className="nh-button-primary px-6 py-2.5 whitespace-nowrap">
-                            Search
-                        </button>
+                        <button
+                            type="submit"
+                            className="nh-button-primary px-6 py-2.5 whitespace-nowrap"
+                        >
+                            Search 
+                        </button> 
                         <Link to="/foods/propose" className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"> Add Food</Link>
                     </div>
                 </form>
@@ -154,7 +175,7 @@ const Foods = () => {
                                 />
                             ))) : 
                             <p className="col-span-full text-center nh-text">
-                                No foods found matching your search: <b>{searchTerm}</b>
+                                No foods found matching your search: <b>{lastSearchedTerm}</b>
                             </p>
                         }
                         </div>

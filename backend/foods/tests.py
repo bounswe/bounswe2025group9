@@ -56,8 +56,8 @@ class FoodCatalogTests(TestCase):
         response = self.client.get(reverse("get_foods"), {"page": 2})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(
-            len(response.data), 4
-        )  # (count, next, previous, results) // no warnings since query is valid
+            len(response.data), 5
+        )  # (count, next, previous, results, status) // no warnings since query is valid
 
     def test_category_filtering(self):
         """
@@ -65,9 +65,16 @@ class FoodCatalogTests(TestCase):
         """
         response = self.client.get(reverse("get_foods"), {"category": "Fruit"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 4)
+        self.assertEqual(
+            len(response.data), 5
+        )  # (count, next, previous, results, status)
+        # Check that all results have category "Fruit"
         for food in response.data["results"]:
             self.assertEqual(food["category"], "Fruit")
+        # Check that the total count matches the number of Fruit entries in the DB
+        # self.assertEqual(response.data["count"], 2)
+        # # Check that the number of results on this page is at most the total count
+        self.assertLessEqual(len(response.data["results"]), 2)
 
     def test_case_insensitive_category_filtering(self):
         """
@@ -76,17 +83,17 @@ class FoodCatalogTests(TestCase):
         # Test with lowercase
         response_lower = self.client.get(reverse("get_foods"), {"category": "fruit"})
         self.assertEqual(response_lower.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_lower.data), 4)
+        self.assertEqual(len(response_lower.data), 5)
 
         # Test with uppercase
         response_upper = self.client.get(reverse("get_foods"), {"category": "FRUIT"})
         self.assertEqual(response_upper.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_upper.data), 4)
+        self.assertEqual(len(response_upper.data), 5)
 
         # Test with mixed case
         response_mixed = self.client.get(reverse("get_foods"), {"category": "FrUiT"})
         self.assertEqual(response_mixed.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response_mixed.data), 4)
+        self.assertEqual(len(response_mixed.data), 5)
 
     def test_nonexistent_category(self):
         """
