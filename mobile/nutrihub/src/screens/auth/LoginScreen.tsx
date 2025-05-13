@@ -40,7 +40,7 @@ interface LoginFormData {
  * Login screen component for user authentication
  */
 const LoginScreen: React.FC = () => {
-  const { theme, textStyles } = useTheme();
+  const { theme, textStyles, themeType } = useTheme();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { login, error: authError, clearError } = useAuth();
   
@@ -111,7 +111,7 @@ const LoginScreen: React.FC = () => {
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeType === 'light' ? '#0d7c5f' : theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}

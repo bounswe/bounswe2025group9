@@ -46,7 +46,7 @@ interface RegisterFormData {
  * Register screen component for user registration
  */
 const RegisterScreen: React.FC = () => {
-  const { theme, textStyles } = useTheme();
+  const { theme, textStyles, themeType } = useTheme();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { register, error: authError, clearError } = useAuth();
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -224,7 +224,7 @@ const RegisterScreen: React.FC = () => {
   // Render success screen
   if (registrationSuccess) {
     return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+      <SafeAreaView style={[styles.container, { backgroundColor: themeType === 'light' ? '#0d7c5f' : theme.background }]}>
         <View style={styles.successContainer}>
           <View style={[styles.successIconContainer, { backgroundColor: theme.success + '20' }]}>
             <Icon name="check-circle" size={80} color={theme.success} />
@@ -245,7 +245,7 @@ const RegisterScreen: React.FC = () => {
   }
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeType === 'light' ? '#0d7c5f' : theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
