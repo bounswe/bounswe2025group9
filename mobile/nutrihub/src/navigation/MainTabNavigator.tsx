@@ -163,15 +163,19 @@ const styles = StyleSheet.create({
   },
   logoTextContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'baseline',
   },
   logoTextNutri: {
     fontWeight: 'normal',
     fontSize: 18,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   logoTextHub: {
     fontWeight: '900',
     fontSize: 18,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   navContainer: {
     display: 'none', // Hide on mobile - would be visible on larger screens
