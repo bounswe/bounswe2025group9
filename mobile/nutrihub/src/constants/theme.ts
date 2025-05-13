@@ -125,6 +125,8 @@ export const PALETTE = {
     TEXT_SECONDARY: '#1f2937', // Matching frontend --color-light-hover (light)
     TEXT_DISABLED: '#9CA3AF', // NEUTRAL.GRAY_400
     DIVIDER: 'rgba(0, 0, 0, 0.15)',
+    HEADER: '#0d7c5f', // Green color for header/footer (matching frontend --color-dark)
+    HEADER_HOVER: '#065f46', // Green hover color (matching frontend --color-dark-hover)
   },
 
   // Component specific colors
@@ -296,9 +298,9 @@ export const LIGHT_THEME: Theme = {
   
   // Component specific
   card: PALETTE.LIGHT.SURFACE,
-  headerBackground: PALETTE.PRIMARY.DEFAULT,
-  headerText: PALETTE.PRIMARY.CONTRAST,
-  tabBarBackground: PALETTE.PRIMARY.DEFAULT,
+  headerBackground: PALETTE.LIGHT.HEADER, // Change to green from frontend
+  headerText: PALETTE.PRIMARY.CONTRAST, // White text on green header
+  tabBarBackground: PALETTE.LIGHT.HEADER, // Change tab bar to green
   tabBarActiveColor: PALETTE.COMPONENT.TAB_BAR_ACTIVE_LIGHT,
   tabBarInactiveColor: PALETTE.COMPONENT.TAB_BAR_INACTIVE_LIGHT,
   inputBackground: PALETTE.LIGHT.SURFACE,
