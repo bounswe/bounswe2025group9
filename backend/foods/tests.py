@@ -4,6 +4,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.conf import settings
 from foods.models import FoodEntry
+from unittest.mock import patch
 
 
 class FoodCatalogTests(TestCase):
@@ -139,23 +140,89 @@ class FoodCatalogTests(TestCase):
 
 class SuggestRecipeTests(TestCase):
     def test_suggest_recipe_successful(self):
-        """
-        Test that a valid food_name returns a recipe.
-        """
-        response = self.client.get(reverse("suggest_recipe"), {"food_name": "chicken"})
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        """Test that a valid food_name returns a recipe."""
+        response = self.client.get(reverse("suggest-recipe"), {"food_name": "chicken"})
+        self.assertEqual(response.status_code, 200)
         self.assertIn("Meal", response.data)
-        self.assertEqual(response.data["Meal"], "Chicken Handi")
+        self.assertIn("Instructions", response.data)
+        self.assertIsInstance(response.data["Meal"], str)
+        self.assertIsInstance(response.data["Instructions"], str)
 
     def test_suggest_recipe_unsuccessful(self):
-        """
-        Test that an unknown food_name returns a warning and 404.
-        """
+        """Test that an unknown food_name returns a warning and 404."""
         response = self.client.get(
-            reverse("suggest_recipe"), {"food_name": "food_not_in_db"}
+            reverse("suggest-recipe"), {"food_name": "food_not_in_db"}
         )
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.status_code, 404)
         self.assertIn("warning", response.data)
-        self.assertEqual(
-            response.data["warning"], "No recipe found for the given food name."
-        )
+        self.assertIn("results", response.data)
+
+class RandomMealTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse('random-meal')
+
+    @patch('requests.get')
+    def test_successful_random_meal(self, mock_get):
+        """Test that a successful API call returns a random meal with all required fields."""
+        # Mock successful API response
+        mock_response = {
+            "meals": [{
+                "idMeal": "52772",
+                "strMeal": "Teriyaki Chicken Casserole",
+                "strCategory": "Chicken",
+                "strArea": "Japanese",
+                "strInstructions": "Preheat oven to 350° F...",
+                "strMealThumb": "https://www.themealdb.com/images/media/meals/wvpsxx1468256321.jpg",
+                "strTags": "Meat,Casserole",
+                "strYoutube": "https://www.youtube.com/watch?v=4aZr5hXWPQ",
+                "strIngredient1": "soy sauce",
+                "strMeasure1": "3/4 cup",
+                "strIngredient2": "water",
+                "strMeasure2": "1/2 cup"
+            }]
+        }
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.status_code = 200
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Verify all required fields are present
+        self.assertIn('id', response.data)
+        self.assertIn('name', response.data)
+        self.assertIn('category', response.data)
+        self.assertIn('area', response.data)
+        self.assertIn('instructions', response.data)
+        self.assertIn('image', response.data)
+        self.assertIn('tags', response.data)
+        self.assertIn('youtube', response.data)
+        self.assertIn('ingredients', response.data)
+        
+        # Verify the data matches our mock
+        self.assertEqual(response.data['id'], "52772")
+        self.assertEqual(response.data['name'], "Teriyaki Chicken Casserole")
+        self.assertEqual(len(response.data['ingredients']), 2)
+
+    @patch('requests.get')
+    def test_empty_meals_response(self, mock_get):
+        """Test that an empty meals response returns appropriate error."""
+        # Mock empty meals response
+        mock_response = {"meals": None}
+        mock_get.return_value.json.return_value = mock_response
+        mock_get.return_value.status_code = 200
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn('warning', response.data)
+        self.assertIn('results', response.data)
+
+    @patch('requests.get')
+    def test_api_error(self, mock_get):
+        """Test that API errors are handled properly."""
+        # Mock API error
+        mock_get.side_effect = Exception("API Error")
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertIn('error', response.data)

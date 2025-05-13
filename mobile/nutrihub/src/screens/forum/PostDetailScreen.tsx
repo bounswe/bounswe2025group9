@@ -14,6 +14,7 @@ import {
   Platform,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -27,61 +28,10 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
+import { forumService } from '../../services/api/forum.service';
 
 type PostDetailRouteProp = RouteProp<ForumStackParamList, 'PostDetail'>;
 type PostDetailNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'PostDetail'>;
-
-// Mock data - will be replaced with API calls
-const MOCK_DATA = {
-  posts: [
-    {
-      id: 1,
-      title: 'Best vegetarian alternatives for meat?',
-      content: 'I\'ve been trying to cut down on meat consumption. What are your favorite plant-based alternatives that actually taste good?\n\nI\'ve tried tofu and tempeh, but I\'m looking for more options that have good texture and can absorb flavors well. Any recommendations for brands or preparation methods would be greatly appreciated!\n\nAlso interested in hearing about nutritional comparisons - how do these alternatives stack up against meat in terms of protein content?',
-      author: 'healthyeater22',
-      authorId: 101,
-      commentsCount: 3,
-      likesCount: 24,
-      isLiked: false,
-      tags: ['Nutrition Tip'],
-      createdAt: new Date('2023-10-15T11:30:00Z'),
-    },
-  ] as ForumTopic[],
-  comments: {
-    1: [
-      {
-        id: 1,
-        postId: 1,
-        content: 'Try seitan! It has a great meaty texture and is very high in protein. You can marinate it just like meat.',
-        author: 'veggielover',
-        authorId: 102,
-        createdAt: new Date('2023-10-15T14:20:00Z'),
-        likesCount: 5,
-        isLiked: false,
-      },
-      {
-        id: 2,
-        postId: 1,
-        content: 'Jackfruit is amazing for pulled "pork" style dishes. The texture is spot on! For protein, combine with beans.',
-        author: 'plantchef',
-        authorId: 103,
-        createdAt: new Date('2023-10-15T16:45:00Z'),
-        likesCount: 8,
-        isLiked: true,
-      },
-      {
-        id: 3,
-        postId: 1,
-        content: 'Don\'t forget about mushrooms! Portobello and king oyster mushrooms have great umami flavor and meaty texture.',
-        author: 'mushroomfan',
-        authorId: 104,
-        createdAt: new Date('2023-10-16T09:15:00Z'),
-        likesCount: 3,
-        isLiked: false,
-      },
-    ],
-  } as Record<number, Comment[]>,
-};
 
 const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailNavigationProp>();
@@ -93,24 +43,31 @@ const PostDetailScreen: React.FC = () => {
   const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submittingComment, setSubmittingComment] = useState(false);
   
-  // Simulate data fetching - replace with API calls
+  // Fetch post and comments data
   useEffect(() => {
     const fetchPostData = async () => {
       setIsLoading(true);
+      setError(null);
+      
       try {
-        // Simulate API delay
-        await new Promise(resolve => setTimeout(resolve, 500));
+        // Fetch post details
+        const postData = await forumService.getPost(postId);
+        setPost(postData);
         
-        // Find post in mock data
-        const foundPost = MOCK_DATA.posts.find(p => p.id === postId);
-        setPost(foundPost || null);
-        
-        // Get comments
-        const foundComments = MOCK_DATA.comments[postId];
-        setComments(foundComments || []);
-      } catch (error) {
-        console.error('Error fetching post data:', error);
+        // Fetch comments for the post
+        try {
+          const commentsData = await forumService.getComments(postId);
+          setComments(commentsData);
+        } catch (err) {
+          console.error('Error fetching comments:', err);
+          // Don't set an error just for comments - we can still show the post
+        }
+      } catch (err) {
+        console.error('Error fetching post data:', err);
+        setError('Failed to load post. Please try again later.');
       } finally {
         setIsLoading(false);
       }
@@ -133,25 +90,31 @@ const PostDetailScreen: React.FC = () => {
   // Handle adding a new comment
   const handleAddComment = async () => {
     if (newComment.trim() && post) {
-      const comment: Comment = {
-        id: Date.now(),
-        postId: post.id,
-        content: newComment.trim(),
-        author: 'currentUser',
-        authorId: 999,
-        createdAt: new Date(),
-        likesCount: 0,
-        isLiked: false,
-      };
+      setSubmittingComment(true);
       
-      setComments([...comments, comment]);
-      setNewComment('');
-      setPost(prev => prev ? { ...prev, commentsCount: prev.commentsCount + 1 } : null);
+      try {
+        // Submit comment to API
+        const createdComment = await forumService.createComment({
+          post: post.id,
+          body: newComment.trim()
+        });
+        
+        // Add comment to list and update post comment count
+        setComments(prevComments => [...prevComments, createdComment]);
+        setPost(prev => prev ? { ...prev, commentsCount: prev.commentsCount + 1 } : null);
+        setNewComment('');
+      } catch (err) {
+        console.error('Error adding comment:', err);
+        Alert.alert('Error', 'Failed to add comment. Please try again.');
+      } finally {
+        setSubmittingComment(false);
+      }
     }
   };
   
-  // Handle comment like
+  // Handle comment like - Note: The API doesn't support this yet
   const handleCommentLike = (commentId: number) => {
+    // Simulate comment liking until API supports it
     setComments(prevComments =>
       prevComments.map(comment =>
         comment.id === commentId
@@ -206,12 +169,13 @@ const PostDetailScreen: React.FC = () => {
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={[styles.loadingText, textStyles.body]}>Loading post...</Text>
         </View>
       </SafeAreaView>
     );
   }
   
-  if (!post) {
+  if (error || !post) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
@@ -223,7 +187,9 @@ const PostDetailScreen: React.FC = () => {
         </View>
         <View style={styles.errorContainer}>
           <Icon name="alert-circle" size={64} color={theme.textSecondary} />
-          <Text style={[styles.errorText, textStyles.heading4]}>Post not found</Text>
+          <Text style={[styles.errorText, textStyles.heading4]}>
+            {error || 'Post not found'}
+          </Text>
           <Text style={[styles.errorSubtext, textStyles.body]}>
             This post may have been deleted or is no longer available.
           </Text>
@@ -264,7 +230,18 @@ const PostDetailScreen: React.FC = () => {
             post={post}
             preview={false}
             showTags={true}
-            onLike={(updatedPost) => setPost(updatedPost)}
+            onLike={async (updatedPost) => {
+              try {
+                const isLiked = await forumService.toggleLike(post.id);
+                setPost(prev => prev ? {
+                  ...prev,
+                  isLiked,
+                  likesCount: isLiked ? prev.likesCount + 1 : prev.likesCount - 1
+                } : null);
+              } catch (err) {
+                console.error('Error toggling like:', err);
+              }
+            }}
           />
           
           {/* Comments Section */}
@@ -291,13 +268,15 @@ const PostDetailScreen: React.FC = () => {
             onChangeText={setNewComment}
             multiline
             containerStyle={styles.commentInput}
+            editable={!submittingComment}
           />
           <Button
             title="Submit"
             onPress={handleAddComment}
             variant="primary"
             size="small"
-            disabled={!newComment.trim()}
+            disabled={!newComment.trim() || submittingComment}
+            loading={submittingComment}
           />
         </View>
       </KeyboardAvoidingView>
@@ -336,6 +315,9 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.md,
   },
   errorContainer: {
     flex: 1,

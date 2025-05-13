@@ -134,6 +134,36 @@ class ApiClient {
       };
     }
   }
+
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.axiosInstance.patch<T>(url, data, config);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error: any) {
+      return {
+        status: error.response?.status || 500,
+        error: error.response?.data?.message || error.response?.data?.detail || error.message || 'An error occurred',
+      };
+    }
+  }
+
+  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.axiosInstance.delete<T>(url, config);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error: any) {
+      return {
+        status: error.response?.status || 500,
+        error: error.response?.data?.message || error.response?.data?.detail || error.message || 'An error occurred',
+      };
+    }
+  }
 }
 
 export const apiClient = new ApiClient();
