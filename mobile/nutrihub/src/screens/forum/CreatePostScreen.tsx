@@ -4,7 +4,7 @@
  * Screen for creating new forum posts (Nutrition Tips and Recipes).
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,6 +14,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -27,10 +28,11 @@ import Card from '../../components/common/Card';
 import useForm from '../../hooks/useForm';
 import { ForumStackParamList } from '../../navigation/types';
 import { POST_TAGS } from '../../constants/forumConstants';
+import { forumService, ApiTag, CreatePostRequest } from '../../services/api/forum.service';
 
 type CreatePostNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'CreatePost'>;
 
-type PostType = 'nutrition' | 'recipe';
+type PostType = 'nutrition' | 'recipe' | 'mealplan';
 
 interface NutritionTipFormData {
   title: string;
@@ -54,6 +56,44 @@ const CreatePostScreen: React.FC = () => {
   const [postType, setPostType] = useState<PostType>('nutrition');
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingredientSearch, setIngredientSearch] = useState('');
+  const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
+  const [loading, setLoading] = useState(true);
+  
+  // Fetch available tags
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        console.log('Fetching tags...');
+        const tags = await forumService.getTags();
+        console.log('Received tags:', tags);
+        if (Array.isArray(tags)) {
+          setAvailableTags(tags);
+        } else {
+          console.error('Tags is not an array:', tags);
+          setAvailableTags([]);
+        }
+      } catch (err) {
+        console.error('Error fetching tags:', err);
+        Alert.alert('Error', 'Failed to load post tags. Some features may be limited.');
+        setAvailableTags([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchTags();
+  }, []);
+  
+  // Helper function to get tag ID by name
+  const getTagIdByName = (tagName: string): number | null => {
+    if (!availableTags || !Array.isArray(availableTags)) {
+      console.warn('availableTags is not an array:', availableTags);
+      return null;
+    }
+    
+    const tag = availableTags.find(t => t && t.name && t.name.toLowerCase() === tagName.toLowerCase());
+    return tag ? tag.id : null;
+  };
   
   // Nutrition tip form
   const nutritionForm = useForm<NutritionTipFormData>({
@@ -72,21 +112,41 @@ const CreatePostScreen: React.FC = () => {
       ],
     },
     onSubmit: async (values) => {
-      navigation.navigate('ForumList', { 
-        action: 'addPost',
-        postData: {
-          id: Date.now(),
+      const dietaryTipTagId = getTagIdByName('Dietary tip');
+      if (!dietaryTipTagId) {
+        Alert.alert('Error', 'Failed to assign correct tag to post. Please try again.');
+        return;
+      }
+      
+      try {
+        const postData: CreatePostRequest = {
           title: values.title,
-          content: values.content,
-          author: 'currentUser',
-          authorId: 999,
-          commentsCount: 0,
-          likesCount: 0,
-          isLiked: false,
-          tags: [POST_TAGS.NUTRITION_TIP],
-          createdAt: new Date().toISOString(),
-        }
-      });
+          body: values.content,
+          tag_ids: [dietaryTipTagId]
+        };
+        
+        const createdPost = await forumService.createPost(postData);
+        
+        navigation.navigate('ForumList', { 
+          action: 'addPost',
+          postData: {
+            id: createdPost.id,
+            title: createdPost.title,
+            content: createdPost.content,
+            author: createdPost.author,
+            authorId: createdPost.authorId,
+            commentsCount: createdPost.commentsCount,
+            likesCount: createdPost.likesCount,
+            isLiked: createdPost.isLiked || false, // Provide default value for isLiked
+            tags: createdPost.tags,
+            createdAt: createdPost.createdAt.toISOString(),
+            updatedAt: createdPost.updatedAt?.toISOString(),
+          }
+        });
+      } catch (err) {
+        console.error('Error creating post:', err);
+        Alert.alert('Error', 'Failed to create post. Please try again.');
+      }
     },
   });
   
@@ -112,24 +172,44 @@ const CreatePostScreen: React.FC = () => {
         return;
       }
       
+      const recipeTagId = getTagIdByName('Recipe');
+      if (!recipeTagId) {
+        Alert.alert('Error', 'Failed to assign correct tag to post. Please try again.');
+        return;
+      }
+      
       // Format recipe content
       const recipeContent = `Ingredients:\n${ingredients.map(ing => `• ${ing.name}`).join('\n')}\n\nInstructions:\n${values.instructions}`;
       
-      navigation.navigate('ForumList', { 
-        action: 'addPost',
-        postData: {
-          id: Date.now(),
+      try {
+        const postData: CreatePostRequest = {
           title: values.recipeName,
-          content: recipeContent,
-          author: 'currentUser',
-          authorId: 999,
-          commentsCount: 0,
-          likesCount: 0,
-          isLiked: false,
-          tags: [POST_TAGS.RECIPE],
-          createdAt: new Date().toISOString(),
-        }
-      });
+          body: recipeContent,
+          tag_ids: [recipeTagId]
+        };
+        
+        const createdPost = await forumService.createPost(postData);
+        
+        navigation.navigate('ForumList', { 
+          action: 'addPost',
+          postData: {
+            id: createdPost.id,
+            title: createdPost.title,
+            content: createdPost.content,
+            author: createdPost.author,
+            authorId: createdPost.authorId,
+            commentsCount: createdPost.commentsCount,
+            likesCount: createdPost.likesCount,
+            isLiked: createdPost.isLiked || false, // Provide default value for isLiked
+            tags: createdPost.tags,
+            createdAt: createdPost.createdAt.toISOString(),
+            updatedAt: createdPost.updatedAt?.toISOString(),
+          }
+        });
+      } catch (err) {
+        console.error('Error creating recipe post:', err);
+        Alert.alert('Error', 'Failed to create recipe post. Please try again.');
+      }
     },
   });
   
@@ -145,6 +225,24 @@ const CreatePostScreen: React.FC = () => {
   const removeIngredient = (id: number) => {
     setIngredients(ingredients.filter(ing => ing.id !== id));
   };
+  
+  if (loading) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
+        <View style={[styles.header, { borderBottomColor: theme.border }]}>
+          <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+            <Icon name="arrow-left" size={24} color={theme.text} />
+          </TouchableOpacity>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>Create New Post</Text>
+          <View style={styles.headerSpacer} />
+        </View>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={theme.primary} />
+          <Text style={[styles.loadingText, textStyles.body]}>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
@@ -220,6 +318,31 @@ const CreatePostScreen: React.FC = () => {
                   Recipe
                 </Text>
               </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={[
+                  styles.postTypeButton,
+                  postType === 'mealplan' && styles.postTypeButtonActive,
+                  { borderColor: theme.border },
+                  postType === 'mealplan' && { backgroundColor: theme.primary, borderColor: theme.primary }
+                ]}
+                onPress={() => setPostType('mealplan')}
+              >
+                <Icon 
+                  name="calendar-text" 
+                  size={24} 
+                  color={postType === 'mealplan' ? '#FFFFFF' : theme.text} 
+                />
+                <Text 
+                  style={[
+                    styles.postTypeText, 
+                    textStyles.body,
+                    { color: postType === 'mealplan' ? '#FFFFFF' : theme.text }
+                  ]}
+                >
+                  Meal Plan
+                </Text>
+              </TouchableOpacity>
             </View>
           </Card>
           
@@ -255,7 +378,7 @@ const CreatePostScreen: React.FC = () => {
                 fullWidth
               />
             </Card>
-          ) : (
+          ) : postType === 'recipe' ? (
             /* Recipe Form */
             <>
               <Card style={styles.section}>
@@ -284,13 +407,13 @@ const CreatePostScreen: React.FC = () => {
                 
                 <View style={styles.ingredientSearchContainer}>
                   <TextInput
-                    placeholder="Search for an ingredient..."
+                    placeholder="Enter an ingredient..."
                     value={ingredientSearch}
                     onChangeText={setIngredientSearch}
                     onSubmitEditing={addIngredient}
                     returnKeyType="done"
                     containerStyle={styles.ingredientSearchInput}
-                    iconName="magnify"
+                    iconName="food-apple"
                   />
                 </View>
                 
@@ -329,11 +452,28 @@ const CreatePostScreen: React.FC = () => {
                   title="Post Recipe"
                   onPress={recipeForm.handleSubmit}
                   loading={recipeForm.isSubmitting}
-                  disabled={!recipeForm.isValid || recipeForm.isSubmitting}
+                  disabled={!recipeForm.isValid || recipeForm.isSubmitting || ingredients.length === 0}
                   fullWidth
                 />
               </Card>
             </>
+          ) : (
+            /* Meal Plan Form - Not implemented yet */
+            <Card style={styles.section}>
+              <View style={styles.comingSoonContainer}>
+                <Icon name="calendar-clock" size={48} color={theme.textSecondary} />
+                <Text style={[styles.comingSoonTitle, textStyles.heading4]}>Coming Soon!</Text>
+                <Text style={[styles.comingSoonText, textStyles.body]}>
+                  Meal plan creation is not yet available. Check back later for this feature!
+                </Text>
+                <Button
+                  title="Go Back"
+                  onPress={() => setPostType('nutrition')}
+                  variant="primary"
+                  style={styles.comingSoonButton}
+                />
+              </View>
+            </Card>
           )}
         </ScrollView>
       </KeyboardAvoidingView>
@@ -368,6 +508,14 @@ const styles = StyleSheet.create({
   content: {
     padding: SPACING.md,
     paddingBottom: SPACING.xl,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.md,
   },
   section: {
     marginBottom: SPACING.md,
@@ -429,6 +577,22 @@ const styles = StyleSheet.create({
   noIngredientsText: {
     textAlign: 'center',
     marginVertical: SPACING.md,
+  },
+  comingSoonContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: SPACING.xl,
+  },
+  comingSoonTitle: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  comingSoonText: {
+    textAlign: 'center',
+    marginBottom: SPACING.lg,
+  },
+  comingSoonButton: {
+    minWidth: 150,
   },
 });
 
