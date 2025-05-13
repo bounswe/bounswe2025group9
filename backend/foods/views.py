@@ -68,18 +68,15 @@ class FoodCatalog(ListAPIView):
             # No valid categories, return warning and empty results
             warning = getattr(self, "warning", None)
             if warning:
-                return Response(
-                    {"warning": warning, "results": [], "status": 206}, status=206
-                )
-            return Response({"results": [], "status": 200}, status=200)
+                return Response({"warning": warning, "results": [], "status": 206})
+            return Response({"results": [], "status": 206})
 
         # If no results after filtering (including search), return 204 No Content
         if queryset.count() == 0:
             warning = getattr(self, "warning", None)
             if warning:
-                return Response(
-                    {"warning": warning, "results": [], "status": 204}, status=204
-                )
+                return Response({"warning": warning, "results": [], "status": 204})
+            return Response({"results": [], "status": 204})
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -96,7 +93,7 @@ class FoodCatalog(ListAPIView):
                 data["status"] = 206
             else:
                 data = {"warning": warning, "results": data, "status": 206}
-            return Response(data, status=206)
+            return Response(data)
         # Always add status to response
         if isinstance(data, dict):
             data["status"] = 200
