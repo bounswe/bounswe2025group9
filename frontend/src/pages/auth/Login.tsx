@@ -18,7 +18,6 @@ const Login = () => {
         password: ''
     })
     const [loginError, setLoginError] = useState('')
-    const [loginErrors, setLoginErrors] = useState<{[key: string]: string}>({})
     const [successMessage, setSuccessMessage] = useState('')
     const [isLoading, setIsLoading] = useState(false)
     const [showPassword, setShowPassword] = useState(false)
@@ -76,7 +75,6 @@ const Login = () => {
         e.preventDefault()
         if (validateForm()) {
             setLoginError('')
-            setLoginErrors({})
             setIsLoading(true)
             try {
                 // use auth context login
@@ -85,127 +83,8 @@ const Login = () => {
                 // redirect to home page
                 navigate('/')
             } catch (err: any) {
-                console.error('Login error:', err)
-                
-                // Add more detailed logging to see the exact error structure
-                console.log('Error object:', err);
-                console.log('Error response:', err.response);
-                console.log('Error message:', err.message);
-                console.log('Error data:', err.data);
-                
-                // Check if error has data property (from our custom error in apiClient)
-                if (err.data) {
-                    const errorData = err.data;
-                    setLoginErrors(errorData);
-                    
-                    if (errorData.detail) {
-                        // Handle token authentication error (wrong username/password)
-                        setLoginError(errorData.detail);
-                        return;
-                    }
-                    
-                    // Get the first error field
-                    const firstErrorField = Object.keys(errorData)[0];
-                    
-                    if (firstErrorField && errorData[firstErrorField]) {
-                        const errorMessages = errorData[firstErrorField];
-                        let errorMessage = '';
-                        
-                        if (Array.isArray(errorMessages) && errorMessages.length > 0) {
-                            errorMessage = errorMessages[0];
-                        } else if (typeof errorMessages === 'string') {
-                            errorMessage = errorMessages;
-                        }
-                        
-                        if (errorMessage) {
-                            setLoginError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
-                            return;
-                        }
-                    }
-                    
-                    // If we couldn't extract a specific message but have error data
-                    setLoginError('Login failed. Please check your credentials.');
-                    return;
-                }
-                
-                // Handle different types of errors
-                if (err.message && err.message.includes('API error')) {
-                    // Extract the actual error from the API error message
-                    try {
-                        // If the error message itself contains JSON
-                        if (err.response && err.response.data) {
-                            const errorData = err.response.data;
-                            setLoginErrors(errorData);
-                            
-                            if (errorData.detail) {
-                                // Handle token authentication error (wrong username/password)
-                                setLoginError(errorData.detail);
-                                return;
-                            }
-                            
-                            // Get the first error field
-                            const firstErrorField = Object.keys(errorData)[0];
-                            
-                            if (firstErrorField && errorData[firstErrorField]) {
-                                const errorMessages = errorData[firstErrorField];
-                                let errorMessage = '';
-                                
-                                if (Array.isArray(errorMessages) && errorMessages.length > 0) {
-                                    errorMessage = errorMessages[0];
-                                } else if (typeof errorMessages === 'string') {
-                                    errorMessage = errorMessages;
-                                }
-                                
-                                if (errorMessage) {
-                                    setLoginError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
-                                    return;
-                                }
-                            }
-                        }
-                    } catch (parseErr) {
-                        console.error('Error parsing error message:', parseErr);
-                    }
-                    
-                    // If we couldn't extract a specific error, use the original message
-                    setLoginError(err.message);
-                } else if (err.response && err.response.data) {
-                    const errorData = err.response.data;
-                    
-                    if (errorData.detail) {
-                        // Handle token authentication error (wrong username/password)
-                        setLoginError(errorData.detail);
-                    } else if (typeof errorData === 'object') {
-                        // Handle field validation errors
-                        setLoginErrors(errorData);
-                        
-                        // Get the first error field
-                        const firstErrorField = Object.keys(errorData)[0];
-                        
-                        if (firstErrorField) {
-                            // Handle array or string error messages
-                            const errorMessages = errorData[firstErrorField];
-                            let errorMessage = '';
-                            
-                            if (Array.isArray(errorMessages) && errorMessages.length > 0) {
-                                errorMessage = errorMessages[0];
-                            } else if (typeof errorMessages === 'string') {
-                                errorMessage = errorMessages;
-                            }
-                            
-                            if (errorMessage) {
-                                setLoginError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
-                            } else {
-                                setLoginError('Login failed. Please check your credentials.');
-                            }
-                        } else {
-                            setLoginError('Login failed. Please check your credentials.');
-                        }
-                    } else {
-                        setLoginError('Login failed. Please check your credentials.');
-                    }
-                } else {
-                    setLoginError('Invalid username or password');
-                }
+                // simple error message for any login failure
+                setLoginError('Invalid username or password')
             } finally {
                 setIsLoading(false)
             }
@@ -301,29 +180,11 @@ const Login = () => {
                         </button>
                     </form>
 
-                    {/* Show either the general error message OR the field-specific errors, not both */}
-                    {loginError && Object.keys(loginErrors).length === 0 && (
+                    {loginError && (
                         <p className="mt-2 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-2 rounded-md flex items-center justify-center">
                             <X size={16} weight="bold" className="mr-1" />
                             {loginError}
                         </p>
-                    )}
-                    
-                    {/* Field-specific backend errors */}
-                    {Object.keys(loginErrors).length > 0 && (
-                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-                            <p className="font-medium text-error mb-1 flex items-center">
-                                <X size={16} weight="bold" className="mr-1" />
-                                Please fix the following errors:
-                            </p>
-                            <ul className="list-disc pl-5 text-sm text-error">
-                                {Object.entries(loginErrors).map(([field, message]) => (
-                                    <li key={field}>
-                                        <span className="capitalize">{field}</span>: {Array.isArray(message) ? message[0] : message}
-                                    </li>
-                                ))}
-                            </ul>
-                        </div>
                     )}
 
                     <div className="mt-4 text-center">
