@@ -1,8 +1,9 @@
 from django.urls import path
-from .views import FoodCatalog
-from foods.views import suggest_recipe
+from .views import FoodCatalog, suggest_recipe, get_random_meal
 
 urlpatterns = [
     path("", FoodCatalog.as_view(), name="get_foods"),
-    path("suggest_recipe/", suggest_recipe, name="suggest_recipe"),
+    path('catalog/', FoodCatalog.as_view(), name='food-catalog'),
+    path('suggest-recipe/', suggest_recipe, name='suggest-recipe'),
+    path('random-meal/', get_random_meal, name='random-meal'),
 ]

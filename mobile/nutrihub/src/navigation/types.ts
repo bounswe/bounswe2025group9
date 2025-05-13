@@ -80,6 +80,7 @@ export type ForumStackParamList = {
 
 /**
  * Serialized version of ForumTopic for navigation
+ * This matches the API response structure
  */
 export interface SerializedForumPost {
   id: number;
@@ -89,8 +90,8 @@ export interface SerializedForumPost {
   authorId: number;
   commentsCount: number;
   likesCount: number;
-  isLiked: boolean;
-  tags: string[]; // PostTagType[]
+  isLiked: boolean; // Changed from isLiked?: boolean to isLiked: boolean
+  tags: string[];
   createdAt: string; // ISO date string
   updatedAt?: string; // ISO date string
 }

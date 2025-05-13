@@ -941,6 +941,22 @@
 			}
 		},
 		{
+			"name": "Get Random Meal",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://127.0.0.1:8081/foods/random-meal/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["foods", "random-meal", ""]
+				},
+				"description": "**Get a random meal from TheMealDB API**\n\nReturns a random meal with complete details including:\n- id\n- name\n- category\n- area (cuisine type)\n- instructions\n- image URL\n- tags\n- youtube link\n- ingredients (with measurements)\n\nNo authentication required."
+			},
+			"response": []
+		},
+		{
 			"name": "delete_recipe",
 			"request": {
 				"method": "DELETE",

@@ -78,7 +78,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
   testID,
 }) => {
   const { theme, textStyles } = useTheme();
-  const [isLiked, setIsLiked] = useState(post.isLiked);
+  const [isLiked, setIsLiked] = useState(post.isLiked || false);
   const [likesCount, setLikesCount] = useState(post.likesCount);
   
   // Format date to a human-readable string
@@ -104,6 +104,38 @@ const ForumPost: React.FC<ForumPostProps> = ({
     }
   };
   
+  // Get icon for tag
+  const getTagIcon = (tagName: string): React.ComponentProps<typeof Icon>['name'] => {
+    // Check for prefix 'dietary' in case of inconsistent tag naming
+    const lowerTag = tagName.toLowerCase();
+    if (lowerTag.includes('diet') || lowerTag.includes('nutrition') || lowerTag.includes('tip')) {
+      return 'lightbulb-outline';
+    }
+    if (lowerTag.includes('recipe')) {
+      return 'chef-hat';
+    }
+    if (lowerTag.includes('meal') || lowerTag.includes('plan')) {
+      return 'calendar-text';
+    }
+    return 'tag';
+  };
+  
+  // Get color for tag
+  const getTagColor = (tagName: string): string => {
+    // Check for prefix in case of inconsistent tag naming
+    const lowerTag = tagName.toLowerCase();
+    if (lowerTag.includes('diet') || lowerTag.includes('nutrition') || lowerTag.includes('tip')) {
+      return '#4CAF50'; // Green
+    }
+    if (lowerTag.includes('recipe')) {
+      return '#FFA000'; // Amber
+    }
+    if (lowerTag.includes('meal') || lowerTag.includes('plan')) {
+      return '#2196F3'; // Blue
+    }
+    return theme.primary;
+  };
+  
   // Handle post press
   const handlePress = () => {
     if (onPress) {
@@ -113,11 +145,18 @@ const ForumPost: React.FC<ForumPostProps> = ({
   
   // Handle like press
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
+    // Update UI immediately for better UX
+    const newIsLiked = !isLiked;
+    setIsLiked(newIsLiked);
+    setLikesCount(prevCount => newIsLiked ? prevCount + 1 : prevCount - 1);
     
     if (onLike) {
-      onLike({ ...post, isLiked: !isLiked, likesCount: isLiked ? likesCount - 1 : likesCount + 1 });
+      // Pass the updated post object to the handler
+      onLike({ 
+        ...post, 
+        isLiked: newIsLiked, 
+        likesCount: newIsLiked ? post.likesCount + 1 : post.likesCount - 1 
+      });
     }
   };
   
@@ -134,10 +173,11 @@ const ForumPost: React.FC<ForumPostProps> = ({
       key={index} 
       style={[
         styles.tagContainer, 
-        { backgroundColor: theme.badgeBackground }
+        { backgroundColor: `${getTagColor(tag)}20` } // 20% opacity
       ]}
     >
-      <Text style={[styles.tagText, { color: theme.badgeText }]}>
+      <Icon name={getTagIcon(tag)} size={12} color={getTagColor(tag)} style={styles.tagIcon} />
+      <Text style={[styles.tagText, { color: getTagColor(tag) }]}>
         {tag}
       </Text>
     </View>
@@ -206,7 +246,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
         
         <Button
           iconName="comment-outline"
-          title={post.commentsCount.toString()}
+          title={(post.commentsCount || 0).toString()}
           variant="text"
           size="small"
           onPress={handleComment}
@@ -245,11 +285,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   tagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.xs,
     marginLeft: SPACING.xs,
     marginBottom: SPACING.xs,
+  },
+  tagIcon: {
+    marginRight: 3,
   },
   tagText: {
     fontSize: 12,
