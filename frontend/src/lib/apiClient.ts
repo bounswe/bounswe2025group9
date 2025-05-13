@@ -101,6 +101,7 @@ export interface ForumPost {
   tags: ForumTag[];
   likes: number;
   liked: boolean;
+  has_recipe?: boolean;
 }
 
 export interface ForumTag {
@@ -129,6 +130,42 @@ export interface CreateForumPostRequest {
 export interface CreateCommentRequest {
   post: number;
   body: string;
+}
+
+// Recipe types
+export interface RecipeIngredient {
+  id?: number;
+  food_id: number;
+  food_name?: string;
+  amount: number;
+  protein?: number;
+  fat?: number;
+  carbs?: number;
+  calories?: number;
+}
+
+export interface Recipe {
+  id: number;
+  post_id?: number;
+  post_title?: string;
+  author?: string;
+  instructions: string;
+  ingredients: RecipeIngredient[];
+  total_protein: number;
+  total_fat: number;
+  total_carbohydrates: number;
+  total_calories: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateRecipeRequest {
+  post_id: number;
+  instructions: string;
+  ingredients: {
+    food_id: number;
+    amount: number;
+  }[];
 }
 
 // api base urls
@@ -545,4 +582,39 @@ export const apiClient = {
       // Just log the error but don't throw
     });
   },
+
+  // recipes
+  createRecipe: (recipeData: CreateRecipeRequest) =>
+    fetchJson<Recipe>("/forum/recipes/", {
+      method: "POST",
+      body: JSON.stringify(recipeData)
+    }, true),
+    
+  getRecipe: (recipeId: number) =>
+    fetchJson<Recipe>(`/forum/recipes/${recipeId}/`, {
+      method: "GET"
+    }, true),
+    
+  getRecipeForPost: (postId: number) => {
+    console.log(`[API] Fetching recipe for post ID: ${postId}`);
+    return fetchJson<PaginatedResponse<Recipe>>(`/forum/recipes/?post=${postId}`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received recipe for post ID ${postId}:`, response);
+      // Return the first recipe if it exists
+      if (response && response.results && response.results.length > 0) {
+        return response.results[0];
+      }
+      return null;
+    }).catch(error => {
+      console.error(`[API] Error fetching recipe for post ID ${postId}:`, error);
+      throw error;
+    });
+  },
+    
+  updateRecipe: (recipeId: number, updateData: Partial<CreateRecipeRequest>) =>
+    fetchJson<Recipe>(`/forum/recipes/${recipeId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData)
+    }, true),
 };
