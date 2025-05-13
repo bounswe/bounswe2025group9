@@ -141,7 +141,7 @@ class FoodCatalogTests(TestCase):
 class SuggestRecipeTests(TestCase):
     def test_suggest_recipe_successful(self):
         """Test that a valid food_name returns a recipe."""
-        response = self.client.get(reverse("suggest-recipe"), {"food_name": "chicken"})
+        response = self.client.get(reverse("suggest_recipe"), {"food_name": "chicken"})
         self.assertEqual(response.status_code, 200)
         self.assertIn("Meal", response.data)
         self.assertIn("Instructions", response.data)
@@ -151,7 +151,7 @@ class SuggestRecipeTests(TestCase):
     def test_suggest_recipe_unsuccessful(self):
         """Test that an unknown food_name returns a warning and 404."""
         response = self.client.get(
-            reverse("suggest-recipe"), {"food_name": "food_not_in_db"}
+            reverse("suggest_recipe"), {"food_name": "food_not_in_db"}
         )
         self.assertEqual(response.status_code, 404)
         self.assertIn("warning", response.data)
