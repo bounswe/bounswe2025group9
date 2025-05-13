@@ -128,7 +128,7 @@ const Login = () => {
                                 placeholder="Enter your username"
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                <p className="nh-error-message">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.username}
                                 </p>
@@ -164,7 +164,7 @@ const Login = () => {
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                <p className="nh-error-message">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.password}
                                 </p>
@@ -181,7 +181,7 @@ const Login = () => {
                     </form>
 
                     {loginError && (
-                        <p className="mt-2 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-2 rounded-md flex items-center justify-center">
+                        <p className="nh-error-message mt-2 justify-center">
                             <X size={16} weight="bold" className="mr-1" />
                             {loginError}
                         </p>

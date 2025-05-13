@@ -302,7 +302,7 @@ const SignUp = () => {
                                     placeholder="Enter your first name"
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <p className="nh-error-message">
                                         <X size={14} weight="bold" className="mr-1" />
                                         {errors.name}
                                     </p>
@@ -325,7 +325,7 @@ const SignUp = () => {
                                     placeholder="Enter your last name"
                                 />
                                 {errors.surname && (
-                                    <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                    <p className="nh-error-message">
                                         <X size={14} weight="bold" className="mr-1" />
                                         {errors.surname}
                                     </p>
@@ -349,7 +349,7 @@ const SignUp = () => {
                                 placeholder="Enter your email"
                             />
                             {errors.email && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                <p className="nh-error-message">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.email}
                                 </p>
@@ -372,7 +372,7 @@ const SignUp = () => {
                                 placeholder="Choose a username"
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                <p className="nh-error-message">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.username}
                                 </p>
@@ -410,7 +410,7 @@ const SignUp = () => {
                                 </button>
                             </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                <p className="nh-error-message">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.password}
                                 </p>
@@ -486,13 +486,13 @@ const SignUp = () => {
                             {formData.confirmPassword && (
                                 <div className="flex items-center mt-1">
                                     {criteriaIcon(passwordCriteria.passwordsMatch)}
-                                    <span className={`ml-2 text-sm ${passwordCriteria.passwordsMatch ? 'text-success' : 'text-error'}`}>
+                                    <span className="ml-2 text-sm" style={{ color: passwordCriteria.passwordsMatch ? 'var(--color-success)' : 'var(--color-error)' }}>
                                         {passwordCriteria.passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
                                     </span>
                                 </div>
                             )}
                             {errors.confirmPassword && (
-                                <p className="mt-1 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-1.5 rounded-md flex items-center">
+                                <p className="nh-error-message">
                                     <X size={14} weight="bold" className="mr-1" />
                                     {errors.confirmPassword}
                                 </p>
@@ -509,7 +509,7 @@ const SignUp = () => {
 
                     {/* Show either the general error message OR the field-specific errors, not both */}
                     {signupError && Object.keys(signupErrors).length === 0 && (
-                        <p className="mt-2 text-sm font-medium bg-red-50 dark:bg-red-900/20 text-error p-2 rounded-md flex items-center justify-center">
+                        <p className="nh-error-message mt-2 justify-center">
                             <X size={16} weight="bold" className="mr-1" />
                             {signupError}
                         </p>
@@ -517,9 +517,8 @@ const SignUp = () => {
                     
                     {/* Field-specific backend errors */}
                     {Object.keys(signupErrors).length > 0 && (
-                        <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded-md">
-       
-                            <ul className="list-disc pl-5 text-sm text-error">
+                        <div className="nh-error-list">
+                            <ul>
                                 {Object.entries(signupErrors).map(([field, message]) => (
                                     <li key={field}>
                                         <span className="capitalize">{field}</span>: {Array.isArray(message) ? message[0] : message}
