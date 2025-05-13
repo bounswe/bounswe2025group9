@@ -71,10 +71,8 @@ class FoodCatalogTests(TestCase):
         # Check that all results have category "Fruit"
         for food in response.data["results"]:
             self.assertEqual(food["category"], "Fruit")
-        # Check that the total count matches the number of Fruit entries in the DB
-        # self.assertEqual(response.data["count"], 2)
-        # # Check that the number of results on this page is at most the total count
-        self.assertLessEqual(len(response.data["results"]), 2)
+        # # Check that at least Fruit instances we insterted are in the db
+        self.assertLessEqual(2, len(response.data["results"]))
 
     def test_case_insensitive_category_filtering(self):
         """
