@@ -3,8 +3,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from foods.models import FoodEntry
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from foods.serializers import FoodEntrySerializer
+from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
 from rest_framework.generics import ListAPIView
+from rest_framework import status
 from django.db.models import Q
 import requests
 from rest_framework.decorators import api_view, permission_classes
@@ -166,20 +167,30 @@ def get_random_meal(request):
                 "ingredients": [
                     {
                         "ingredient": meal.get(f"strIngredient{i}"),
-                        "measure": meal.get(f"strMeasure{i}")
+                        "measure": meal.get(f"strMeasure{i}"),
                     }
                     for i in range(1, 21)
                     if meal.get(f"strIngredient{i}")
-                ]
+                ],
             }
         )
     except requests.RequestException as e:
         return Response(
             {"error": f"Failed to fetch random meal: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
     except Exception as e:
         return Response(
             {"error": f"An unexpected error occurred: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
         )
+
+
+@permission_classes([IsAuthenticated])
+class FoodProposalSubmitView(APIView):
+    def post(self, request):
+        serializer = FoodProposalSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(proposedBy=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -972,6 +972,38 @@
 				},
 				"description": "**Delete a recipe**\n\nRemove a recipe from a post. Only the post author can delete the recipe.\n\nReturns:\n- `204 No Content` on successful deletion\n- `403 Forbidden` if not the post author\n- `404 Not Found` if recipe doesn't exist"
 			}
+		},
+		{
+			"name": "submit_food_proposal",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Greek Salad\",\n  \"category\": \"Salad\",\n  \"servingSize\": 150,\n  \"caloriesPerServing\": 120,\n  \"proteinContent\": 4.5,\n  \"fatContent\": 8.0,\n  \"carbohydrateContent\": 10.0,\n  \"dietaryOptions\": [\"Vegetarian\", \"Low-Carb\"],\n  \"nutritionScore\": 75.2,\n  \"imageUrl\": \"https://example.com/salad.jpg\",\n  \"allergens\": []\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8081/foods/manual-proposal/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"foods",
+						"proposal",
+						""
+					]
+				},
+				"description": "**Submit a new food proposal**\n\nExample request body:\n```json\n{\n  \"name\": \"Greek Salad\",\n  \"category\": \"Salad\",\n  \"servingSize\": 150,\n  \"caloriesPerServing\": 120,\n  \"proteinContent\": 4.5,\n  \"fatContent\": 8.0,\n  \"carbohydrateContent\": 10.0,\n  \"dietaryOptions\": [\"Vegetarian\", \"Low-Carb\"],\n  \"nutritionScore\": 75.2,\n  \"imageUrl\": \"https://example.com/salad.jpg\",\n  \"allergens\": []\n}\n```"
+			},
+			"response": []
 		}
 	]
 }
