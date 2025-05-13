@@ -101,7 +101,13 @@ const PostDetailScreen: React.FC = () => {
         
         // Add comment to list and update post comment count
         setComments(prevComments => [...prevComments, createdComment]);
-        setPost(prev => prev ? { ...prev, commentsCount: prev.commentsCount + 1 } : null);
+        setPost(prev => {
+          if (!prev) return null;
+          return { 
+            ...prev, 
+            commentsCount: (prev.commentsCount || 0) + 1 
+          };
+        });
         setNewComment('');
       } catch (err) {
         console.error('Error adding comment:', err);
@@ -236,10 +242,13 @@ const PostDetailScreen: React.FC = () => {
                 setPost(prev => prev ? {
                   ...prev,
                   isLiked,
-                  likesCount: isLiked ? prev.likesCount + 1 : prev.likesCount - 1
+                  likesCount: isLiked 
+                    ? (prev.likesCount || 0) + 1 
+                    : Math.max((prev.likesCount || 0) - 1, 0) // Ensure count doesn't go below 0
                 } : null);
               } catch (err) {
                 console.error('Error toggling like:', err);
+                Alert.alert('Error', 'Failed to update like status. Please try again.');
               }
             }}
           />

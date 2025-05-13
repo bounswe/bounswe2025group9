@@ -2,6 +2,6 @@
 export const API_CONFIG = {
   BASE_URL: __DEV__ 
     ? 'http://164.92.234.228/api'  // Development, ADD PUBLIC IP HERE!
-    : 'https://api.nutrihub.com',  // Production
+    : 'http://164.92.234.228/api',  // Production
   TIMEOUT: 10000,
 };

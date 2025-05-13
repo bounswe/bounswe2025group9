@@ -20,6 +20,8 @@ export interface ApiForumTopic {
     name: string;
   }>;
   like_count: number;
+  comments_count?: number; // Some endpoints might include this
+  is_liked?: boolean;      // Some endpoints might include this
   created_at: string;
   updated_at: string;
 }
@@ -29,6 +31,8 @@ export interface ApiComment {
   post: number;
   body: string;
   author: string;
+  like_count?: number;
+  is_liked?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -57,9 +61,9 @@ const mapApiTopicToForumTopic = (apiTopic: ApiForumTopic): ForumTopic => {
     content: apiTopic.body,
     author: apiTopic.author,
     authorId: 0, // Not provided in API
-    commentsCount: 0, // We'll need to fetch separately 
-    likesCount: apiTopic.like_count,
-    isLiked: false, // Not provided in basic API response
+    commentsCount: apiTopic.comments_count || 0, // Use API value if available
+    likesCount: apiTopic.like_count || 0, // Add fallback for like_count
+    isLiked: apiTopic.is_liked || false, // Add fallback for is_liked
     tags: apiTopic.tags.map(tag => tag.name),
     createdAt: new Date(apiTopic.created_at),
     updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
@@ -75,9 +79,22 @@ const mapApiCommentToComment = (apiComment: ApiComment): Comment => {
     author: apiComment.author,
     authorId: 0, // Not provided in API
     createdAt: new Date(apiComment.created_at),
-    likesCount: 0, // Not provided in API
-    isLiked: false, // Not provided in API
+    likesCount: apiComment.like_count || 0, // Add fallback
+    isLiked: apiComment.is_liked || false, // Add fallback
   };
+};
+
+// Helper function to fetch comments count for a post
+const fetchCommentsCount = async (postId: number): Promise<number> => {
+  try {
+    const response = await apiClient.get<PaginatedResponse<ApiComment>>(`/forum/comments/?post=${postId}`);
+    if (response.error) return 0;
+    
+    return response.data?.count || 0;
+  } catch (err) {
+    console.warn(`Error fetching comments count for post ${postId}:`, err);
+    return 0;
+  }
 };
 
 export const forumService = {
@@ -97,7 +114,38 @@ export const forumService = {
       throw new Error('Unexpected API response format');
     }
     
-    return response.data.results.map(mapApiTopicToForumTopic);
+    // Map posts and enrich with comments count if needed
+    const mappedPosts = response.data.results.map(mapApiTopicToForumTopic);
+    
+    // If the API doesn't provide comments_count, fetch them individually
+    // (this can be resource-intensive for many posts)
+    const postsNeedingCommentCount = mappedPosts.filter(post => post.commentsCount === 0);
+    
+    if (postsNeedingCommentCount.length > 0) {
+      console.log(`Fetching comment counts for ${postsNeedingCommentCount.length} posts...`);
+      
+      // Fetch comments counts in parallel
+      const commentCountPromises = postsNeedingCommentCount.map(post => 
+        fetchCommentsCount(post.id).then(count => ({ postId: post.id, count }))
+      );
+      
+      try {
+        const commentCounts = await Promise.all(commentCountPromises);
+        
+        // Update posts with fetched comment counts
+        commentCounts.forEach(({ postId, count }) => {
+          const post = mappedPosts.find(p => p.id === postId);
+          if (post) {
+            post.commentsCount = count;
+          }
+        });
+      } catch (err) {
+        console.error('Error fetching comment counts:', err);
+        // Continue with existing data if there's an error
+      }
+    }
+    
+    return mappedPosts;
   },
 
   // Get single post by ID
@@ -109,22 +157,15 @@ export const forumService = {
       throw new Error('Post not found');
     }
     
-    // Fetch comments count for this post
-    let commentsCount = 0;
-    try {
-      const commentsResponse = await apiClient.get<PaginatedResponse<ApiComment>>(`/forum/comments/?post=${id}`);
-      if (commentsResponse.data && commentsResponse.data.count) {
-        commentsCount = commentsResponse.data.count;
-      }
-    } catch (err) {
-      console.warn('Could not fetch comments count:', err);
+    // Map the post data
+    const mappedPost = mapApiTopicToForumTopic(response.data);
+    
+    // Fetch comments count if not included in API response
+    if (mappedPost.commentsCount === 0) {
+      mappedPost.commentsCount = await fetchCommentsCount(id);
     }
     
-    const mappedPost = mapApiTopicToForumTopic(response.data);
-    return {
-      ...mappedPost,
-      commentsCount
-    };
+    return mappedPost;
   },
 
   // Create a new post
