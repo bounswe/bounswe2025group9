@@ -522,6 +522,8 @@ export const apiClient = {
     }).catch(error => {
       console.error(`[API] Error searching for posts with query "${query}":`, error);
       throw error;
+    });
+  },
   
   // logout endpoint
   logout: (refreshToken: string) => {
