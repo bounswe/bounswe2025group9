@@ -45,7 +45,6 @@ const Foods = () => {
     const [fetchSuccess, setFetchSuccess] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [shouldFetch, setShouldFetch] = useState(true);
-    const [lastSearchedTerm, setLastSearchedTerm] = useState('');
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [count, setCount] = useState(0);
     const [next, setNext] = useState<string | null>(null);
@@ -119,7 +118,6 @@ const Foods = () => {
         e.preventDefault();
         setPage(1);
         setShouldFetch(true);
-        setLastSearchedTerm(searchTerm);
     };
 
     return (
@@ -160,12 +158,12 @@ const Foods = () => {
                 </form>
                 {warning && (
                     <div className="mb-6 text-center text-yellow-700 bg-yellow-100 border border-yellow-300 rounded p-3">
-                        {warning} {searchTerm && <span>(searched: <b>{searchTerm}</b>)</span>}
+                        {warning}
                     </div>
                 )}
                 {fetchSuccess ? (
                         <>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {foods.length > 0 ?
                             (foods.map(food => (
                                 <FoodItem 
@@ -174,9 +172,7 @@ const Foods = () => {
                                     onClick={() => setSelectedFood(food)}
                                 />
                             ))) : 
-                            <p className="col-span-full text-center nh-text">
-                                No foods found matching your search: <b>{lastSearchedTerm}</b>
-                            </p>
+                            null
                         }
                         </div>
                         <div className="flex justify-center mt-8 gap-4">
