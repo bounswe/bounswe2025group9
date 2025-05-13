@@ -5,6 +5,7 @@ from foods.models import FoodEntry
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from foods.serializers import FoodEntrySerializer
 from rest_framework.generics import ListAPIView
+from django.db.models import Q
 
 
 class FoodCatalog(ListAPIView):
@@ -19,6 +20,12 @@ class FoodCatalog(ListAPIView):
         available_categories_lc = [cat.lower() for cat in available_categories]
 
         self.warning = None  # Store warning for use in list()
+
+        # --- Search term support ---
+        search_term = self.request.query_params.get("search", "").strip()
+        if search_term:
+            # Filter by name or description containing the search term (case-insensitive)
+            queryset = queryset.filter(Q(name__icontains=search_term))
 
         categories_param = self.request.query_params.get("categories", None)
         if categories_param is None:
