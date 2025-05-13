@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package*.json ./
 ARG VITE_API_BASE_URL
 ENV VITE_API_BASE_URL=${VITE_API_BASE_URL}
-RUN npm ci
+RUN npm install
 COPY . .
 RUN npm run build
 
