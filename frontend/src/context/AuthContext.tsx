@@ -140,6 +140,20 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   
   // logout function
   const logout = () => {
+    // get refresh token before clearing
+    const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY);
+    
+    // if we have a refresh token, send logout request to backend
+    if (refreshToken) {
+      apiClient.logout(refreshToken)
+        .then(() => {
+          console.log('Successfully logged out on server');
+        })
+        .catch(error => {
+          console.error('Error logging out on server:', error);
+        });
+    }
+    
     // clear tokens from memory
     setAccessTokenState(null);
     setRefreshToken(null);

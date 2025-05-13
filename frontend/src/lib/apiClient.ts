@@ -1,10 +1,11 @@
-// api client for making requests to our mock api
-
-export interface PaginationResponse<T> {
+// api client for making requests to our apis
+export interface PaginatedResponseWithStatus<T> {
   count: number;
   next: string | null;
   previous: string | null;
   results: T[];
+  status?: number;
+  warning?: string;
 }
 // types
 export interface Food {
@@ -100,6 +101,7 @@ export interface ForumPost {
   tags: ForumTag[];
   likes: number;
   liked: boolean;
+  has_recipe?: boolean;
 }
 
 export interface ForumTag {
@@ -128,6 +130,42 @@ export interface CreateForumPostRequest {
 export interface CreateCommentRequest {
   post: number;
   body: string;
+}
+
+// Recipe types
+export interface RecipeIngredient {
+  id?: number;
+  food_id: number;
+  food_name?: string;
+  amount: number;
+  protein?: number;
+  fat?: number;
+  carbs?: number;
+  calories?: number;
+}
+
+export interface Recipe {
+  id: number;
+  post_id?: number;
+  post_title?: string;
+  author?: string;
+  instructions: string;
+  ingredients: RecipeIngredient[];
+  total_protein: number;
+  total_fat: number;
+  total_carbohydrates: number;
+  total_calories: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateRecipeRequest {
+  post_id: number;
+  instructions: string;
+  ingredients: {
+    food_id: number;
+    amount: number;
+  }[];
 }
 
 // api base urls
@@ -193,12 +231,15 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 
     if (!response.ok) {
       let errorBody = 'No error details available';
+      let errorData = null;
+      
       try {
         const errorText = await response.text();
         errorBody = errorText;
         // Try parsing as JSON if possible
         try {
           const errorJson = JSON.parse(errorText);
+          errorData = errorJson;
           errorBody = JSON.stringify(errorJson, null, 2);
         } catch {
           // Not JSON, use as is
@@ -208,7 +249,17 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       }
       
       console.error(`API error (${response.status} ${response.statusText}):`, errorBody);
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      
+      // Create a custom error with the error data attached
+      const error = new Error(`API error: ${response.status} ${response.statusText}`);
+      // @ts-ignore - Adding custom property to Error object
+      error.status = response.status;
+      // @ts-ignore - Adding custom property to Error object
+      error.statusText = response.statusText;
+      // @ts-ignore - Adding custom property to Error object
+      error.data = errorData;
+      
+      throw error;
     }
 
     const data = await response.json();
@@ -223,13 +274,20 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number }) => {
+  getFoods: (params?: { page?: number, search?: string}) => {
     let url = "/foods";
-    // set page number
+    const queryParams = new URLSearchParams();
     if (params && params.page) {
-      url += `?page=${params.page}`;
+      queryParams.append('page', params.page.toString());
     }
-    return fetchJson<PaginationResponse<Food>>(url, {
+    if (params && params.search) {
+      queryParams.append('search', params.search);
+    }
+    const queryString = queryParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    return fetchJson<PaginatedResponseWithStatus<Food>>(url, {
       method: "GET",
     }, true);
   },
@@ -482,4 +540,81 @@ export const apiClient = {
       throw error;
     });
   },
+
+  // search forum posts with fuzzy matching
+  searchForumPosts: (query: string) => {
+    console.log(`[API] Searching for posts with query: "${query}"`);
+    const url = `/forum/posts/search/?q=${encodeURIComponent(query)}`;
+    
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received search results for query "${query}":`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error searching for posts with query "${query}":`, error);
+      throw error;
+    });
+  },
+  
+  // logout endpoint
+  logout: (refreshToken: string) => {
+    console.log('[API] Logging out on the server');
+    return fetchJson<void>("/users/token/logout/", {
+      method: "POST",
+      body: JSON.stringify({ refresh: refreshToken }),
+    }, true).catch(error => {
+      console.error('[API] Error during logout:', error);
+      // Even if the server logout fails, we want to continue with the local logout
+      // Just log the error but don't throw
+    });
+  },
+
+  // recipes
+  createRecipe: (recipeData: CreateRecipeRequest) =>
+    fetchJson<Recipe>("/forum/recipes/", {
+      method: "POST",
+      body: JSON.stringify(recipeData)
+    }, true),
+    
+  getRecipe: (recipeId: number) =>
+    fetchJson<Recipe>(`/forum/recipes/${recipeId}/`, {
+      method: "GET"
+    }, true),
+    
+  getRecipeForPost: (postId: number) => {
+    console.log(`[API] Fetching recipe for post ID: ${postId}`);
+    return fetchJson<PaginatedResponse<Recipe>>(`/forum/recipes/?post=${postId}`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received recipe for post ID ${postId}:`, response);
+      // Return the first recipe if it exists
+      if (response && response.results && response.results.length > 0) {
+        return response.results[0];
+      }
+      return null;
+    }).catch(error => {
+      console.error(`[API] Error fetching recipe for post ID ${postId}:`, error);
+      throw error;
+    });
+  },
+    
+  updateRecipe: (recipeId: number, updateData: Partial<CreateRecipeRequest>) =>
+    fetchJson<Recipe>(`/forum/recipes/${recipeId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData)
+    }, true),
 };

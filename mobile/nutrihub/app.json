@@ -10,7 +10,7 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#0d7c5f"
     },
     "ios": {
       "supportsTablet": true
@@ -18,11 +18,17 @@
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+        "backgroundColor": "#0d7c5f"
+      },
+      "package": "com.y4z1c1.nutrihub"
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "082f0add-9ca4-42a3-9133-e8b160fa4c7f"
+      }
     }
   }
 }

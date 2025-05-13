@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SPACING, PALETTE } from '../constants/theme';
@@ -41,23 +41,19 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
     <SafeAreaView edges={['top']} style={{ backgroundColor: theme.headerBackground }}>
       <View style={[styles.header, { backgroundColor: theme.headerBackground, borderBottomColor: theme.border }]}>
         <View style={styles.logoContainer}>
-          <Icon name="heart-pulse" size={24} color={theme.headerText} />
-          <Text style={[styles.logoText, { color: theme.headerText }]}>NutriHub</Text>
-        </View>
-        
-        <View style={styles.navContainer}>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: theme.headerText }]}>Home</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: theme.headerText }]}>Foods</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: theme.headerText }]}>Forum</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.navItem}>
-            <Text style={[styles.navText, { color: theme.headerText }]}>API Examples [TEMPORARY]</Text>
-          </TouchableOpacity>
+          <Image 
+            source={require('../../assets/logo.png')} 
+            style={styles.logoImage} 
+            resizeMode="contain"
+          />
+          <View style={styles.logoTextContainer}>
+            <Text style={[styles.logoTextNutri, { color: theme.headerText, fontFamily: 'Poppins_400Regular' }]}>
+              Nutri
+            </Text>
+            <Text style={[styles.logoTextHub, { color: theme.headerText, fontFamily: 'Poppins_900Black' }]}>
+              Hub
+            </Text>
+          </View>
         </View>
         
         <View style={styles.rightContainer}>
@@ -160,10 +156,26 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  logoText: {
-    fontWeight: 'bold',
+  logoImage: {
+    width: 36,
+    height: 36,
+    marginRight: SPACING.xs,
+  },
+  logoTextContainer: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+  },
+  logoTextNutri: {
+    fontWeight: 'normal',
     fontSize: 18,
-    marginLeft: SPACING.xs,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+  },
+  logoTextHub: {
+    fontWeight: '900',
+    fontSize: 18,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
   },
   navContainer: {
     display: 'none', // Hide on mobile - would be visible on larger screens

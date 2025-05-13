@@ -1,6 +1,6 @@
 // forum page component
 import { useState, useEffect } from 'react'
-import { User, ThumbsUp,PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel } from '@phosphor-icons/react'
+import { User, ThumbsUp, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel, MagnifyingGlass } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
@@ -75,6 +75,12 @@ const Forum = () => {
     const [activeFilter, setActiveFilter] = useState<number | null>(null);
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
     
+    // Search related state
+    const [searchQuery, setSearchQuery] = useState<string>('');
+    const [isSearching, setIsSearching] = useState<boolean>(false);
+    const [searchResults, setSearchResults] = useState<ForumPost[]>([]);
+    const [searchResultsCount, setSearchResultsCount] = useState<number>(0);
+    
     // helper to get liked posts for the current user from local storage
     const getUserLikedPostsFromStorage = (): {[key: number]: boolean} => {
         const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
@@ -113,7 +119,32 @@ const Forum = () => {
     
     // Apply pagination to filtered posts
     useEffect(() => {
-        if (allPosts.length > 0) {
+        if (isSearching && activeFilter) {
+            // When both searching and filtering, show intersection
+            const filteredSearchResults = searchResults.filter(post => 
+                post.tags.some(tag => tag.id === activeFilter)
+            );
+            
+            setTotalCount(filteredSearchResults.length);
+            
+            // Get current page posts from filtered search results
+            const indexOfLastPost = currentPage * postsPerPage;
+            const indexOfFirstPost = indexOfLastPost - postsPerPage;
+            const currentPosts = filteredSearchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredSearchResults.length));
+            
+            setPosts(currentPosts);
+        } else if (isSearching) {
+            // When only searching, use search results
+            setTotalCount(searchResultsCount);
+            
+            // Get current page posts from search results
+            const indexOfLastPost = currentPage * postsPerPage;
+            const indexOfFirstPost = indexOfLastPost - postsPerPage;
+            const currentPosts = searchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, searchResults.length));
+            
+            setPosts(currentPosts);
+        } else if (allPosts.length > 0) {
+            // When only filtering or no filters, use allPosts
             const filteredPosts = activeFilter 
                 ? allPosts.filter(post => post.tags.some(tag => tag.id === activeFilter))
                 : allPosts;
@@ -127,7 +158,7 @@ const Forum = () => {
             
             setPosts(currentPosts);
         }
-    }, [allPosts, currentPage, postsPerPage, activeFilter]);
+    }, [allPosts, currentPage, postsPerPage, activeFilter, isSearching, searchResults, searchResultsCount]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
@@ -170,10 +201,21 @@ const Forum = () => {
             // Use local storage as the primary source of truth for liked status
             const userLikedPosts = getUserLikedPostsFromStorage();
 
-            const fetchedPosts = response.results.map(post => ({
-                ...post,
-                liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
-            }));
+            const fetchedPosts = response.results.map(post => {
+                // Normalize the author field to ensure it's an object with an id and username
+                let normalizedAuthor = post.author;
+                if (typeof post.author === 'string') {
+                    normalizedAuthor = { id: 0, username: post.author };
+                } else if (!post.author || !post.author.username) {
+                    normalizedAuthor = { id: 0, username: 'Anonymous' };
+                }
+                
+                return {
+                    ...post,
+                    author: normalizedAuthor,
+                    liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+                };
+            });
 
             // Handle pagination if necessary (though large page_size reduces need)
             let allResults = [...fetchedPosts];
@@ -184,10 +226,21 @@ const Forum = () => {
                 currentPageNum++;
                 try {
                     const nextPageResponse = await apiClient.getForumPosts({ ...params, page: currentPageNum });
-                    const nextPagePosts = nextPageResponse.results.map(post => ({
-                        ...post,
-                        liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
-                    }));
+                    const nextPagePosts = nextPageResponse.results.map(post => {
+                        // Normalize the author field to ensure it's an object with an id and username
+                        let normalizedAuthor = post.author;
+                        if (typeof post.author === 'string') {
+                            normalizedAuthor = { id: 0, username: post.author };
+                        } else if (!post.author || !post.author.username) {
+                            normalizedAuthor = { id: 0, username: 'Anonymous' };
+                        }
+                        
+                        return {
+                            ...post,
+                            author: normalizedAuthor,
+                            liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+                        };
+                    });
                     allResults.push(...nextPagePosts);
                     nextUrl = nextPageResponse.next;
                 } catch (err) {
@@ -239,6 +292,71 @@ const Forum = () => {
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
+        setCurrentPage(1); // Reset to first page
+        
+        // Clear search if active
+        if (isSearching) {
+            clearSearch();
+        }
+    };
+
+    // Handle searching for posts
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!searchQuery.trim()) {
+            // If search query is empty, clear search
+            clearSearch();
+            return;
+        }
+        
+        setLoading(true);
+        setIsSearching(true);
+        setCurrentPage(1); // Reset to first page for search results
+        
+        try {
+            const response = await apiClient.searchForumPosts(searchQuery);
+            console.log(`[Forum] Search results for "${searchQuery}":`, response);
+            
+            // Use local storage as the primary source of truth for liked status
+            const userLikedPosts = getUserLikedPostsFromStorage();
+            
+            const searchPosts = response.results.map(post => {
+                // Normalize the author field to ensure it's an object with an id and username
+                let normalizedAuthor = post.author;
+                if (typeof post.author === 'string') {
+                    normalizedAuthor = { id: 0, username: post.author };
+                } else if (!post.author || !post.author.username) {
+                    normalizedAuthor = { id: 0, username: 'Anonymous' };
+                }
+                
+                return {
+                    ...post,
+                    author: normalizedAuthor,
+                    liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+                };
+            });
+            
+            setSearchResults(searchPosts);
+            setSearchResultsCount(response.count);
+            
+            // Don't clear active filter when searching - allow both to be active
+        } catch (error) {
+            console.error('[Forum] Error searching for posts:', error);
+            // Keep showing current posts on error
+            setSearchResults([]);
+            setSearchResultsCount(0);
+        } finally {
+            setLoading(false);
+        }
+    };
+    
+    // Clear search results and return to normal view
+    const clearSearch = () => {
+        setSearchQuery('');
+        setIsSearching(false);
+        setSearchResults([]);
+        setSearchResultsCount(0);
         setCurrentPage(1); // Reset to first page
     };
 
@@ -472,7 +590,7 @@ const Forum = () => {
                                     <span className="flex-grow text-center">Meal Plans</span>
                                 </button>
                                 
-                                {activeFilter !== null && (
+                                {activeFilter !== null && !isSearching && (
                                     <button 
                                         onClick={clearFilter}
                                         className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -487,12 +605,75 @@ const Forum = () => {
 
                     {/* Middle column - Posts */}
                     <div className="w-full md:w-3/5">
+                        {/* Search bar - moved inside the middle column */}
+                        <div className="mb-6">
+                            <form onSubmit={handleSearch} className="flex gap-2">
+                                <div className="relative flex-grow">
+                                    <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                                        <MagnifyingGlass size={20} style={{ color: 'var(--forum-search-icon)' }} />
+                                    </div>
+                                    <input
+                                        type="search"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full p-2 pl-10 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
+                                        placeholder="Search posts by title..."
+                                        aria-label="Search posts"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            type="button"
+                                            onClick={clearSearch}
+                                            className="absolute inset-y-0 right-0 flex items-center pr-3"
+                                        >
+                                            <X size={20} style={{ color: 'var(--forum-search-icon)' }} />
+                                        </button>
+                                    )}
+                                </div>
+                                <button
+                                    type="submit"
+                                    className="px-5 py-3 nh-button nh-button-primary rounded-lg flex items-center"
+                                >
+                                    Search
+                                </button>
+                            </form>
+                        </div>
+                        
+                        {/* Display search status */}
+                        {isSearching && (
+                            <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm nh-text">
+                                        {searchResultsCount > 0 
+                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${activeFilter ? ' (filtered by tag)' : ''}` 
+                                            : `No results found for "${searchQuery}"`}
+                                    </p>
+                                    <button
+                                        onClick={clearSearch}
+                                        className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
+                                    >
+                                        <X size={16} weight="bold" />
+                                        Clear search
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        
                         {/* Active filter indicator */}
                         {filterLabel && (
-                            <div className="mb-6 p-3 bg-gray-800 dark:bg-gray-800 rounded-lg border border-gray-700">
-                                <p className="text-sm text-center nh-text">
-                                    Showing posts tagged with: <span className="font-medium">{filterLabel}</span>
-                                </p>
+                            <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
+                                <div className="flex items-center justify-between">
+                                    <p className="text-sm nh-text">
+                                        Filtered by tag: <span className="font-medium">{filterLabel}</span>
+                                    </p>
+                                    <button
+                                        onClick={clearFilter}
+                                        className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
+                                    >
+                                        <X size={16} weight="bold" />
+                                        Clear filter
+                                    </button>
+                                </div>
                             </div>
                         )}
                         
@@ -556,7 +737,9 @@ const Forum = () => {
                                                 <div className="flex items-center justify-center">
                                                     <User size={16} className="flex-shrink-0" />
                                                 </div>
-                                                Posted by: {post.author.username} • {formatDate(post.created_at)}
+                                                Posted by: {typeof post.author === 'string' 
+                                                    ? post.author 
+                                                    : post.author?.username || 'Anonymous'} • {formatDate(post.created_at)}
                                             </span>
                                             <div className="flex items-center gap-4">
                                                 <Link 
