@@ -495,4 +495,17 @@ export const apiClient = {
       throw error;
     });
   },
+  
+  // logout endpoint
+  logout: (refreshToken: string) => {
+    console.log('[API] Logging out on the server');
+    return fetchJson<void>("/users/token/logout/", {
+      method: "POST",
+      body: JSON.stringify({ refresh: refreshToken }),
+    }, true).catch(error => {
+      console.error('[API] Error during logout:', error);
+      // Even if the server logout fails, we want to continue with the local logout
+      // Just log the error but don't throw
+    });
+  },
 };
