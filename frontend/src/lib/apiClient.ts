@@ -26,15 +26,14 @@ export interface Food {
 export interface FoodProposal {
   name: string;
   category: string;
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    vitamins?: Record<string, number>;
-    minerals?: Record<string, number>;
-  };
-  dietaryTags?: string[];
+  servingSize: number;
+  caloriesPerServing: number;
+  proteinContent: number;
+  fatContent: number;
+  carbohydrateContent: number;
+  allergens?: number[];
+  dietaryOptions?: string[];
+  nutritionScore: number;
   imageUrl?: string;
 }
 
@@ -293,10 +292,10 @@ export const apiClient = {
   },
 
   proposeFood: (proposal: FoodProposal) =>
-    fetchJson<FoodProposalResponse>("/foods/propose", {
+    fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
-    }),
+    }, true),
 
   // auth - use real backend
   login: (username: string, password: string) =>

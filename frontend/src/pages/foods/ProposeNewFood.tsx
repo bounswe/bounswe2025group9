@@ -1,82 +1,197 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Box,
   Button,
   Container,
   TextField,
-  Grid,
   Paper,
   Alert,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Chip,
+  OutlinedInput,
+  Checkbox,
+  ListItemText,
+  SelectChangeEvent,
+  Stack,
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
+import { FoodProposal, apiClient } from '../../lib/apiClient';
 
+// Add proper types for MUI components
+import { GridProps } from '@mui/material/Grid';
 
-interface MacronutrientData {
-  carbohydrates: string;
-  protein: string;
-  fat: string;
-}
+const ITEM_HEIGHT = 48;
+const ITEM_PADDING_TOP = 8;
+const MenuProps = {
+  PaperProps: {
+    style: {
+      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
+      width: 250,
+    },
+  },
+};
 
-interface MicronutrientData {
-  vitamins: string;
-  minerals: string;
+// Available dietary options
+const dietaryOptions = [
+  'Vegan',
+  'Vegetarian',
+  'Gluten-Free',
+  'Dairy-Free',
+  'Keto',
+  'Paleo',
+  'Low-Carb',
+  'Low-Fat',
+  'Sugar-Free',
+  'Organic',
+];
+
+interface Allergen {
+  id: number;
+  name: string;
 }
 
 const ProposeNewFood: React.FC = () => {
   const navigate = useNavigate();
   const [foodName, setFoodName] = useState('');
   const [category, setCategory] = useState('');
+  const [servingSize, setServingSize] = useState('');
   const [calories, setCalories] = useState('');
-  const [macronutrients, setMacronutrients] = useState<MacronutrientData>({
-    carbohydrates: '',
-    protein: '',
-    fat: '',
-  });
-  const [micronutrients, setMicronutrients] = useState<MicronutrientData>({
-    vitamins: '',
-    minerals: '',
-  });
+  const [protein, setProtein] = useState('');
+  const [carbs, setCarbs] = useState('');
+  const [fat, setFat] = useState('');
+  const [imageUrl, setImageUrl] = useState('');
+  const [selectedDietaryOptions, setSelectedDietaryOptions] = useState<string[]>([]);
+  const [selectedAllergens, setSelectedAllergens] = useState<number[]>([]);
+  const [allergens, setAllergens] = useState<Allergen[]>([]);
+  
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleMacronutrientChange = (field: keyof MacronutrientData) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setMacronutrients({
-      ...macronutrients,
-      [field]: event.target.value,
-    });
+  // Fetch allergens (mock for now)
+  useEffect(() => {
+    // In a real implementation, you would fetch allergens from the backend
+    setAllergens([
+      { id: 1, name: 'Peanuts' },
+      { id: 2, name: 'Tree Nuts' },
+      { id: 3, name: 'Milk' },
+      { id: 4, name: 'Eggs' },
+      { id: 5, name: 'Fish' },
+      { id: 6, name: 'Shellfish' },
+      { id: 7, name: 'Soy' },
+      { id: 8, name: 'Wheat' },
+    ]);
+  }, []);
+
+  const validateForm = () => {
+    const errors: {[key: string]: string} = {};
+    
+    if (!foodName.trim()) errors.foodName = 'Food name is required';
+    if (!category.trim()) errors.category = 'Category is required';
+    if (!servingSize || isNaN(Number(servingSize)) || Number(servingSize) <= 0) 
+      errors.servingSize = 'Valid serving size is required';
+    if (!calories || isNaN(Number(calories)) || Number(calories) < 0) 
+      errors.calories = 'Valid calorie count is required';
+    if (!protein || isNaN(Number(protein)) || Number(protein) < 0) 
+      errors.protein = 'Valid protein content is required';
+    if (!carbs || isNaN(Number(carbs)) || Number(carbs) < 0) 
+      errors.carbs = 'Valid carbohydrate content is required';
+    if (!fat || isNaN(Number(fat)) || Number(fat) < 0) 
+      errors.fat = 'Valid fat content is required';
+    
+    if (imageUrl && !isValidUrl(imageUrl)) 
+      errors.imageUrl = 'Please enter a valid URL';
+    
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
   };
 
-  const handleMicronutrientChange = (field: keyof MicronutrientData) => (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    setMicronutrients({
-      ...micronutrients,
-      [field]: event.target.value,
-    });
+  const isValidUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  };
+
+  const calculateNutritionScore = () => {
+    // Simple nutrition score calculation (this would be more sophisticated in a real app)
+    const proteinValue = Number(protein);
+    const carbsValue = Number(carbs);
+    const fatValue = Number(fat);
+    const caloriesValue = Number(calories);
+    
+    // Basic formula: higher protein is good, balanced macros are good
+    const proteinScore = proteinValue * 4;
+    const balanceScore = 100 - Math.abs((carbsValue * 4) - (fatValue * 9)) / caloriesValue * 100;
+    
+    return Math.round((proteinScore + balanceScore) / 2);
+  };
+
+  const handleDietaryOptionsChange = (event: SelectChangeEvent<string[]>) => {
+    const {
+      target: { value },
+    } = event;
+    setSelectedDietaryOptions(
+      typeof value === 'string' ? value.split(',') : value,
+    );
+  };
+
+  const handleAllergensChange = (event: SelectChangeEvent<number[]>) => {
+    const {
+      target: { value },
+    } = event;
+    setSelectedAllergens(
+      typeof value === 'string' ? value.split(',').map(Number) : value,
+    );
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
     setSuccess('');
-
-    // Validate required fields
-    if (!foodName || !category || !calories || 
-        !macronutrients.carbohydrates || !macronutrients.protein || !macronutrients.fat) {
-      setError('Please fill in all required fields');
+    
+    if (!validateForm()) {
+      setError('Please correct the errors in the form');
       return;
     }
-
+    
+    setIsSubmitting(true);
+    
     try {
-      // TODO: Implement API call to submit the food proposal
+      const nutritionScore = calculateNutritionScore();
+      
+      const proposal: FoodProposal = {
+        name: foodName,
+        category: category,
+        servingSize: Number(servingSize),
+        caloriesPerServing: Number(calories),
+        proteinContent: Number(protein),
+        fatContent: Number(fat),
+        carbohydrateContent: Number(carbs),
+        allergens: selectedAllergens,
+        dietaryOptions: selectedDietaryOptions,
+        nutritionScore: nutritionScore,
+        imageUrl: imageUrl || undefined,
+      };
+      
+      const response = await apiClient.proposeFood(proposal);
       setSuccess('Food proposal submitted successfully!');
+      
+      // Clear form or redirect after success
       setTimeout(() => {
         navigate('/foods');
       }, 2000);
     } catch (err) {
-      setError(`Failed to submit food proposal. Please try again. ${err} `);
+      console.error('Error submitting food proposal:', err);
+      setError(`Failed to submit food proposal. Please try again.`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -90,133 +205,207 @@ const ProposeNewFood: React.FC = () => {
 
         <Paper elevation={3} sx={{ p: 3 }}>
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
+            <Stack spacing={3}>
               {/* Basic Information */}
-              <Grid size={{xs: 12}}>
+              <Box>
                 <TextField
                   required
                   fullWidth
                   label="Food Name"
                   value={foodName}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFoodName(e.target.value)}
+                  onChange={(e) => setFoodName(e.target.value)}
+                  error={!!validationErrors.foodName}
+                  helperText={validationErrors.foodName}
                 />
-              </Grid>
+              </Box>
 
-              <Grid size={{xs: 12}}>
+              <Box>
                 <TextField
                   required
                   fullWidth
                   label="Food Category"
                   value={category}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCategory(e.target.value)}
+                  onChange={(e) => setCategory(e.target.value)}
+                  error={!!validationErrors.category}
+                  helperText={validationErrors.category}
                 />
-              </Grid>
+              </Box>
               
-              {/* Calories */}
-              <Grid size={{xs: 12}}>    
-                <h2 className="nh-subtitle">
-                  Calories (per 100g)
-                </h2>
-              </Grid>
-
-              <Grid size={{xs: 12, sm: 6}}>
-                <TextField
-                  required
-                  fullWidth
-                  type="number"
-                  label="Calories (kcal)"
-                  value={calories}
-                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCalories(e.target.value)}
-                />
-              </Grid>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Serving Size (g)"
+                    value={servingSize}
+                    onChange={(e) => setServingSize(e.target.value)}
+                    error={!!validationErrors.servingSize}
+                    helperText={validationErrors.servingSize}
+                  />
+                </Box>
+                
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Calories per Serving"
+                    value={calories}
+                    onChange={(e) => setCalories(e.target.value)}
+                    error={!!validationErrors.calories}
+                    helperText={validationErrors.calories}
+                  />
+                </Box>
+              </Box>
 
               {/* Macronutrients */}
-              <Grid size={{xs: 12}}>    
+              <Box>    
                 <h2 className="nh-subtitle">
-                  Macronutrients (per 100g)
+                  Macronutrients (per serving)
                 </h2>
-              </Grid>
+              </Box>
 
-              <Grid size={{xs: 12, sm: 6}}>
-                <TextField
-                  required
-                  fullWidth
-                  type="number"
-                  label="Carbohydrates (g)"
-                  value={macronutrients.carbohydrates}
-                  onChange={handleMacronutrientChange('carbohydrates')}
-                />
-              </Grid>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Carbohydrates (g)"
+                    value={carbs}
+                    onChange={(e) => setCarbs(e.target.value)}
+                    error={!!validationErrors.carbs}
+                    helperText={validationErrors.carbs}
+                  />
+                </Box>
 
-              <Grid size={{xs: 12, sm: 6}}>
-                <TextField
-                  required
-                  fullWidth
-                  type="number"
-                  label="Protein (g)"
-                  value={macronutrients.protein}
-                  onChange={handleMacronutrientChange('protein')}
-                />
-              </Grid>
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Protein (g)"
+                    value={protein}
+                    onChange={(e) => setProtein(e.target.value)}
+                    error={!!validationErrors.protein}
+                    helperText={validationErrors.protein}
+                  />
+                </Box>
 
-              <Grid size={{xs: 12, sm: 6}}>
-                <TextField
-                  required
-                  fullWidth
-                  type="number"
-                  label="Fat (g)"
-                  value={macronutrients.fat}
-                  onChange={handleMacronutrientChange('fat')}
-                />
-              </Grid>
+                <Box sx={{ flex: 1 }}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="number"
+                    label="Fat (g)"
+                    value={fat}
+                    onChange={(e) => setFat(e.target.value)}
+                    error={!!validationErrors.fat}
+                    helperText={validationErrors.fat}
+                  />
+                </Box>
+              </Box>
               
-              {/* Micronutrients */}
-              <Grid size={{xs: 12}}>    
+              {/* Allergens */}
+              <Box>    
                 <h2 className="nh-subtitle">
-                  Micronutrients (per 100g)
+                  Allergens & Dietary Information
                 </h2>
-              </Grid>
+              </Box>
 
-              <Grid size={{xs: 12, sm: 6}}>
+              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
+                <Box sx={{ flex: 1 }}>
+                  <FormControl fullWidth>
+                    <InputLabel id="allergens-label">Contains Allergens</InputLabel>
+                    <Select
+                      labelId="allergens-label"
+                      multiple
+                      value={selectedAllergens}
+                      onChange={handleAllergensChange}
+                      input={<OutlinedInput label="Contains Allergens" />}
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(selected as number[]).map((value) => (
+                            <Chip 
+                              key={value} 
+                              label={allergens.find(a => a.id === value)?.name || value} 
+                            />
+                          ))}
+                        </Box>
+                      )}
+                      MenuProps={MenuProps}
+                    >
+                      {allergens.map((allergen) => (
+                        <MenuItem key={allergen.id} value={allergen.id}>
+                          <Checkbox checked={selectedAllergens.indexOf(allergen.id) > -1} />
+                          <ListItemText primary={allergen.name} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+
+                <Box sx={{ flex: 1 }}>
+                  <FormControl fullWidth>
+                    <InputLabel id="dietary-options-label">Dietary Options</InputLabel>
+                    <Select
+                      labelId="dietary-options-label"
+                      multiple
+                      value={selectedDietaryOptions}
+                      onChange={handleDietaryOptionsChange}
+                      input={<OutlinedInput label="Dietary Options" />}
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(selected as string[]).map((value) => (
+                            <Chip key={value} label={value} />
+                          ))}
+                        </Box>
+                      )}
+                      MenuProps={MenuProps}
+                    >
+                      {dietaryOptions.map((option) => (
+                        <MenuItem key={option} value={option}>
+                          <Checkbox checked={selectedDietaryOptions.indexOf(option) > -1} />
+                          <ListItemText primary={option} />
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Box>
+              </Box>
+              
+              {/* Image URL */}
+              <Box>
                 <TextField
                   fullWidth
-                  type="number"
-                  label="Vitamins (mg)"
-                  value={micronutrients.vitamins}
-                  onChange={handleMicronutrientChange('vitamins')}
+                  label="Image URL (optional)"
+                  value={imageUrl}
+                  onChange={(e) => setImageUrl(e.target.value)}
+                  error={!!validationErrors.imageUrl}
+                  helperText={validationErrors.imageUrl || "Provide a URL to an image of this food (optional)"}
                 />
-              </Grid>
-
-              <Grid size={{xs: 12, sm: 6}}>
-                <TextField
-                  fullWidth
-                  type="number"
-                  label="Minerals (mg)"
-                  value={micronutrients.minerals}
-                  onChange={handleMicronutrientChange('minerals')}
-                />
-              </Grid>
-
+              </Box>
 
               {/* Submit Button */}
-              <Grid size={{xs: 12}}>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate('/foods')}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    color="primary"
-                  >
-                    Submit Proposal
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/foods')}
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
+                </Button>
+              </Box>
+            </Stack>
           </form>
         </Paper>
       </Box>
