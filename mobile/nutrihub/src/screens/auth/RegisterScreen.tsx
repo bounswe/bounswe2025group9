@@ -270,7 +270,7 @@ const RegisterScreen: React.FC = () => {
           
           <View style={[styles.cardContainer, { backgroundColor: theme.surface }]}>
             <View style={styles.cardHeader}>
-              <Icon name="account-plus" size={28} color="white" style={styles.cardIcon} />
+              <Icon name="account-plus" size={28} color={themeType === 'light' ? theme.text : "white"} style={styles.cardIcon} />
               <Text style={[styles.cardTitle, textStyles.heading2]}>Sign Up</Text>
             </View>
             
