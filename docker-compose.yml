@@ -1,0 +1,52 @@
+x-db-env: &db-env
+  MYSQL_DATABASE: "mydb"
+  MYSQL_USER: "django"
+  MYSQL_PASSWORD: "djangopass"
+  MYSQL_ROOT_PASSWORD: "rootpass"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-db
+    restart: always
+    environment:
+      <<: *db-env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "django", "-pdjangopass"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+    container_name: django-app
+    expose:
+      - "9000"
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *db-env
+      DJANGO_SECRET_KEY: "super-secret-key"
+    volumes:
+      - static_volume:/project/staticfiles
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        VITE_API_BASE_URL: /api
+    container_name: nginx-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    volumes:
+      - static_volume:/usr/share/nginx/html/static
+
+volumes:
+  mysql_data:
+  static_volume:

@@ -1,6 +1,7 @@
 from typing import cast
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework.views import Response
 from forum.models import Post, Recipe, RecipeIngredient
@@ -57,10 +58,11 @@ class RecipeTests(TestCase):
 
     def test_create_recipe(self):
         self.client.force_authenticate(user=self.user1)
+        url = reverse("recipe-list")
         response = cast(
             Response,
             self.client.post(
-                "/forum/recipes/",
+                url,
                 {
                     "post_id": self.post.id,
                     "instructions": "1. Cook chicken. 2. Cook rice. 3. Serve together.",
@@ -104,7 +106,8 @@ class RecipeTests(TestCase):
         RecipeIngredient.objects.create(recipe=recipe, food=self.food2, amount=150)
 
         self.client.force_authenticate(user=self.user2)  # Even non-author can view
-        response = cast(Response, self.client.get(f"/forum/recipes/{recipe.id}/"))
+        url = reverse("recipe-detail", args=[recipe.id])
+        response = cast(Response, self.client.get(url))
 
         self.assertEqual(response.status_code, 200)
         data = response.data
@@ -137,9 +140,8 @@ class RecipeTests(TestCase):
         )
 
         self.client.force_authenticate(user=self.user1)
-        response = cast(
-            Response, self.client.get(f"/forum/recipes/?post={self.post.id}")
-        )
+        url = reverse("recipe-list")
+        response = cast(Response, self.client.get(f"{url}?post={self.post.id}"))
 
         self.assertEqual(response.status_code, 200)
         results = response.data.get("results", [])
@@ -155,10 +157,11 @@ class RecipeTests(TestCase):
         RecipeIngredient.objects.create(recipe=recipe, food=self.food1, amount=100)
 
         self.client.force_authenticate(user=self.user1)
+        url = reverse("recipe-detail", args=[recipe.id])
         response = cast(
             Response,
             self.client.patch(
-                f"/forum/recipes/{recipe.id}/",
+                url,
                 {
                     "instructions": "Updated instructions",
                     "ingredients": [
@@ -181,10 +184,11 @@ class RecipeTests(TestCase):
         )
 
         self.client.force_authenticate(user=self.user2)
+        url = reverse("recipe-detail", args=[recipe.id])
         response = cast(
             Response,
             self.client.patch(
-                f"/forum/recipes/{recipe.id}/",
+                url,
                 {"instructions": "Trying to modify someone else's recipe"},
                 format="json",
             ),
@@ -200,7 +204,8 @@ class RecipeTests(TestCase):
         )
 
         self.client.force_authenticate(user=self.user1)
-        response = cast(Response, self.client.delete(f"/forum/recipes/{recipe.id}/"))
+        url = reverse("recipe-detail", args=[recipe.id])
+        response = cast(Response, self.client.delete(url))
 
         self.assertEqual(response.status_code, 204)
         self.assertEqual(Recipe.objects.count(), 0)

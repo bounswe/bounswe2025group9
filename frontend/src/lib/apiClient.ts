@@ -168,7 +168,7 @@ export interface CreateRecipeRequest {
 }
 
 // api base urls
-const BACKEND_API_URL = "http://localhost:8081";
+const BACKEND_API_URL = import.meta.env.VITE_API_BASE_URL;
 const MOCK_API_URL = "/api";
 
 // token storage
