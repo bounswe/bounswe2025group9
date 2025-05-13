@@ -837,6 +837,125 @@
             },
             "description": "**Toggle like/unlike for a post**\n\nSend a `POST` request to like or unlike a post.\n\n- If the user hasn't liked the post → it creates a like and returns:\n```json\n{ \"liked\": true }\n```\n- If the user already liked it → it unlikes the post and returns:\n```json\n{ \"liked\": false }\n```\n\nReturns:\n- `201 Created` if a like was added\n- `200 OK` if a like was removed\n- `403 Forbidden` if user is not allowed\n- `401 Unauthorized` if not authenticated"
           }
+        },
+		    {
+      "name": "Suggest Recipe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8081/foods/suggest_recipe?food_name=chicken",
+          "host": ["http://127.0.0.1:8081"],
+          "path": ["foods", "suggest_recipe"],
+          "query": [
+            {
+              "key": "food_name",
+              "value": "chicken"
+            }
+          ]
         }
+      },
+      "response": []
+    },
+		{
+			"name": "create_recipe",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+					{ "key": "Content-Type", "value": "application/json", "type": "text" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"post_id\": 1,\n  \"instructions\": \"1. Preheat oven to 350°F.\\n2. Season chicken with salt and pepper.\\n3. Bake for 25 minutes.\\n4. Cook rice according to package instructions.\\n5. Serve chicken over rice.\",\n  \"ingredients\": [\n    {\n      \"food_id\": 1,\n      \"amount\": 200\n    },\n    {\n      \"food_id\": 2,\n      \"amount\": 150\n    }\n  ]\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/recipes/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", ""]
+				},
+				"description": "**Create a recipe for a post**\n\nAdd a recipe to an existing post. You must be the author of the post.\n\nRequired fields:\n- `post_id`: ID of the post to attach the recipe to\n- `instructions`: Step-by-step cooking instructions\n- `ingredients`: Array of ingredients with food_id and amount (in grams)\n\nThe API will calculate nutritional totals automatically based on ingredients.\n\nReturns:\n- `201 Created` with full recipe details\n- `403 Forbidden` if not the post author\n- `400 Bad Request` if validation fails"
+			}
+		},
+		{
+			"name": "get_recipe_detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/recipes/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", "1", ""]
+				},
+				"description": "**Get recipe details**\n\nRetrieve complete information about a recipe, including:\n- Instructions\n- Ingredients with amounts\n- Nutritional information (protein, fat, carbs, calories)\n- Author and post information\n\nAuthentication is required but any authenticated user can view recipes."
+			}
+		},
+		{
+			"name": "get_recipes_for_post",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/recipes/?post=1",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", ""],
+					"query": [
+						{ "key": "post", "value": "1" }
+					]
+				},
+				"description": "**Get recipe for a specific post**\n\nFilters recipes by post ID. Since a post can have at most one recipe, this will return either an empty list or a list with exactly one recipe.\n\nQuery parameters:\n- `post`: ID of the post to get the recipe for"
+			}
+		},
+		{
+			"name": "update_recipe",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+					{ "key": "Content-Type", "value": "application/json", "type": "text" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"instructions\": \"1. Updated cooking instructions.\\n2. Add more details on preparation.\\n3. New serving suggestions.\",\n  \"ingredients\": [\n    {\n      \"food_id\": 1,\n      \"amount\": 250\n    },\n    {\n      \"food_id\": 3,\n      \"amount\": 100\n    }\n  ]\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/recipes/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", "1", ""]
+				},
+				"description": "**Update a recipe**\n\nModify the instructions or ingredients of a recipe. Only the post author can update the recipe.\n\nYou can update:\n- `instructions`: New cooking instructions\n- `ingredients`: New list of ingredients (completely replaces existing ingredients)\n\nNutritional totals will be recalculated based on the new ingredients.\n\nReturns:\n- `200 OK` with updated recipe\n- `403 Forbidden` if not the post author"
+			}
+		},
+		{
+			"name": "delete_recipe",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+				],
+				"url": {
+					"raw": "http://127.0.0.1:8081/forum/recipes/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", "1", ""]
+				},
+				"description": "**Delete a recipe**\n\nRemove a recipe from a post. Only the post author can delete the recipe.\n\nReturns:\n- `204 No Content` on successful deletion\n- `403 Forbidden` if not the post author\n- `404 Not Found` if recipe doesn't exist"
+			}
+		}
 	]
 }

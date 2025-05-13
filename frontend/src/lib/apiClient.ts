@@ -193,12 +193,15 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 
     if (!response.ok) {
       let errorBody = 'No error details available';
+      let errorData = null;
+      
       try {
         const errorText = await response.text();
         errorBody = errorText;
         // Try parsing as JSON if possible
         try {
           const errorJson = JSON.parse(errorText);
+          errorData = errorJson;
           errorBody = JSON.stringify(errorJson, null, 2);
         } catch {
           // Not JSON, use as is
@@ -208,7 +211,17 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       }
       
       console.error(`API error (${response.status} ${response.statusText}):`, errorBody);
-      throw new Error(`API error: ${response.status} ${response.statusText}`);
+      
+      // Create a custom error with the error data attached
+      const error = new Error(`API error: ${response.status} ${response.statusText}`);
+      // @ts-ignore - Adding custom property to Error object
+      error.status = response.status;
+      // @ts-ignore - Adding custom property to Error object
+      error.statusText = response.statusText;
+      // @ts-ignore - Adding custom property to Error object
+      error.data = errorData;
+      
+      throw error;
     }
 
     const data = await response.json();
@@ -509,6 +522,17 @@ export const apiClient = {
     }).catch(error => {
       console.error(`[API] Error searching for posts with query "${query}":`, error);
       throw error;
+  
+  // logout endpoint
+  logout: (refreshToken: string) => {
+    console.log('[API] Logging out on the server');
+    return fetchJson<void>("/users/token/logout/", {
+      method: "POST",
+      body: JSON.stringify({ refresh: refreshToken }),
+    }, true).catch(error => {
+      console.error('[API] Error during logout:', error);
+      // Even if the server logout fails, we want to continue with the local logout
+      // Just log the error but don't throw
     });
   },
 };
