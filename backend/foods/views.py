@@ -135,3 +135,42 @@ def suggest_recipe(request):
         )
     except requests.RequestException as e:
         return Response({"error": f"Failed to fetch recipe: {str(e)}"}, status=500)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def get_random_meal(request):
+    url = "https://www.themealdb.com/api/json/v1/1/random.php"
+    try:
+        response = requests.get(url, timeout=5)
+        response.raise_for_status()
+        data = response.json()
+        meals = data.get("meals")
+        if not meals:
+            return Response(
+                {"warning": "No random meal found.", "results": []},
+                status=404,
+            )
+        meal = meals[0]
+        return Response(
+            {
+                "id": meal.get("idMeal"),
+                "name": meal.get("strMeal"),
+                "category": meal.get("strCategory"),
+                "area": meal.get("strArea"),
+                "instructions": meal.get("strInstructions"),
+                "image": meal.get("strMealThumb"),
+                "tags": meal.get("strTags"),
+                "youtube": meal.get("strYoutube"),
+                "ingredients": [
+                    {
+                        "ingredient": meal.get(f"strIngredient{i}"),
+                        "measure": meal.get(f"strMeasure{i}")
+                    }
+                    for i in range(1, 21)
+                    if meal.get(f"strIngredient{i}")
+                ]
+            }
+        )
+    except requests.RequestException as e:
+        return Response({"error": f"Failed to fetch random meal: {str(e)}"}, status=500)
