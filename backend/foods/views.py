@@ -104,6 +104,7 @@ class FoodCatalog(ListAPIView):
             data = {"results": data, "status": 200}
         return Response(data)
 
+
 # get food_name as parameter
 # make api call to https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}
 # check if the response is not empty
@@ -135,18 +136,13 @@ def suggest_recipe(request):
         )
     except requests.RequestException as e:
         return Response({"error": f"Failed to fetch recipe: {str(e)}"}, status=500)
-      
-      
 
 
+@permission_classes([IsAuthenticated])
 class FoodProposalSubmitView(APIView):
-    permission_classes = [IsAuthenticated]
-
     def post(self, request):
         serializer = FoodProposalSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save(proposedBy=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
