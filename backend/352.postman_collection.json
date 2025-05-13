@@ -838,6 +838,25 @@
             "description": "**Toggle like/unlike for a post**\n\nSend a `POST` request to like or unlike a post.\n\n- If the user hasn't liked the post → it creates a like and returns:\n```json\n{ \"liked\": true }\n```\n- If the user already liked it → it unlikes the post and returns:\n```json\n{ \"liked\": false }\n```\n\nReturns:\n- `201 Created` if a like was added\n- `200 OK` if a like was removed\n- `403 Forbidden` if user is not allowed\n- `401 Unauthorized` if not authenticated"
           }
         },
+		    {
+      "name": "Suggest Recipe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://127.0.0.1:8081/foods/suggest_recipe?food_name=chicken",
+          "host": ["http://127.0.0.1:8081"],
+          "path": ["foods", "suggest_recipe"],
+          "query": [
+            {
+              "key": "food_name",
+              "value": "chicken"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
 		{
 			"name": "create_recipe",
 			"request": {
