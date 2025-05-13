@@ -8,6 +8,7 @@ from rest_framework.generics import ListAPIView
 from django.db.models import Q
 import requests
 from rest_framework.decorators import api_view, permission_classes
+from rest_framework import status
 
 
 class FoodCatalog(ListAPIView):
@@ -173,4 +174,12 @@ def get_random_meal(request):
             }
         )
     except requests.RequestException as e:
-        return Response({"error": f"Failed to fetch random meal: {str(e)}"}, status=500)
+        return Response(
+            {"error": f"Failed to fetch random meal: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"An unexpected error occurred: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
