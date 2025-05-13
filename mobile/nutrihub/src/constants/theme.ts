@@ -272,8 +272,8 @@ export const LIGHT_THEME: Theme = {
   textDisabled: PALETTE.LIGHT.TEXT_DISABLED,
   
   // Interactive elements
-  primary: PALETTE.ACCENT.DEFAULT,
-  primaryVariant: PALETTE.ACCENT.DARK,
+  primary: PALETTE.PRIMARY.DEFAULT,
+  primaryVariant: PALETTE.PRIMARY.DARK,
   secondary: PALETTE.PRIMARY.DEFAULT,
   secondaryText: PALETTE.AMBER.DARK,
   accent: PALETTE.ACCENT.DEFAULT,
