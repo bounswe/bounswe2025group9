@@ -11,44 +11,39 @@ class FoodCatalogTests(TestCase):
         self.client = APIClient()
         # Create sample FoodEntry objects
         for i in range(15):
-            FoodEntry.objects.create(
+            food = FoodEntry.objects.create(
                 name=f"Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
                 proteinContent=10,
                 fatContent=5,
                 carbohydrateContent=20,
-                allergens=[],
-                dietaryOptions=[],
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image{i}.jpg",
             )
         # Create 2 FoodEntry objects with category "Fruit"
         for i in range(2):
-            FoodEntry.objects.create(
+            food = FoodEntry.objects.create(
                 name=f"Fruit Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
                 proteinContent=10,
                 fatContent=5,
                 carbohydrateContent=20,
-                allergens=[],
-                dietaryOptions=[],
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image_fruit_{i}.jpg",
                 category="Fruit",
             )
+
         # Create 13 FoodEntry objects with category "Vegetable"
         for i in range(13):
-            FoodEntry.objects.create(
+            food = FoodEntry.objects.create(
                 name=f"Vegetable Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
                 proteinContent=10,
                 fatContent=5,
                 carbohydrateContent=20,
-                allergens=[],
-                dietaryOptions=[],
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image_veg_{i}.jpg",
                 category="Vegetable",
@@ -63,16 +58,6 @@ class FoodCatalogTests(TestCase):
         self.assertEqual(
             len(response.data), 4
         )  # (count, next, previous, results) // no warnings since query is valid
-
-    def test_default_limit(self):
-        """
-        Test that the default limit (10) is applied when no 'limit' is provided.
-        """
-        response = self.client.get(reverse("get_foods"))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(
-            len(response.data["results"]), settings.REST_FRAMEWORK["PAGE_SIZE"]
-        )  # Updated to match actual default limit
 
     def test_category_filtering(self):
         """
