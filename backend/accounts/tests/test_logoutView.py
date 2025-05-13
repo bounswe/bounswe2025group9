@@ -13,7 +13,7 @@ class LogoutViewTests(APITestCase):
         self.refresh = RefreshToken.for_user(self.user)
         self.access_token = str(self.refresh.access_token)
         self.refresh_token = str(self.refresh)
-        self.url = "/users/token/logout/"
+        self.url = reverse("token_logout")
 
     def test_logout_successful(self):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")

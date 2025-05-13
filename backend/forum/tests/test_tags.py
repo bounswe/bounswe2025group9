@@ -1,6 +1,7 @@
 from typing import Any, cast
 from django.test import TestCase
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework.views import Response
 from forum.models import Post, Tag
@@ -33,10 +34,11 @@ class TaggingTests(TestCase):
         self.post3.tags.set([self.tag1, self.tag2])
 
     def test_create_post_with_tags(self):
+        url = reverse("post-list")
         response = cast(
             Response,
             self.client.post(
-                "/forum/posts/",
+                url,
                 {
                     "title": "Tagged Post",
                     "body": "Tagged with dietary tip and recipe.",
@@ -52,7 +54,8 @@ class TaggingTests(TestCase):
         self.assertIn(self.tag2, post.tags.all())
 
     def test_filter_by_single_tag(self):
-        response = cast(Any, self.client.get(f"/forum/posts/?tags={self.tag1.id}"))
+        url = reverse("post-list")
+        response = cast(Any, self.client.get(f"{url}?tags={self.tag1.id}"))
         self.assertEqual(response.status_code, 200)
 
         titles = [p["title"] for p in response.data["results"]]
@@ -61,10 +64,10 @@ class TaggingTests(TestCase):
         self.assertNotIn("Avocado toast", titles)
 
     def test_filter_by_multiple_tags(self):
-        # Should return posts that match tag1 OR tag2
+        url = reverse("post-list")
         response = cast(
             Any,
-            self.client.get(f"/forum/posts/?tags={self.tag1.id}&tags={self.tag2.id}"),
+            self.client.get(f"{url}?tags={self.tag1.id}&tags={self.tag2.id}"),
         )
         self.assertEqual(response.status_code, 200)
 
@@ -74,14 +77,16 @@ class TaggingTests(TestCase):
         self.assertIn("Hybrid Post", titles)
 
     def test_ordering_by_created_at(self):
+        url = reverse("post-list")
+
         # ascending
-        response = cast(Any, self.client.get("/forum/posts/?ordering=created_at"))
+        response = cast(Any, self.client.get(f"{url}?ordering=created_at"))
         self.assertEqual(response.status_code, 200)
         ordered_titles = [p["title"] for p in response.data["results"]]
         self.assertEqual(ordered_titles, ["Apple tips", "Avocado toast", "Hybrid Post"])
 
         # descending
-        response = cast(Any, self.client.get("/forum/posts/?ordering=-created_at"))
+        response = cast(Any, self.client.get(f"{url}?ordering=-created_at"))
         self.assertEqual(response.status_code, 200)
         ordered_titles = [p["title"] for p in response.data["results"]]
         self.assertEqual(ordered_titles, ["Hybrid Post", "Avocado toast", "Apple tips"])
