@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import {
   Box,
   Button,
@@ -47,10 +47,6 @@ const dietaryOptions = [
   'Organic',
 ];
 
-interface Allergen {
-  id: number;
-  name: string;
-}
 
 const ProposeNewFood: React.FC = () => {
   const navigate = useNavigate();
@@ -63,28 +59,12 @@ const ProposeNewFood: React.FC = () => {
   const [fat, setFat] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [selectedDietaryOptions, setSelectedDietaryOptions] = useState<string[]>([]);
-  const [selectedAllergens, setSelectedAllergens] = useState<number[]>([]);
-  const [allergens, setAllergens] = useState<Allergen[]>([]);
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch allergens (mock for now)
-  useEffect(() => {
-    // In a real implementation, you would fetch allergens from the backend
-    setAllergens([
-      { id: 1, name: 'Peanuts' },
-      { id: 2, name: 'Tree Nuts' },
-      { id: 3, name: 'Milk' },
-      { id: 4, name: 'Eggs' },
-      { id: 5, name: 'Fish' },
-      { id: 6, name: 'Shellfish' },
-      { id: 7, name: 'Soy' },
-      { id: 8, name: 'Wheat' },
-    ]);
-  }, []);
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
@@ -141,14 +121,6 @@ const ProposeNewFood: React.FC = () => {
     );
   };
 
-  const handleAllergensChange = (event: SelectChangeEvent<number[]>) => {
-    const {
-      target: { value },
-    } = event;
-    setSelectedAllergens(
-      typeof value === 'string' ? value.split(',').map(Number) : value,
-    );
-  };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -173,7 +145,6 @@ const ProposeNewFood: React.FC = () => {
         proteinContent: Number(protein),
         fatContent: Number(fat),
         carbohydrateContent: Number(carbs),
-        allergens: selectedAllergens,
         dietaryOptions: selectedDietaryOptions,
         nutritionScore: nutritionScore,
         imageUrl: imageUrl || undefined,
@@ -306,45 +277,14 @@ const ProposeNewFood: React.FC = () => {
                 </Box>
               </Box>
               
-              {/* Allergens */}
+
               <Box>    
                 <h2 className="nh-subtitle">
-                  Allergens & Dietary Information
+                  Dietary Information
                 </h2>
               </Box>
 
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <FormControl fullWidth>
-                    <InputLabel id="allergens-label">Contains Allergens</InputLabel>
-                    <Select
-                      labelId="allergens-label"
-                      multiple
-                      value={selectedAllergens}
-                      onChange={handleAllergensChange}
-                      input={<OutlinedInput label="Contains Allergens" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {(selected as number[]).map((value) => (
-                            <Chip 
-                              key={value} 
-                              label={allergens.find(a => a.id === value)?.name || value} 
-                            />
-                          ))}
-                        </Box>
-                      )}
-                      MenuProps={MenuProps}
-                    >
-                      {allergens.map((allergen) => (
-                        <MenuItem key={allergen.id} value={allergen.id}>
-                          <Checkbox checked={selectedAllergens.indexOf(allergen.id) > -1} />
-                          <ListItemText primary={allergen.name} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-
+              <Box>
                 <Box sx={{ flex: 1 }}>
                   <FormControl fullWidth>
                     <InputLabel id="dietary-options-label">Dietary Options</InputLabel>
