@@ -66,14 +66,18 @@ class FoodCatalog(ListAPIView):
             # No valid categories, return warning and empty results
             warning = getattr(self, "warning", None)
             if warning:
-                return Response({"warning": warning, "results": []}, status=206)
-            return Response({"results": []}, status=200)
+                return Response(
+                    {"warning": warning, "results": [], "status": 206}, status=206
+                )
+            return Response({"results": [], "status": 200}, status=200)
 
         # If no results after filtering (including search), return 204 No Content
         if queryset.count() == 0:
-            return Response(
-                {"warning": f"No result for {search_term}", "results": []}, status=204
-            )
+            warning = getattr(self, "warning", None)
+            if warning:
+                return Response(
+                    {"warning": warning, "results": [], "status": 204}, status=204
+                )
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -87,7 +91,13 @@ class FoodCatalog(ListAPIView):
             # Add warning to paginated response
             if isinstance(data, dict):
                 data["warning"] = warning
+                data["status"] = 206
             else:
-                data = {"warning": warning, "results": data}
+                data = {"warning": warning, "results": data, "status": 206}
             return Response(data, status=206)
+        # Always add status to response
+        if isinstance(data, dict):
+            data["status"] = 200
+        else:
+            data = {"results": data, "status": 200}
         return Response(data)

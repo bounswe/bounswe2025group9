@@ -1,10 +1,11 @@
-// api client for making requests to our mock api
-
-export interface PaginationResponse<T> {
+// api client for making requests to our apis
+export interface PaginatedResponseWithStatus<T> {
   count: number;
   next: string | null;
   previous: string | null;
   results: T[];
+  status?: number;
+  warning?: string;
 }
 // types
 export interface Food {
@@ -223,13 +224,20 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number }) => {
+  getFoods: (params?: { page?: number, search?: string}) => {
     let url = "/foods";
-    // set page number
+    const queryParams = new URLSearchParams();
     if (params && params.page) {
-      url += `?page=${params.page}`;
+      queryParams.append('page', params.page.toString());
     }
-    return fetchJson<PaginationResponse<Food>>(url, {
+    if (params && params.search) {
+      queryParams.append('search', params.search);
+    }
+    const queryString = queryParams.toString();
+    if (queryString) {
+      url += `?${queryString}`;
+    }
+    return fetchJson<PaginatedResponseWithStatus<Food>>(url, {
       method: "GET",
     }, true);
   },
