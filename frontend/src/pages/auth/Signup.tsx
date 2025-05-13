@@ -1,7 +1,7 @@
-import { UserPlus } from '@phosphor-icons/react'
+import { UserPlus, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { apiClient } from '../../lib/apiClient'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 
 // signup page component (placeholder)
 const SignUp = () => {
@@ -12,8 +12,7 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         name: '',
-        surname: '',
-        address: ''
+        surname: ''
     })
     const [errors, setErrors] = useState({
         email: '',
@@ -21,11 +20,26 @@ const SignUp = () => {
         password: '',
         confirmPassword: '',
         name: '',
-        surname: '',
-        address: ''
+        surname: ''
     })
     const [signupError, setSignupError] = useState('')
+    const [signupErrors, setSignupErrors] = useState<{[key: string]: string}>({})
     const [signupSuccess, setSignupSuccess] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+    const [passwordFocused, setPasswordFocused] = useState(false)
+
+    // password validation criteria
+    const passwordCriteria = {
+        minLength: formData.password.length >= 8,
+        hasUppercase: /[A-Z]/.test(formData.password),
+        hasLowercase: /[a-z]/.test(formData.password),
+        hasNumber: /\d/.test(formData.password),
+        passwordsMatch: formData.password === formData.confirmPassword && formData.confirmPassword !== ''
+    }
+
+    // check if all password criteria are met
+    const allCriteriaMet = Object.values(passwordCriteria).every(criteria => criteria)
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const { name, value } = e.target
@@ -42,6 +56,14 @@ const SignUp = () => {
         }
     }
 
+    const togglePasswordVisibility = (field: 'password' | 'confirmPassword') => {
+        if (field === 'password') {
+            setShowPassword(prev => !prev)
+        } else {
+            setShowConfirmPassword(prev => !prev)
+        }
+    }
+
     const validateForm = () => {
         let isValid = true
         const newErrors = {
@@ -50,8 +72,7 @@ const SignUp = () => {
             password: '',
             confirmPassword: '',
             name: '',
-            surname: '',
-            address: ''
+            surname: ''
         }
 
         // Email validation
@@ -76,11 +97,8 @@ const SignUp = () => {
         if (!formData.password) {
             newErrors.password = 'Password is required'
             isValid = false
-        } else if (formData.password.length < 8) {
-            newErrors.password = 'Password must be at least 8 characters'
-            isValid = false
-        } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(formData.password)) {
-            newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, and one number'
+        } else if (!allCriteriaMet) {
+            newErrors.password = 'Password does not meet all requirements'
             isValid = false
         }
 
@@ -101,12 +119,6 @@ const SignUp = () => {
             isValid = false
         }
 
-        // Address validation
-        if (!formData.address) {
-            newErrors.address = 'Address is required'
-            isValid = false
-        }
-
         setErrors(newErrors)
         return isValid
     }
@@ -115,6 +127,7 @@ const SignUp = () => {
         e.preventDefault()
         if (validateForm()) {
             setSignupError('')
+            setSignupErrors({})
             setSignupSuccess(false)
             try {
                 console.log('attempting signup with data:', {
@@ -123,8 +136,7 @@ const SignUp = () => {
                     surname: formData.surname,
                     email: formData.email,
                     password: formData.password,
-                    confirmPassword: formData.confirmPassword,
-                    address: formData.address
+                    confirmPassword: formData.confirmPassword
                 })
                 await apiClient.signup({
                     username: formData.username,
@@ -132,7 +144,6 @@ const SignUp = () => {
                     name: formData.name,
                     surname: formData.surname,
                     email: formData.email,
-                    address: formData.address,
                     tags: [],
                     allergens: []
                 })
@@ -143,11 +154,123 @@ const SignUp = () => {
                 setTimeout(() => {
                     navigate('/login')
                 }, 1500)
-            } catch (err) {
+            } catch (err: any) {
                 console.error('signup failed:', err)
-                setSignupError('signup failed, please check your info')
+                
+                // Add more detailed logging to see the exact error structure
+                console.log('Error object:', err);
+                console.log('Error response:', err.response);
+                console.log('Error message:', err.message);
+                console.log('Error data:', err.data);
+                
+                // Check if error has data property (from our custom error in apiClient)
+                if (err.data) {
+                    const errorData = err.data;
+                    setSignupErrors(errorData);
+                    
+                    // Get the first error field
+                    const firstErrorField = Object.keys(errorData)[0];
+                    
+                    if (firstErrorField && errorData[firstErrorField]) {
+                        const errorMessages = errorData[firstErrorField];
+                        let errorMessage = '';
+                        
+                        if (Array.isArray(errorMessages) && errorMessages.length > 0) {
+                            errorMessage = errorMessages[0];
+                        } else if (typeof errorMessages === 'string') {
+                            errorMessage = errorMessages;
+                        }
+                        
+                        if (errorMessage) {
+                            setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
+                            return;
+                        }
+                    }
+                    
+                    // If we couldn't extract a specific message but have error data
+                    setSignupError('Signup failed. Please check your information and try again.');
+                    return;
+                }
+                
+                // Handle different types of errors
+                if (err.message && err.message.includes('API error')) {
+                    // Extract the actual error from the API error message
+                    try {
+                        // If the error message itself contains JSON
+                        if (err.response && err.response.data) {
+                            const errorData = err.response.data;
+                            setSignupErrors(errorData);
+                            
+                            // Get the first error field
+                            const firstErrorField = Object.keys(errorData)[0];
+                            
+                            if (firstErrorField && errorData[firstErrorField]) {
+                                const errorMessages = errorData[firstErrorField];
+                                let errorMessage = '';
+                                
+                                if (Array.isArray(errorMessages) && errorMessages.length > 0) {
+                                    errorMessage = errorMessages[0];
+                                } else if (typeof errorMessages === 'string') {
+                                    errorMessage = errorMessages;
+                                }
+                                
+                                if (errorMessage) {
+                                    setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
+                                    return;
+                                }
+                            }
+                        }
+                    } catch (parseErr) {
+                        console.error('Error parsing error message:', parseErr);
+                    }
+                    
+                    // If we couldn't extract a specific error, use the original message
+                    setSignupError(err.message);
+                } else if (err.response && err.response.data) {
+                    const errorData = err.response.data;
+                    
+                    if (typeof errorData === 'object') {
+                        setSignupErrors(errorData);
+                        
+                        // Get the first error field
+                        const firstErrorField = Object.keys(errorData)[0];
+                        
+                        if (firstErrorField) {
+                            // Handle array or string error messages
+                            const errorMessages = errorData[firstErrorField];
+                            let errorMessage = '';
+                            
+                            if (Array.isArray(errorMessages) && errorMessages.length > 0) {
+                                errorMessage = errorMessages[0];
+                            } else if (typeof errorMessages === 'string') {
+                                errorMessage = errorMessages;
+                            }
+                            
+                            if (errorMessage) {
+                                setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
+                            } else {
+                                setSignupError('Signup failed. Please check your information and try again.');
+                            }
+                        } else {
+                            setSignupError('Signup failed. Please check your information and try again.');
+                        }
+                    } else {
+                        setSignupError('Signup failed. Please check your information and try again.');
+                    }
+                } else {
+                    setSignupError('Network error. Please try again later.');
+                }
             }
         }
+    }
+
+    // icon for password criteria display
+    const criteriaIcon = (met: boolean) => {
+        return met ? (
+            <Check size={16} weight="bold" style={{ color: 'var(--color-success)' }} />
+        ) : (
+            <X size={16} weight="bold" style={{ color: 'var(--color-error)' }} />
+        )
     }
 
     return (
@@ -155,8 +278,8 @@ const SignUp = () => {
             <div className="nh-container">
                 <div className="max-w-md mx-auto nh-card">
                     <div className="text-center mb-4">
-                        <div className="inline-flex items-center">
-                            <UserPlus size={28} weight="bold" className="text-primary mr-2" />
+                        <div className="inline-flex items-center justify-center">
+                            <UserPlus size={28} weight="bold" className="text-primary mr-2 mb-3" aria-hidden="true" />
                             <h2 className="nh-title">Sign Up</h2>
                         </div>
                     </div>
@@ -164,7 +287,7 @@ const SignUp = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="name" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                     First Name
                                 </label>
                                 <input
@@ -174,17 +297,20 @@ const SignUp = () => {
                                     value={formData.name}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.name ? 'border-red-500' : 'border-gray-300'
+                                        errors.name ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Enter your first name"
                                 />
                                 {errors.name && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.name}</p>
+                                    <p className="nh-error-message">
+                                        <X size={14} weight="bold" className="mr-1" />
+                                        {errors.name}
+                                    </p>
                                 )}
                             </div>
 
                             <div>
-                                <label htmlFor="surname" className="block text-sm font-medium text-gray-700 mb-1">
+                                <label htmlFor="surname" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                     Last Name
                                 </label>
                                 <input
@@ -194,18 +320,21 @@ const SignUp = () => {
                                     value={formData.surname}
                                     onChange={handleChange}
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                        errors.surname ? 'border-red-500' : 'border-gray-300'
+                                        errors.surname ? 'border-red-500' : 'border-gray-500'
                                     }`}
                                     placeholder="Enter your last name"
                                 />
                                 {errors.surname && (
-                                    <p className="mt-1 text-sm text-red-500">{errors.surname}</p>
+                                    <p className="nh-error-message">
+                                        <X size={14} weight="bold" className="mr-1" />
+                                        {errors.surname}
+                                    </p>
                                 )}
                             </div>
                         </div>
 
                         <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Email
                             </label>
                             <input
@@ -215,17 +344,20 @@ const SignUp = () => {
                                 value={formData.email}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.email ? 'border-red-500' : 'border-gray-300'
+                                    errors.email ? 'border-red-500' : 'border-gray-500'
                                 }`}
                                 placeholder="Enter your email"
                             />
                             {errors.email && (
-                                <p className="mt-1 text-sm text-red-500">{errors.email}</p>
+                                <p className="nh-error-message">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.email}
+                                </p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="username" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Username
                             </label>
                             <input
@@ -235,72 +367,135 @@ const SignUp = () => {
                                 value={formData.username}
                                 onChange={handleChange}
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.username ? 'border-red-500' : 'border-gray-300'
+                                    errors.username ? 'border-red-500' : 'border-gray-500'
                                 }`}
                                 placeholder="Choose a username"
                             />
                             {errors.username && (
-                                <p className="mt-1 text-sm text-red-500">{errors.username}</p>
+                                <p className="nh-error-message">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.username}
+                                </p>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Password
                             </label>
-                            <input
-                                type="password"
-                                id="password"
-                                name="password"
-                                value={formData.password}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.password ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Create a password"
-                            />
+                            <div className="relative">
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleChange}
+                                    onFocus={() => setPasswordFocused(true)}
+                                    onBlur={() => setPasswordFocused(false)}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
+                                        errors.password ? 'border-red-500' : 'border-gray-500'
+                                    }`}
+                                    placeholder="Create a password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => togglePasswordVisibility('password')}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? (
+                                        <EyeSlash size={20} weight="regular" />
+                                    ) : (
+                                        <Eye size={20} weight="regular" />
+                                    )}
+                                </button>
+                            </div>
                             {errors.password && (
-                                <p className="mt-1 text-sm text-red-500">{errors.password}</p>
+                                <p className="nh-error-message">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.password}
+                                </p>
+                            )}
+                            
+                            {/* password criteria checklist */}
+                            {(passwordFocused || formData.password.length > 0) && (
+                                <div className="mt-2 p-2 rounded-md transition-colors" style={{
+                                    backgroundColor: 'var(--color-bg-tertiary)',
+                                    borderWidth: '1px',
+                                    borderColor: 'var(--color-gray-700)',
+                                    borderStyle: 'solid'
+                                }}>
+                                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>Password must have:</p>
+                                    <ul className="space-y-1">
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.minLength)}
+                                            <span className={`ml-2 ${passwordCriteria.minLength ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least 8 characters
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.hasUppercase)}
+                                            <span className={`ml-2 ${passwordCriteria.hasUppercase ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least one uppercase letter
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.hasLowercase)}
+                                            <span className={`ml-2 ${passwordCriteria.hasLowercase ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least one lowercase letter
+                                            </span>
+                                        </li>
+                                        <li className="flex items-center text-sm">
+                                            {criteriaIcon(passwordCriteria.hasNumber)}
+                                            <span className={`ml-2 ${passwordCriteria.hasNumber ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
+                                                At least one number
+                                            </span>
+                                        </li>
+                                    </ul>
+                                </div>
                             )}
                         </div>
 
                         <div>
-                            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                            <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
                                 Confirm Password
                             </label>
-                            <input
-                                type="password"
-                                id="confirmPassword"
-                                name="confirmPassword"
-                                value={formData.confirmPassword}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.confirmPassword ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Confirm your password"
-                            />
-                            {errors.confirmPassword && (
-                                <p className="mt-1 text-sm text-red-500">{errors.confirmPassword}</p>
+                            <div className="relative">
+                                <input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    value={formData.confirmPassword}
+                                    onChange={handleChange}
+                                    className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
+                                        errors.confirmPassword ? 'border-red-500' : 'border-gray-500'
+                                    }`}
+                                    placeholder="Confirm your password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => togglePasswordVisibility('confirmPassword')}
+                                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showConfirmPassword ? (
+                                        <EyeSlash size={20} weight="regular" />
+                                    ) : (
+                                        <Eye size={20} weight="regular" />
+                                    )}
+                                </button>
+                            </div>
+                            {formData.confirmPassword && (
+                                <div className="flex items-center mt-1">
+                                    {criteriaIcon(passwordCriteria.passwordsMatch)}
+                                    <span className="ml-2 text-sm" style={{ color: passwordCriteria.passwordsMatch ? 'var(--color-success)' : 'var(--color-error)' }}>
+                                        {passwordCriteria.passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                                    </span>
+                                </div>
                             )}
-                        </div>
-
-                        <div>
-                            <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">
-                                Address
-                            </label>
-                            <input
-                                type="text"
-                                id="address"
-                                name="address"
-                                value={formData.address}
-                                onChange={handleChange}
-                                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
-                                    errors.address ? 'border-red-500' : 'border-gray-300'
-                                }`}
-                                placeholder="Enter your address"
-                            />
-                            {errors.address && (
-                                <p className="mt-1 text-sm text-red-500">{errors.address}</p>
+                            {errors.confirmPassword && (
+                                <p className="nh-error-message">
+                                    <X size={14} weight="bold" className="mr-1" />
+                                    {errors.confirmPassword}
+                                </p>
                             )}
                         </div>
 
@@ -312,22 +507,43 @@ const SignUp = () => {
                         </button>
                     </form>
 
-                    {signupError && (
-                        <p className="mt-2 text-sm text-red-500 text-center">{signupError}</p>
+                    {/* Show either the general error message OR the field-specific errors, not both */}
+                    {signupError && Object.keys(signupErrors).length === 0 && (
+                        <p className="nh-error-message mt-2 justify-center">
+                            <X size={16} weight="bold" className="mr-1" />
+                            {signupError}
+                        </p>
                     )}
+                    
+                    {/* Field-specific backend errors */}
+                    {Object.keys(signupErrors).length > 0 && (
+                        <div className="nh-error-list">
+                            <ul>
+                                {Object.entries(signupErrors).map(([field, message]) => (
+                                    <li key={field}>
+                                        <span className="capitalize">{field}</span>: {Array.isArray(message) ? message[0] : message}
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    )}
+                    
                     {signupSuccess && (
-                        <div className="mt-4 p-3 bg-green-100 text-green-800 rounded-md text-center">
-                            <p className="font-medium">Signup successful!</p>
+                        <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-success rounded-md text-center">
+                            <p className="font-medium flex items-center justify-center">
+                                <Check size={18} weight="bold" className="mr-1" />
+                                Signup successful!
+                            </p>
                             <p className="text-sm mt-1">Redirecting to login page...</p>
                         </div>
                     )}
 
                     <div className="mt-4 text-center">
-                        <p className="text-sm text-gray-600">
+                        <p className="text-sm text-gray-600 dark:text-gray-400">
                             Already have an account?{' '}
-                            <a href="/login" className="text-primary hover:text-primary-dark">
+                            <Link to="/login" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
                                 Sign in
-                            </a>
+                            </Link>
                         </p>
                     </div>
                 </div>

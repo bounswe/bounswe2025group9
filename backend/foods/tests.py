@@ -21,6 +21,9 @@ class FoodCatalogTests(TestCase):
                 nutritionScore=5.0,
                 imageUrl=f"http://example.com/image{i}.jpg",
             )
+            food.allergens.set([])
+            food.dietaryOptions = []
+            food.save()
         # Create 2 FoodEntry objects with category "Fruit"
         for i in range(2):
             food = FoodEntry.objects.create(
@@ -35,6 +38,10 @@ class FoodCatalogTests(TestCase):
                 category="Fruit",
             )
 
+            food.allergens.set([])
+            food.dietaryOptions = []
+            food.save()
+
         # Create 13 FoodEntry objects with category "Vegetable"
         for i in range(13):
             food = FoodEntry.objects.create(
@@ -48,6 +55,9 @@ class FoodCatalogTests(TestCase):
                 imageUrl=f"http://example.com/image_veg_{i}.jpg",
                 category="Vegetable",
             )
+            food.allergens.set([])
+            food.dietaryOptions = []
+            food.save()
 
     def test_successful_query(self):
         """
@@ -126,3 +136,26 @@ class FoodCatalogTests(TestCase):
         results = response.data.get("results", [])
         self.assertTrue(all(food["category"] == "Fruit" for food in results))
         self.assertTrue(any("Fruit Food" in food["name"] for food in results))
+
+class SuggestRecipeTests(TestCase):
+    def test_suggest_recipe_successful(self):
+        """
+        Test that a valid food_name returns a recipe.
+        """
+        response = self.client.get(reverse("suggest_recipe"), {"food_name": "chicken"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn("Meal", response.data)
+        self.assertEqual(response.data["Meal"], "Chicken Handi")
+
+    def test_suggest_recipe_unsuccessful(self):
+        """
+        Test that an unknown food_name returns a warning and 404.
+        """
+        response = self.client.get(
+            reverse("suggest_recipe"), {"food_name": "food_not_in_db"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("warning", response.data)
+        self.assertEqual(
+            response.data["warning"], "No recipe found for the given food name."
+        )

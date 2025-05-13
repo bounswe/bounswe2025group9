@@ -23,7 +23,7 @@ class User(AbstractUser):
 
     name = models.CharField(max_length=100)
     surname = models.CharField(max_length=100)
-    address = models.TextField()
+    address = models.TextField(null=True, blank=True)
 
     tags = models.ManyToManyField(Tag, blank=True)
     allergens = models.ManyToManyField(Allergen, blank=True)
