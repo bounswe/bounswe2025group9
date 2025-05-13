@@ -85,20 +85,41 @@ const ForumScreen: React.FC = () => {
       if (selectedTagIds.length === 0) {
         // If no filters, fetch all posts
         try {
+          console.log('Fetching all posts...');
           const fetchedPosts = await forumService.getPosts();
-          setPosts(fetchedPosts);
+          // Preserve like status for existing posts
+          const updatedPosts = preserveLikeStatus(fetchedPosts, posts);
+          setPosts(updatedPosts);
         } catch (err) {
           console.error('Error fetching posts:', err);
         }
       } else {
         // Fetch filtered posts
         try {
+          console.log('Fetching filtered posts with tags:', selectedTagIds);
           const filteredPosts = await forumService.getPosts(selectedTagIds);
-          setPosts(filteredPosts);
+          // Preserve like status for existing posts
+          const updatedPosts = preserveLikeStatus(filteredPosts, posts);
+          setPosts(updatedPosts);
         } catch (err) {
           console.error('Error fetching filtered posts:', err);
         }
       }
+    };
+
+    // Helper function to preserve like status from existing posts
+    const preserveLikeStatus = (newPosts: ForumTopic[], oldPosts: ForumTopic[]): ForumTopic[] => {
+      return newPosts.map(newPost => {
+        const existingPost = oldPosts.find(oldPost => oldPost.id === newPost.id);
+        if (existingPost && existingPost.isLiked) {
+          return {
+            ...newPost,
+            isLiked: existingPost.isLiked,
+            likesCount: existingPost.likesCount
+          };
+        }
+        return newPost;
+      });
     };
 
     // Only run this effect if we're not in the initial loading state
@@ -360,15 +381,45 @@ const ForumScreen: React.FC = () => {
         refreshing={loading}
         onRefresh={() => {
           setLoading(true);
+          
+          // Helper function to preserve like status
+          const preserveLikeStatus = (newPosts: ForumTopic[], oldPosts: ForumTopic[]): ForumTopic[] => {
+            return newPosts.map(newPost => {
+              const existingPost = oldPosts.find(oldPost => oldPost.id === newPost.id);
+              if (existingPost && existingPost.isLiked) {
+                return {
+                  ...newPost,
+                  isLiked: existingPost.isLiked,
+                  likesCount: existingPost.likesCount
+                };
+              }
+              return newPost;
+            });
+          };
+          
           if (selectedTagIds.length > 0) {
             forumService.getPosts(selectedTagIds)
-              .then(posts => setPosts(posts))
-              .catch(err => console.error('Error refreshing posts:', err))
+              .then(fetchedPosts => {
+                // Preserve like status
+                const updatedPosts = preserveLikeStatus(fetchedPosts, posts);
+                setPosts(updatedPosts);
+              })
+              .catch(err => {
+                console.error('Error refreshing posts:', err);
+                Alert.alert('Error', 'Failed to refresh posts. Please try again.');
+              })
               .finally(() => setLoading(false));
           } else {
             forumService.getPosts()
-              .then(posts => setPosts(posts))
-              .catch(err => console.error('Error refreshing posts:', err))
+              .then(fetchedPosts => {
+                // Preserve like status
+                const updatedPosts = preserveLikeStatus(fetchedPosts, posts);
+                setPosts(updatedPosts);
+              })
+              .catch(err => {
+                console.error('Error refreshing posts:', err);
+                Alert.alert('Error', 'Failed to refresh posts. Please try again.');
+              })
               .finally(() => setLoading(false));
           }
         }}

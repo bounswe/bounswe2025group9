@@ -83,9 +83,14 @@ const ForumPost: React.FC<ForumPostProps> = ({
   
   // Initialize like state and count from post data
   useEffect(() => {
-    setIsLiked(post.isLiked || false);
-    setLikesCount(post.likesCount || 0);
-  }, [post.isLiked, post.likesCount]);
+    // Only update if different to avoid infinite loops
+    if (isLiked !== post.isLiked) {
+      setIsLiked(post.isLiked || false);
+    }
+    if (likesCount !== post.likesCount) {
+      setLikesCount(post.likesCount || 0);
+    }
+  }, [post.isLiked, post.likesCount, post.id]);
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {

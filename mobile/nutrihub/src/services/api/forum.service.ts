@@ -236,6 +236,18 @@ export const forumService = {
     return response.data.liked;
   },
 
+  // Toggle like on a comment
+  async toggleCommentLike(commentId: number): Promise<boolean> {
+    const response = await apiClient.post<{ liked: boolean }>(`/forum/comments/${commentId}/like/`);
+    if (response.error) throw new Error(response.error);
+    
+    if (!response.data) {
+      throw new Error('Failed to toggle comment like');
+    }
+    
+    return response.data.liked;
+  },
+
   // Get comments for a post
   async getComments(postId: number): Promise<Comment[]> {
     const response = await apiClient.get<PaginatedResponse<ApiComment>>(`/forum/comments/?post=${postId}`);

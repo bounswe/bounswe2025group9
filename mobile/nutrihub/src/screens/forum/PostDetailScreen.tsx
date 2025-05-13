@@ -118,20 +118,30 @@ const PostDetailScreen: React.FC = () => {
     }
   };
   
-  // Handle comment like - Note: The API doesn't support this yet
-  const handleCommentLike = (commentId: number) => {
-    // Simulate comment liking until API supports it
-    setComments(prevComments =>
-      prevComments.map(comment =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              isLiked: !comment.isLiked,
-              likesCount: comment.isLiked ? comment.likesCount - 1 : comment.likesCount + 1,
-            }
-          : comment
-      )
-    );
+  // Handle comment like
+  const handleCommentLike = async (commentId: number) => {
+    try {
+      const isLiked = await forumService.toggleCommentLike(commentId);
+      
+      // Update comment in the state with the new like status
+      setComments(prevComments =>
+        prevComments.map(comment =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                isLiked: isLiked,
+                likesCount: isLiked 
+                  ? (comment.likesCount || 0) + 1 
+                  : Math.max((comment.likesCount || 0) - 1, 0) // Ensure count doesn't go below 0
+              }
+            : comment
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling comment like:', err);
+      // Optionally alert the user
+      Alert.alert('Error', 'Failed to update comment like status.');
+    }
   };
   
   // Render comment item
@@ -155,8 +165,11 @@ const PostDetailScreen: React.FC = () => {
             size={16} 
             color={comment.isLiked ? theme.primary : theme.textSecondary} 
           />
-          <Text style={[styles.commentLikes, { color: comment.isLiked ? theme.primary : theme.textSecondary }]}>
-            {comment.likesCount}
+          <Text style={[
+            styles.commentLikes, 
+            { color: comment.isLiked ? theme.primary : theme.textSecondary }
+          ]}>
+            {comment.likesCount || 0}
           </Text>
         </TouchableOpacity>
       </View>
