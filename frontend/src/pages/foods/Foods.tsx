@@ -40,7 +40,6 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   );
 }
 
-// foods page component (placeholder)
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
     const [fetchSuccess, setFetchSuccess] = useState(true)
@@ -50,32 +49,46 @@ const Foods = () => {
     const [next, setNext] = useState<string | null>(null);
     const [previous, setPrevious] = useState<string | null>(null);
     const [page, setPage] = useState(1);
+    const [warning, setWarning] = useState<string | null>(null);
 
-    const fetchFoods = async (pageNum = 1) => {
+    const fetchFoods = async (pageNum = 1, search = '') => {
         try {
-            const response = await apiClient.getFoods({ page: pageNum });
-            setFoods(response.results); // response is now a paginated response (count, next, previous,)
-            setCount(response.count || 0);
-            setNext(response.next || null);
-            setPrevious(response.previous || null);
-            setFetchSuccess(true);
-            console.log("Fetched foods:", response);
+            const response = await apiClient.getFoods({ page: pageNum, search });
+
+            if (response.status == 200){
+                setFoods(response.results);
+                setCount(response.count || 0);
+                setNext(response.next || null);
+                setPrevious(response.previous || null);
+                setFetchSuccess(true);
+                setWarning(null);
+                console.log("Fetched foods:", response);
+            }
+            else if (response.status == 206){ // partial content, some categories are not found
+                setFoods(response.results);
+                setCount(response.count || 0);
+                setNext(response.next || null);
+                setPrevious(response.previous || null);
+                setFetchSuccess(true);
+                setWarning(response.warning || "Some categories are not available.");
+            }
+            else if (response.status == 204){ // No content, searched terms are not found
+                setFoods([]);
+                setFetchSuccess(true);
+                setWarning(response.warning || `No foods found for "${searchTerm}".`);
+            }
+
         } catch (error) {
             console.error('Error fetching foods:', error);
             setFetchSuccess(false);
+            setWarning(null);
         }
     }
 
     useEffect(() => {
-        fetchFoods(page);
-    }, [page]);
+        fetchFoods(page, searchTerm);
+    }, [page, searchTerm]);
 
-    // Filter foods based on search term (client-side, after pagination)
-    const filteredFoods = foods.filter(food => 
-        food.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-
-    // Pagination controls
     const pageSize = foods.length
     const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
 
@@ -86,6 +99,11 @@ const Foods = () => {
         if (next && page < totalPages) setPage(page + 1);
     };
 
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        setPage(1);
+    };
+
     return (
         <div className="py-12">
             <div className="nh-container">
@@ -94,14 +112,17 @@ const Foods = () => {
                     Browse our selection of available foods.
                 </p>
 
-                <div className="flex flex-col sm:flex-row gap-4 mb-8">
+                <form className="flex flex-col sm:flex-row gap-4 mb-8" onSubmit={handleSearch}>
                     <div className="relative flex-grow">
                         <input 
                             type="text" 
                             className="w-full nh-input pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
                             placeholder="Search for a food..."
                             value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onChange={(e) => {
+                                setSearchTerm(e.target.value);
+                                setPage(1);
+                            }}
                         />
                         <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,28 +131,33 @@ const Foods = () => {
                         </div>
                     </div>
                     <div className="flex gap-3">
-                        <button className="nh-button-primary px-6 py-2.5 whitespace-nowrap">
+                        <button type="submit" className="nh-button-primary px-6 py-2.5 whitespace-nowrap">
                             Search
                         </button>
                         <Link to="/foods/propose" className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"> Add Food</Link>
                     </div>
-
-                </div>
+                </form>
+                {warning && (
+                    <div className="mb-6 text-center text-yellow-700 bg-yellow-100 border border-yellow-300 rounded p-3">
+                        {warning} {searchTerm && <span>(searched: <b>{searchTerm}</b>)</span>}
+                    </div>
+                )}
                 {fetchSuccess ? (
                         <>
                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {filteredFoods.length > 0 ?
-                            (filteredFoods.map(food => (
+                        {foods.length > 0 ?
+                            (foods.map(food => (
                                 <FoodItem 
                                     key={food.id} 
                                     item={food} 
                                     onClick={() => setSelectedFood(food)}
                                 />
                             ))) : 
-                            (<p className="col-span-full text-center nh-text">No foods found matching your search.</p>)
+                            <p className="col-span-full text-center nh-text">
+                                No foods found matching your search: <b>{searchTerm}</b>
+                            </p>
                         }
                         </div>
-                        {/* Pagination controls */}
                         <div className="flex justify-center mt-8 gap-4">
                             <button 
                                 className="nh-button-secondary px-4 py-2"
