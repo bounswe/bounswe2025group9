@@ -13,6 +13,17 @@
     "preview3": {
       "developmentClient": true
     },
-    "production": {}
+    "production": {},
+    "local": {
+      "android": {
+        "buildType": "apk",
+        "distribution": "internal",
+        "withoutCredentials": true
+      },
+      "developmentClient": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8000"
+      }
+    }
   }
 } 
