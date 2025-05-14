@@ -19,3 +19,4 @@ We are Computer Engineering students studying at Boğaziçi University. We are t
 - [Mete DAMAR](https://github.com/bounswe/bounswe2025group9/wiki/Personal-Wiki:-Mete-DAMAR)
 
 # [Affordable & Healthy Eating Hub](https://github.com/bounswe/bounswe2025group9/wiki/Project:-Affordable-&-Healthy-Eating-Hub)
+[![Nutrihub Logo](https://github.com/user-attachments/assets/e9d5b3d7-7a9a-425a-a6ac-10c9665f5276)](https://nutrihub.fit)
