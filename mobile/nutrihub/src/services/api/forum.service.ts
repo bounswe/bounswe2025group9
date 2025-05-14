@@ -4,6 +4,7 @@
 
 import { apiClient } from './client';
 import { ForumTopic, Comment, PostTagType } from '../../types/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // API response interface for paginated results
 export interface PaginatedResponse<T> {
@@ -121,8 +122,21 @@ export const forumService = {
       url += `?${tagParams}`;
     }
     
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      console.log("Skipping forum request - no access token available");
+      return [];
+    }
+    
     const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>(url);
-    if (response.error) throw new Error(response.error);
+    if (response.error) {
+      if (response.status === 401) {
+        console.error("Authentication error in getPosts - token may be invalid");
+        throw new Error("Authentication error - please login again");
+      }
+      throw new Error(response.error);
+    }
     
     if (!response.data || !response.data.results) {
       console.error('Unexpected response format:', response.data);
@@ -165,6 +179,12 @@ export const forumService = {
 
   // Get single post by ID
   async getPost(id: number): Promise<ForumTopic> {
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      throw new Error("Cannot fetch post: User not logged in");
+    }
+    
     const response = await apiClient.get<ApiForumTopic>(`/forum/posts/${id}/`);
     if (response.error) throw new Error(response.error);
     
@@ -277,6 +297,13 @@ export const forumService = {
 
   // Get comments for a post
   async getComments(postId: number): Promise<Comment[]> {
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      console.log("Skipping comments request - no access token available");
+      return [];
+    }
+    
     const response = await apiClient.get<PaginatedResponse<ApiComment>>(`/forum/comments/?post=${postId}`);
     if (response.error) throw new Error(response.error);
     
@@ -302,6 +329,13 @@ export const forumService = {
 
   // Search posts
   async searchPosts(query: string): Promise<ForumTopic[]> {
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      console.log("Skipping search request - no access token available");
+      return [];
+    }
+    
     const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>(`/forum/posts/search/?q=${query}`);
     if (response.error) throw new Error(response.error);
     

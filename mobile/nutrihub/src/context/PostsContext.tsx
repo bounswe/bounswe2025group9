@@ -8,6 +8,7 @@
 import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import { ForumTopic } from '../types/types';
 import { forumService } from '../services/api/forum.service';
+import { useAuth } from '../context/AuthContext'; 
 
 interface PostsContextType {
   posts: ForumTopic[];
@@ -29,11 +30,17 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const [posts, setPosts] = useState<ForumTopic[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { isLoggedIn } = useAuth(); // Get authentication state
 
-  // Fetch initial posts when the context loads
+  // Only fetch posts when user is logged in
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    if (isLoggedIn) {
+      console.log("User is logged in, fetching initial posts");
+      fetchPosts().catch(err => {
+        console.error("Error fetching initial posts:", err);
+      });
+    }
+  }, [isLoggedIn]); // Depend on isLoggedIn state
 
   // Add a new post to the state
   const addPost = (post: ForumTopic) => {
@@ -54,6 +61,12 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Fetch all posts from the API
   const fetchPosts = async (tagIds?: number[]): Promise<ForumTopic[]> => {
+    // Only proceed if user is logged in
+    if (!isLoggedIn) {
+      console.log("Skipping fetchPosts because user is not logged in");
+      return [];
+    }
+    
     setIsLoading(true);
     setError(null);
     
@@ -73,6 +86,11 @@ export const PostsProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   // Fetch a specific post by ID
   const fetchPostById = async (id: number): Promise<ForumTopic> => {
+    // Only proceed if user is logged in
+    if (!isLoggedIn) {
+      throw new Error("Cannot fetch post: User not logged in");
+    }
+    
     setIsLoading(true);
     setError(null);
     
