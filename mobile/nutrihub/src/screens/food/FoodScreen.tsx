@@ -72,6 +72,26 @@ const FoodScreen: React.FC = () => {
   // Food data state
   const [foodData, setFoodData] = useState<FoodItem[]>([]);
   
+  // Ref to track if we're already fetching
+  const isFetchingRef = React.useRef(false);
+  
+  // Initialize pagination state with useRef to prevent race conditions
+  const [pagination, setPagination] = useState({
+    page: 1,          // Current page (starting at 1)
+    limit: 20,        // Items per page
+    hasMore: true,    // Whether there are more items to load
+    total: 0,         // Total number of items available
+    loading: false    // Whether we're currently loading more items
+  });
+  
+  // Use a ref to track the current page to avoid stale state in callbacks
+  const currentPageRef = React.useRef(pagination.page);
+  
+  // Update ref when pagination changes
+  React.useEffect(() => {
+    currentPageRef.current = pagination.page;
+  }, [pagination.page]);
+  
   // Loading and error states
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -102,15 +122,46 @@ const FoodScreen: React.FC = () => {
   } = useFoodFilters(foodData);
   
   // Fetch food data from API
-  const fetchFoodData = useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
+  const fetchFoodData = useCallback(async (loadMore = false) => {
+    // Prevent concurrent fetches
+    if (isFetchingRef.current) {
+      console.log('Already fetching data, ignoring request');
+      return;
+    }
     
     try {
+      isFetchingRef.current = true;
+      
+      if (loadMore) {
+        if (!pagination.hasMore || pagination.loading) {
+          console.log('No more items or already loading, skipping fetch');
+          return;
+        }
+        setPagination(prev => ({ ...prev, loading: true }));
+      } else {
+        setIsLoading(true);
+        setError(null);
+        // Reset page when fetching fresh data
+        setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
+        currentPageRef.current = 1;
+      }
+      
       // Convert category filter to array if present
       const categoryFilters = filters.category ? [filters.category] : undefined;
       
-      const response = await getFoodCatalog(50, categoryFilters);
+      // Calculate request parameters
+      // Use ref for current page to avoid stale closure issues
+      const pageToFetch = loadMore ? currentPageRef.current : 1;
+      const offset = (pageToFetch - 1) * pagination.limit;
+      
+      console.log(`Fetching food data: loadMore=${loadMore}, page=${pageToFetch}, limit=${pagination.limit}`);
+      
+      const response = await getFoodCatalog(
+        pagination.limit, 
+        offset, 
+        categoryFilters,
+        filters.name // Pass the search term
+      );
       
       if (response.error) {
         console.error('API Error:', response.error);
@@ -118,31 +169,118 @@ const FoodScreen: React.FC = () => {
         return;
       }
       
-      if (!response.data) {
-        console.error('No data in response');
-        setError('No food data available');
-        return;
-      }
-      
-      if (!Array.isArray(response.data)) {
-        console.error('Response data is not an array:', response.data);
+      if (!response.data || !Array.isArray(response.data)) {
+        console.error('Invalid response data:', response.data);
         setError('Invalid response format from server');
         return;
       }
 
-      setFoodData(response.data);
+      const responseData = response.data;
+      console.log(`Received ${responseData.length} items, hasMore=${response.hasMore}, total=${response.total}`);
+      
+      // Log the first few IDs for debugging
+      if (responseData.length > 0) {
+        console.log('First few item IDs:', responseData.slice(0, 5).map(item => item.id));
+      } else {
+        console.log('No items received in this batch');
+      }
+
+      if (loadMore) {
+        // Append new items to existing data
+        setFoodData(prevData => {
+          // Create a Set of existing IDs for efficient lookups
+          const existingIds = new Set(prevData.map(item => item.id));
+          
+          // Filter out duplicates
+          const newItems = responseData.filter(item => !existingIds.has(item.id));
+          console.log(`Adding ${newItems.length} new items to existing ${prevData.length} items`);
+          
+          // Always update the page number for next load
+          const nextPage = pageToFetch + 1;
+          console.log(`Setting next page to ${nextPage}`);
+          
+          // Update pagination state
+          setPagination(prev => ({ 
+            ...prev, 
+            page: nextPage,
+            hasMore: response.hasMore,
+            total: response.total,
+            loading: false
+          }));
+          
+          // Update the ref
+          currentPageRef.current = nextPage;
+          
+          // Return the combined array
+          return [...prevData, ...newItems];
+        });
+      } else {
+        // Replace all data for initial load or refresh
+        setFoodData(responseData);
+        
+        // Update pagination state for first load
+        const nextPage = 2; // Since we just loaded page 1
+        setPagination(prev => ({ 
+          ...prev, 
+          page: nextPage,
+          hasMore: response.hasMore,
+          total: response.total,
+          loading: false
+        }));
+        
+        // Update the ref
+        currentPageRef.current = nextPage;
+      }
     } catch (err: any) {
       console.error('Error in fetchFoodData:', err);
       setError(err.message || 'Failed to fetch food data');
+      setPagination(prev => ({ ...prev, loading: false }));
     } finally {
       setIsLoading(false);
+      isFetchingRef.current = false;
     }
-  }, [filters.category]);
+  // Only include stable dependencies to prevent infinite loops
+  }, [filters.category, filters.name, pagination.limit, pagination.hasMore, pagination.loading]);
   
   // Load initial data
   useEffect(() => {
-    fetchFoodData();
-  }, [fetchFoodData]);
+    // Only fetch data on component mount
+    const loadInitialData = async () => {
+      console.log('Loading initial food data');
+      await fetchFoodData(false);
+    };
+    
+    loadInitialData();
+    // We only want this to run once on mount, so no dependencies
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  
+  // Create a separate effect to handle category filter changes
+  useEffect(() => {
+    // Skip on initial mount since we already fetch data in the other useEffect
+    if (filters.category !== undefined) {
+      console.log('Category filter changed, reloading data');
+      fetchFoodData(false);
+    }
+    // Only depend on category filter
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filters.category]);
+  
+  // Handle load more when reaching end of list
+  const handleLoadMore = useCallback(() => {
+    if (!pagination.hasMore || isLoading || pagination.loading || isFetchingRef.current) {
+      console.log('Skipping load more:', {
+        hasMore: pagination.hasMore,
+        isLoading,
+        isLoadingMore: pagination.loading,
+        isFetching: isFetchingRef.current
+      });
+      return;
+    }
+    
+    console.log('Loading more items from page:', currentPageRef.current);
+    fetchFoodData(true);
+  }, [fetchFoodData, pagination.hasMore, isLoading, pagination.loading]);
   
   // Toggle layout mode
   const toggleLayoutMode = () => {
@@ -167,6 +305,12 @@ const FoodScreen: React.FC = () => {
     setDietaryOptions(newFilters.dietaryOptions || []);
     setPriceRange(newFilters.minPrice, newFilters.maxPrice);
     setNutritionScoreRange(newFilters.minNutritionScore, newFilters.maxNutritionScore);
+    
+    // Reset pagination when filters change
+    setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
+    currentPageRef.current = 1;
+    // Clear food data to avoid mixing results from different filters
+    setFoodData([]);
   }, [setCategoryFilter, setDietaryOptions, setPriceRange, setNutritionScoreRange]);
   
   // Handle propose food submission
@@ -214,9 +358,29 @@ const FoodScreen: React.FC = () => {
   
   // Handle pull-to-refresh
   const onRefresh = useCallback(() => {
+    // Don't try to refresh if we're already fetching
+    if (isFetchingRef.current) {
+      console.log('Already fetching, skipping refresh');
+      return;
+    }
+    
+    console.log('Refreshing food data');
     setRefreshing(true);
     
-    fetchFoodData()
+    // Reset pagination state
+    setPagination(prev => ({
+      ...prev,
+      page: 1,
+      hasMore: true,
+      loading: false
+    }));
+    currentPageRef.current = 1;
+    
+    // Clear food data to avoid mixing results
+    setFoodData([]);
+    
+    // Fetch fresh data
+    fetchFoodData(false)
       .finally(() => {
         setRefreshing(false);
       });
@@ -240,8 +404,33 @@ const FoodScreen: React.FC = () => {
     />
   ), [layoutMode, handleFoodItemPress]);
   
+  // Render footer for infinite loading
+  const renderFooter = useCallback(() => {
+    return (
+      <View style={styles.footerLoader}>
+        {pagination.loading ? (
+          <>
+            <ActivityIndicator size="small" color={theme.primary} />
+            <Text style={[styles.footerText, textStyles.caption]}>Loading more items...</Text>
+          </>
+        ) : pagination.hasMore ? (
+          <Text style={[styles.footerText, textStyles.caption]}>
+            {`Scroll to load more (${foodData.length}/${pagination.total || '?'} items)`}
+          </Text>
+        ) : (
+          <Text style={[styles.footerText, textStyles.caption]}>
+            {foodData.length > 0 ? 'End of list' : 'No items found'}
+          </Text>
+        )}
+      </View>
+    );
+  }, [pagination.loading, pagination.hasMore, pagination.total, foodData.length, theme.primary, textStyles.caption]);
+  
   // Generate key extractor for list items
   const keyExtractor = useCallback((item: FoodItem) => item.id.toString(), []);
+  
+  // Use a ref to track the last onEndReached call time
+  const lastEndReachedCallRef = React.useRef<number | null>(null);
   
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -434,7 +623,7 @@ const FoodScreen: React.FC = () => {
           <Text style={[styles.emptyText, textStyles.body]}>{error}</Text>
           <Button
             title="Retry"
-            onPress={fetchFoodData}
+            onPress={() => fetchFoodData(false)}
             variant="primary"
             style={styles.emptyButton}
             iconName="refresh"
@@ -469,6 +658,25 @@ const FoodScreen: React.FC = () => {
               colors={[theme.primary]}
             />
           }
+          onEndReached={() => {
+            // Prevent edge bounce triggering loads on iOS
+            if (foodData.length === 0) return;
+            
+            console.log("Reached end of list, debouncing load more call...");
+            // Prevent multiple triggers with debouncing
+            if (!pagination.loading && pagination.hasMore && !isFetchingRef.current) {
+              // Use a ref to track the last onEndReached call time
+              if (!lastEndReachedCallRef.current || 
+                  Date.now() - lastEndReachedCallRef.current > 1000) {
+                lastEndReachedCallRef.current = Date.now();
+                handleLoadMore();
+              } else {
+                console.log("Ignoring end reached call, too soon after previous call");
+              }
+            }
+          }}
+          onEndReachedThreshold={0.3} // Trigger earlier
+          ListFooterComponent={renderFooter}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Icon name="food-off" size={64} color={theme.textSecondary} />
@@ -671,6 +879,15 @@ const styles = StyleSheet.create({
   debugText: {
     color: '#0066CC',
     fontWeight: '500',
+  },
+  footerLoader: {
+    padding: SPACING.md,
+    justifyContent: 'center',
+    alignItems: 'center',
+    flexDirection: 'row',
+  },
+  footerText: {
+    marginLeft: SPACING.sm,
   },
 });
 

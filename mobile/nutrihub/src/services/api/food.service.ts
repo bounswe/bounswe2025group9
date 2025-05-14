@@ -21,6 +21,15 @@ export interface ApiFoodItem {
   price?: number;
 }
 
+export interface ApiPaginatedResponse<T> {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+  status?: number;
+  warning?: string;
+}
+
 export interface FoodProposalData {
   name: string;
   category: string;
@@ -76,116 +85,139 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
 };
 
 /**
- * Get food catalog with optional filtering
- * @param limit Maximum number of items to return (default: 50)
- * @param categories Optional comma-separated list of categories to filter by
- * @returns Promise with food items
+ * Get food catalog with optional filtering and pagination
+ * @param limit Maximum number of items to return per page (default: 20)
+ * @param offset Number of items to skip (for pagination)
+ * @param categories Optional array of categories to filter by
+ * @param search Optional search term to filter by name
+ * @returns Promise with food items and pagination info
  */
 export const getFoodCatalog = async (
-  limit: number = 50,
-  categories?: string[]
-): Promise<{ data?: FoodItem[]; error?: string; status: number }> => {
+  limit: number = 20,
+  offset: number = 0,
+  categories?: string[],
+  search?: string
+): Promise<{ 
+  data?: FoodItem[]; 
+  error?: string; 
+  status: number; 
+  hasMore: boolean; 
+  total: number 
+}> => {
   try {
-    let queryParams = `limit=${limit}`;
+    // Build query parameters
+    const params = new URLSearchParams();
     
+    // Calculate page number from offset/limit
+    const page = Math.floor(offset / limit) + 1;
+    
+    // Add pagination parameters (always required)
+    params.append('page', page.toString());
+    params.append('page_size', limit.toString());
+    
+    // Add optional filter parameters
     if (categories && categories.length > 0) {
-      queryParams += `&categories=${categories.join(',')}`;
+      params.append('category', categories.join(','));
+    }
+    
+    if (search && search.trim() !== '') {
+      params.append('search', search.trim());
     }
 
-    // Since API_CONFIG.BASE_URL already includes '/api', we don't need to include it in the path
-    const response = await apiClient.get<any>(`/foods?${queryParams}`);
-
-    // Debug request URL for troubleshooting
-    console.log('Requesting food catalog from:', `/foods?${queryParams}`);
-
+    // Log the request details
+    const fullUrl = `/foods?${params.toString()}`;
+    console.log(`Requesting food catalog: ${fullUrl}`);
+    console.log('Request params:', { page, page_size: limit, categories, search, originalOffset: offset });
+    
+    // Make the API request
+    const response = await apiClient.get<ApiPaginatedResponse<ApiFoodItem>>(fullUrl);
+    
     if (response.error) {
+      console.error('API error:', response.error);
       return {
         error: response.error,
         status: response.status,
+        hasMore: false,
+        total: 0
       };
     }
 
     if (!response.data) {
+      console.error('No data received from API');
       return {
         error: 'No data received',
         status: response.status,
+        hasMore: false,
+        total: 0
       };
     }
 
-    // Debug log to see the structure of the response
-    console.log('API Response:', JSON.stringify(response.data));
+    // Log response structure for debugging
+    console.log('API response structure:', JSON.stringify({
+      count: response.data.count,
+      next: response.data.next !== null,
+      previous: response.data.previous !== null,
+      resultsLength: response.data.results?.length || 0
+    }));
 
-    // Handle different response formats
+    // Handle DRF paginated response
     let foodItems: ApiFoodItem[] = [];
+    let total = 0;
+    let hasMore = false;
     
-    if (Array.isArray(response.data)) {
-      // If the response is already an array of food items
-      foodItems = response.data;
-    } else if (response.data.results && Array.isArray(response.data.results)) {
-      // If the response has a results property containing the array (common paginated format)
+    if (response.data.results && Array.isArray(response.data.results)) {
+      // Standard DRF pagination format
       foodItems = response.data.results;
-    } else if (typeof response.data === 'object') {
-      // Try to extract items if it's another kind of object
-      const possibleArrayProperties = ['items', 'foods', 'data'];
-      for (const prop of possibleArrayProperties) {
-        if (response.data[prop] && Array.isArray(response.data[prop])) {
-          foodItems = response.data[prop];
+      total = response.data.count || 0;
+      hasMore = response.data.next !== null;
+      
+      console.log(`Received ${foodItems.length} items, total=${total}, hasMore=${hasMore}`);
+    } else if (Array.isArray(response.data)) {
+      // Direct array response
+      foodItems = response.data;
+      total = foodItems.length;
+      hasMore = foodItems.length >= limit;
+      
+      console.log(`Received array of ${foodItems.length} items`);
+    } else {
+      // Try to extract items from a non-standard response
+      console.warn('Non-standard API response format:', response.data);
+      
+      // Use type assertion to handle possible non-standard response structure
+      const responseData = response.data as Record<string, any>;
+      
+      // Check various possible property names for the data array
+      for (const prop of ['items', 'foods', 'data', 'results']) {
+        if (responseData[prop] && Array.isArray(responseData[prop])) {
+          foodItems = responseData[prop];
+          total = responseData.count || responseData.total || foodItems.length;
+          hasMore = !!responseData.next || (offset + foodItems.length < total);
           break;
         }
       }
     }
 
-    // If we still don't have an array, create a mock food item for development
-    if (foodItems.length === 0) {
-      console.warn('No food items found in the API response. Creating mock data for development.');
-
-      // Create mock food items for development
-      foodItems = [
-        {
-          id: 1,
-          name: 'Organic Apples',
-          category: 'Fruit',
-          description: 'Fresh, locally grown organic apples. Rich in fiber and antioxidants.',
-          servingSize: 100,
-          caloriesPerServing: 52,
-          proteinContent: 0.3,
-          fatContent: 0.2,
-          carbohydrateContent: 14,
-          fiberContent: 2.4,
-          nutritionScore: 8.5,
-          dietaryOptions: ['Vegetarian', 'Vegan', 'Gluten-free'],
-          price: 3.99,
-        },
-        {
-          id: 2,
-          name: 'Greek Yogurt',
-          category: 'Dairy',
-          description: 'Creamy Greek yogurt with high protein content. Perfect for breakfast or snacks.',
-          servingSize: 100,
-          caloriesPerServing: 100,
-          proteinContent: 10,
-          fatContent: 5,
-          carbohydrateContent: 4,
-          nutritionScore: 7.8,
-          dietaryOptions: ['Vegetarian', 'High-protein'],
-          allergens: ['Lactose'],
-          price: 4.99,
-        }
-      ];
-    }
-
     // Transform API response to app format
     const transformedData = foodItems.map(transformFoodItem);
+    
+    // Log the first few IDs for debugging
+    if (transformedData.length > 0) {
+      console.log('First few item IDs:', transformedData.slice(0, 3).map(item => item.id));
+    }
 
     return {
       data: transformedData,
       status: response.status,
+      hasMore,
+      total
     };
   } catch (error: any) {
     console.error('Error fetching food catalog:', error);
     return {
       error: error.message || 'Failed to fetch food catalog',
       status: 500,
+      hasMore: false,
+      total: 0
     };
   }
 };
