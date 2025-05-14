@@ -52,6 +52,8 @@ const CreatePostScreen: React.FC = () => {
   const [nutritionContent, setNutritionContent] = useState('');
   const [nutritionTitleError, setNutritionTitleError] = useState<string | undefined>(undefined);
   const [nutritionContentError, setNutritionContentError] = useState<string | undefined>(undefined);
+  const [nutritionTitleTouched, setNutritionTitleTouched] = useState(false);
+  const [nutritionContentTouched, setNutritionContentTouched] = useState(false);
   const [isSubmittingNutrition, setIsSubmittingNutrition] = useState(false);
   
   // Recipe form state
@@ -59,12 +61,15 @@ const CreatePostScreen: React.FC = () => {
   const [recipeInstructions, setRecipeInstructions] = useState('');
   const [recipeNameError, setRecipeNameError] = useState<string | undefined>(undefined);
   const [recipeInstructionsError, setRecipeInstructionsError] = useState<string | undefined>(undefined);
+  const [recipeNameTouched, setRecipeNameTouched] = useState(false);
+  const [recipeInstructionsTouched, setRecipeInstructionsTouched] = useState(false);
   const [isSubmittingRecipe, setIsSubmittingRecipe] = useState(false);
 
   // Ingredient state
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
   const [ingredientName, setIngredientName] = useState('');
   const [ingredientAmount, setIngredientAmount] = useState('100');
+  const [ingredientError, setIngredientError] = useState<string | undefined>(undefined);
   
   // Tags state
   const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
@@ -99,6 +104,102 @@ const CreatePostScreen: React.FC = () => {
     fetchTags();
   }, []);
   
+  // Validate nutrition title field
+  const validateNutritionTitle = (value: string): string | undefined => {
+    if (!value.trim()) {
+      return 'Title is required';
+    } else if (value.trim().length < 3) {
+      return 'Title must be at least 3 characters';
+    }
+    return undefined;
+  };
+  
+  // Validate nutrition content field
+  const validateNutritionContent = (value: string): string | undefined => {
+    if (!value.trim()) {
+      return 'Content is required';
+    } else if (value.trim().length < 10) {
+      return 'Content must be at least 10 characters';
+    }
+    return undefined;
+  };
+  
+  // Validate recipe name field
+  const validateRecipeName = (value: string): string | undefined => {
+    if (!value.trim()) {
+      return 'Recipe name is required';
+    } else if (value.trim().length < 3) {
+      return 'Recipe name must be at least 3 characters';
+    }
+    return undefined;
+  };
+  
+  // Validate recipe instructions field
+  const validateRecipeInstructions = (value: string): string | undefined => {
+    if (!value.trim()) {
+      return 'Instructions are required';
+    } else if (value.trim().length < 10) {
+      return 'Instructions must be at least 10 characters';
+    }
+    return undefined;
+  };
+  
+  // Handle nutrition title change
+  const handleNutritionTitleChange = (value: string) => {
+    setNutritionTitle(value);
+    if (nutritionTitleTouched) {
+      setNutritionTitleError(validateNutritionTitle(value));
+    }
+  };
+  
+  // Handle nutrition content change
+  const handleNutritionContentChange = (value: string) => {
+    setNutritionContent(value);
+    if (nutritionContentTouched) {
+      setNutritionContentError(validateNutritionContent(value));
+    }
+  };
+  
+  // Handle recipe name change
+  const handleRecipeNameChange = (value: string) => {
+    setRecipeName(value);
+    if (recipeNameTouched) {
+      setRecipeNameError(validateRecipeName(value));
+    }
+  };
+  
+  // Handle recipe instructions change
+  const handleRecipeInstructionsChange = (value: string) => {
+    setRecipeInstructions(value);
+    if (recipeInstructionsTouched) {
+      setRecipeInstructionsError(validateRecipeInstructions(value));
+    }
+  };
+  
+  // Handle nutrition title blur
+  const handleNutritionTitleBlur = () => {
+    setNutritionTitleTouched(true);
+    setNutritionTitleError(validateNutritionTitle(nutritionTitle));
+  };
+  
+  // Handle nutrition content blur
+  const handleNutritionContentBlur = () => {
+    setNutritionContentTouched(true);
+    setNutritionContentError(validateNutritionContent(nutritionContent));
+  };
+  
+  // Handle recipe name blur
+  const handleRecipeNameBlur = () => {
+    setRecipeNameTouched(true);
+    setRecipeNameError(validateRecipeName(recipeName));
+  };
+  
+  // Handle recipe instructions blur
+  const handleRecipeInstructionsBlur = () => {
+    setRecipeInstructionsTouched(true);
+    setRecipeInstructionsError(validateRecipeInstructions(recipeInstructions));
+  };
+  
   // Helper function to get tag ID by name
   const getTagIdByName = (tagName: string): number | null => {
     if (!availableTags || !Array.isArray(availableTags) || availableTags.length === 0) {
@@ -119,66 +220,44 @@ const CreatePostScreen: React.FC = () => {
   
   // Validate nutrition tip form
   const validateNutritionForm = () => {
-    let isValid = true;
+    // Force validation by setting touched states
+    setNutritionTitleTouched(true);
+    setNutritionContentTouched(true);
     
-    // Validate title
-    if (!nutritionTitle.trim()) {
-      setNutritionTitleError('Title is required');
-      isValid = false;
-    } else if (nutritionTitle.trim().length < 3) {
-      setNutritionTitleError('Title must be at least 3 characters');
-      isValid = false;
-    } else {
-      setNutritionTitleError(undefined);
-    }
+    // Validate fields
+    const titleError = validateNutritionTitle(nutritionTitle);
+    const contentError = validateNutritionContent(nutritionContent);
     
-    // Validate content
-    if (!nutritionContent.trim()) {
-      setNutritionContentError('Content is required');
-      isValid = false;
-    } else if (nutritionContent.trim().length < 10) {
-      setNutritionContentError('Content must be at least 10 characters');
-      isValid = false;
-    } else {
-      setNutritionContentError(undefined);
-    }
+    // Update error states
+    setNutritionTitleError(titleError);
+    setNutritionContentError(contentError);
     
-    return isValid;
+    return !titleError && !contentError;
   };
   
   // Validate recipe form
   const validateRecipeForm = () => {
-    let isValid = true;
+    // Force validation by setting touched states
+    setRecipeNameTouched(true);
+    setRecipeInstructionsTouched(true);
     
-    // Validate recipe name
-    if (!recipeName.trim()) {
-      setRecipeNameError('Recipe name is required');
-      isValid = false;
-    } else if (recipeName.trim().length < 3) {
-      setRecipeNameError('Recipe name must be at least 3 characters');
-      isValid = false;
-    } else {
-      setRecipeNameError(undefined);
-    }
+    // Validate fields
+    const nameError = validateRecipeName(recipeName);
+    const instructionsError = validateRecipeInstructions(recipeInstructions);
     
-    // Validate instructions
-    if (!recipeInstructions.trim()) {
-      setRecipeInstructionsError('Instructions are required');
-      isValid = false;
-    } else if (recipeInstructions.trim().length < 10) {
-      setRecipeInstructionsError('Instructions must be at least 10 characters');
-      isValid = false;
-    } else {
-      setRecipeInstructionsError(undefined);
-    }
+    // Update error states
+    setRecipeNameError(nameError);
+    setRecipeInstructionsError(instructionsError);
     
-    // Validate ingredients
+    // Check ingredients
     if (ingredients.length === 0) {
-      Alert.alert('Missing Ingredients', 'Please add at least one ingredient to your recipe.');
-      isValid = false;
+      setIngredientError('At least one ingredient is required');
+      return false;
+    } else {
+      setIngredientError(undefined);
     }
     
-    return isValid;
+    return !nameError && !instructionsError && ingredients.length > 0;
   };
   
   // Handle nutrition tip submission
@@ -218,6 +297,8 @@ const CreatePostScreen: React.FC = () => {
       setNutritionContent('');
       setNutritionTitleError(undefined);
       setNutritionContentError(undefined);
+      setNutritionTitleTouched(false);
+      setNutritionContentTouched(false);
       
       // Navigate back with new post
       navigation.navigate('ForumList', { 
@@ -303,6 +384,8 @@ const CreatePostScreen: React.FC = () => {
       setRecipeInstructions('');
       setRecipeNameError(undefined);
       setRecipeInstructionsError(undefined);
+      setRecipeNameTouched(false);
+      setRecipeInstructionsTouched(false);
       setIngredients([]);
       
       // Navigate back with new post
@@ -337,20 +420,20 @@ const CreatePostScreen: React.FC = () => {
   const addIngredient = () => {
     // Validate ingredient name
     if (!ingredientName.trim()) {
-      Alert.alert('Error', 'Please enter an ingredient name');
+      setIngredientError('Please enter an ingredient name');
       return;
     }
     
     // Validate amount
     const amount = parseFloat(ingredientAmount);
     if (isNaN(amount) || amount <= 0) {
-      Alert.alert('Error', 'Please enter a valid amount (greater than 0)');
+      setIngredientError('Please enter a valid amount (greater than 0)');
       return;
     }
     
     // Check for duplicates
     if (ingredients.some(ing => ing.name.toLowerCase() === ingredientName.trim().toLowerCase())) {
-      Alert.alert('Duplicate Ingredient', 'This ingredient is already in your recipe. You can remove it and add it again if you need to change the amount.');
+      setIngredientError('This ingredient is already in your recipe');
       return;
     }
     
@@ -361,6 +444,9 @@ const CreatePostScreen: React.FC = () => {
       amount: amount
     }]);
     
+    // Clear ingredient error if it exists
+    setIngredientError(undefined);
+    
     // Clear input fields
     setIngredientName('');
     setIngredientAmount('100'); // Reset to default
@@ -369,6 +455,23 @@ const CreatePostScreen: React.FC = () => {
   // Handle removing ingredient
   const removeIngredient = (id: number) => {
     setIngredients(ingredients.filter(ing => ing.id !== id));
+    // If we're removing an ingredient but there are others left, clear the error
+    if (ingredients.length > 1) {
+      setIngredientError(undefined);
+    }
+  };
+  
+  // Check if nutrition form is valid for enabling submit button
+  const isNutritionFormValid = () => {
+    return !nutritionTitleError && !nutritionContentError && 
+           nutritionTitle.trim().length >= 3 && nutritionContent.trim().length >= 10;
+  };
+  
+  // Check if recipe form is valid for enabling submit button
+  const isRecipeFormValid = () => {
+    return !recipeNameError && !recipeInstructionsError && 
+           recipeName.trim().length >= 3 && recipeInstructions.trim().length >= 10 && 
+           ingredients.length > 0;
   };
   
   if (loading) {
@@ -509,7 +612,8 @@ const CreatePostScreen: React.FC = () => {
                 label="Title"
                 placeholder="Enter your tip title"
                 value={nutritionTitle}
-                onChangeText={setNutritionTitle}
+                onChangeText={handleNutritionTitleChange}
+                onBlur={handleNutritionTitleBlur}
                 error={nutritionTitleError}
               />
               
@@ -517,7 +621,8 @@ const CreatePostScreen: React.FC = () => {
                 label="Content"
                 placeholder="Share your nutrition tip..."
                 value={nutritionContent}
-                onChangeText={setNutritionContent}
+                onChangeText={handleNutritionContentChange}
+                onBlur={handleNutritionContentBlur}
                 error={nutritionContentError}
                 multiline
                 inputStyle={styles.contentInput}
@@ -527,7 +632,7 @@ const CreatePostScreen: React.FC = () => {
                 title="Post Nutrition Tip"
                 onPress={handleSubmitNutritionTip}
                 loading={isSubmittingNutrition}
-                disabled={isSubmittingNutrition || !nutritionTitle.trim() || !nutritionContent.trim()}
+                disabled={isSubmittingNutrition || !isNutritionFormValid()}
                 fullWidth
               />
             </Card>
@@ -539,7 +644,8 @@ const CreatePostScreen: React.FC = () => {
                   label="Recipe Name"
                   placeholder="Enter recipe name"
                   value={recipeName}
-                  onChangeText={setRecipeName}
+                  onChangeText={handleRecipeNameChange}
+                  onBlur={handleRecipeNameBlur}
                   error={recipeNameError}
                 />
               </Card>
@@ -547,7 +653,7 @@ const CreatePostScreen: React.FC = () => {
               <Card style={styles.section}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle]}>Ingredients</Text>
                 
-                {/* Ingredient Addition Form - Updated to match the image */}
+                {/* Ingredient Addition Form */}
                 <View style={styles.ingredientInputRow}>
                   <View style={styles.ingredientNameInputContainer}>
                     <TextInput
@@ -579,6 +685,13 @@ const CreatePostScreen: React.FC = () => {
                   />
                 </View>
                 
+                {/* Ingredient Error */}
+                {ingredientError && (
+                  <Text style={[styles.ingredientErrorText, { color: theme.error }]}>
+                    {ingredientError}
+                  </Text>
+                )}
+                
                 {/* Ingredients List */}
                 <View style={styles.ingredientsListContainer}>
                   {ingredients.map((ingredient) => (
@@ -609,7 +722,8 @@ const CreatePostScreen: React.FC = () => {
                   label="Instructions"
                   placeholder="Enter cooking instructions..."
                   value={recipeInstructions}
-                  onChangeText={setRecipeInstructions}
+                  onChangeText={handleRecipeInstructionsChange}
+                  onBlur={handleRecipeInstructionsBlur}
                   error={recipeInstructionsError}
                   multiline
                   inputStyle={styles.contentInput}
@@ -619,7 +733,7 @@ const CreatePostScreen: React.FC = () => {
                   title="Post Recipe"
                   onPress={handleSubmitRecipe}
                   loading={isSubmittingRecipe}
-                  disabled={isSubmittingRecipe || !recipeName.trim() || !recipeInstructions.trim() || ingredients.length === 0}
+                  disabled={isSubmittingRecipe || !isRecipeFormValid()}
                   fullWidth
                 />
               </Card>
@@ -745,6 +859,10 @@ const styles = StyleSheet.create({
   addIngredientButton: {
     marginLeft: SPACING.xs,
     alignSelf: 'flex-end',
+  },
+  ingredientErrorText: {
+    fontSize: 12,
+    marginBottom: SPACING.sm,
   },
   ingredientsListContainer: {
     marginTop: SPACING.xs,
