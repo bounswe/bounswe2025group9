@@ -60,7 +60,28 @@ class FoodCatalog(ListAPIView):
             if not categories:
                 self.empty = True
                 return FoodEntry.objects.none()
-        return queryset.filter(category__in=categories).order_by("id")
+        queryset = queryset.filter(category__in=categories).order_by("id")
+
+        # --- Dietary Options filtering ---
+        dietary_options_param = self.request.query_params.get("dietaryOptions", "")
+        if dietary_options_param:
+            requested_options = [
+                opt.strip().lower()
+                for opt in dietary_options_param.split(",")
+                if opt.strip()
+            ]
+            # Filter entries where dietaryOptions contains any of the requested options (case-insensitive)
+            q = Q()
+            for opt in requested_options:
+                q |= Q(dietaryOptions__icontains=opt)
+            queryset = queryset.filter(q)
+            if queryset.count() == 0:
+                self.warning = (
+                    (self.warning + " " if self.warning else "")
+                    + f'No records found for dietary options: {", ".join(requested_options)}'
+                )
+
+        return queryset
 
     def list(self, request, *args, **kwargs):
         self.empty = False
