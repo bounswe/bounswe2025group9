@@ -116,7 +116,7 @@ class FoodCatalogTests(TestCase):
             response.data["warning"],
             "Some categories are not available: nonexistentcategory",
         )
-
+        
     def test_search_returns_successful(self):
         response = self.client.get(reverse("get_foods"), {"search": "frUit"})
         self.assertEqual(response.data.get("status"), status.HTTP_200_OK)
@@ -230,3 +230,102 @@ class RandomMealTests(TestCase):
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertIn("error", response.data)
+
+
+class GetOrFetchFoodEntryTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.url = reverse("get_or_fetch_food")
+
+    def test_missing_name_param(self):
+        """
+        When no 'name' parameter is provided, return 400 BAD REQUEST.
+        """
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {"error": "Missing 'name' parameter"})
+
+    def test_food_exists_in_db(self):
+        """
+        When food exists in the database (case-insensitive), return it with 200 OK.
+        """
+        food = FoodEntry.objects.create(
+            name="Apple",
+            category="Fruit",
+            servingSize=100.0,
+            caloriesPerServing=52.0,
+            proteinContent=0.3,
+            fatContent=0.2,
+            carbohydrateContent=14.0,
+            allergens=[],
+            dietaryOptions=[],
+            nutritionScore=0.0,
+            imageUrl="",
+        )
+        response = self.client.get(self.url, {"name": "apple"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        expected = FoodEntrySerializer(food).data
+        self.assertEqual(response.data, expected)
+
+    @patch("foods.views.make_request")
+    def test_api_search_not_found(self, mock_make_request):
+        """
+        When the FatSecret API search returns no foods, return 404 NOT FOUND.
+        """
+        mock_make_request.return_value = {"foods": {"food": []}}
+        response = self.client.get(self.url, {"name": "Banana"})
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(response.data, {"error": "Food not found in FatSecret API"})
+
+    @patch("foods.views.make_request")
+    @patch("foods.views.extract_food_info")
+    def test_extract_food_info_failure(self, mock_extract, mock_make):
+        """
+        When extract_food_info returns None, return 500 INTERNAL SERVER ERROR.
+        """
+        mock_make.side_effect = [
+            {"foods": {"food": [{"food_id": "123"}]}},
+            {"food": {"food_url": "http://example.com"}},
+        ]
+        mock_extract.return_value = None
+        response = self.client.get(self.url, {"name": "Banana"})
+        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
+        self.assertEqual(response.data, {"error": "Could not parse FatSecret response"})
+
+    @patch("foods.views.make_request")
+    @patch("foods.views.extract_food_info")
+    @patch("foods.views.get_fatsecret_image_url")
+    def test_success_fetch_creates_and_returns_food(
+        self, mock_image_url, mock_extract, mock_make
+    ):
+        """
+        When the API returns valid data, create a new FoodEntry and return 201 CREATED.
+        """
+        mock_make.side_effect = [
+            {"foods": {"food": [{"food_id": "123"}]}},
+            {"food": {"food_url": "http://example.com"}},
+        ]
+        parsed_data = {
+            "food_name": "Banana",
+            "serving_amount": 100.0,
+            "calories": 89.0,
+            "carbohydrates": 23.0,
+            "protein": 1.1,
+            "fat": 0.3,
+        }
+        mock_extract.return_value = parsed_data
+        mock_image_url.return_value = "http://image.test/banana.png"
+
+        response = self.client.get(self.url, {"name": "Banana"})
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        food = FoodEntry.objects.get(name="Banana")
+        self.assertEqual(food.category, "Unknown")
+        self.assertEqual(food.servingSize, parsed_data["serving_amount"])
+        self.assertEqual(food.caloriesPerServing, parsed_data["calories"])
+        self.assertEqual(food.carbohydrateContent, parsed_data["carbohydrates"])
+        self.assertEqual(food.proteinContent, parsed_data["protein"])
+        self.assertEqual(food.fatContent, parsed_data["fat"])
+        self.assertEqual(food.imageUrl, mock_image_url.return_value)
+
+        expected = FoodEntrySerializer(food).data
+        self.assertEqual(response.data, expected)

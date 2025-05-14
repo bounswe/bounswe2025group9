@@ -1,15 +1,25 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from foods.models import FoodEntry
+from foods.models import FoodEntry, FoodProposal
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
+from foods.serializers import FoodEntrySerializer, FoodProosalSerializer
 from rest_framework.generics import ListAPIView
 from rest_framework import status
+from django.db import transaction
 from django.db.models import Q
 import requests
+import sys
+import os
+import traceback
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
+
+sys.path.append(
+    os.path.join(os.path.dirname(__file__), "..", "api", "db_initialization")
+)
+
+from scraper import make_request, extract_food_info, get_fatsecret_image_url
 
 
 class FoodCatalog(ListAPIView):
@@ -129,6 +139,67 @@ class FoodCatalog(ListAPIView):
         return Response(data)
 
 
+class GetOrFetchFoodEntry(APIView):
+    def get(self, request):
+        food_name = request.query_params.get("name")
+        if not food_name:
+            return Response(
+                {"error": "Missing 'name' parameter"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            food = FoodEntry.objects.get(name__iexact=food_name)
+            serializer = FoodEntrySerializer(food)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except FoodEntry.DoesNotExist:
+            pass
+
+        try:
+            search = make_request("foods.search", {"search_expression": food_name})
+            foods = search.get("foods", {}).get("food", [])
+            if not foods:
+                return Response(
+                    {"error": "Food not found in FatSecret API"},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            food_id = foods[0]["food_id"]
+            details = make_request("food.get", {"food_id": food_id})
+            parsed = extract_food_info(details)
+
+            if not parsed:
+                return Response(
+                    {"error": "Could not parse FatSecret response"},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            image_url = get_fatsecret_image_url(details["food"]["food_url"])
+
+            with transaction.atomic():
+                food = FoodProposal.objects.create(
+                    name=parsed["food_name"],
+                    category="Unknown",
+                    servingSize=parsed.get("serving_amount", 100.0),
+                    caloriesPerServing=parsed.get("calories", 0.0),
+                    proteinContent=parsed.get("protein", 0.0),
+                    fatContent=parsed.get("fat", 0.0),
+                    carbohydrateContent=parsed.get("carbohydrates", 0.0),
+                    dietaryOptions=[],
+                    nutritionScore=0.0,
+                    imageUrl=image_url,
+                    proposedBy=request.user,
+                )
+
+            serializer = FoodProosalSerializer(food)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            traceback.print_exc()
+            return Response(
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
 # get food_name as parameter
 # make api call to https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}
 # check if the response is not empty
@@ -217,3 +288,4 @@ class FoodProposalSubmitView(APIView):
             serializer.save(proposedBy=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+

@@ -203,6 +203,28 @@
 			"response": []
 		},
 		{
+			"name": "get_or_fetch_food_by_name",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+				"raw": "http://localhost:8081/foods/get-or-fetch/?name=apple",
+				"protocol": "http",
+				"host": ["localhost"],
+				"port": "8081",
+				"path": ["foods","get-or-fetch",""],
+				"query": [
+					{
+					"key": "name",
+					"value": "apple"
+					}
+				]
+				},
+				"description": "Check if a food with the given name exists in the DB; if not, fetch from FatSecret API and save to DB."
+			},
+			"response": []
+		},
+		{
 			"name": "fuzzy_search_posts",
 			"request": {
 			  "method": "GET",
@@ -869,6 +891,28 @@
 					]
 				},
 				"description": "**Submit a new food proposal**\n\nExample request body:\n```json\n{\n  \"name\": \"Greek Salad\",\n  \"category\": \"Salad\",\n  \"servingSize\": 150,\n  \"caloriesPerServing\": 120,\n  \"proteinContent\": 4.5,\n  \"fatContent\": 8.0,\n  \"carbohydrateContent\": 10.0,\n  \"dietaryOptions\": [\"Vegetarian\", \"Low-Carb\"],\n  \"nutritionScore\": 75.2,\n  \"imageUrl\": \"https://example.com/salad.jpg\",\n  \"allergens\": []\n}\n```"
+			},
+			"response": []
+		},
+		{
+			"name": "get_wikidata_entity",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/food/Q193",
+					"protocol": "https",
+					"host": [
+						"nutrihub",
+						"fit"
+					],
+					"path": [
+						"api",
+						"food",
+						"Q193"
+					]
+				},
+				"description": "**Get detailed information for a specific food entity from Wikidata**\n\nThis endpoint retrieves detailed information about a food entity from Wikidata using its entity ID.\n\nPath parameter:\n- `entity_id`: The Wikidata entity ID (e.g., Q193 for 'beer')\n\nResponse includes:\n- Basic entity information (ID, label, description)\n- Wikipedia link if available\n- Food-related properties such as:\n  - subclass_of\n  - instance_of\n  - made_from_material\n  - has_parts\n  - has_effect\n  - has_nutritional_value\n\nExample response for beer (Q193):\n```json\n{\n  \"id\": \"Q193\",\n  \"label\": \"beer\",\n  \"description\": \"alcoholic drink fermented from starch material\",\n  \"wikipedia_link\": \"https://en.wikipedia.org/wiki/Beer\",\n  \"properties\": {\n    \"instance_of\": [\"Q2095\"],\n    \"made_from_material\": [\"Q5371\", \"Q7772\"],\n    \"has_effect\": [\"Q47495\"]\n  }\n}\n```"
 			},
 			"response": []
 		}

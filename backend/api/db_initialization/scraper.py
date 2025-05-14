@@ -8,11 +8,12 @@ import requests
 import json
 import re
 from bs4 import BeautifulSoup
+import os
 
 
 # FatSecret API credentials
-CONSUMER_KEY = ""
-CONSUMER_SECRET = ""
+CONSUMER_KEY = os.environ.get("FATSECRET_CONSUMER_KEY", "")
+CONSUMER_SECRET = os.environ.get("FATSECRET_CONSUMER_SECRET", "")
 INPUT_FILE = "500_common_foods.json"
 OUTPUT_FILE = "foods.json"
 RATE_LIMIT_DELAY = 1.2  # seconds between calls
