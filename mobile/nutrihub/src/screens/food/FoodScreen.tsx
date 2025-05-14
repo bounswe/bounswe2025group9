@@ -4,7 +4,7 @@
  * Displays a list of food items with filtering and sorting options.
  */
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -30,111 +30,8 @@ import Button from '../../components/common/Button';
 import useFoodFilters from '../../hooks/useFoodFilters';
 import { FoodItem, FoodCategoryType, DietaryOptionType, FoodFilters } from '../../types/types';
 import { FOOD_CATEGORIES, DIETARY_OPTIONS, FOOD_SORT_OPTIONS } from '../../constants/foodConstants';
-
-// Mock data for food items - updated with allergens
-const MOCK_FOOD_ITEMS: FoodItem[] = [
-  {
-    id: 1,
-    title: 'Organic Apples',
-    description: 'Fresh, locally grown organic apples. Rich in fiber and antioxidants.',
-    iconName: 'food-apple',
-    category: 'Fruit',
-    nutritionScore: 8.5,
-    dietaryOptions: ['Vegetarian', 'Vegan', 'Gluten-free'],
-    price: 3.99,
-    macronutrients: {
-      calories: 52,
-      protein: 0.3,
-      carbohydrates: 14,
-      fat: 0.2,
-      fiber: 2.4,
-    },
-  },
-  {
-    id: 2,
-    title: 'Greek Yogurt',
-    description: 'Creamy Greek yogurt with high protein content. Perfect for breakfast or snacks.',
-    iconName: 'food-variant',
-    category: 'Dairy',
-    nutritionScore: 7.8,
-    dietaryOptions: ['Vegetarian', 'High-protein'],
-    allergens: ['Lactose'],
-    price: 4.99,
-    macronutrients: {
-      calories: 100,
-      protein: 10,
-      carbohydrates: 4,
-      fat: 5,
-    },
-  },
-  {
-    id: 3,
-    title: 'Quinoa',
-    description: 'Nutrient-rich ancient grain that provides complete protein and complex carbohydrates.',
-    iconName: 'barley',
-    category: 'Grain',
-    nutritionScore: 9.2,
-    dietaryOptions: ['Vegetarian', 'Vegan', 'Gluten-free', 'High-protein'],
-    price: 6.99,
-    macronutrients: {
-      calories: 120,
-      protein: 4.4,
-      carbohydrates: 21.3,
-      fat: 1.9,
-      fiber: 2.8,
-    },
-  },
-  {
-    id: 4,
-    title: 'Chicken Breast',
-    description: 'Lean, skinless chicken breast. Excellent source of high-quality protein.',
-    iconName: 'food-drumstick',
-    category: 'Meat',
-    nutritionScore: 8.7,
-    dietaryOptions: ['High-protein', 'Low-fat'],
-    price: 7.99,
-    macronutrients: {
-      calories: 165,
-      protein: 31,
-      carbohydrates: 0,
-      fat: 3.6,
-    },
-  },
-  {
-    id: 5,
-    title: 'Avocado',
-    description: 'Nutrient-dense fruit rich in healthy fats, fiber, and various micronutrients.',
-    iconName: 'fruit-pear',
-    category: 'Fruit',
-    nutritionScore: 9.0,
-    dietaryOptions: ['Vegetarian', 'Vegan', 'Gluten-free'],
-    price: 2.49,
-    macronutrients: {
-      calories: 160,
-      protein: 2,
-      carbohydrates: 8.5,
-      fat: 14.7,
-      fiber: 6.7,
-    },
-  },
-  {
-    id: 6,
-    title: 'Salmon Fillet',
-    description: 'Fresh Atlantic salmon rich in omega-3 fatty acids and high-quality protein.',
-    iconName: 'fish',
-    category: 'Meat',
-    nutritionScore: 9.5,
-    dietaryOptions: ['High-protein'],
-    allergens: ['Fish'],
-    price: 12.99,
-    macronutrients: {
-      calories: 208,
-      protein: 20,
-      carbohydrates: 0,
-      fat: 13,
-    },
-  },
-];
+import { getFoodCatalog, submitFoodProposal } from '../../services/api/food.service';
+import { API_CONFIG } from '../../config';
 
 // Success notification component
 const SuccessNotification: React.FC<{
@@ -172,9 +69,13 @@ const FoodScreen: React.FC = () => {
   // Layout mode state
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('grid');
   
-  // Loading and refresh states
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  // Food data state
+  const [foodData, setFoodData] = useState<FoodItem[]>([]);
+  
+  // Loading and error states
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Modal states
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
@@ -198,7 +99,50 @@ const FoodScreen: React.FC = () => {
     setDietaryOptions,
     setPriceRange,
     setNutritionScoreRange,
-  } = useFoodFilters(MOCK_FOOD_ITEMS);
+  } = useFoodFilters(foodData);
+  
+  // Fetch food data from API
+  const fetchFoodData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // Convert category filter to array if present
+      const categoryFilters = filters.category ? [filters.category] : undefined;
+      
+      const response = await getFoodCatalog(50, categoryFilters);
+      
+      if (response.error) {
+        console.error('API Error:', response.error);
+        setError(response.error);
+        return;
+      }
+      
+      if (!response.data) {
+        console.error('No data in response');
+        setError('No food data available');
+        return;
+      }
+      
+      if (!Array.isArray(response.data)) {
+        console.error('Response data is not an array:', response.data);
+        setError('Invalid response format from server');
+        return;
+      }
+
+      setFoodData(response.data);
+    } catch (err: any) {
+      console.error('Error in fetchFoodData:', err);
+      setError(err.message || 'Failed to fetch food data');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [filters.category]);
+  
+  // Load initial data
+  useEffect(() => {
+    fetchFoodData();
+  }, [fetchFoodData]);
   
   // Toggle layout mode
   const toggleLayoutMode = () => {
@@ -226,19 +170,40 @@ const FoodScreen: React.FC = () => {
   }, [setCategoryFilter, setDietaryOptions, setPriceRange, setNutritionScoreRange]);
   
   // Handle propose food submission
-  const handleProposeFoodSubmit = useCallback((data: FoodProposalData) => {
-    console.log('Proposed food:', data);
-    
-    // Show loading state briefly (simulate API call)
+  const handleProposeFoodSubmit = useCallback(async (data: FoodProposalData) => {
     setProposeFoodModalVisible(false);
+    setIsLoading(true);
     
-    // Simulate API call
-    setTimeout(() => {
-      // Show success notification
-      setNotificationMessage(`Food proposal for "${data.name}" has been submitted for review!`);
-      setShowSuccessNotification(true);
+    try {
+      // Convert the data to the format expected by the API
+      const proposalData = {
+        name: data.name,
+        category: data.category,
+        servingSize: Number(data.servingSize) || 100,
+        caloriesPerServing: Number(data.calories) || 0,
+        proteinContent: Number(data.protein) || 0,
+        fatContent: Number(data.fat) || 0,
+        carbohydrateContent: Number(data.carbohydrates) || 0,
+        fiberContent: data.fiber ? Number(data.fiber) : undefined,
+        sugarContent: data.sugar ? Number(data.sugar) : undefined,
+        dietaryOptions: [], // Not provided in the current form
+        nutritionScore: 70, // Default score - could be calculated based on nutrients
+        allergens: [],
+      };
       
-    }, 500);
+      const response = await submitFoodProposal(proposalData);
+      
+      if (response.error) {
+        Alert.alert('Error', response.error);
+      } else {
+        setNotificationMessage(`Food proposal for "${data.name}" has been submitted for review!`);
+        setShowSuccessNotification(true);
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to submit food proposal');
+    } finally {
+      setIsLoading(false);
+    }
   }, []);
   
   // Remove a specific dietary option
@@ -250,19 +215,12 @@ const FoodScreen: React.FC = () => {
   // Handle pull-to-refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
-    // Simulate API call
-    setTimeout(() => {
-      setRefreshing(false);
-    }, 1500);
-  }, []);
-  
-  // Simulate initial loading
-  React.useEffect(() => {
-    setIsLoading(true);
-    setTimeout(() => {
-      setIsLoading(false);
-    }, 1000);
-  }, []);
+    
+    fetchFoodData()
+      .finally(() => {
+        setRefreshing(false);
+      });
+  }, [fetchFoodData]);
   
   // Check if filters are active
   const hasActiveFilters = filters.name || filters.category || (filters.dietaryOptions?.length ?? 0) > 0 || 
@@ -358,9 +316,15 @@ const FoodScreen: React.FC = () => {
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
                     {filters.category}
                   </Text>
-                  <Icon name="close" size={16} color={theme.error} style={styles.activeFilterIcon} />
+                  <Icon 
+                    name="close" 
+                    size={14} 
+                    color={theme.error} 
+                    style={styles.activeFilterIcon} 
+                  />
                 </TouchableOpacity>
               )}
+              
               {filters.dietaryOptions?.map(option => (
                 <TouchableOpacity
                   key={option}
@@ -370,29 +334,46 @@ const FoodScreen: React.FC = () => {
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
                     {option}
                   </Text>
-                  <Icon name="close" size={16} color={theme.error} style={styles.activeFilterIcon} />
+                  <Icon 
+                    name="close" 
+                    size={14} 
+                    color={theme.error} 
+                    style={styles.activeFilterIcon} 
+                  />
                 </TouchableOpacity>
               ))}
+              
               {(filters.minPrice !== undefined || filters.maxPrice !== undefined) && (
                 <TouchableOpacity
                   style={[styles.activeFilterChip, { backgroundColor: theme.errorContainerBg }]}
                   onPress={() => setPriceRange(undefined, undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Price: ${filters.minPrice || 0} - ${filters.maxPrice || '∞'}
+                    Price: {filters.minPrice || 0} - {filters.maxPrice || '∞'}
                   </Text>
-                  <Icon name="close" size={16} color={theme.error} style={styles.activeFilterIcon} />
+                  <Icon 
+                    name="close" 
+                    size={14} 
+                    color={theme.error} 
+                    style={styles.activeFilterIcon} 
+                  />
                 </TouchableOpacity>
               )}
+              
               {(filters.minNutritionScore !== undefined || filters.maxNutritionScore !== undefined) && (
                 <TouchableOpacity
                   style={[styles.activeFilterChip, { backgroundColor: theme.errorContainerBg }]}
                   onPress={() => setNutritionScoreRange(undefined, undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Score: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
+                    Nutrition: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
                   </Text>
-                  <Icon name="close" size={16} color={theme.error} style={styles.activeFilterIcon} />
+                  <Icon 
+                    name="close" 
+                    size={14} 
+                    color={theme.error} 
+                    style={styles.activeFilterIcon} 
+                  />
                 </TouchableOpacity>
               )}
             </ScrollView>
@@ -445,6 +426,31 @@ const FoodScreen: React.FC = () => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[styles.loadingText, textStyles.body]}>Loading foods...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.emptyContainer}>
+          <Icon name="alert-circle" size={64} color={theme.error} />
+          <Text style={[styles.emptyTitle, textStyles.heading4]}>Error loading foods</Text>
+          <Text style={[styles.emptyText, textStyles.body]}>{error}</Text>
+          <Button
+            title="Retry"
+            onPress={fetchFoodData}
+            variant="primary"
+            style={styles.emptyButton}
+            iconName="refresh"
+          />
+          <TouchableOpacity 
+            style={styles.debugButton} 
+            onPress={() => {
+              Alert.alert(
+                "Debug Info", 
+                `API URL: ${API_CONFIG.BASE_URL}\nEndpoint: /foods\nCategory Filter: ${filters.category || 'None'}`
+              );
+              fetchFoodData();
+            }}
+          >
+            <Text style={styles.debugText}>Debug API Connection</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         <FlatList
@@ -654,6 +660,16 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     marginLeft: SPACING.sm,
     flex: 1,
+    fontWeight: '500',
+  },
+  debugButton: {
+    marginTop: SPACING.sm,
+    padding: SPACING.sm,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+  },
+  debugText: {
+    color: '#0066CC',
     fontWeight: '500',
   },
 });
