@@ -1,15 +1,5 @@
 import React from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Grid,
-  Divider,
-  Box,
-} from '@mui/material';
+import { X, Hamburger, Tag, Fire, Scales } from '@phosphor-icons/react';
 import { Food } from '../../lib/apiClient';
 
 interface FoodDetailProps {
@@ -22,102 +12,152 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
   if (!food) return null;
 
   return (
-    <Dialog 
-      open={open} 
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-    >
-      <DialogTitle className="nh-title">
-        {food.name}
-      </DialogTitle>
-      <DialogContent>
-        <Box sx={{ mt: 2 }}>
-          <Grid container spacing={3}>
-            {/* Basic Information */}
-            <Grid size={{xs: 12}}>
-              <Typography variant="h6" className="nh-subtitle">
-                Basic Information
-              </Typography>
-              <Typography className="nh-text">
-                Category: {food.category}
-              </Typography>
-              <Typography className="nh-text">
-                Nutrition Score: {food.nutritionScore}
-              </Typography>
-              <Typography className="nh-text">
-                Serving Size: {food.servingSize}
-              </Typography>
-            </Grid>
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${open ? 'visible' : 'invisible'}`}>
+      {/* Backdrop with blur effect */}
+      <div 
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm transition-opacity duration-300 ${open ? 'opacity-100' : 'opacity-0'}`}
+        onClick={onClose}
+      ></div>
+      
+      {/* Modal */}
+      <div 
+        className={`max-w-3xl w-full mx-4 bg-[var(--color-bg-primary)] rounded-lg shadow-xl transform transition-all duration-300 max-h-[90vh] overflow-y-auto relative ${open ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+      >
+        {/* Close button */}
+        <button 
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full bg-[var(--color-button-danger-bg)] hover:bg-[var(--color-button-danger-hover-bg)] z-10"
+        >
+          <X size={24} weight="bold" className="text-[var(--color-text-on-danger)]" />
+        </button>
 
-            <Grid size={{xs: 12}}>
-              <Divider sx={{ my: 2 }} />
-            </Grid>
-
-            {/* Nutrition Information */}
-            <Grid size={{xs: 12}}>
-              <Typography variant="h6" className="nh-subtitle">
-                Nutrition Information (per {food.servingSize})
-              </Typography>
-            </Grid>
-
-            <Grid size={{xs: 12, sm: 6}}>
-              <Typography className="nh-text">
-                Calories: {food.caloriesPerServing} kcal
-              </Typography>
-            </Grid>
-
-            <Grid size={{xs: 12, sm: 6}}>
-              <Typography className="nh-text">
-                Carbohydrates: {food.carbohydrateContent} g
-              </Typography>
-            </Grid>
-
-            <Grid size={{xs: 12, sm: 6}}>
-              <Typography className="nh-text">
-                Protein: {food.proteinContent}g
-              </Typography>
-            </Grid>
-
-            <Grid size={{xs: 12, sm: 6}}>
-              <Typography className="nh-text">
-                Fat: {food.fatContent}g
-              </Typography>
-            </Grid>
-
-            {/* Dietary Tags */}
-            <Grid size={{xs: 12}}>
-              <Divider sx={{ my: 2 }} />
-              <Typography variant="h6" className="nh-subtitle">
-                Dietary Tags
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mt: 1 }}>
-                {food.dietaryOptions.map((tag) => (
-                  <Typography 
+        {/* Food image section */}
+        <div className="w-full h-48 md:h-64 relative overflow-hidden border-b border-[var(--color-border)]">
+          {food.imageUrl ? (
+            <img 
+              src={food.imageUrl} 
+              alt={food.name} 
+              className="w-full h-full object-cover"
+              onError={e => { 
+                (e.target as HTMLImageElement).style.display = 'none';
+                (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center', 'bg-[var(--color-bg-secondary)]');
+              }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[var(--color-bg-secondary)]">
+              <Hamburger size={72} weight="fill" className="text-[var(--color-text-tertiary)]" />
+            </div>
+          )}
+        </div>
+          
+        {/* Content section */}
+        <div className="p-6">
+          {/* Food title */}
+          <h2 className="nh-title text-3xl font-bold text-[var(--color-accent)] mb-6">{food.name}</h2>
+            
+          {/* Basic Information */}
+          <div className="mb-8">
+            <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
+              <Tag size={20} weight="fill" className="text-[var(--color-accent)]" />
+              Basic Information
+            </h3>
+              
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
+                <p className="text-[var(--color-text-secondary)] text-sm">Category</p>
+                <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.category}</p>
+              </div>
+                
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
+                <p className="text-[var(--color-text-secondary)] text-sm">Nutrition Score</p>
+                <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.nutritionScore}</p>
+              </div>
+                
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
+                <p className="text-[var(--color-text-secondary)] text-sm">Serving Size</p>
+                <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.servingSize}g</p>
+              </div>
+            </div>
+          </div>
+            
+          {/* Nutrition Information */}
+          <div className="mb-8">
+            <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
+              <Fire size={20} weight="fill" className="text-[var(--color-accent)]" />
+              Nutrition Information (per {food.servingSize}g)
+            </h3>
+              
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center">
+                <div className="flex justify-center mb-2">
+                  <Fire size={24} weight="fill" className="text-red-500" />
+                </div>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.caloriesPerServing} kcal</p>
+                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Calories</p>
+              </div>
+                
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center">
+                <div className="flex justify-center mb-2">
+                  <Scales size={24} weight="fill" className="text-blue-500" />
+                </div>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.proteinContent}g</p>
+                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Protein</p>
+              </div>
+                
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center">
+                <div className="flex justify-center mb-2">
+                  <Scales size={24} weight="fill" className="text-yellow-500" />
+                </div>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.fatContent}g</p>
+                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Fat</p>
+              </div>
+                
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center">
+                <div className="flex justify-center mb-2">
+                  <Scales size={24} weight="fill" className="text-green-500" />
+                </div>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.carbohydrateContent}g</p>
+                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Carbs</p>
+              </div>
+            </div>
+          </div>
+            
+          {/* Dietary Tags */}
+          <div>
+            <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
+              <Tag size={20} weight="fill" className="text-[var(--color-accent)]" />
+              Dietary Tags
+            </h3>
+              
+            <div className="flex flex-wrap gap-2">
+              {food.dietaryOptions.length > 0 ? (
+                food.dietaryOptions.map((tag) => (
+                  <div 
                     key={tag}
-                    className="nh-text"
-                    sx={{ 
-                      backgroundColor: 'primary.light',
-                      color: 'primary.contrastText',
-                      px: 2,
-                      py: 0.5,
-                      borderRadius: 1,
-                    }}
+                    className="flex items-center px-3 py-1.5 rounded-full text-sm font-medium bg-[var(--color-accent-bg-soft)] text-[var(--color-accent)] border border-[var(--color-accent-border-soft)]"
                   >
+                    <Tag size={14} weight="fill" className="mr-1.5" />
                     {tag}
-                  </Typography>
-                ))}
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose} className="nh-button-secondary">
-          Close
-        </Button>
-      </DialogActions>
-    </Dialog>
+                  </div>
+                ))
+              ) : (
+                <p className="text-[var(--color-text-secondary)] italic">No dietary tags specified</p>
+              )}
+            </div>
+          </div>
+        </div>
+            
+        {/* Footer */}
+        <div className="p-4 border-t border-[var(--color-border)] flex justify-end">
+          <button 
+            onClick={onClose}
+            className="px-6 py-2 rounded-md bg-[var(--color-button-danger-bg)] hover:bg-[var(--color-button-danger-hover-bg)] text-[var(--color-button-danger-fg)] transition-colors"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
