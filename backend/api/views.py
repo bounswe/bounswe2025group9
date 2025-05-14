@@ -137,6 +137,77 @@ class WikidataEntityView(APIView):
                 return f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
         return None
 
+class WikidataFoodView(APIView):
+    permission_classes = []
+    
+    def get(self, request: Request) -> Response:
+        """
+        GET /food?query={query}&limit={limit}
+        Search for food-related entities in Wikidata
+        """
+        query = request.query_params.get("query")
+        limit = request.query_params.get("limit", "10")
+        
+        try:
+            limit = int(limit)
+        except ValueError:
+            limit = 10
+            
+        if not query:
+            return Response(
+                {"error": "query parameter is required"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+            
+        try:
+            results = self.search_wikidata_entities(query, limit)
+            return Response({
+                "results": results,
+                "count": len(results),
+                "query": query
+            })
+        except Exception as e:
+            return Response(
+                {"error": f"Failed to query Wikidata: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+    
+    def search_wikidata_entities(self, query, limit):
+        """
+        Uses the wbsearchentities API to search for food-related entities
+        """
+        api_url = "https://www.wikidata.org/w/api.php"
+        
+        # Parameters for wbsearchentities
+        params = {
+            "action": "wbsearchentities",
+            "format": "json",
+            "search": query,
+            "language": "en",
+            "limit": limit,
+            "type": "item"
+        }
+        
+        response = requests.get(
+            api_url, 
+            params=params,
+            headers={"User-Agent": "WikidataFoodApp/1.0"}
+        )
+        response.raise_for_status()
+        data = response.json()
+        
+        # Process the search results
+        results = []
+        for item in data.get("search", []):
+            result = {
+                "id": item.get("id"),
+                "label": item.get("label", "Unknown"),
+                "description": item.get("description", ""),
+                "url": item.get("url", "")
+            }
+            results.append(result)
+            
+        return results
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
