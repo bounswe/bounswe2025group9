@@ -1,5 +1,5 @@
-import { Hamburger} from '@phosphor-icons/react'
-import { apiClient , Food} from '../../lib/apiClient';
+import { Hamburger } from '@phosphor-icons/react';
+import { apiClient, Food } from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
@@ -40,6 +40,12 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   );
 }
 
+const dietaryOptionsList = [
+  { label: "Vegan", value: "vegan" },
+  { label: "Vegetarian", value: "vegetarian" },
+  { label: "Gluten-Free", value: "gluten-free" },
+];
+
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
     const [fetchSuccess, setFetchSuccess] = useState(true)
@@ -51,10 +57,11 @@ const Foods = () => {
     const [previous, setPrevious] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [warning, setWarning] = useState<string | null>(null);
+    const [selectedDietaryOptions, setSelectedDietaryOptions] = useState<string[]>([]);
 
-    const fetchFoods = async (pageNum = 1, search = '') => {
+    const fetchFoods = async (pageNum = 1, search = '', dietaryOptions: string[] = []) => {
         try {
-            const response = await apiClient.getFoods({ page: pageNum, search });
+            const response = await apiClient.getFoods({ page: pageNum, search, dietaryOptions });
 
             if (response.status == 200){
                 setFoods(response.results);
@@ -71,12 +78,28 @@ const Foods = () => {
                 setNext(response.next || null);
                 setPrevious(response.previous || null);
                 setFetchSuccess(true);
-                setWarning(response.warning || "Some categories are not available.");
+                // Don't show backend warning, show nothing or a generic message if needed
+                setWarning("Some categories are not available.");
             }
             else if (response.status == 204){ // No content, searched terms are not found
                 setFoods([]);
                 setFetchSuccess(true);
-                setWarning(response.warning || `No foods found for "${searchTerm}".`);
+                // Custom warning for dietaryOptions and searchTerm, with bold
+                let dietaryMsg = selectedDietaryOptions.length > 0
+                    ? `dietary options: <b>${selectedDietaryOptions.join(', ')}</b>`
+                    : "";
+                let searchMsg = searchTerm ? `search term: <b>"${searchTerm}"</b>` : "";
+                let combinedMsg = "";
+                if (dietaryMsg && searchMsg) {
+                    combinedMsg = `No foods found for ${dietaryMsg} and ${searchMsg}.`;
+                } else if (dietaryMsg) {
+                    combinedMsg = `No foods found for ${dietaryMsg}.`;
+                } else if (searchMsg) {
+                    combinedMsg = `No foods found for ${searchMsg}.`;
+                } else {
+                    combinedMsg = "No foods found.";
+                }
+                setWarning(combinedMsg);
             }
         } catch (error) {
             console.error('Error fetching foods:', error);
@@ -87,14 +110,14 @@ const Foods = () => {
 
     useEffect(() => {
         if (shouldFetch) {
-            fetchFoods(page, searchTerm);
+            fetchFoods(page, searchTerm, selectedDietaryOptions);
             setShouldFetch(false);
         }
-    }, [page, shouldFetch, searchTerm]);
+    }, [page, shouldFetch, searchTerm, selectedDietaryOptions]);
 
     // Initial load on component mount
     useEffect(() => {
-        fetchFoods(1, '');
+        fetchFoods(1, '', []);
     }, []);
 
     const pageSize = foods.length
@@ -112,6 +135,16 @@ const Foods = () => {
             setPage(page + 1);
             setShouldFetch(true);
         }
+    };
+
+    const handleDietaryOptionToggle = (option: string) => {
+        setPage(1);
+        setSelectedDietaryOptions(prev =>
+            prev.includes(option)
+                ? prev.filter(o => o !== option)
+                : [...prev, option]
+        );
+        setShouldFetch(true);
     };
 
     const handleSearch = (e: React.FormEvent) => {
@@ -156,10 +189,29 @@ const Foods = () => {
                         <Link to="/foods/propose" className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"> Add Food</Link>
                     </div>
                 </form>
+                {/* Dietary Options Filter Buttons */}
+                <div className="flex flex-wrap gap-2 mb-6 justify-center">
+                    {dietaryOptionsList.map(opt => (
+                        <button
+                            key={opt.value}
+                            type="button"
+                            className={
+                                "px-4 py-2 rounded border " +
+                                (selectedDietaryOptions.includes(opt.value)
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "bg-white text-gray-700 border-gray-300 hover:bg-blue-50")
+                            }
+                            onClick={() => handleDietaryOptionToggle(opt.value)}
+                        >
+                            {opt.label}
+                        </button>
+                    ))}
+                </div>
                 {warning && (
-                    <div className="mb-6 text-center text-yellow-700 bg-yellow-100 border border-yellow-300 rounded p-3">
-                        {warning}
-                    </div>
+                    <div
+                        className="mb-6 text-center text-yellow-700 bg-yellow-100 border border-yellow-300 rounded p-3"
+                        dangerouslySetInnerHTML={{ __html: warning }}
+                    />
                 )}
                 {fetchSuccess ? (
                         <>
