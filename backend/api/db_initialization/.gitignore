@@ -1,0 +1,11 @@
+# API keys and configuration
+config.py
+
+# Generated images
+food_images/
+food_images_webp/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class 
