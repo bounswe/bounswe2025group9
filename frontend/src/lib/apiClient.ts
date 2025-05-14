@@ -273,7 +273,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number, search?: string}) => {
+  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string }) => {
     let url = "/foods";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
@@ -281,6 +281,12 @@ export const apiClient = {
     }
     if (params && params.search) {
       queryParams.append('search', params.search);
+    }
+    if (params && params.sort_by) {
+      queryParams.append('sort_by', params.sort_by);
+    }
+    if (params && params.order) {
+      queryParams.append('order', params.order);
     }
     const queryString = queryParams.toString();
     if (queryString) {

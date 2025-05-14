@@ -40,6 +40,14 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   );
 }
 
+const SORT_OPTIONS = [
+    { key: 'nutritionscore', label: 'By Nutrition Score' },
+    { key: 'carbohydratecontent', label: 'By Carb Content' },
+    { key: 'proteincontent', label: 'By Protein Content' },
+    { key: 'fatcontent', label: 'By Fat Content' },
+    { key: '', label: 'Remove Sort' }
+];
+
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
     const [fetchSuccess, setFetchSuccess] = useState(true)
@@ -51,10 +59,18 @@ const Foods = () => {
     const [previous, setPrevious] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [warning, setWarning] = useState<string | null>(null);
+    const [sortBy, setSortBy] = useState<string>('');
+    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [showSort, setShowSort] = useState(false);
 
     const fetchFoods = async (pageNum = 1, search = '') => {
         try {
-            const response = await apiClient.getFoods({ page: pageNum, search });
+            const params: any = { page: pageNum, search };
+            if (sortBy) {
+                params.sort_by = sortBy;
+                params.order = sortOrder;
+            }
+            const response = await apiClient.getFoods(params);
 
             if (response.status == 200){
                 setFoods(response.results);
@@ -120,6 +136,23 @@ const Foods = () => {
         setShouldFetch(true);
     };
 
+    const handleSortChange = (key: string) => {
+        if (key === '') {
+            setSortBy('');
+            setSortOrder('desc');
+        } else {
+            if (sortBy === key) {
+                setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+            } else {
+                setSortBy(key);
+                setSortOrder('desc');
+            }
+        }
+        setPage(1);
+        setShouldFetch(true);
+        // Do not close the sort panel here
+    };
+
     return (
         <div className="py-12">
             <div className="nh-container">
@@ -127,6 +160,7 @@ const Foods = () => {
                 <p className="nh-text text-center mb-12">
                     Browse our selection of available foods.
                 </p>
+
 
                 <form className="flex flex-col sm:flex-row gap-4 mb-8" onSubmit={handleSearch}>
                     <div className="relative flex-grow">
@@ -146,6 +180,16 @@ const Foods = () => {
                             </svg>
                         </div>
                     </div>
+                    {/* Sort By Button between Search and Add Food */}
+                    <button
+                        type="button"
+                        className="nh-button-secondary px-4 py-2"
+                        onClick={() => setShowSort((prev) => !prev)}
+                    >
+                        {sortBy
+                            ? `Sorting: ${SORT_OPTIONS.find(opt => opt.key === sortBy)?.label || 'Custom'} (${sortOrder === 'desc' ? '↓' : '↑'})`
+                            : 'Sort By'}
+                    </button>
                     <div className="flex gap-3">
                         <button
                             type="submit"
@@ -156,6 +200,28 @@ const Foods = () => {
                         <Link to="/foods/propose" className="nh-button-secondary px-6 py-2.5 whitespace-nowrap"> Add Food</Link>
                     </div>
                 </form>
+                {/* Sort By Toggle Options */}
+                {showSort && (
+                    <div className="flex flex-wrap gap-3 mb-6 justify-center">
+                        {SORT_OPTIONS.map(option => (
+                            <button
+                                key={option.key}
+                                type="button"
+                                className={`nh-button-secondary px-4 py-2 flex items-center gap-1
+                                    ${sortBy === option.key ? 'border-blue-500 border-2' : ''}
+                                    ${option.key === '' && sortBy === '' ? 'border-blue-500 border-2' : ''}
+                                `}
+                                onClick={() => handleSortChange(option.key)}
+                            >
+                                {option.label}
+                                {option.key !== '' && sortBy === option.key && (
+                                    <span>{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                                )}
+                            </button>
+                        ))}
+                    </div>
+                )}
+
                 {warning && (
                     <div className="mb-6 text-center text-yellow-700 bg-yellow-100 border border-yellow-300 rounded p-3">
                         {warning}
