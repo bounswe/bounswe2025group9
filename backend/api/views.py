@@ -56,7 +56,7 @@ class WikidataEntityView(APIView):
                 )
 
             return Response(entity_data)
-        except Exception as e:
+        except requests.exceptions.RequestException as e:
             return Response(
                 {"error": f"Failed to retrieve entity: {str(e)}"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR,
