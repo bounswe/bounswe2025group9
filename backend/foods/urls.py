@@ -1,6 +1,13 @@
 from django.urls import path
 
-from .views import FoodCatalog, GetOrFetchFoodEntry, FoodProposalSubmitView, suggest_recipe, get_random_meal
+from .views import (
+    FoodCatalog,
+    GetOrFetchFoodEntry,
+    FoodProposalSubmitView,
+    suggest_recipe,
+    get_random_meal,
+    food_nutrition_info,
+)
 
 urlpatterns = [
     path("", FoodCatalog.as_view(), name="get_foods"),
@@ -14,4 +21,5 @@ urlpatterns = [
     path("random-meal/", get_random_meal, name="random-meal"),
     path("", FoodCatalog.as_view(), name="get_foods"),
     path("catalog/", FoodCatalog.as_view(), name="food-catalog"),
+    path("food/nutrition-info/", food_nutrition_info, name="food_nutrition_info"),
 ]
