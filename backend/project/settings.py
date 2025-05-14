@@ -191,3 +191,7 @@ CORS_ALLOW_HEADERS = [
 
 # allow credentials (cookies, authorization headers)
 CORS_ALLOW_CREDENTIALS = True
+
+
+# DeepL API configuration
+DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "d60101d3-17b1-4237-8810-d06262d4ce8d:fx")
