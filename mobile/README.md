@@ -57,3 +57,40 @@ This project uses the following core technologies:
 
 The app will then load and run inside Expo Go or your simulator/emulator. Changes you make to the code will often update live in the app.
 > 📚 Learn more about Expo at [https://docs.expo.dev](https://docs.expo.dev)
+
+## Building an APK for Android
+
+To create a standalone APK file that can be installed directly on Android devices without Expo Go:
+
+1. **Install EAS CLI:** EAS (Expo Application Services) is used to build native app binaries.
+   ```bash
+   npm install -g eas-cli
+   ```
+
+2. **Log in to your Expo account:** You need an Expo account to use EAS build services.
+   ```bash
+   eas login
+   ```
+   If you don't have an account, sign up at [https://expo.dev/signup](https://expo.dev/signup)
+
+3. **Configure the build profile:** Our project already has an `eas.json` file with a preconfigured `preview` profile for building APKs.
+
+4. **Build the APK:** Run the following command to start the build process:
+   ```bash
+   eas build --platform android --profile preview
+   ```
+   
+   Alternatively, to build locally without using Expo's cloud services:
+   ```bash
+   eas build --platform android --profile preview --local
+   ```
+
+5. **Download the APK:** After the build completes:
+   - If using cloud build: EAS will provide a URL to download the APK
+   - If building locally: The APK will be available in the local output directory
+
+6. **Install on Android device:**
+   - Transfer the APK to your Android device
+   - Open the file on your device to install (you may need to enable "Install from Unknown Sources" in your device settings)
+
+> **Note:** The first build will take longer as it sets up the build environment.
