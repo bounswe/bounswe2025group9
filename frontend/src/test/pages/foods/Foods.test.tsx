@@ -36,7 +36,8 @@ vi.mock('../../../lib/apiClient', () => ({
 
 // Mock FoodDetail component to avoid rendering issues
 vi.mock('../../../pages/foods/FoodDetail', () => ({
-    default: ({ food, open, onClose }: { food: Food | null, open: boolean, onClose: () => void }) => (
+    default: (
+        { open }: {open: boolean, onClose: () => void }) => (
         open ? <div data-testid="food-detail-modal">Food Detail Modal</div> : null
     )
 }))
