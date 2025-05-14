@@ -1,3 +1,7 @@
+/**
+ * Forum service for interacting with the forum-related API endpoints
+ */
+
 import { apiClient } from './client';
 import { ForumTopic, Comment, PostTagType } from '../../types/types';
 
@@ -51,6 +55,17 @@ export interface CreatePostRequest {
 export interface CreateCommentRequest {
   post: number;
   body: string;
+}
+
+export interface RecipeIngredient {
+  food_id: number;
+  amount: number;
+}
+
+export interface CreateRecipeRequest {
+  post_id: number;
+  instructions: string;
+  ingredients: RecipeIngredient[];
 }
 
 // Convert API response to our ForumTopic type
@@ -178,6 +193,18 @@ export const forumService = {
     }
     
     return mapApiTopicToForumTopic(response.data);
+  },
+
+  // Create a new recipe
+  async createRecipe(recipeData: CreateRecipeRequest): Promise<any> {
+    const response = await apiClient.post<any>('/forum/recipes/', recipeData);
+    if (response.error) throw new Error(response.error);
+    
+    if (!response.data) {
+      throw new Error('Failed to create recipe');
+    }
+    
+    return response.data;
   },
 
   // Update a post
