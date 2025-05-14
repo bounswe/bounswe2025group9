@@ -274,7 +274,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number, search?: string}) => {
+  getFoods: (params?: { page?: number, search?: string, dietaryOptions?: string | string[] }) => {
     let url = "/foods";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
@@ -282,6 +282,13 @@ export const apiClient = {
     }
     if (params && params.search) {
       queryParams.append('search', params.search);
+    }
+    if (params && params.dietaryOptions) {
+      if (Array.isArray(params.dietaryOptions)) {
+        queryParams.append('dietaryOptions', params.dietaryOptions.join(','));
+      } else {
+        queryParams.append('dietaryOptions', params.dietaryOptions);
+      }
     }
     const queryString = queryParams.toString();
     if (queryString) {

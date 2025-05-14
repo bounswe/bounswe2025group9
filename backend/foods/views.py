@@ -70,10 +70,10 @@ class FoodCatalog(ListAPIView):
                 for opt in dietary_options_param.split(",")
                 if opt.strip()
             ]
-            # Filter entries where dietaryOptions contains any of the requested options (case-insensitive)
+            # Filter entries where dietaryOptions contains all of the requested options (case-insensitive)
             q = Q()
             for opt in requested_options:
-                q |= Q(dietaryOptions__icontains=opt)
+                q &= Q(dietaryOptions__icontains=opt)
             queryset = queryset.filter(q)
             if queryset.count() == 0:
                 self.warning = (
