@@ -211,7 +211,7 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://localhost:8081/foods?limit=10&categories=Fruit,Protein",
+					"raw": "http://localhost:8081/foods?categories=Fruit,Protein",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -222,12 +222,12 @@
 					],
 					"query": [
 						{
-							"key": "limit",
-							"value": "10"
-						},
-						{
 							"key": "categories",
 							"value": "Fruit,Protein"
+						},
+						{
+							"key": "dietaryOptions",
+							"value": "Vegan,Gluten-Free"
 						}
 					]
 				},
