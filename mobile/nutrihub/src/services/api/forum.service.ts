@@ -6,6 +6,24 @@ import { apiClient } from './client';
 import { ForumTopic, Comment, PostTagType } from '../../types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+// Storage key for liked posts
+const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
+
+// Initialize liked posts in AsyncStorage if it doesn't exist
+const initializeLikedPosts = async (): Promise<void> => {
+  try {
+    const existingData = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+    if (existingData === null) {
+      await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify([]));
+    }
+  } catch (error) {
+    console.error('Error initializing liked posts storage:', error);
+  }
+};
+
+// Call initialization on app startup
+initializeLikedPosts();
+
 // API response interface for paginated results
 export interface PaginatedResponse<T> {
   count: number;
@@ -70,20 +88,68 @@ export interface CreateRecipeRequest {
 }
 
 // Convert API response to our ForumTopic type
-const mapApiTopicToForumTopic = (apiTopic: ApiForumTopic): ForumTopic => {
-  return {
-    id: apiTopic.id,
-    title: apiTopic.title,
-    content: apiTopic.body,
-    author: apiTopic.author,
-    authorId: 0, // Not provided in API
-    commentsCount: apiTopic.comments_count || 0, // Use API value if available
-    likesCount: apiTopic.like_count || 0, // Add fallback for like_count
-    isLiked: apiTopic.is_liked || false, // Add fallback for is_liked
-    tags: apiTopic.tags.map(tag => tag.name),
-    createdAt: new Date(apiTopic.created_at),
-    updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
-  };
+const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTopic> => {
+  // Check if this post is in our locally stored liked posts
+  try {
+    const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+    const likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+    
+    // Override isLiked based on local storage if available
+    const isLocallyLiked = likedPosts.includes(apiTopic.id);
+    const isLiked = isLocallyLiked || apiTopic.is_liked || false;
+    
+    return {
+      id: apiTopic.id,
+      title: apiTopic.title,
+      content: apiTopic.body,
+      author: apiTopic.author,
+      authorId: 0, // Not provided in API
+      commentsCount: apiTopic.comments_count || 0, // Use API value if available
+      likesCount: apiTopic.like_count || 0, // Add fallback for like_count
+      isLiked: isLiked,
+      tags: apiTopic.tags.map(tag => tag.name),
+      createdAt: new Date(apiTopic.created_at),
+      updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
+    };
+  } catch (error) {
+    console.error('Error checking liked posts storage in mapApiTopicToForumTopic:', error);
+    // Fall back to default behavior if AsyncStorage fails
+    return {
+      id: apiTopic.id,
+      title: apiTopic.title,
+      content: apiTopic.body,
+      author: apiTopic.author,
+      authorId: 0,
+      commentsCount: apiTopic.comments_count || 0,
+      likesCount: apiTopic.like_count || 0,
+      isLiked: apiTopic.is_liked || false,
+      tags: apiTopic.tags.map(tag => tag.name),
+      createdAt: new Date(apiTopic.created_at),
+      updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
+    };
+  }
+};
+
+// Utility function to add/remove post ID from liked posts in AsyncStorage
+const updateLikedPostsStorage = async (postId: number, isLiked: boolean): Promise<void> => {
+  try {
+    const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+    let likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+    
+    if (isLiked) {
+      // Add post ID if not already in the list
+      if (!likedPosts.includes(postId)) {
+        likedPosts.push(postId);
+      }
+    } else {
+      // Remove post ID from the list
+      likedPosts = likedPosts.filter(id => id !== postId);
+    }
+    
+    await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
+  } catch (error) {
+    console.error('Error updating liked posts storage:', error);
+  }
 };
 
 // Convert API response to our Comment type
@@ -143,8 +209,10 @@ export const forumService = {
       throw new Error('Unexpected API response format');
     }
     
-    // Map posts and enrich with comments count if needed
-    const mappedPosts = response.data.results.map(mapApiTopicToForumTopic);
+    // Map posts with async operation for checking local storage
+    const mappedPosts = await Promise.all(
+      response.data.results.map(apiTopic => mapApiTopicToForumTopic(apiTopic))
+    );
     
     // If the API doesn't provide comments_count, fetch them individually
     // (this can be resource-intensive for many posts)
@@ -193,7 +261,7 @@ export const forumService = {
     }
     
     // Map the post data
-    const mappedPost = mapApiTopicToForumTopic(response.data);
+    const mappedPost = await mapApiTopicToForumTopic(response.data);
     
     // Fetch comments count if not included in API response
     if (mappedPost.commentsCount === 0) {
@@ -212,7 +280,7 @@ export const forumService = {
       throw new Error('Failed to create post');
     }
     
-    return mapApiTopicToForumTopic(response.data);
+    return await mapApiTopicToForumTopic(response.data);
   },
 
   // Create a new recipe
@@ -236,7 +304,7 @@ export const forumService = {
       throw new Error('Failed to update post');
     }
     
-    return mapApiTopicToForumTopic(response.data);
+    return await mapApiTopicToForumTopic(response.data);
   },
 
   // Get all available tags
@@ -279,6 +347,9 @@ export const forumService = {
     if (!response.data) {
       throw new Error('Failed to toggle like');
     }
+    
+    // Store the like status in AsyncStorage
+    await updateLikedPostsStorage(postId, response.data.liked);
     
     return response.data.liked;
   },
@@ -344,6 +415,10 @@ export const forumService = {
       throw new Error('Unexpected API response format for search');
     }
     
-    return response.data.results.map(mapApiTopicToForumTopic);
+    const mappedPosts = await Promise.all(
+      response.data.results.map(apiTopic => mapApiTopicToForumTopic(apiTopic))
+    );
+    
+    return mappedPosts;
   }
 };

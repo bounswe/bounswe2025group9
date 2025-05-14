@@ -25,6 +25,10 @@ import { ForumTopic } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
 import { forumService, ApiTag } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage key for liked posts - must match the one in forum.service.ts
+const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
 
 type ForumScreenNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'ForumList'>;
 type ForumScreenRouteProp = RouteProp<ForumStackParamList, 'ForumList'>;
@@ -44,6 +48,63 @@ const ForumScreen: React.FC = () => {
   // Use the global posts context
   const { posts, setPosts, updatePost } = usePosts();
 
+  // Helper function to preserve like status when loading new posts
+  const preserveLikeStatus = useCallback(async (newPosts: ForumTopic[], currentPosts: ForumTopic[]): Promise<ForumTopic[]> => {
+    try {
+      // Get liked posts from AsyncStorage
+      const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+      const likedPostIds: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+      
+      return newPosts.map(newPost => {
+        // Check if post is liked in AsyncStorage
+        const isLocallyLiked = likedPostIds.includes(newPost.id);
+        
+        if (isLocallyLiked) {
+          return {
+            ...newPost,
+            isLiked: true,
+            likesCount: Math.max(newPost.likesCount, 
+              currentPosts.find(p => p.id === newPost.id)?.likesCount || 0)
+          };
+        }
+        
+        // Try to find the post in current posts
+        const existingPost = currentPosts.find(p => p.id === newPost.id);
+        
+        // If it exists and has like status, preserve that information
+        if (existingPost && existingPost.isLiked !== undefined) {
+          return {
+            ...newPost,
+            isLiked: existingPost.isLiked,
+            likesCount: existingPost.isLiked ? 
+              // If it was liked locally but not on server, ensure count is accurate
+              Math.max(newPost.likesCount, existingPost.likesCount) : 
+              newPost.likesCount
+          };
+        }
+        
+        // Otherwise return the new post as is
+        return newPost;
+      });
+    } catch (error) {
+      console.error('Error checking liked posts in AsyncStorage:', error);
+      // Fall back to original logic without AsyncStorage if there's an error
+      return newPosts.map(newPost => {
+        const existingPost = currentPosts.find(p => p.id === newPost.id);
+        if (existingPost && existingPost.isLiked !== undefined) {
+          return {
+            ...newPost,
+            isLiked: existingPost.isLiked,
+            likesCount: existingPost.isLiked ? 
+              Math.max(newPost.likesCount, existingPost.likesCount) : 
+              newPost.likesCount
+          };
+        }
+        return newPost;
+      });
+    }
+  }, []);
+
   // Fetch tags and posts
   useEffect(() => {
     const fetchTagsAndPosts = async () => {
@@ -56,7 +117,9 @@ const ForumScreen: React.FC = () => {
         // Then fetch posts directly from the service
         try {
           const fetchedPosts = await forumService.getPosts();
-          setPosts(fetchedPosts);
+          // Preserve like status from existing posts
+          const mergedPosts = await preserveLikeStatus(fetchedPosts, posts);
+          setPosts(mergedPosts);
         } catch (err) {
           console.error('Error fetching posts:', err);
           setError('Failed to load posts. Please try again later.');
@@ -70,6 +133,7 @@ const ForumScreen: React.FC = () => {
     };
 
     fetchTagsAndPosts();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // No dependencies to avoid refresh loops
 
   // Handle new post from navigation params
@@ -87,14 +151,16 @@ const ForumScreen: React.FC = () => {
     setLoading(true);
     try {
       const filteredPosts = await forumService.getPosts(tagIds);
-      setPosts(filteredPosts);
+      // Preserve like status when applying filters
+      const mergedPosts = await preserveLikeStatus(filteredPosts, posts);
+      setPosts(mergedPosts);
     } catch (err) {
       console.error('Error fetching filtered posts:', err);
       setError('Failed to filter posts. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [setPosts]);
+  }, [posts, setPosts, preserveLikeStatus]);
 
   // Convert serialized post to ForumTopic
   const deserializePost = (serializedPost: SerializedForumPost): ForumTopic => ({
@@ -114,11 +180,33 @@ const ForumScreen: React.FC = () => {
       const isLiked = await forumService.toggleLike(post.id);
       
       // Update post in global context
-      updatePost({
+      const updatedPost = {
         ...post,
         isLiked,
-        likesCount: isLiked ? post.likesCount + 1 : post.likesCount - 1
-      });
+        likesCount: isLiked ? post.likesCount + 1 : Math.max(post.likesCount - 1, 0)
+      };
+      
+      updatePost(updatedPost);
+      
+      // Update in AsyncStorage for persistence across sessions
+      try {
+        const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+        let likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+        
+        if (isLiked) {
+          // Add post ID if not already in the list
+          if (!likedPosts.includes(post.id)) {
+            likedPosts.push(post.id);
+          }
+        } else {
+          // Remove post ID from the list
+          likedPosts = likedPosts.filter(id => id !== post.id);
+        }
+        
+        await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
+      } catch (error) {
+        console.error('Error updating liked posts in storage:', error);
+      }
     } catch (err) {
       console.error('Error toggling like:', err);
     }
@@ -162,20 +250,23 @@ const ForumScreen: React.FC = () => {
   const handleRefresh = useCallback(async () => {
     setLoading(true);
     try {
+      let fetchedPosts;
       if (selectedTagIds.length > 0) {
-        const fetchedPosts = await forumService.getPosts(selectedTagIds);
-        setPosts(fetchedPosts);
+        fetchedPosts = await forumService.getPosts(selectedTagIds);
       } else {
-        const fetchedPosts = await forumService.getPosts();
-        setPosts(fetchedPosts);
+        fetchedPosts = await forumService.getPosts();
       }
+      
+      // Preserve like status during refresh
+      const mergedPosts = await preserveLikeStatus(fetchedPosts, posts);
+      setPosts(mergedPosts);
     } catch (err) {
       console.error('Error refreshing posts:', err);
       Alert.alert('Error', 'Failed to refresh posts. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [selectedTagIds, setPosts]);
+  }, [selectedTagIds, setPosts, posts, preserveLikeStatus]);
 
   // Render forum post
   const renderItem = ({ item }: { item: ForumTopic }) => (
@@ -220,11 +311,7 @@ const ForumScreen: React.FC = () => {
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
             onPress={() => {
               setError(null);
-              setLoading(true);
-              forumService.getPosts()
-                .then(fetchedPosts => setPosts(fetchedPosts))
-                .catch(err => setError('Failed to load posts. Please try again.'))
-                .finally(() => setLoading(false));
+              handleRefresh();
             }}
           >
             <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>Retry</Text>

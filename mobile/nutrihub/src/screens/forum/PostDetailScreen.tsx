@@ -30,6 +30,10 @@ import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
 import { forumService } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage key for liked posts - must match the one in forum.service.ts
+const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
 
 type PostDetailRouteProp = RouteProp<ForumStackParamList, 'PostDetail'>;
 type PostDetailNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'PostDetail'>;
@@ -48,6 +52,45 @@ const PostDetailScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   
+  // Preserve like status when loading post data
+  const preserveLikeStatus = useCallback(async (newPost: ForumTopic, existingPosts: ForumTopic[]): Promise<ForumTopic> => {
+    // Try to find the post in existing posts
+    const existingPost = existingPosts.find(p => p.id === newPost.id);
+    
+    // Check if post is in our locally stored liked posts
+    try {
+      const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+      const likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+      const isLocallyLiked = likedPosts.includes(newPost.id);
+      
+      if (isLocallyLiked) {
+        // If the post is in our locally stored liked posts, mark it as liked
+        return {
+          ...newPost,
+          isLiked: true,
+          likesCount: Math.max(newPost.likesCount, existingPost?.likesCount || 0)
+        };
+      }
+    } catch (error) {
+      console.error('Error checking liked posts storage:', error);
+    }
+    
+    // If it exists and has like status, preserve that information
+    if (existingPost && existingPost.isLiked !== undefined) {
+      return {
+        ...newPost,
+        isLiked: existingPost.isLiked,
+        likesCount: existingPost.isLiked ? 
+          // If it was liked locally but not on server, ensure count is accurate
+          Math.max(newPost.likesCount, existingPost.likesCount) : 
+          newPost.likesCount
+      };
+    }
+    
+    // Otherwise return the new post as is
+    return newPost;
+  }, []);
+  
   // Get post and comments from API - no dependency on context methods
   const fetchPostData = useCallback(async () => {
     setIsLoading(true);
@@ -60,7 +103,9 @@ const PostDetailScreen: React.FC = () => {
       // If not found in array, fetch from API
       if (!postData) {
         try {
-          postData = await forumService.getPost(postId);
+          const fetchedPost = await forumService.getPost(postId);
+          // Preserve any existing like status
+          postData = await preserveLikeStatus(fetchedPost, posts);
         } catch (err) {
           console.error('Error fetching post from API:', err);
           throw err;
@@ -83,7 +128,7 @@ const PostDetailScreen: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [postId, posts]);
+  }, [postId, posts, preserveLikeStatus]);
   
   // Fetch post and comments data
   useEffect(() => {
@@ -180,6 +225,26 @@ const PostDetailScreen: React.FC = () => {
       
       // Update post in global context
       updatePost(updatedPost);
+      
+      // Also update AsyncStorage for persistence across sessions
+      try {
+        const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+        let likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+        
+        if (isLiked) {
+          // Add post ID if not already in the list
+          if (!likedPosts.includes(postToLike.id)) {
+            likedPosts.push(postToLike.id);
+          }
+        } else {
+          // Remove post ID from the list
+          likedPosts = likedPosts.filter(id => id !== postToLike.id);
+        }
+        
+        await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
+      } catch (error) {
+        console.error('Error updating liked posts in storage:', error);
+      }
     } catch (err) {
       console.error('Error toggling like:', err);
       Alert.alert('Error', 'Failed to update like status. Please try again.');
