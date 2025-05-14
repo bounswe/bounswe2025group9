@@ -203,6 +203,28 @@
 			"response": []
 		},
 		{
+			"name": "get_or_fetch_food_by_name",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+				"raw": "http://localhost:8081/foods/get-or-fetch/?name=apple",
+				"protocol": "http",
+				"host": ["localhost"],
+				"port": "8081",
+				"path": ["foods","get-or-fetch",""],
+				"query": [
+					{
+					"key": "name",
+					"value": "apple"
+					}
+				]
+				},
+				"description": "Check if a food with the given name exists in the DB; if not, fetch from FatSecret API and save to DB."
+			},
+			"response": []
+		},
+		{
 			"name": "fuzzy_search_posts",
 			"request": {
 			  "method": "GET",

@@ -35,12 +35,13 @@ interface ProposeFoodModalProps {
 export interface FoodProposalData {
   name: string;
   category: string;  // Keep as string for form validation
+  servingSize: string; // In grams
   calories: string;
   carbohydrates: string;
   protein: string;
   fat: string;
-  vitamins?: string;
-  minerals?: string;
+  fiber?: string;
+  sugar?: string;
 }
 
 const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
@@ -59,6 +60,11 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
     ],
     category: [
       { validator: (value: string) => value.trim().length > 0, message: 'Food category is required' },
+    ],
+    servingSize: [
+      { validator: (value: string) => value.trim().length > 0, message: 'Serving size is required' },
+      { validator: (value: string) => !isNaN(parseFloat(value)), message: 'Serving size must be a number' },
+      { validator: (value: string) => parseFloat(value) > 0, message: 'Serving size must be positive' },
     ],
     calories: [
       { validator: (value: string) => value.trim().length > 0, message: 'Calories is required' },
@@ -99,12 +105,13 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
     initialValues: {
       name: '',
       category: '',
+      servingSize: '100', // Default to 100g
       calories: '',
       carbohydrates: '',
       protein: '',
       fat: '',
-      vitamins: '',
-      minerals: '',
+      fiber: '',
+      sugar: '',
     },
     validationRules,
     onSubmit: async (formValues) => {
@@ -139,6 +146,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
   const isFormValid = () => {
     return values.name.trim().length >= 3 &&
            values.category.trim().length > 0 &&
+           values.servingSize.trim().length > 0 && !isNaN(parseFloat(values.servingSize)) && parseFloat(values.servingSize) > 0 &&
            values.calories.trim().length > 0 && !isNaN(parseFloat(values.calories)) && parseFloat(values.calories) >= 0 &&
            values.carbohydrates.trim().length > 0 && !isNaN(parseFloat(values.carbohydrates)) && parseFloat(values.carbohydrates) >= 0 &&
            values.protein.trim().length > 0 && !isNaN(parseFloat(values.protein)) && parseFloat(values.protein) >= 0 &&
@@ -215,6 +223,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
                     </TouchableOpacity>
                   ))}
                 </View>
+                
                 {errors.category && touched.category && (
                   <Text style={[styles.errorText, { color: theme.error }]}>
                     {errors.category}
@@ -223,26 +232,41 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
               </View>
             </Card>
 
-            {/* Calories */}
+            {/* Serving and Calories */}
             <Card style={styles.section}>
               <Text style={[styles.sectionTitle, textStyles.subtitle]}>
-                Calories (per 100g)
+                Nutrition Information
               </Text>
-              <TextInput
-                label="Calories (kcal) *"
-                placeholder="Enter calories"
-                value={values.calories}
-                onChangeText={handleChange('calories')}
-                onBlur={handleBlur('calories')}
-                error={getFieldError('calories')}
-                keyboardType="decimal-pad"
-              />
+              <View style={styles.row}>
+                <View style={styles.halfWidth}>
+                  <TextInput
+                    label="Serving Size (g) *"
+                    placeholder="100"
+                    value={values.servingSize}
+                    onChangeText={handleChange('servingSize')}
+                    onBlur={handleBlur('servingSize')}
+                    error={getFieldError('servingSize')}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+                <View style={styles.halfWidth}>
+                  <TextInput
+                    label="Calories (kcal) *"
+                    placeholder="Enter calories"
+                    value={values.calories}
+                    onChangeText={handleChange('calories')}
+                    onBlur={handleBlur('calories')}
+                    error={getFieldError('calories')}
+                    keyboardType="decimal-pad"
+                  />
+                </View>
+              </View>
             </Card>
 
             {/* Macronutrients */}
             <Card style={styles.section}>
               <Text style={[styles.sectionTitle, textStyles.subtitle]}>
-                Macronutrients (per 100g)
+                Macronutrients (per serving)
               </Text>
               <View style={styles.row}>
                 <View style={styles.halfWidth}>
@@ -268,44 +292,37 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
                   />
                 </View>
               </View>
-              <TextInput
-                label="Fat (g) *"
-                placeholder="Enter fat"
-                value={values.fat}
-                onChangeText={handleChange('fat')}
-                onBlur={handleBlur('fat')}
-                error={getFieldError('fat')}
-                keyboardType="decimal-pad"
-              />
-            </Card>
-
-            {/* Micronutrients */}
-            <Card style={styles.section}>
-              <Text style={[styles.sectionTitle, textStyles.subtitle]}>
-                Micronutrients (per 100g)
-              </Text>
               <View style={styles.row}>
                 <View style={styles.halfWidth}>
                   <TextInput
-                    label="Vitamins (mg)"
-                    placeholder="Optional"
-                    value={values.vitamins}
-                    onChangeText={handleChange('vitamins')}
-                    onBlur={handleBlur('vitamins')}
-                    keyboardType="default"
+                    label="Fat (g) *"
+                    placeholder="Enter fat"
+                    value={values.fat}
+                    onChangeText={handleChange('fat')}
+                    onBlur={handleBlur('fat')}
+                    error={getFieldError('fat')}
+                    keyboardType="decimal-pad"
                   />
                 </View>
                 <View style={styles.halfWidth}>
                   <TextInput
-                    label="Minerals (mg)"
+                    label="Fiber (g)"
                     placeholder="Optional"
-                    value={values.minerals}
-                    onChangeText={handleChange('minerals')}
-                    onBlur={handleBlur('minerals')}
-                    keyboardType="default"
+                    value={values.fiber}
+                    onChangeText={handleChange('fiber')}
+                    onBlur={handleBlur('fiber')}
+                    keyboardType="decimal-pad"
                   />
                 </View>
               </View>
+              <TextInput
+                label="Sugar (g)"
+                placeholder="Optional"
+                value={values.sugar}
+                onChangeText={handleChange('sugar')}
+                onBlur={handleBlur('sugar')}
+                keyboardType="decimal-pad"
+              />
             </Card>
           </ScrollView>
 

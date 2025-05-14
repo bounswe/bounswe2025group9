@@ -1,6 +1,7 @@
 from django.http import JsonResponse, HttpRequest
 from datetime import datetime
-from rest_framework.decorators import api_view
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import AllowAny
 
 
 from rest_framework.views import APIView
@@ -207,3 +208,41 @@ class WikidataFoodView(APIView):
             results.append(result)
             
         return results
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def random_food_image(request):
+    """
+    GET /food/image/?category={food_category}
+
+    Fetches a random food image from the Foodish API.
+    If no category is provided, returns an image from a random category.
+
+    Example response:
+    {
+        "image": "https://foodish-api.com/images/pizza/pizza23.jpg"
+    }
+    """
+    category = request.query_params.get("category")
+
+    try:
+        if category:
+            url = f"https://foodish-api.com/api/images/{category}"
+        else:
+            url = "https://foodish-api.com/api/"
+
+        resp = requests.get(url, timeout=5)
+        resp.raise_for_status()
+
+        data = resp.json()
+        return Response(data)
+    except requests.exceptions.HTTPError as http_err:
+        return Response(
+            {"error": f"HTTP error from Foodish API: {str(http_err)}"},
+            status=status.HTTP_502_BAD_GATEWAY,
+        )
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to fetch image: {str(e)}"},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
