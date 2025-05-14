@@ -60,7 +60,29 @@ class FoodCatalog(ListAPIView):
             if not categories:
                 self.empty = True
                 return FoodEntry.objects.none()
-        return queryset.filter(category__in=categories).order_by("id")
+        # --- Sorting support ---
+        sort_by = self.request.query_params.get("sort_by", "").strip()
+        order = self.request.query_params.get("order", "desc").strip().lower()
+
+        valid_sort_fields = {
+            "nutritionscore": "nutritionScore",
+            "proteincontent": "proteinContent",
+            "fatcontent": "fatContent",
+        }
+
+        if sort_by.lower() in valid_sort_fields:
+            sort_field = valid_sort_fields[sort_by.lower()]
+            if order == "asc":
+                queryset = queryset.filter(category__in=categories).order_by(sort_field)
+            else:
+                queryset = queryset.filter(category__in=categories).order_by(
+                    f"-{sort_field}"
+                )
+        else:
+            # Default sort by id
+            queryset = queryset.filter(category__in=categories).order_by("id")
+
+        return queryset
 
     def list(self, request, *args, **kwargs):
         self.empty = False
