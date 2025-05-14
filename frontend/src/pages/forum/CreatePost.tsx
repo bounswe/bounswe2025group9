@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, WarningCircle, Plus, X } from '@phosphor-icons/react'
 import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+import { Tag } from '@phosphor-icons/react'
 
 // required post types
 const POST_TYPES = {
@@ -12,6 +13,45 @@ const POST_TYPES = {
 
 // only these tags are allowed to be selected
 const ALLOWED_TAG_IDS = [1, 2];
+
+// Define tag colors based on tag name for consistent display (copied from Forum.tsx)
+const getTagStyle = (tagName: string) => {
+    // Check for exact tag types from backend
+    switch (tagName) {
+        case "Dietary tip":
+            return { 
+                bg: 'var(--forum-dietary-bg)',
+                text: 'var(--forum-dietary-text)',
+                activeBg: 'var(--forum-dietary-active-bg)',
+                activeText: 'var(--forum-dietary-active-text)',
+                hoverBg: 'var(--forum-dietary-hover-bg)'
+            };
+        case "Recipe":
+            return { 
+                bg: 'var(--forum-recipe-bg)',
+                text: 'var(--forum-recipe-text)',
+                activeBg: 'var(--forum-recipe-active-bg)',
+                activeText: 'var(--forum-recipe-active-text)',
+                hoverBg: 'var(--forum-recipe-hover-bg)'
+            };
+        // Removed "Meal plan" as it's not a post type here
+        default: // Fallback for any other tag, though only "Dietary tip" and "Recipe" are used for selection
+            return { 
+                bg: 'var(--forum-default-bg)',
+                text: 'var(--forum-default-text)',
+                activeBg: 'var(--forum-default-active-bg)',
+                activeText: 'var(--forum-default-active-text)',
+                hoverBg: 'var(--forum-default-hover-bg)'
+            };
+    }
+};
+
+// Hard-coded tag IDs for mapping (subset of Forum.tsx's TAG_IDS)
+const TAG_IDS = {
+    "Dietary tip": 1,
+    "Recipe": 2
+    // "Meal plan": 3 // Not a creatable post type here
+};
 
 const CreatePost = () => {
     const navigate = useNavigate();
@@ -281,238 +321,288 @@ const CreatePost = () => {
     return (
         <div className="py-12">
             <div className="nh-container">
-                <div className="mb-6">
-                    <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6">
-                        <ArrowLeft size={20} weight="bold" />
-                        Back to Forum
-                    </Link>
-                </div>
-                
-                <div className="nh-card mb-8">
-                    <h1 className="nh-title mb-6">Create New Post</h1>
-                    
-                    {user && (
-                        <p className="mb-4 text-sm">
-                            Posting as: <span className="font-semibold">{user.username}</span>
-                        </p>
-                    )}
-                    
-                    {/* Display success message if present */}
-                    {successMessage && (
-                        <div className="bg-green-100 dark:bg-green-900/20 border border-green-200 dark:border-green-900/30 text-green-700 dark:text-green-400 px-4 py-3 rounded-md mb-6 flex items-start gap-2">
-                            <span>{successMessage}</span>
-                        </div>
-                    )}
-                    
-                    {/* Display validation error if present */}
-                    {validationError && (
-                        <div className="bg-red-100 dark:bg-red-900/20 border border-red-200 dark:border-red-900/30 text-red-700 dark:text-red-400 px-4 py-3 rounded-md mb-6 flex items-start gap-2">
-                            <WarningCircle size={20} className="flex-shrink-0 mt-0.5" />
-                            <span>{validationError}</span>
-                        </div>
-                    )}
-                    
-                    <form onSubmit={handleSubmit}>
-                        {/* Post Title */}
-                        <div className="mb-6">
-                            <label className="block mb-2 nh-subtitle text-base">
-                                Title
-                            </label>
-                            <input
-                                type="text"
-                                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                required
-                                placeholder="Enter post title"
-                            />
-                        </div>
-                        
-                        {/* Post Type Selection - required radio button style selection */}
-                        <div className="mb-6">
-                            <label className="block mb-2 nh-subtitle text-base">
-                                Post Type <span className="text-red-500">*</span>
-                                <span className="text-sm font-normal ml-2 text-gray-500">
-                                    (Required - select one)
-                                </span>
-                            </label>
-                            {loading ? (
-                                <p>Loading post types...</p>
-                            ) : (
-                                <div className="flex flex-col space-y-2">
-                                    {Object.entries(POST_TYPES).map(([id, name]) => {
-                                        const tagId = parseInt(id);
-                                        return (
-                                            <label key={tagId} className="flex items-center space-x-2 cursor-pointer">
-                                                <input
-                                                    type="radio"
-                                                    name="postType"
-                                                    checked={selectedTagId === tagId}
-                                                    onChange={() => selectTag(tagId)}
-                                                    className="form-radio text-primary h-5 w-5"
-                                                />
-                                                <span className="text-base">{name}</span>
-                                            </label>
-                                        );
-                                    })}
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left column - Empty */}
+                    <div className="w-full md:w-1/5"></div>
+
+                    {/* Middle column - Post Creation Form */}
+                    <div className="w-full md:w-3/5">
+                        <div className="nh-card">
+
+                            <div className="flex justify-start items-center mt-6 gap-6 mb-2">
+
+
+                        <button 
+                        onClick={() => navigate('/forum')}
+                        className="nh-button-square nh-button-primary flex items-center gap-2 px-2 py-2" /* Primary styling */
+                        disabled={ loading}
+                    >
+                        <ArrowLeft size={20} weight="bold" /> 
+                    </button>
+                    <div className="flex justify-center items-center">
+                    <h1 className="nh-title-custom">Create New Post</h1>
+
+                    </div>
+
+                            </div>
+
+                            
+                            {user && (
+                                <p className="mb-4 text-sm">
+                                    Posting as: <span className="font-semibold">{user.username}</span>
+                                </p>
+                            )}
+                            
+                            {/* Display success message if present */}
+                            {successMessage && (
+                                <div 
+                                    className="px-4 py-3 rounded-md mb-6 flex items-start gap-2 border"
+                                    style={{
+                                        backgroundColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.1)', /* fallback to green-500 rgb */
+                                        borderColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.3)',
+                                        color: 'var(--color-success)'
+                                    }}
+                                >
+                                    <span>{successMessage}</span>
                                 </div>
                             )}
-                        </div>
-                        
-                        {/* Post content */}
-                        <div className="mb-6">
-                            <label className="block mb-2 nh-subtitle text-base">Content</label>
-                            <textarea
-                                className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                                rows={8}
-                                value={content}
-                                onChange={(e) => setContent(e.target.value)}
-                                required
-                                placeholder={selectedTagId === 2 
-                                    ? "Describe your recipe here... Include any tips, serving suggestions, or nutritional benefits."
-                                    : "Share your thoughts here..."}
-                            ></textarea>
-                        </div>
-                        
-                        {/* Recipe fields - only show if Recipe is selected */}
-                        {selectedTagId === 2 && (
-                            <div className="mb-6">
-                                <div className="border dark:border-gray-700 rounded-md p-4 bg-gray-50 dark:bg-gray-800/50">
-                                    <h3 className="nh-subtitle text-base mb-4">Recipe Details</h3>
-                                    
-                                    {/* Recipe Instructions */}
-                                    <div className="mb-4">
-                                        <label className="block mb-2 font-medium">
-                                            Cooking Instructions <span className="text-red-500">*</span>
-                                        </label>
-                                        <textarea
-                                            className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                                            rows={6}
-                                            value={recipeInstructions}
-                                            onChange={(e) => setRecipeInstructions(e.target.value)}
-                                            placeholder="1. Preheat oven to 350°F.&#10;2. Mix the ingredients...&#10;3. Cook for 25 minutes.&#10;..."
-                                        ></textarea>
-                                    </div>
-                                    
-                                    {/* Ingredients Selection */}
-                                    <div className="mb-4">
-                                        <label className="block mb-2 font-medium">
-                                            Ingredients <span className="text-red-500">*</span>
-                                        </label>
-                                        
-                                        {/* Food search */}
-                                        <div className="mb-4">
-                                            <div className="flex flex-col md:flex-row gap-2 mb-2">
-                                                <div className="flex-grow">
-                                                    <input
-                                                        type="text"
-                                                        className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                                                        placeholder="Search for ingredients..."
-                                                        value={foodSearchTerm}
-                                                        onChange={(e) => setFoodSearchTerm(e.target.value)}
-                                                    />
-                                                </div>
-                                                <div className="flex-grow-0">
-                                                    <input
-                                                        type="number"
-                                                        className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                                                        placeholder="Amount (g)"
-                                                        value={selectedFoodAmount}
-                                                        onChange={(e) => setSelectedFoodAmount(parseInt(e.target.value))}
-                                                        min={1}
-                                                    />
-                                                </div>
-                                                <button
-                                                    type="button"
-                                                    className="nh-button nh-button-primary"
-                                                    onClick={addIngredient}
-                                                    disabled={!selectedFoodId}
-                                                >
-                                                    <Plus size={20} weight="bold" className="mr-1" />
-                                                    Add
-                                                </button>
+                            
+                            {/* Display validation error if present */}
+                            {validationError && (
+                                <div className="nh-error-message mb-6"> {/* Use nh-error-message class */}
+                                    <WarningCircle size={20} className="flex-shrink-0 mt-0.5 mr-2" /> {/* Added margin for icon */}
+                                    <span>{validationError}</span>
+                                </div>
+                            )}
+                            
+                            <form onSubmit={handleSubmit} id="createPostForm"> {/* Added id to form */}
+                                {/* Post Title */}
+                                <div className="mb-6">
+                                    <label className="block mb-2 nh-subtitle text-base">
+                                        Title
+                                    </label>
+                                    <input
+                                        type="text"
+                                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                        value={title}
+                                        onChange={(e) => setTitle(e.target.value)}
+                                        required
+                                        placeholder="Enter post title"
+                                    />
+                                </div>
+                                
+                                {/* Post Type Selection - required radio button style selection */}
+                                <div className="mb-6">
+                                    <label className="block mb-2 nh-subtitle text-base">
+                                        Post Type 
+
+                                    </label>
+                                    {loading ? (
+                                        <p>Loading post types...</p>
+                                    ) : (
+                                        <div className="flex flex-row items-start space-x-2">
+                                            {Object.entries(POST_TYPES).map(([id, name]) => {
+                                                const tagId = parseInt(id);
+                                                const tagName = name as keyof typeof TAG_IDS; // Cast name to be a key of TAG_IDS
+                                                const style = getTagStyle(tagName);
+                                                const isActive = selectedTagId === tagId;
+
+                                                return (
+                                                    <button
+                                                        key={tagId}
+                                                        type="button" // Important: prevent form submission
+                                                        onClick={() => selectTag(tagId)}
+                                                        className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                                        style={{
+                                                            backgroundColor: isActive ? style.activeBg : style.bg,
+                                                            color: isActive ? style.activeText : style.text,
+                                                            // Apply hover style if not active
+                                                            // On hover, if not active, use hoverBg. If active, keep activeBg.
+                                                        }}
+                                                        onMouseOver={(e) => {
+                                                            if (!isActive) {
+                                                                e.currentTarget.style.backgroundColor = style.hoverBg;
+                                                            }
+                                                        }}
+                                                        onMouseOut={(e) => {
+                                                            if (!isActive) {
+                                                                e.currentTarget.style.backgroundColor = style.bg;
+                                                            }
+                                                        }}
+                                                    >
+                                                        <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                                        <span className="flex-grow text-left">{name}</span> 
+                                                        {/* Ensure text aligns left if buttons are different widths */}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                                
+                                {/* Post content */}
+                                <div className="mb-6">
+                                    <label className="block mb-2 nh-subtitle text-base">Content</label>
+                                    <textarea
+                                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                        rows={8}
+                                        value={content}
+                                        onChange={(e) => setContent(e.target.value)}
+                                        required
+                                        placeholder={selectedTagId === 2 
+                                            ? "Describe your recipe here... Include any tips, serving suggestions, or nutritional benefits."
+                                            : "Share your thoughts here..."}
+                                    ></textarea>
+                                </div>
+                                
+                                {/* Recipe fields - only show if Recipe is selected */}
+                                {selectedTagId === 2 && (
+                                    <div className="mb-6">
+                                        <div className="border rounded-md p-4 bg-[var(--color-bg-tertiary)] border-[var(--forum-search-border)]">
+                                            <h3 className="nh-subtitle text-base mb-4">Recipe Details</h3>
+                                            
+                                            {/* Recipe Instructions */}
+                                            <div className="mb-4">
+                                                <label className="block mb-2 font-medium">
+                                                    Cooking Instructions <span className="text-red-500">*</span>
+                                                </label>
+                                                <textarea
+                                                    className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                                    rows={6}
+                                                    value={recipeInstructions}
+                                                    onChange={(e) => setRecipeInstructions(e.target.value)}
+                                                    placeholder="1. Preheat oven to 350°F.&#10;2. Mix the ingredients...&#10;3. Cook for 25 minutes.&#10;..."
+                                                ></textarea>
                                             </div>
                                             
-                                            {/* Food search results */}
-                                            {foodSearchTerm.length >= 2 && (
-                                                <div className="mb-4 border dark:border-gray-700 rounded-md overflow-hidden max-h-60 overflow-y-auto">
-                                                    {loadingFoods ? (
-                                                        <div className="p-4 text-center">Loading foods...</div>
-                                                    ) : foodOptions.length === 0 ? (
-                                                        <div className="p-4 text-center">No foods found. Try a different search term.</div>
-                                                    ) : (
-                                                        <div className="divide-y dark:divide-gray-700">
-                                                            {foodOptions.map(food => (
-                                                                <div 
-                                                                    key={food.id}
-                                                                    className={`p-3 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors flex items-center ${selectedFoodId === food.id ? 'bg-primary bg-opacity-10' : ''}`}
-                                                                    onClick={() => setSelectedFoodId(food.id)}
-                                                                >
-                                                                    <input
-                                                                        type="radio"
-                                                                        className="mr-2"
-                                                                        checked={selectedFoodId === food.id}
-                                                                        onChange={() => setSelectedFoodId(food.id)}
-                                                                    />
-                                                                    <div>
-                                                                        <div className="font-medium">{food.name}</div>
-                                                                        <div className="text-xs text-gray-500">
-                                                                            {food.category} • 
-                                                                            {food.proteinContent}g protein • 
-                                                                            {food.fatContent}g fat • 
-                                                                            {food.carbohydrateContent}g carbs • 
-                                                                            {food.caloriesPerServing} calories
+                                            {/* Ingredients Selection */}
+                                            <div className="mb-4">
+                                                <label className="block mb-2 font-medium">
+                                                    Ingredients <span className="text-red-500">*</span>
+                                                </label>
+                                                
+                                                {/* Food search */}
+                                                <div className="mb-4">
+                                                    <div className="flex flex-col md:flex-row gap-2 mb-2">
+                                                        <div className="flex-grow">
+                                                            <input
+                                                                type="text"
+                                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                                                placeholder="Search for ingredients..."
+                                                                value={foodSearchTerm}
+                                                                onChange={(e) => setFoodSearchTerm(e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div className="flex-grow-0">
+                                                            <input
+                                                                type="number"
+                                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                                                placeholder="Amount (g)"
+                                                                value={selectedFoodAmount}
+                                                                onChange={(e) => setSelectedFoodAmount(parseInt(e.target.value))}
+                                                                min={1}
+                                                            />
+                                                        </div>
+                                                        <button
+                                                            type="button"
+                                                            className="nh-button-square nh-button-primary"
+                                                            onClick={addIngredient}
+                                                            disabled={!selectedFoodId}
+                                                        >
+                                                            <Plus size={20} weight="bold" className="mr-1" />
+                                                            
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    {/* Food search results */}
+                                                    {foodSearchTerm.length >= 2 && (
+                                                        <div className="mb-4 border border-[var(--forum-search-border)] rounded-md overflow-hidden max-h-60 overflow-y-auto">
+                                                            {loadingFoods ? (
+                                                                <div className="p-4 text-center">Loading foods...</div>
+                                                            ) : foodOptions.length === 0 ? (
+                                                                <div className="p-4 text-center">No foods found. Try a different search term.</div>
+                                                            ) : (
+                                                                <div className="divide-y divide-[var(--forum-search-border)]">
+                                                                    {foodOptions.map(food => (
+                                                                        <div 
+                                                                            key={food.id}
+                                                                            className={`p-3 cursor-pointer hover:bg-[var(--color-bg-tertiary)] transition-colors flex items-center ${selectedFoodId === food.id ? 'bg-primary/10 dark:bg-primary/20' : ''}`}
+                                                                            onClick={() => setSelectedFoodId(food.id)}
+                                                                        >
+                                                                            <input
+                                                                                type="radio"
+                                                                                className="mr-2"
+                                                                                checked={selectedFoodId === food.id}
+                                                                                onChange={() => setSelectedFoodId(food.id)}
+                                                                            />
+                                                                            <div>
+                                                                                <div className="font-medium">{food.name}</div>
+                                                                                <div className="text-xs text-gray-500">
+                                                                                    {food.category} • 
+                                                                                    {food.proteinContent}g protein • 
+                                                                                    {food.fatContent}g fat • 
+                                                                                    {food.carbohydrateContent}g carbs • 
+                                                                                    {food.caloriesPerServing} calories
+                                                                                </div>
+                                                                            </div>
                                                                         </div>
-                                                                    </div>
+                                                                    ))}
                                                                 </div>
-                                                            ))}
+                                                            )}
                                                         </div>
                                                     )}
                                                 </div>
-                                            )}
-                                        </div>
-                                        
-                                        {/* Ingredient List */}
-                                        <div className="mb-2">
-                                            <h4 className="font-medium mb-2">Selected Ingredients:</h4>
-                                            {ingredients.length === 0 ? (
-                                                <p className="text-gray-500 italic">No ingredients added yet.</p>
-                                            ) : (
-                                                <ul className="space-y-2">
-                                                    {ingredients.map((ingredient, index) => (
-                                                        <li 
-                                                            key={index}
-                                                            className="flex justify-between items-center p-2 border dark:border-gray-700 rounded-md"
-                                                        >
-                                                            <span>{ingredient.food_name} ({ingredient.amount}g)</span>
-                                                            <button
-                                                                type="button"
-                                                                className="text-red-500 hover:text-red-700 p-1"
-                                                                onClick={() => removeIngredient(index)}
-                                                            >
-                                                                <X size={18} weight="bold" />
-                                                            </button>
-                                                        </li>
-                                                    ))}
-                                                </ul>
-                                            )}
+                                                
+                                                {/* Ingredient List */}
+                                                <div className="mb-2">
+                                                    <h4 className="font-medium mb-2">Selected Ingredients:</h4>
+                                                    {ingredients.length === 0 ? (
+                                                        <p className="text-gray-500 italic">No ingredients added yet.</p>
+                                                    ) : (
+                                                        <ul className="space-y-2">
+                                                            {ingredients.map((ingredient, index) => (
+                                                                <li 
+                                                                    key={index}
+                                                                    className="flex justify-between items-center p-2 border border-[var(--forum-search-border)] rounded-md"
+                                                                >
+                                                                    <span>{ingredient.food_name} ({ingredient.amount}g)</span>
+                                                                    <button
+                                                                        type="button"
+                                                                        className="text-red-500 hover:text-red-700 p-1"
+                                                                        onClick={() => removeIngredient(index)}
+                                                                    >
+                                                                        <X size={18} weight="bold" />
+                                                                    </button>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                        )}
-                        
-                        {/* Submit Button */}
-                        <div className="flex justify-end">
-                            <button 
-                                type="submit" 
-                                className="nh-button nh-button-primary px-6 py-2"
-                                disabled={submitting || loading}
-                            >
-                                {submitting ? 'Posting...' : 'Create Post'}
-                            </button>
+                                )}
+                            </form>
+
+                              {/* Buttons row - MOVED TO BOTTOM */}
+                        <div className="flex justify-end items-center mt-6"> {/* Changed mb-6 to mt-6 */}
+                    
+                    <button 
+                        type="submit" 
+                        form="createPostForm" // Associate with the form
+                        className="nh-button nh-button-primary  flex items-center gap-2 px-6 py-2" /* Primary styling */
+                        disabled={submitting || loading}
+                    >
+                        {submitting ? 'Posting...' : 'Create Post'}
+                    </button>
+                </div>
                         </div>
-                    </form>
+
+                      
+                    </div>
+
+                    {/* Right column - Empty */}
+                    <div className="w-full md:w-1/5"></div>
                 </div>
             </div>
         </div>

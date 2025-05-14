@@ -173,9 +173,9 @@
   --forum-default-hover-bg: #e5e5e5;
 
   /* Forum search and filter containers - light mode */
-  --forum-search-bg: #ffffff; /* white */
+  --forum-search-bg: #d7d7d7; /* white */
   --forum-search-border: #e5e7eb; /* gray-200 */
-  --forum-search-placeholder: #9ca3af; /* gray-400 */
+  --forum-search-placeholder: #000000; /* gray-400 */
   --forum-search-text: #1f2937; /* gray-800 */
   --forum-search-icon: #6b7280; /* gray-500 */
   --forum-search-focus-ring: var(--color-primary);

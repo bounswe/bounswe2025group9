@@ -47,7 +47,8 @@ services:
       - backend
     volumes:
       - static_volume:/usr/share/nginx/html/static
-      - ./certs:/etc/nginx/certs:ro
+      - ./certbot/www:/var/www/certbot
+      - ./certbot/conf:/etc/letsencrypt
       - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
 
 volumes:
