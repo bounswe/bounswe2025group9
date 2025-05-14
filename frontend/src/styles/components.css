@@ -23,6 +23,17 @@
   cursor: pointer;
 }
 
+.nh-button-square {
+  display: inline-block;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+
 .nh-button-lg {
   padding: var(--space-4) var(--space-8);
   font-size: var(--font-size-xl);
@@ -67,6 +78,14 @@
   font-size: var(--font-size-3xl);
   font-weight: bold;
   margin-bottom: var(--space-4);
+  color: var(--color-light);
+  transition: color 0.3s ease;
+}
+
+.nh-title-custom{
+  font-size: var(--font-size-3xl);
+  font-weight: bold;
+  margin-bottom: 0;
   color: var(--color-light);
   transition: color 0.3s ease;
 }
