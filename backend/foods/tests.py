@@ -60,6 +60,47 @@ class FoodCatalogTests(TestCase):
             food.dietaryOptions = []
             food.save()
 
+        # Add entries with dietaryOptions for testing
+        self.vegan_food = FoodEntry.objects.create(
+            name="Vegan Salad",
+            servingSize=100,
+            caloriesPerServing=50,
+            proteinContent=2,
+            fatContent=1,
+            carbohydrateContent=10,
+            nutritionScore=8.0,
+            imageUrl="http://example.com/vegan.jpg",
+            category="Salad",
+        )
+        self.vegan_food.dietaryOptions = ["Vegan", "Gluten-Free"]
+        self.vegan_food.save()
+        self.vegetarian_food = FoodEntry.objects.create(
+            name="Vegetarian Pizza",
+            servingSize=150,
+            caloriesPerServing=200,
+            proteinContent=8,
+            fatContent=7,
+            carbohydrateContent=30,
+            nutritionScore=7.0,
+            imageUrl="http://example.com/vegetarian.jpg",
+            category="Pizza",
+        )
+        self.vegetarian_food.dietaryOptions = ["Vegetarian"]
+        self.vegetarian_food.save()
+        self.gluten_free_food = FoodEntry.objects.create(
+            name="Gluten Free Bread",
+            servingSize=50,
+            caloriesPerServing=120,
+            proteinContent=3,
+            fatContent=2,
+            carbohydrateContent=22,
+            nutritionScore=6.0,
+            imageUrl="http://example.com/glutenfree.jpg",
+            category="Bread",
+        )
+        self.gluten_free_food.dietaryOptions = ["Gluten-Free"]
+        self.gluten_free_food.save()
+
     def test_successful_query(self):
         """
         Test that a valid query returns the correct status and data.
@@ -137,6 +178,46 @@ class FoodCatalogTests(TestCase):
         results = response.data.get("results", [])
         self.assertTrue(all(food["category"] == "Fruit" for food in results))
         self.assertTrue(any("Fruit Food" in food["name"] for food in results))
+
+    def test_dietary_options_filtering_single(self):
+        """Test filtering by a single dietary option (case-insensitive)."""
+        response = self.client.get(reverse("get_foods"), {"dietaryOptions": "vegan"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data.get("results", [])
+        self.assertTrue(any("Vegan Salad" == food["name"] for food in results))
+        self.assertTrue(
+            all(
+                any(opt.lower() == "vegan" for opt in food["dietaryOptions"])
+                for food in results
+            )
+        )
+
+    def test_dietary_options_filtering_case_insensitive(self):
+        """Test filtering by dietary option with different casing."""
+        response = self.client.get(reverse("get_foods"), {"dietaryOptions": "VeGaN"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data.get("results", [])
+        self.assertTrue(any("Vegan Salad" == food["name"] for food in results))
+
+    def test_dietary_options_filtering_multiple(self):
+        """Test filtering by multiple dietary options (comma-separated)."""
+        response = self.client.get(
+            reverse("get_foods"), {"dietaryOptions": "vegan,vegetarian"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+        self.assertIn("Vegan Salad", names)
+        self.assertIn("Vegetarian Pizza", names)
+
+    def test_dietary_options_filtering_no_results(self):
+        """Test filtering by a dietary option that does not exist."""
+        response = self.client.get(reverse("get_foods"), {"dietaryOptions": "keto"})
+        self.assertEqual(response.data.get("status"), status.HTTP_204_NO_CONTENT)
+        self.assertEqual(len(response.data.get("results", [])), 0)
+        self.assertIn(
+            "No records found for dietary options", response.data.get("warning", "")
+        )
 
 
 class SuggestRecipeTests(TestCase):
