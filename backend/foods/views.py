@@ -66,6 +66,7 @@ class FoodCatalog(ListAPIView):
 
         valid_sort_fields = {
             "nutritionscore": "nutritionScore",
+            "carbohydratecontent": "carbohydrateContent",
             "proteincontent": "proteinContent",
             "fatcontent": "fatContent",
         }
