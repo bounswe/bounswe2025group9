@@ -30,7 +30,7 @@ const Footer = () => {
                                     </a>
                                 </li>
                                 <li>
-                                    <a href="https://github.com/bounswe/bounswe2025group9/releases/download/v1.1.0/nutrihub_v4.0.apk" // Placeholder for APK link
+                                    <a href="https://github.com/bounswe/bounswe2025group9/releases/download/latest/nutrihub.apk" // Placeholder for APK link
                                         target="_blank"
                                         rel="noopener noreferrer"
                                         className="nh-text-light hover:text-white flex items-center">
