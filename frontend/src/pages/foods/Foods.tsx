@@ -62,13 +62,14 @@ const Foods = () => {
     const [sortBy, setSortBy] = useState<string>('');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
-    const fetchFoods = async (pageNum = 1, search = '') => {
+    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder) => {
         try {
-            const params: any = { page: pageNum, search };
-            if (sortBy) {
-                params.sort_by = sortBy;
-                params.order = sortOrder;
-            }
+            const params: any = { 
+                page: pageNum, 
+                search,
+                ...(sortByParam && { sort_by: sortByParam, order: sortOrderParam })
+            };
+            console.log("API request params:", params);
             const response = await apiClient.getFoods(params);
 
             if (response.status == 200){
@@ -100,6 +101,7 @@ const Foods = () => {
         }
     }
 
+    // Main fetch effect
     useEffect(() => {
         if (shouldFetch) {
             fetchFoods(page, searchTerm);
@@ -107,6 +109,14 @@ const Foods = () => {
         }
     }, [page, shouldFetch, searchTerm]);
 
+    // Refetch when sort options change - separate effect to avoid race conditions
+    useEffect(() => {
+        if (sortBy !== undefined) { // Only trigger if not initial render
+            console.log("Sort changed, fetching with:", { sortBy, sortOrder, page, searchTerm });
+            fetchFoods(page, searchTerm);
+        }
+    }, [sortBy, sortOrder]);
+    
     // Initial load on component mount
     useEffect(() => {
         fetchFoods(1, '');
@@ -123,19 +133,35 @@ const Foods = () => {
     };
 
     const handleSortChange = (key: string) => {
+        console.log("Sort button clicked with key:", key);
+        let newSortBy = sortBy;
+        let newSortOrder = sortOrder;
+        
         if (key === '') {
-            setSortBy('');
-            setSortOrder('desc');
+            newSortBy = '';
+            newSortOrder = 'desc';
         } else {
             if (sortBy === key) {
-                setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+                console.log("Toggling sort order from", sortOrder, "to", sortOrder === 'desc' ? 'asc' : 'desc');
+                newSortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
             } else {
-                setSortBy(key);
-                setSortOrder('desc');
+                console.log("Setting new sort by:", key);
+                newSortBy = key;
+                newSortOrder = 'desc';
             }
         }
+        
+        // Update state
+        setSortBy(newSortBy);
+        setSortOrder(newSortOrder);
         setPage(1);
-        setShouldFetch(true);
+        
+        // Fetch with the new sorting parameters directly
+        console.log("Immediately fetching with new sort:", { newSortBy, newSortOrder });
+        
+        // Use empty search to show all foods with the new sort
+        setSearchTerm('');
+        fetchFoods(1, '', newSortBy, newSortOrder);
     };
 
     const clearSearch = () => {
@@ -170,6 +196,17 @@ const Foods = () => {
                                 <Funnel size={20} weight="fill" className="text-primary" />
                                 Sort Options
                             </h3>
+                            
+                            {/* Current sort indicator */}
+                            {sortBy && (
+                                <div className="mb-4 px-4 py-2 bg-primary bg-opacity-10 rounded-lg">
+                                    <p className="text-sm font-medium">
+                                        Sorting: {SORT_OPTIONS.find(opt => opt.key === sortBy)?.label || 'Custom'}
+                                        <span className="ml-1 font-bold">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                                    </p>
+                                </div>
+                            )}
+                            
                             <div className="flex flex-col gap-3">
                                 {/* Sort buttons */}
                                 {SORT_OPTIONS.map(option => (
@@ -190,7 +227,7 @@ const Foods = () => {
                                         <span className="flex-grow text-center">
                                             {option.label}
                                             {option.key !== '' && sortBy === option.key && (
-                                                <span className="ml-1">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                                                <span className="ml-1 font-bold text-lg">{sortOrder === 'desc' ? '↓' : '↑'}</span>
                                             )}
                                         </span>
                                     </button>

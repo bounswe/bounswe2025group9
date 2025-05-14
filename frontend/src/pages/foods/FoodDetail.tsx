@@ -147,15 +147,6 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
           </div>
         </div>
             
-        {/* Footer */}
-        <div className="p-4 border-t border-[var(--color-border)] flex justify-end">
-          <button 
-            onClick={onClose}
-            className="px-6 py-2 rounded-md bg-[var(--color-button-danger-bg)] hover:bg-[var(--color-button-danger-hover-bg)] text-[var(--color-button-danger-fg)] transition-colors"
-          >
-            Close
-          </button>
-        </div>
       </div>
     </div>
   );
