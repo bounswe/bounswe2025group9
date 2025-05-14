@@ -200,6 +200,7 @@ class GetOrFetchFoodEntry(APIView):
                 {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
+
 # get food_name as parameter
 # make api call to https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}
 # check if the response is not empty
@@ -289,3 +290,49 @@ class FoodProposalSubmitView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+@api_view(["GET"])
+def food_nutrition_info(request):
+    """
+    GET /food/nutrition-info/?name={food_name}
+    Fetches nutrition facts for a food using the Open Food Facts API (free to use).
+    Returns calories, protein, fat, carbs, etc. if available.
+    """
+    food_name = request.query_params.get("name")
+    if not food_name:
+        return Response(
+            {"error": "name parameter is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    try:
+        api_url = "https://world.openfoodfacts.org/cgi/search.pl"
+        params = {
+            "search_terms": food_name,
+            "search_simple": 1,
+            "action": "process",
+            "json": 1,
+            "page_size": 1,
+        }
+        resp = requests.get(api_url, params=params, timeout=5)
+        resp.raise_for_status()
+        data = resp.json()
+        products = data.get("products", [])
+        if not products:
+            return Response(
+                {"warning": f"No nutrition info found for '{food_name}'."}, status=404
+            )
+        product = products[0]
+        nutriments = product.get("nutriments", {})
+        result = {
+            "food": food_name,
+            "calories": nutriments.get("energy-kcal_100g"),
+            "protein": nutriments.get("proteins_100g"),
+            "fat": nutriments.get("fat_100g"),
+            "carbs": nutriments.get("carbohydrates_100g"),
+            "fiber": nutriments.get("fiber_100g"),
+        }
+        return Response(result)
+    except Exception as e:
+        return Response(
+            {"error": f"Failed to fetch nutrition info: {str(e)}"}, status=500
+        )
