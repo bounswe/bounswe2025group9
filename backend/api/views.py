@@ -15,6 +15,45 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.request import Request
 
+class TranslationService:
+    def __init__(self):
+        self.api_key = settings.DEEPL_API_KEY
+        self.api_url = "https://api-free.deepl.com/v2/translate"
+
+    def validate_params(self, text: str, target_lang: str, source_lang: str) -> bool:
+        if not text:
+            raise ValueError("Text cannot be empty")
+        if not target_lang:
+            raise ValueError("Target language cannot be empty")
+        return True
+
+    def translate_text(self, text: str, target_lang: str, source_lang: str = None) -> dict:
+        self.validate_params(text, target_lang, source_lang)
+        
+        headers = {
+            "Authorization": f"DeepL-Auth-Key {self.api_key}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "text": [text],
+            "target_lang": target_lang,
+        }
+        if source_lang:
+            payload["source_lang"] = source_lang
+
+        response = requests.post(self.api_url, headers=headers, json=payload)
+        
+        if response.status_code != 200:
+            raise Exception(f"Translation service error: {response.text}")
+            
+        data = response.json()
+        return {
+            'translated_text': data['translations'][0]['text'],
+            'source_lang': data['translations'][0]['detected_source_language'],
+            'target_lang': target_lang
+        }
+
 class TranslationView(APIView):
     permission_classes = []
 

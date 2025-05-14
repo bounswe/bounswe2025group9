@@ -174,6 +174,10 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",  # vite development server
     "http://127.0.0.1:5173",  # alternative localhost
+    "http://localhost:8000",    
+    "http://127.0.0.1:8000",  
+    "http://localhost:8081",    
+    "http://127.0.0.1:8081"  
 ]
 
 # allow postman to make requests
@@ -194,4 +198,4 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 # DeepL API configuration
-DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "d60101d3-17b1-4237-8810-d06262d4ce8d:fx")
+DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "7225230f-59a5-42eb-b576-7fb2d5cf2db1:fx")
