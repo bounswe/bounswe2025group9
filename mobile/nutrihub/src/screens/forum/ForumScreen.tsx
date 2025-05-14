@@ -4,8 +4,16 @@
  * Displays the community forum with posts and interaction options.
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,6 +24,11 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { ForumTopic } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
 import { forumService, ApiTag } from '../../services/api/forum.service';
+import { usePosts } from '../../context/PostsContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage key for liked posts - must match the one in forum.service.ts
+const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
 
 type ForumScreenNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'ForumList'>;
 type ForumScreenRouteProp = RouteProp<ForumStackParamList, 'ForumList'>;
@@ -27,11 +40,70 @@ const ForumScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<ForumScreenNavigationProp>();
   const route = useRoute<ForumScreenRouteProp>();
-  const [posts, setPosts] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
+  
+  // Use the global posts context
+  const { posts, setPosts, updatePost } = usePosts();
+
+  // Helper function to preserve like status when loading new posts
+  const preserveLikeStatus = useCallback(async (newPosts: ForumTopic[], currentPosts: ForumTopic[]): Promise<ForumTopic[]> => {
+    try {
+      // Get liked posts from AsyncStorage
+      const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+      const likedPostIds: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+      
+      return newPosts.map(newPost => {
+        // Check if post is liked in AsyncStorage
+        const isLocallyLiked = likedPostIds.includes(newPost.id);
+        
+        if (isLocallyLiked) {
+          return {
+            ...newPost,
+            isLiked: true,
+            likesCount: Math.max(newPost.likesCount, 
+              currentPosts.find(p => p.id === newPost.id)?.likesCount || 0)
+          };
+        }
+        
+        // Try to find the post in current posts
+        const existingPost = currentPosts.find(p => p.id === newPost.id);
+        
+        // If it exists and has like status, preserve that information
+        if (existingPost && existingPost.isLiked !== undefined) {
+          return {
+            ...newPost,
+            isLiked: existingPost.isLiked,
+            likesCount: existingPost.isLiked ? 
+              // If it was liked locally but not on server, ensure count is accurate
+              Math.max(newPost.likesCount, existingPost.likesCount) : 
+              newPost.likesCount
+          };
+        }
+        
+        // Otherwise return the new post as is
+        return newPost;
+      });
+    } catch (error) {
+      console.error('Error checking liked posts in AsyncStorage:', error);
+      // Fall back to original logic without AsyncStorage if there's an error
+      return newPosts.map(newPost => {
+        const existingPost = currentPosts.find(p => p.id === newPost.id);
+        if (existingPost && existingPost.isLiked !== undefined) {
+          return {
+            ...newPost,
+            isLiked: existingPost.isLiked,
+            likesCount: existingPost.isLiked ? 
+              Math.max(newPost.likesCount, existingPost.likesCount) : 
+              newPost.likesCount
+          };
+        }
+        return newPost;
+      });
+    }
+  }, []);
 
   // Fetch tags and posts
   useEffect(() => {
@@ -42,10 +114,12 @@ const ForumScreen: React.FC = () => {
         const tags = await forumService.getTags();
         setAvailableTags(tags);
         
-        // Then fetch posts
+        // Then fetch posts directly from the service
         try {
           const fetchedPosts = await forumService.getPosts();
-          setPosts(fetchedPosts);
+          // Preserve like status from existing posts
+          const mergedPosts = await preserveLikeStatus(fetchedPosts, posts);
+          setPosts(mergedPosts);
         } catch (err) {
           console.error('Error fetching posts:', err);
           setError('Failed to load posts. Please try again later.');
@@ -59,7 +133,8 @@ const ForumScreen: React.FC = () => {
     };
 
     fetchTagsAndPosts();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // No dependencies to avoid refresh loops
 
   // Handle new post from navigation params
   useEffect(() => {
@@ -69,36 +144,23 @@ const ForumScreen: React.FC = () => {
       // Clear the navigation params
       navigation.setParams({ action: undefined, postData: undefined });
     }
-  }, [route.params, navigation]);
+  }, [route.params, navigation, setPosts]);
 
-  // Fetch posts when filters change
-  useEffect(() => {
-    const fetchFilteredPosts = async () => {
-      if (selectedTagIds.length === 0) {
-        // If no filters, fetch all posts
-        try {
-          const fetchedPosts = await forumService.getPosts();
-          setPosts(fetchedPosts);
-        } catch (err) {
-          console.error('Error fetching posts:', err);
-        }
-      } else {
-        // Fetch filtered posts
-        try {
-          const filteredPosts = await forumService.getPosts(selectedTagIds);
-          setPosts(filteredPosts);
-        } catch (err) {
-          console.error('Error fetching filtered posts:', err);
-        }
-      }
-    };
-
-    // Only run this effect if we're not in the initial loading state
-    if (!loading) {
-      setLoading(true);
-      fetchFilteredPosts().finally(() => setLoading(false));
+  // Handle filter change manually instead of in useEffect
+  const handleFilterChange = useCallback(async (tagIds: number[]) => {
+    setLoading(true);
+    try {
+      const filteredPosts = await forumService.getPosts(tagIds);
+      // Preserve like status when applying filters
+      const mergedPosts = await preserveLikeStatus(filteredPosts, posts);
+      setPosts(mergedPosts);
+    } catch (err) {
+      console.error('Error fetching filtered posts:', err);
+      setError('Failed to filter posts. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  }, [selectedTagIds]);
+  }, [posts, setPosts, preserveLikeStatus]);
 
   // Convert serialized post to ForumTopic
   const deserializePost = (serializedPost: SerializedForumPost): ForumTopic => ({
@@ -116,15 +178,35 @@ const ForumScreen: React.FC = () => {
   const handlePostLike = async (post: ForumTopic) => {
     try {
       const isLiked = await forumService.toggleLike(post.id);
-      setPosts(prevPosts => 
-        prevPosts.map(p => 
-          p.id === post.id ? {
-            ...p,
-            isLiked,
-            likesCount: isLiked ? p.likesCount + 1 : p.likesCount - 1
-          } : p
-        )
-      );
+      
+      // Update post in global context
+      const updatedPost = {
+        ...post,
+        isLiked,
+        likesCount: isLiked ? post.likesCount + 1 : Math.max(post.likesCount - 1, 0)
+      };
+      
+      updatePost(updatedPost);
+      
+      // Update in AsyncStorage for persistence across sessions
+      try {
+        const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+        let likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+        
+        if (isLiked) {
+          // Add post ID if not already in the list
+          if (!likedPosts.includes(post.id)) {
+            likedPosts.push(post.id);
+          }
+        } else {
+          // Remove post ID from the list
+          likedPosts = likedPosts.filter(id => id !== post.id);
+        }
+        
+        await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
+      } catch (error) {
+        console.error('Error updating liked posts in storage:', error);
+      }
     } catch (err) {
       console.error('Error toggling like:', err);
     }
@@ -145,24 +227,14 @@ const ForumScreen: React.FC = () => {
     // If loading, don't allow filtering
     if (loading) return;
     
-    setLoading(true);
-    setSelectedTagIds(prev => {
-      // Create new selected tags array
-      const newSelectedTags = prev.includes(tagId) ? [] : [tagId];
-      
-      // Fetch posts with the new filter
-      forumService.getPosts(newSelectedTags)
-        .then(fetchedPosts => {
-          setPosts(fetchedPosts);
-        })
-        .catch(err => {
-          console.error('Error filtering posts:', err);
-          setError('Failed to filter posts. Please try again.');
-        })
-        .finally(() => setLoading(false));
-      
-      return newSelectedTags;
-    });
+    // Create new selected tags array
+    const newSelectedTags = selectedTagIds.includes(tagId) ? [] : [tagId];
+    
+    // Update state
+    setSelectedTagIds(newSelectedTags);
+    
+    // Fetch posts with the new filter
+    handleFilterChange(newSelectedTags);
   };
 
   // Find tag by name or ID
@@ -173,6 +245,28 @@ const ForumScreen: React.FC = () => {
     }
     return availableTags.find(tag => tag && tag.name && tag.name.toLowerCase() === name.toLowerCase());
   };
+  
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      let fetchedPosts;
+      if (selectedTagIds.length > 0) {
+        fetchedPosts = await forumService.getPosts(selectedTagIds);
+      } else {
+        fetchedPosts = await forumService.getPosts();
+      }
+      
+      // Preserve like status during refresh
+      const mergedPosts = await preserveLikeStatus(fetchedPosts, posts);
+      setPosts(mergedPosts);
+    } catch (err) {
+      console.error('Error refreshing posts:', err);
+      Alert.alert('Error', 'Failed to refresh posts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedTagIds, setPosts, posts, preserveLikeStatus]);
 
   // Render forum post
   const renderItem = ({ item }: { item: ForumTopic }) => (
@@ -217,11 +311,7 @@ const ForumScreen: React.FC = () => {
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
             onPress={() => {
               setError(null);
-              setLoading(true);
-              forumService.getPosts()
-                .then(posts => setPosts(posts))
-                .catch(err => setError('Failed to load posts. Please try again.'))
-                .finally(() => setLoading(false));
+              handleRefresh();
             }}
           >
             <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>Retry</Text>
@@ -350,20 +440,7 @@ const ForumScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
-        onRefresh={() => {
-          setLoading(true);
-          if (selectedTagIds.length > 0) {
-            forumService.getPosts(selectedTagIds)
-              .then(posts => setPosts(posts))
-              .catch(err => console.error('Error refreshing posts:', err))
-              .finally(() => setLoading(false));
-          } else {
-            forumService.getPosts()
-              .then(posts => setPosts(posts))
-              .catch(err => console.error('Error refreshing posts:', err))
-              .finally(() => setLoading(false));
-          }
-        }}
+        onRefresh={handleRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="forum-outline" size={64} color={theme.textSecondary} />

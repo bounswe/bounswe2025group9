@@ -4,7 +4,7 @@
  * A flexible component for displaying forum posts with various interaction options.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
@@ -78,8 +78,6 @@ const ForumPost: React.FC<ForumPostProps> = ({
   testID,
 }) => {
   const { theme, textStyles } = useTheme();
-  const [isLiked, setIsLiked] = useState(post.isLiked || false);
-  const [likesCount, setLikesCount] = useState(post.likesCount);
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -145,18 +143,9 @@ const ForumPost: React.FC<ForumPostProps> = ({
   
   // Handle like press
   const handleLike = () => {
-    // Update UI immediately for better UX
-    const newIsLiked = !isLiked;
-    setIsLiked(newIsLiked);
-    setLikesCount(prevCount => newIsLiked ? prevCount + 1 : prevCount - 1);
-    
     if (onLike) {
-      // Pass the updated post object to the handler
-      onLike({ 
-        ...post, 
-        isLiked: newIsLiked, 
-        likesCount: newIsLiked ? post.likesCount + 1 : post.likesCount - 1 
-      });
+      // Let parent handle like status updates completely
+      onLike(post);
     }
   };
   
@@ -183,10 +172,10 @@ const ForumPost: React.FC<ForumPostProps> = ({
     </View>
   );
   
-  // Create like button text style
+  // Create like button text style based on post props, not local state
   const likeButtonTextStyle: TextStyle = {
     ...styles.actionText,
-    ...(isLiked ? { color: theme.primary } : {})
+    ...(post.isLiked ? { color: theme.primary } : {})
   };
   
   return (
@@ -235,8 +224,8 @@ const ForumPost: React.FC<ForumPostProps> = ({
       {/* Footer with actions */}
       <View style={[styles.footer, { borderTopColor: theme.divider }]}>
         <Button
-          iconName={isLiked ? "thumb-up" : "thumb-up-outline"}
-          title={likesCount.toString()}
+          iconName={post.isLiked ? "thumb-up" : "thumb-up-outline"}
+          title={(post.likesCount || 0).toString()}
           variant="text"
           size="small"
           onPress={handleLike}

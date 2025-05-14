@@ -30,11 +30,15 @@ class ApiClient {
       async (config) => {
         const token = await AsyncStorage.getItem('access_token');
         if (token) {
+          console.log(`Adding auth token to request: ${config.url}`);
           config.headers.Authorization = `Bearer ${token}`;
+        } else {
+          console.log(`No auth token for request: ${config.url}`);
         }
         return config;
       },
       (error) => {
+        console.error("Request interceptor error:", error);
         return Promise.reject(error);
       }
     );

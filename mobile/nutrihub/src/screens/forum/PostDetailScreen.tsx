@@ -4,7 +4,7 @@
  * Displays the full content of a forum post with comments.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,11 @@ import Card from '../../components/common/Card';
 import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
 import { forumService } from '../../services/api/forum.service';
+import { usePosts } from '../../context/PostsContext';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Storage key for liked posts - must match the one in forum.service.ts
+const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
 
 type PostDetailRouteProp = RouteProp<ForumStackParamList, 'PostDetail'>;
 type PostDetailNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'PostDetail'>;
@@ -37,6 +42,7 @@ const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailNavigationProp>();
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
+  const { posts, updatePost } = usePosts();
   
   const postId = route.params.postId;
   const [post, setPost] = useState<ForumTopic | null>(null);
@@ -46,35 +52,88 @@ const PostDetailScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   
+  // Preserve like status when loading post data
+  const preserveLikeStatus = useCallback(async (newPost: ForumTopic, existingPosts: ForumTopic[]): Promise<ForumTopic> => {
+    // Try to find the post in existing posts
+    const existingPost = existingPosts.find(p => p.id === newPost.id);
+    
+    // Check if post is in our locally stored liked posts
+    try {
+      const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+      const likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+      const isLocallyLiked = likedPosts.includes(newPost.id);
+      
+      if (isLocallyLiked) {
+        // If the post is in our locally stored liked posts, mark it as liked
+        return {
+          ...newPost,
+          isLiked: true,
+          likesCount: Math.max(newPost.likesCount, existingPost?.likesCount || 0)
+        };
+      }
+    } catch (error) {
+      console.error('Error checking liked posts storage:', error);
+    }
+    
+    // If it exists and has like status, preserve that information
+    if (existingPost && existingPost.isLiked !== undefined) {
+      return {
+        ...newPost,
+        isLiked: existingPost.isLiked,
+        likesCount: existingPost.isLiked ? 
+          // If it was liked locally but not on server, ensure count is accurate
+          Math.max(newPost.likesCount, existingPost.likesCount) : 
+          newPost.likesCount
+      };
+    }
+    
+    // Otherwise return the new post as is
+    return newPost;
+  }, []);
+  
+  // Get post and comments from API - no dependency on context methods
+  const fetchPostData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // First try to get the post from our posts array
+      let postData = posts.find(p => p.id === postId);
+      
+      // If not found in array, fetch from API
+      if (!postData) {
+        try {
+          const fetchedPost = await forumService.getPost(postId);
+          // Preserve any existing like status
+          postData = await preserveLikeStatus(fetchedPost, posts);
+        } catch (err) {
+          console.error('Error fetching post from API:', err);
+          throw err;
+        }
+      }
+      
+      setPost(postData);
+      
+      // Fetch comments for the post
+      try {
+        const commentsData = await forumService.getComments(postId);
+        setComments(commentsData);
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+        // Don't set an error just for comments - we can still show the post
+      }
+    } catch (err) {
+      console.error('Error fetching post data:', err);
+      setError('Failed to load post. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [postId, posts, preserveLikeStatus]);
+  
   // Fetch post and comments data
   useEffect(() => {
-    const fetchPostData = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // Fetch post details
-        const postData = await forumService.getPost(postId);
-        setPost(postData);
-        
-        // Fetch comments for the post
-        try {
-          const commentsData = await forumService.getComments(postId);
-          setComments(commentsData);
-        } catch (err) {
-          console.error('Error fetching comments:', err);
-          // Don't set an error just for comments - we can still show the post
-        }
-      } catch (err) {
-        console.error('Error fetching post data:', err);
-        setError('Failed to load post. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchPostData();
-  }, [postId]);
+  }, [fetchPostData]);
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -101,7 +160,16 @@ const PostDetailScreen: React.FC = () => {
         
         // Add comment to list and update post comment count
         setComments(prevComments => [...prevComments, createdComment]);
-        setPost(prev => prev ? { ...prev, commentsCount: prev.commentsCount + 1 } : null);
+        
+        // Update post in both local state and global context
+        const updatedPost = {
+          ...post,
+          commentsCount: (post.commentsCount || 0) + 1
+        };
+        
+        setPost(updatedPost);
+        updatePost(updatedPost); // Update in global context
+        
         setNewComment('');
       } catch (err) {
         console.error('Error adding comment:', err);
@@ -112,20 +180,75 @@ const PostDetailScreen: React.FC = () => {
     }
   };
   
-  // Handle comment like - Note: The API doesn't support this yet
-  const handleCommentLike = (commentId: number) => {
-    // Simulate comment liking until API supports it
-    setComments(prevComments =>
-      prevComments.map(comment =>
-        comment.id === commentId
-          ? {
-              ...comment,
-              isLiked: !comment.isLiked,
-              likesCount: comment.isLiked ? comment.likesCount - 1 : comment.likesCount + 1,
-            }
-          : comment
-      )
-    );
+  // Handle comment like
+  const handleCommentLike = async (commentId: number) => {
+    try {
+      const isLiked = await forumService.toggleCommentLike(commentId);
+      
+      // Update comment in the state with the new like status
+      setComments(prevComments =>
+        prevComments.map(comment =>
+          comment.id === commentId
+            ? {
+                ...comment,
+                isLiked: isLiked,
+                likesCount: isLiked 
+                  ? (comment.likesCount || 0) + 1 
+                  : Math.max((comment.likesCount || 0) - 1, 0) // Ensure count doesn't go below 0
+              }
+            : comment
+        )
+      );
+    } catch (err) {
+      console.error('Error toggling comment like:', err);
+      // Optionally alert the user
+      Alert.alert('Error', 'Failed to update comment like status.');
+    }
+  };
+  
+  // Handle post like
+  const handlePostLike = async (postToLike: ForumTopic) => {
+    try {
+      const isLiked = await forumService.toggleLike(postToLike.id);
+      
+      // Create an updated post with the new like status
+      const updatedPost = {
+        ...postToLike,
+        isLiked: isLiked,
+        likesCount: isLiked 
+          ? (postToLike.likesCount || 0) + 1 
+          : Math.max((postToLike.likesCount || 0) - 1, 0)
+      };
+      
+      // Update post in local state
+      setPost(updatedPost);
+      
+      // Update post in global context
+      updatePost(updatedPost);
+      
+      // Also update AsyncStorage for persistence across sessions
+      try {
+        const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+        let likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
+        
+        if (isLiked) {
+          // Add post ID if not already in the list
+          if (!likedPosts.includes(postToLike.id)) {
+            likedPosts.push(postToLike.id);
+          }
+        } else {
+          // Remove post ID from the list
+          likedPosts = likedPosts.filter(id => id !== postToLike.id);
+        }
+        
+        await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
+      } catch (error) {
+        console.error('Error updating liked posts in storage:', error);
+      }
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      Alert.alert('Error', 'Failed to update like status. Please try again.');
+    }
   };
   
   // Render comment item
@@ -149,8 +272,11 @@ const PostDetailScreen: React.FC = () => {
             size={16} 
             color={comment.isLiked ? theme.primary : theme.textSecondary} 
           />
-          <Text style={[styles.commentLikes, { color: comment.isLiked ? theme.primary : theme.textSecondary }]}>
-            {comment.likesCount}
+          <Text style={[
+            styles.commentLikes, 
+            { color: comment.isLiked ? theme.primary : theme.textSecondary }
+          ]}>
+            {comment.likesCount || 0}
           </Text>
         </TouchableOpacity>
       </View>
@@ -230,18 +356,7 @@ const PostDetailScreen: React.FC = () => {
             post={post}
             preview={false}
             showTags={true}
-            onLike={async (updatedPost) => {
-              try {
-                const isLiked = await forumService.toggleLike(post.id);
-                setPost(prev => prev ? {
-                  ...prev,
-                  isLiked,
-                  likesCount: isLiked ? prev.likesCount + 1 : prev.likesCount - 1
-                } : null);
-              } catch (err) {
-                console.error('Error toggling like:', err);
-              }
-            }}
+            onLike={handlePostLike}
           />
           
           {/* Comments Section */}
