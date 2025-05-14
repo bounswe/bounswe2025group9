@@ -35,6 +35,11 @@ DEBUG = True
 # TODO: Temporarily allow all host for development
 ALLOWED_HOSTS = ["*"]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://nutrihub.fit",
+    "https://www.nutrihub.fit",
+]
+
 
 # Application definition
 
