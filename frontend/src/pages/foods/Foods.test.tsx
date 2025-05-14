@@ -21,7 +21,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, waitFor } from '@testing-library/react'
 import { BrowserRouter } from 'react-router-dom'
-import { apiClient, Food, PaginationResponse } from '../../lib/apiClient'
+import { apiClient, Food, PaginatedResponseWithStatus } from '../../lib/apiClient'
 import Foods from './Foods'
 import '@testing-library/jest-dom'
 
@@ -70,7 +70,7 @@ describe('Foods Page', () => {
             allergens: [],
             dietaryOptions: []
         } ]
-        const mockFoods: PaginationResponse<Food> = {
+        const mockFoods: PaginatedResponseWithStatus<Food> = {
             results,
             count: 1,
             next: null,

@@ -58,6 +58,19 @@
   --forum-default-active-text: white;
   --forum-default-hover-bg: #444444;
 
+  /* Forum search and filter containers - dark mode */
+  --forum-search-bg: #1f2937; /* gray-800 */
+  --forum-search-border: #374151; /* gray-700 */
+  --forum-search-placeholder: #9ca3af; /* gray-400 */
+  --forum-search-text: #e5e7eb; /* gray-200 */
+  --forum-search-icon: #6b7280; /* gray-500 */
+  --forum-search-focus-ring: var(--color-primary);
+  --forum-search-focus-border: var(--color-primary);
+  
+  --forum-filter-container-bg: #1f2937; /* gray-800 */
+  --forum-filter-container-border: #374151; /* gray-700 */
+  --forum-filter-container-text: #e5e7eb; /* gray-200 */
+
   /* gray scale */
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -158,6 +171,19 @@
   --forum-default-active-bg: #888888;
   --forum-default-active-text: white;
   --forum-default-hover-bg: #e5e5e5;
+
+  /* Forum search and filter containers - light mode */
+  --forum-search-bg: #d7d7d7; /* white */
+  --forum-search-border: #e5e7eb; /* gray-200 */
+  --forum-search-placeholder: #000000; /* gray-400 */
+  --forum-search-text: #1f2937; /* gray-800 */
+  --forum-search-icon: #6b7280; /* gray-500 */
+  --forum-search-focus-ring: var(--color-primary);
+  --forum-search-focus-border: var(--color-primary);
+  
+  --forum-filter-container-bg: #f9fafb; /* gray-50 */
+  --forum-filter-container-border: #e5e7eb; /* gray-200 */
+  --forum-filter-container-text: #111827; /* gray-900 */
 
   /* shadows for light mode */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

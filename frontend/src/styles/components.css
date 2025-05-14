@@ -23,6 +23,17 @@
   cursor: pointer;
 }
 
+.nh-button-square {
+  display: inline-block;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+
 .nh-button-lg {
   padding: var(--space-4) var(--space-8);
   font-size: var(--font-size-xl);
@@ -71,6 +82,14 @@
   transition: color 0.3s ease;
 }
 
+.nh-title-custom{
+  font-size: var(--font-size-3xl);
+  font-weight: bold;
+  margin-bottom: 0;
+  color: var(--color-light);
+  transition: color 0.3s ease;
+}
+
 .nh-title-lg {
   font-size: var(--font-size-5xl);
   font-weight: bold;
@@ -96,6 +115,45 @@
   transition: color 0.3s ease;
 }
 
+/* error message styles */
+.nh-error-message {
+  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+  padding: 0.375rem;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.light-theme .nh-error-message {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: var(--color-error);
+}
+
+.nh-error-list {
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border-radius: var(--radius-md);
+  transition: background-color 0.3s ease;
+}
+
+.nh-error-list ul {
+  list-style-type: disc;
+  padding-left: 1.25rem;
+  margin-top: 0.25rem;
+  font-size: var(--font-size-sm);
+  color: var(--color-error);
+}
+
+.light-theme .nh-error-list {
+  background-color: rgba(239, 68, 68, 0.1);
+}
+
 /* light mode text adjustments */
 .light-theme .nh-title,
 .light-theme .nh-title-lg,
@@ -105,6 +163,35 @@
 
 .light-theme .nh-text {
   color: #334155; /* slate-700 - darker than default for better contrast */
+}
+
+/* forum components */
+.nh-forum-search {
+  background-color: var(--forum-search-bg);
+  border-color: var(--forum-search-border);
+  color: var(--forum-search-text);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+}
+
+/* hide default browser search clear button */
+.nh-forum-search::-webkit-search-cancel-button {
+  display: none;
+}
+
+.nh-forum-search::placeholder {
+  color: var(--forum-search-placeholder);
+}
+
+.nh-forum-search:focus {
+  border-color: var(--forum-search-focus-border);
+  outline-color: var(--forum-search-focus-ring);
+}
+
+.nh-forum-filter-container {
+  background-color: var(--forum-filter-container-bg);
+  border-color: var(--forum-filter-container-border);
+  color: var(--forum-filter-container-text);
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }
 
 /* navbar and footer */
@@ -119,6 +206,53 @@
 
 .light-theme .nh-navbar {
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* mobile menu styles */
+.nh-navbar .mobile-menu {
+  background-color: var(--color-gray-800);
+  color: white;
+  border-radius: var(--radius-md);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.light-theme .nh-navbar .mobile-menu {
+  background-color: white;
+  color: var(--color-gray-900);
+  border: 1px solid var(--color-gray-200);
+}
+
+.nh-navbar .mobile-menu a {
+  color: white;
+  transition: color 0.3s ease;
+}
+
+.nh-navbar .mobile-menu a:hover {
+  color: var(--color-gray-300);
+}
+
+.light-theme .nh-navbar .mobile-menu a {
+  color: var(--color-gray-900);
+}
+
+.light-theme .nh-navbar .mobile-menu a:hover {
+  color: var(--color-gray-700);
+}
+
+.nh-navbar .mobile-menu .divider {
+  border-color: var(--color-gray-700);
+}
+
+.light-theme .nh-navbar .mobile-menu .divider {
+  border-color: var(--color-gray-200);
+}
+
+.nh-navbar .mobile-menu .welcome-text {
+  color: white;
+}
+
+.light-theme .nh-navbar .mobile-menu .welcome-text {
+  color: var(--color-gray-900);
 }
 
 .nh-footer {
@@ -197,4 +331,24 @@
 
 .light-theme .food-image-placeholder {
   background-color: #fef3c7; /* amber-200 */
+}
+
+/* Ingredient text styling for PostDetail.tsx */
+.nh-ingredient-main-text {
+  color: var(--color-gray-200); /* Light text for dark mode */
+  /* font-weight, etc., can be inherited or set on the <span> inside if needed */
+}
+
+.light-theme .nh-ingredient-main-text {
+  color: var(--color-gray-900); /* Dark text for light mode */
+}
+
+.nh-ingredient-nutrient-text {
+  color: var(--color-gray-400); /* Dimmer light text for dark mode */
+  font-size: var(--font-size-xs);
+  margin-left: var(--space-1);
+}
+
+.light-theme .nh-ingredient-nutrient-text {
+  color: #000000; /* Pure black for light mode */
 }

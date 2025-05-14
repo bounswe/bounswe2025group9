@@ -56,6 +56,9 @@ export interface FoodFilters {
 export type PostTagType = typeof POST_TAGS[keyof typeof POST_TAGS];
 export type PostSortOptionType = typeof POST_SORT_OPTIONS[keyof typeof POST_SORT_OPTIONS];
 
+/**
+ * Forum topic model matching backend API structure
+ */
 export interface ForumTopic {
   id: number;
   title: string;
@@ -65,11 +68,14 @@ export interface ForumTopic {
   commentsCount: number;
   likesCount: number;
   isLiked?: boolean;
-  tags: PostTagType[];
+  tags: string[]; // Using string instead of PostTagType to accommodate any tag from API
   createdAt: Date;
   updatedAt?: Date;
 }
 
+/**
+ * Comment model matching backend API structure
+ */
 export interface Comment {
   id: number;
   postId: number;
@@ -81,16 +87,31 @@ export interface Comment {
   isLiked?: boolean;
 }
 
-export interface ForumComment {
+/**
+ * Recipe model matching backend API structure
+ */
+export interface Recipe {
   id: number;
-  topicId: number;
-  content: string;
-  author: string;
-  authorId: number;
-  likesCount: number;
-  isLiked?: boolean;
-  createdAt: Date;
-  updatedAt?: Date;
+  post_id: number;
+  instructions: string;
+  ingredients: RecipeIngredient[];
+  nutrition: {
+    calories: number;
+    protein: number;
+    carbs: number;
+    fat: number;
+  };
+  created_at: string;
+  updated_at: string;
+}
+
+/**
+ * Recipe ingredient model
+ */
+export interface RecipeIngredient {
+  food_id: number;
+  food_name: string;
+  amount: number; // In grams
 }
 
 /**

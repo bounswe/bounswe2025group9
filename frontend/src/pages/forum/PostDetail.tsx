@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
-import { User, ThumbsUp, ChatText, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight } from '@phosphor-icons/react'
-import { apiClient } from '../../lib/apiClient'
+import { User, ThumbsUp, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, CookingPot, Scales, Fire } from '@phosphor-icons/react'
+import { apiClient, Recipe } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 // import shared cache functions
 import { getPostFromCache, setPostInCache, updatePostLikeStatusInCache } from '../../lib/postCache';
@@ -61,6 +61,10 @@ const PostDetail = () => {
     const [post, setPost] = useState<ForumPost | null>(null)
     const [loading, setLoading] = useState(true)
     
+    // Recipe state
+    const [recipe, setRecipe] = useState<Recipe | null>(null)
+    const [loadingRecipe, setLoadingRecipe] = useState(false)
+    
     // Comment state
     const [commentText, setCommentText] = useState('')
     const [comments, setComments] = useState<Comment[]>([])
@@ -113,6 +117,10 @@ const PostDetail = () => {
     useEffect(() => {
         if (post) {
             fetchComments();
+            // Check if post has a recipe
+            if (post.has_recipe) {
+                fetchRecipe();
+            }
         }
     }, [post, commentPage]);
     
@@ -148,6 +156,22 @@ const PostDetail = () => {
             console.error('Error fetching comments:', error);
         } finally {
             setLoadingComments(false);
+        }
+    };
+
+    // Fetch recipe for the post
+    const fetchRecipe = async () => {
+        if (!postId || isNaN(postIdNum)) return;
+        
+        setLoadingRecipe(true);
+        try {
+            const recipeData = await apiClient.getRecipeForPost(postIdNum);
+            console.log('[PostDetail] Received recipe data:', recipeData);
+            setRecipe(recipeData);
+        } catch (error) {
+            console.error('Error fetching recipe:', error);
+        } finally {
+            setLoadingRecipe(false);
         }
     };
 
@@ -374,6 +398,77 @@ const PostDetail = () => {
         window.scrollTo(0, 0)
     }, [])
 
+    // Render recipe section
+    const renderRecipe = () => {
+        if (!recipe) return null;
+        
+        return (
+            <div className="nh-card mb-6 rounded-lg shadow-md">
+                <div className="flex items-center mb-4">
+                    <div className="flex items-center justify-center mr-3">
+                        <CookingPot size={24} weight="fill" className="text-primary" />
+                    </div>
+                    <h2 className="nh-subtitle">Recipe Details</h2>
+                </div>
+                
+                {/* Nutritional Information */}
+                <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
+                        <div className="flex justify-center mb-1">
+                            <Fire size={20} weight="fill" className="text-red-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_calories)} kcal</div>
+                        <div className="text-xs text-gray-500">Calories</div>
+                    </div>
+                    <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
+                        <div className="flex justify-center mb-1">
+                            <Scales size={20} weight="fill" className="text-blue-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_protein)}g</div>
+                        <div className="text-xs text-gray-500">Protein</div>
+                    </div>
+                    <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
+                        <div className="flex justify-center mb-1">
+                            <Scales size={20} weight="fill" className="text-yellow-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_fat)}g</div>
+                        <div className="text-xs text-gray-500">Fat</div>
+                    </div>
+                    <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
+                        <div className="flex justify-center mb-1">
+                            <Scales size={20} weight="fill" className="text-green-500" />
+                        </div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_carbohydrates)}g</div>
+                        <div className="text-xs text-gray-500">Carbs</div>
+                    </div>
+                </div>
+                
+                {/* Ingredients */}
+                <div className="mb-6">
+                    <h3 className="font-semibold text-lg mb-2">Ingredients</h3>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                        {recipe.ingredients.map((ingredient, index) => (
+                            <li key={index} className="nh-ingredient-main-text">
+                                <span className="font-medium">{ingredient.food_name}</span> - {ingredient.amount}g
+                                <span className="nh-ingredient-nutrient-text">
+                                    ({ingredient.protein?.toFixed(1)}g protein, {ingredient.fat?.toFixed(1)}g fat, {ingredient.carbs?.toFixed(1)}g carbs)
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                </div>
+                
+                {/* Cooking Instructions */}
+                <div>
+                    <h3 className="font-semibold text-lg mb-2">Instructions</h3>
+                    <div className="whitespace-pre-line p-4 rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
+                        {recipe.instructions}
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     if (loading) {
         return (
             <div className="w-full py-12">
@@ -413,250 +508,278 @@ const PostDetail = () => {
     return (
         <div className="w-full py-12">
             <div className="nh-container">
-                <div className="mb-6">
-                    <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6 py-3 rounded-lg shadow-sm hover:shadow transition-all px-4">
-                        <ArrowLeft size={20} weight="bold" />
-                        Back to Forum
-                    </Link>
-                </div>
-                
-                {/* Post */}
-                <div className="nh-card mb-8 rounded-lg shadow-md">
-                    <div className="flex items-center mb-4">
-                        <div className="flex items-center justify-center mr-3">
-                            <ChatText size={24} weight="fill" className="text-primary" />
-                        </div>
-                        <h1 className="nh-title">{post.title}</h1>
-                    </div>
-                    
-                    {/* Tags */}
-                    {post.tags && post.tags.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-4">
-                            {post.tags.map((tag) => {
-                                const tagStyle = getTagStyle(tag.name);
-                                return (
-                                    <div 
-                                        key={tag.id} 
-                                        className="flex items-center px-3 py-1.5 rounded-md text-sm font-medium" 
-                                        style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
-                                    >
-                                        <Tag size={14} weight="fill" className="mr-1.5" />
-                                        {tag.name}
+                {/* Apply three-column layout */}
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left column - Empty */}
+                    <div className="w-full md:w-1/5"></div>
+
+                    {/* Middle column - Post Details */}
+                    <div className="w-full md:w-3/5">
+                        
+                        {/* Post Card - nh-card for the post content itself */}
+                        <div className="nh-card mb-8 rounded-lg shadow-md">
+                            {/* Combined Back button and Title container INSIDE the card */}
+                            <div className="flex items-center gap-4 mb-4 pt-4 px-4"> {/* Added padding here if needed */}
+                                <Link 
+                                    to="/forum" 
+                                    className="nh-button-square nh-button-primary flex items-center justify-center p-2"
+                                >
+                                    <ArrowLeft size={20} weight="bold" />
+                                </Link>
+                              
+                                <h1 className="nh-title-custom flex-grow">{post.title}</h1>
+                            </div>
+                            
+                            {/* Tags - Ensure styling is relative to the card padding */}
+                            {post.tags && post.tags.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4 px-4"> {/* Added padding here if needed */}
+                                    {post.tags.map((tag) => {
+                                        const tagStyle = getTagStyle(tag.name);
+                                        return (
+                                            <div 
+                                                key={tag.id} 
+                                                className="flex items-center px-3 py-1.5 rounded-md text-sm font-medium" 
+                                                style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
+                                            >
+                                                <Tag size={14} weight="fill" className="mr-1.5" />
+                                                {tag.name}
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                            
+                            <p className="nh-text mb-6 px-4"> {/* Added padding here if needed */}
+                                {post.body}
+                            </p>
+                            
+                            {/* Footer of the card with author and likes - Ensure styling is relative to the card padding */}
+                            <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4 pb-4 px-4"> {/* Added padding here */}
+                                <span className="flex items-center gap-1">
+                                    <div className="flex items-center justify-center">
+                                        <User size={16} className="flex-shrink-0" />
                                     </div>
-                                );
-                            })}
-                        </div>
-                    )}
-                    
-                    <p className="nh-text mb-6">
-                        {post.body}
-                    </p>
-                    
-                    <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4">
-                        <span className="flex items-center gap-1">
-                            <div className="flex items-center justify-center">
-                                <User size={16} className="flex-shrink-0" />
+                                    Posted by: {post.author.username} • {formatDate(post.created_at)}
+                                </span>
+                                <button 
+                                    onClick={handleLikeToggle}
+                                    className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 ${post.liked ? 'text-primary' : 'text-gray-600 dark:text-gray-400'}`}
+                                >
+                                    <div className="flex items-center justify-center">
+                                        <ThumbsUp size={16} weight={post.liked ? "fill" : "regular"} className="flex-shrink-0" />
+                                    </div>
+                                    Likes: {post.likes}
+                                </button>
                             </div>
-                            Posted by: {post.author.username} • {formatDate(post.created_at)}
-                        </span>
-                        <button 
-                            onClick={handleLikeToggle}
-                            className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 ${post.liked ? 'text-primary' : ''}`}
-                        >
-                            <div className="flex items-center justify-center">
-                                <ThumbsUp size={16} weight={post.liked ? "fill" : "regular"} className="flex-shrink-0" />
-                            </div>
-                            Likes: {post.likes}
-                        </button>
-                    </div>
-                </div>
-                
-                {/* Comments Section */}
-                <div className="mb-6">
-                    <h2 className="nh-subtitle mb-4 flex items-center gap-2">
-                        <ChatDots size={20} weight="fill" className="text-primary" />
-                        Comments ({comments.length})
-                    </h2>
-                    
-                    {loadingComments ? (
-                        <div className="text-center py-4">
-                            <p>Loading comments...</p>
                         </div>
-                    ) : comments.length === 0 ? (
-                        <div className="text-center py-4">
-                            <p>No comments yet. Be the first to comment!</p>
-                        </div>
-                    ) : (
-                        <div className="space-y-4 mb-8">
-                            {comments.map((comment) => (
-                                <div key={comment.id} className="nh-card rounded-lg shadow-sm border border-gray-700">
-                                    <div className="flex items-start">
-                                        <div className="flex-shrink-0 mr-3">
-                                            <div className="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                                                <User size={18} weight="fill" className="text-gray-500" />
+                        
+                        {/* Recipe Section - Show if post has recipe and recipe is loaded */}
+                        {post.has_recipe && (
+                            loadingRecipe ? (
+                                <div className="mb-8 text-center py-4">
+                                    <p>Loading recipe details...</p>
+                                </div>
+                            ) : recipe ? (
+                                renderRecipe()
+                            ) : (
+                                <div className="mb-8 text-center py-4">
+                                    <p>Recipe information could not be loaded.</p>
+                                </div>
+                            )
+                        )}
+                        
+                        {/* Comments Section */}
+                        <div className="mb-6">
+                            <h2 className="nh-subtitle mb-4 flex items-center gap-2">
+                                <ChatDots size={20} weight="fill" className="text-primary" />
+                                Comments ({comments.length})
+                            </h2>
+                            
+                            {loadingComments ? (
+                                <div className="text-center py-4">
+                                    <p>Loading comments...</p>
+                                </div>
+                            ) : comments.length === 0 ? (
+                                <div className="text-center py-4">
+                                    <p>No comments yet. Be the first to comment!</p>
+                                </div>
+                            ) : (
+                                <div className="space-y-4 mb-8">
+                                    {comments.map((comment) => (
+                                        <div key={comment.id} className="nh-card rounded-lg shadow-sm border border-gray-700">
+                                            <div className="flex items-start">
+                                                <div className="flex-shrink-0 mr-3">
+                                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
+                                                        <User size={18} weight="fill" className="text-gray-500" />
+                                                    </div>
+                                                </div>
+                                                <div className="flex-grow">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <h4 className="font-semibold text-primary">
+                                                            {comment.author}
+                                                        </h4>
+                                                        <span className="text-gray-400">•</span>
+                                                        <span className="text-xs text-gray-500">
+                                                            {formatDate(comment.created_at)}
+                                                        </span>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
+                                                        <p className="nh-text text-sm">
+                                                            {comment.body}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                            
+                            {/* Comment pagination */}
+                            {!loadingComments && totalComments > 0 && totalCommentPages > 1 && (
+                                <div className="flex justify-center items-center mt-6 gap-2">
+                                    <button 
+                                        onClick={() => handleCommentPageChange(Math.max(1, commentPage - 1))}
+                                        disabled={commentPage === 1}
+                                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all shadow hover:shadow-md ${commentPage === 1 ? 'text-[var(--color-gray-400)] dark:text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-[var(--forum-default-hover-bg)] dark:hover:bg-gray-800'}`}
+                                    >
+                                        <CaretLeft size={20} weight="bold" />
+                                    </button>
+                                    
+                                    {totalCommentPages <= 5 ? (
+                                        // Show all pages if 5 or fewer
+                                        [...Array(totalCommentPages)].map((_, index) => (
+                                            <button
+                                                key={index}
+                                                onClick={() => handleCommentPageChange(index + 1)}
+                                                className={`w-10 h-10 rounded-full transition-all shadow hover:shadow-md ${ 
+                                                    commentPage === index + 1 
+                                                    ? 'bg-primary text-white'
+                                                    : 'text-[var(--forum-default-text)] dark:text-gray-400 hover:bg-[var(--forum-default-hover-bg)] dark:hover:bg-gray-800'
+                                                }`}
+                                            >
+                                                {index + 1}
+                                            </button>
+                                        ))
+                                    ) : (
+                                        // Show limited range of pages
+                                        <>
+                                            {/* First page */}
+                                            <button
+                                                onClick={() => handleCommentPageChange(1)}
+                                                className={`w-10 h-10 rounded-full transition-all shadow hover:shadow-md ${ 
+                                                    commentPage === 1 
+                                                    ? 'bg-primary text-white' 
+                                                    : 'text-[var(--forum-default-text)] dark:text-gray-400 hover:bg-[var(--forum-default-hover-bg)] dark:hover:bg-gray-800'
+                                                }`}
+                                            >
+                                                1
+                                            </button>
+                                            
+                                            {/* Ellipsis for many pages */}
+                                            {commentPage > 3 && <span className="mx-1 text-[var(--forum-default-text)] dark:text-gray-400">...</span>}
+                                            
+                                            {/* Pages around current page */}
+                                            {Array.from(
+                                                { length: Math.min(3, totalCommentPages - 2) },
+                                                (_, i) => {
+                                                    let pageNum;
+                                                    if (commentPage <= 2) {
+                                                        pageNum = i + 2; // Show 2, 3, 4
+                                                    } else if (commentPage >= totalCommentPages - 1) {
+                                                        pageNum = totalCommentPages - Math.min(3, totalCommentPages - 2) + i; // Ensure it shows correct last few pages
+                                                    } else {
+                                                        pageNum = commentPage - 1 + i; // Show around current
+                                                    }
+                                                    
+                                                    if (pageNum <= 1 || pageNum >= totalCommentPages) return null;
+                                                    
+                                                    return (
+                                                        <button
+                                                            key={pageNum}
+                                                            onClick={() => handleCommentPageChange(pageNum)}
+                                                            className={`w-10 h-10 rounded-full transition-all shadow hover:shadow-md ${ 
+                                                                commentPage === pageNum 
+                                                                ? 'bg-primary text-white' 
+                                                                : 'text-[var(--forum-default-text)] dark:text-gray-400 hover:bg-[var(--forum-default-hover-bg)] dark:hover:bg-gray-800'
+                                                            }`}
+                                                        >
+                                                            {pageNum}
+                                                        </button>
+                                                    );
+                                                }
+                                            )}
+                                            
+                                            {/* Ellipsis for many pages */}
+                                            {commentPage < totalCommentPages - 2 && <span className="mx-1 text-[var(--forum-default-text)] dark:text-gray-400">...</span>}
+                                            
+                                            {/* Last page */}
+                                            <button
+                                                onClick={() => handleCommentPageChange(totalCommentPages)}
+                                                className={`w-10 h-10 rounded-full transition-all shadow hover:shadow-md ${ 
+                                                    commentPage === totalCommentPages 
+                                                    ? 'bg-primary text-white' 
+                                                    : 'text-[var(--forum-default-text)] dark:text-gray-400 hover:bg-[var(--forum-default-hover-bg)] dark:hover:bg-gray-800'
+                                                }`}
+                                            >
+                                                {totalCommentPages}
+                                            </button>
+                                        </>
+                                    )}
+                                    
+                                    <button 
+                                        onClick={() => handleCommentPageChange(Math.min(totalCommentPages, commentPage + 1))}
+                                        disabled={commentPage === totalCommentPages}
+                                        className={`flex items-center justify-center w-10 h-10 rounded-full transition-all shadow hover:shadow-md ${commentPage === totalCommentPages ? 'text-[var(--color-gray-400)] dark:text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-[var(--forum-default-hover-bg)] dark:hover:bg-gray-800'}`}
+                                    >
+                                        <CaretRight size={20} weight="bold" />
+                                    </button>
+                                </div>
+                            )}
+                            
+                            {/* Add Comment Form - Moved below comments */}
+                            <div className="nh-card rounded-lg shadow-md border border-gray-700">
+                                <h3 className="nh-subtitle mb-4">Add a Comment</h3>
+                                <form onSubmit={handleCommentSubmit}>
+                                    <div className="flex items-start gap-3 mb-4">
+                                        <div className="flex-shrink-0">
+                                            <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
+                                                <User size={18} weight="fill" className="text-primary" />
                                             </div>
                                         </div>
                                         <div className="flex-grow">
-                                            <div className="flex items-center gap-2 mb-2">
-                                                <h4 className="font-semibold text-primary">
-                                                    {comment.author}
-                                                </h4>
-                                                <span className="text-gray-400">•</span>
-                                                <span className="text-xs text-gray-500">
-                                                    {formatDate(comment.created_at)}
-                                                </span>
-                                            </div>
-                                            <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
-                                                <p className="nh-text text-sm">
-                                                    {comment.body}
-                                                </p>
-                                            </div>
+                                            <p className="font-semibold text-primary mb-2">You</p>
+                                            <textarea 
+                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)] transition-all"
+                                                rows={3}
+                                                placeholder="Share your thoughts..."
+                                                value={commentText}
+                                                onChange={(e) => setCommentText(e.target.value)}
+                                                required
+                                            ></textarea>
                                         </div>
                                     </div>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                    
-                    {/* Comment pagination */}
-                    {!loadingComments && totalComments > 0 && totalCommentPages > 1 && (
-                        <div className="flex justify-center items-center mt-6 gap-2">
-                            <button 
-                                onClick={() => handleCommentPageChange(Math.max(1, commentPage - 1))}
-                                disabled={commentPage === 1}
-                                className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${commentPage === 1 ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
-                            >
-                                <CaretLeft size={20} weight="bold" />
-                            </button>
-                            
-                            {totalCommentPages <= 5 ? (
-                                // Show all pages if 5 or fewer
-                                [...Array(totalCommentPages)].map((_, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => handleCommentPageChange(index + 1)}
-                                        className={`w-10 h-10 rounded-full transition-all ${
-                                            commentPage === index + 1 
-                                            ? 'bg-primary text-white shadow' 
-                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                        }`}
-                                    >
-                                        {index + 1}
-                                    </button>
-                                ))
-                            ) : (
-                                // Show limited range of pages
-                                <>
-                                    {/* First page */}
-                                    <button
-                                        onClick={() => handleCommentPageChange(1)}
-                                        className={`w-10 h-10 rounded-full transition-all ${
-                                            commentPage === 1 
-                                            ? 'bg-primary text-white shadow' 
-                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                        }`}
-                                    >
-                                        1
-                                    </button>
-                                    
-                                    {/* Ellipsis for many pages */}
-                                    {commentPage > 3 && <span className="mx-1">...</span>}
-                                    
-                                    {/* Pages around current page */}
-                                    {Array.from(
-                                        { length: Math.min(3, totalCommentPages - 2) },
-                                        (_, i) => {
-                                            let pageNum;
-                                            if (commentPage <= 2) {
-                                                pageNum = i + 2; // Show 2, 3, 4
-                                            } else if (commentPage >= totalCommentPages - 1) {
-                                                pageNum = totalCommentPages - 3 + i; // Show last 3 pages before the last
-                                            } else {
-                                                pageNum = commentPage - 1 + i; // Show around current
-                                            }
-                                            
-                                            if (pageNum <= 1 || pageNum >= totalCommentPages) return null;
-                                            
-                                            return (
-                                                <button
-                                                    key={pageNum}
-                                                    onClick={() => handleCommentPageChange(pageNum)}
-                                                    className={`w-10 h-10 rounded-full transition-all ${
-                                                        commentPage === pageNum 
-                                                        ? 'bg-primary text-white shadow' 
-                                                        : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                                    }`}
-                                                >
-                                                    {pageNum}
-                                                </button>
-                                            );
-                                        }
-                                    )}
-                                    
-                                    {/* Ellipsis for many pages */}
-                                    {commentPage < totalCommentPages - 2 && <span className="mx-1">...</span>}
-                                    
-                                    {/* Last page */}
-                                    <button
-                                        onClick={() => handleCommentPageChange(totalCommentPages)}
-                                        className={`w-10 h-10 rounded-full transition-all ${
-                                            commentPage === totalCommentPages 
-                                            ? 'bg-primary text-white shadow' 
-                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                        }`}
-                                    >
-                                        {totalCommentPages}
-                                    </button>
-                                </>
-                            )}
-                            
-                            <button 
-                                onClick={() => handleCommentPageChange(Math.min(totalCommentPages, commentPage + 1))}
-                                disabled={commentPage === totalCommentPages}
-                                className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${commentPage === totalCommentPages ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
-                            >
-                                <CaretRight size={20} weight="bold" />
-                            </button>
-                        </div>
-                    )}
-                    
-                    {/* Add Comment Form - Moved below comments */}
-                    <div className="nh-card rounded-lg shadow-md border border-gray-700">
-                        <h3 className="nh-subtitle mb-4">Add a Comment</h3>
-                        <form onSubmit={handleCommentSubmit}>
-                            <div className="flex items-start gap-3 mb-4">
-                                <div className="flex-shrink-0">
-                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
-                                        <User size={18} weight="fill" className="text-primary" />
+                                    <div className="flex justify-end">
+                                        <button 
+                                            type="submit" 
+                                            className="nh-button nh-button-primary light:hover:bg-blue-400 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
+                                        >
+                                            Post Comment
+                                        </button>
                                     </div>
-                                </div>
-                                <div className="flex-grow">
-                                    <p className="font-semibold text-primary mb-2">You</p>
-                                    <textarea 
-                                        className="w-full border rounded-lg p-3 dark:bg-gray-800 dark:border-gray-700 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
-                                        rows={3}
-                                        placeholder="Share your thoughts..."
-                                        value={commentText}
-                                        onChange={(e) => setCommentText(e.target.value)}
-                                        required
-                                    ></textarea>
-                                </div>
+                                </form>
                             </div>
-                            <div className="flex justify-end">
-                                <button 
-                                    type="submit" 
-                                    className="nh-button nh-button-primary py-3 px-4 rounded-lg shadow-sm hover:shadow-md transition-all flex items-center gap-2"
-                                >
-                                    <ChatDots size={18} weight="fill" />
-                                    Post Comment
-                                </button>
-                            </div>
-                        </form>
+                        </div>
                     </div>
+                    {/* End of Middle Column */}
+
+                    {/* Right column - Empty */}
+                    <div className="w-full md:w-1/5"></div>
                 </div>
+                {/* End of three-column layout */}
             </div>
         </div>
-    )
-}
+    );
+};
 
-export default PostDetail 
+export default PostDetail; 

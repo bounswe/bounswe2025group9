@@ -9,7 +9,8 @@ class FoodEntrySerializer(ModelSerializer):
         fields = "__all__"
 
 
-class FoodProosalSerializer(ModelSerializer):
+class FoodProposalSerializer(ModelSerializer):
     class Meta:
         model = FoodProposal
         fields = "__all__"
+        read_only_fields = ("proposedBy",)

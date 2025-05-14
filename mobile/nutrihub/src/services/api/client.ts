@@ -30,6 +30,7 @@ class ApiClient {
       async (config) => {
         const token = await AsyncStorage.getItem('access_token');
         if (token) {
+          config.headers = config.headers || {};
           config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -42,63 +43,78 @@ class ApiClient {
     // Response interceptor for token refresh
     this.axiosInstance.interceptors.response.use(
       (response) => response,
-      async (error: AxiosError) => {
-        const originalRequest: any = error.config;
-
-        if (error.response?.status === 401 && !originalRequest._retry) {
+      async (error) => {
+        const originalRequest = error.config;
+        
+        // If the error is due to an expired token and we haven't tried to refresh yet
+        if (error.response?.status === 401 &&
+            !originalRequest._retry &&
+            error.response?.data?.detail?.includes('expired')) {
+          
           if (this.isRefreshing) {
-            return new Promise((resolve, reject) => {
-              this.failedQueue.push({ resolve, reject });
-            }).then(token => {
+            try {
+              // Wait for the refresh to complete
+              const token = await new Promise<string>((resolve, reject) => {
+                this.failedQueue.push({ resolve, reject });
+              });
+              
               originalRequest.headers.Authorization = `Bearer ${token}`;
               return this.axiosInstance(originalRequest);
-            }).catch(err => {
-              return Promise.reject(err);
-            });
-          }
-
-          originalRequest._retry = true;
-          this.isRefreshing = true;
-
-          const refreshToken = await AsyncStorage.getItem('refresh_token');
-
-          if (refreshToken) {
-            try {
-              const response = await axios.post(`${API_CONFIG.BASE_URL}/users/token/refresh/`, {
-                refresh: refreshToken
-              });
-
-              const { access } = response.data;
-              await AsyncStorage.setItem('access_token', access);
-
-              this.processQueue(null, access);
-
-              originalRequest.headers.Authorization = `Bearer ${access}`;
-              return this.axiosInstance(originalRequest);
             } catch (refreshError) {
-              this.processQueue(refreshError, null);
-              // Clear tokens on refresh failure
-              await AsyncStorage.removeItem('access_token');
-              await AsyncStorage.removeItem('refresh_token');
-              await AsyncStorage.removeItem('user_data');
-              throw refreshError;
-            } finally {
-              this.isRefreshing = false;
+              return Promise.reject(refreshError);
             }
           }
+          
+          originalRequest._retry = true;
+          this.isRefreshing = true;
+          
+          try {
+            const refreshToken = await AsyncStorage.getItem('refresh_token');
+            if (!refreshToken) {
+              throw new Error('No refresh token available');
+            }
+            
+            const response = await axios.post(`${API_CONFIG.BASE_URL}/users/token/refresh/`, {
+              refresh: refreshToken
+            });
+            
+            if (response.data.access) {
+              const newToken = response.data.access;
+              await AsyncStorage.setItem('access_token', newToken);
+              
+              // Update auth header for original request
+              originalRequest.headers.Authorization = `Bearer ${newToken}`;
+              
+              // Process queue
+              this.processQueue(null, newToken);
+              
+              return this.axiosInstance(originalRequest);
+            } else {
+              // Unexpected response format
+              return Promise.reject(new Error('Failed to refresh token'));
+            }
+          } catch (error) {
+            // Failed to refresh token, clear tokens and reject queue
+            await AsyncStorage.removeItem('access_token');
+            await AsyncStorage.removeItem('refresh_token');
+            this.processQueue(error, null);
+            return Promise.reject(error);
+          } finally {
+            this.isRefreshing = false;
+          }
         }
-
+        
         return Promise.reject(error);
       }
     );
   }
-
-  private processQueue(error: any, token: string | null = null) {
-    this.failedQueue.forEach(prom => {
+  
+  private processQueue(error: any, token: string | null) {
+    this.failedQueue.forEach(promise => {
       if (error) {
-        prom.reject(error);
-      } else {
-        prom.resolve(token!);
+        promise.reject(error);
+      } else if (token) {
+        promise.resolve(token);
       }
     });
     
@@ -123,6 +139,51 @@ class ApiClient {
   async post<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
     try {
       const response = await this.axiosInstance.post<T>(url, data, config);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error: any) {
+      return {
+        status: error.response?.status || 500,
+        error: error.response?.data?.message || error.response?.data?.detail || error.message || 'An error occurred',
+      };
+    }
+  }
+
+  async put<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.axiosInstance.put<T>(url, data, config);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error: any) {
+      return {
+        status: error.response?.status || 500,
+        error: error.response?.data?.message || error.response?.data?.detail || error.message || 'An error occurred',
+      };
+    }
+  }
+
+  async patch<T>(url: string, data?: any, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.axiosInstance.patch<T>(url, data, config);
+      return {
+        data: response.data,
+        status: response.status,
+      };
+    } catch (error: any) {
+      return {
+        status: error.response?.status || 500,
+        error: error.response?.data?.message || error.response?.data?.detail || error.message || 'An error occurred',
+      };
+    }
+  }
+
+  async delete<T>(url: string, config?: AxiosRequestConfig): Promise<ApiResponse<T>> {
+    try {
+      const response = await this.axiosInstance.delete<T>(url, config);
       return {
         data: response.data,
         status: response.status,
