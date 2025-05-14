@@ -1,37 +1,7 @@
 import React, { useState} from 'react';
-import {
-  Box,
-  Button,
-  Container,
-  TextField,
-  Paper,
-  Alert,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Chip,
-  OutlinedInput,
-  Checkbox,
-  ListItemText,
-  SelectChangeEvent,
-  Stack,
-} from '@mui/material';
+import { ArrowLeft, WarningCircle } from '@phosphor-icons/react';
 import { useNavigate } from 'react-router-dom';
 import { FoodProposal, apiClient } from '../../lib/apiClient';
-
-// Add proper types for MUI components
-
-const ITEM_HEIGHT = 48;
-const ITEM_PADDING_TOP = 8;
-const MenuProps = {
-  PaperProps: {
-    style: {
-      maxHeight: ITEM_HEIGHT * 4.5 + ITEM_PADDING_TOP,
-      width: 250,
-    },
-  },
-};
 
 // Available dietary options
 const dietaryOptions = [
@@ -46,7 +16,6 @@ const dietaryOptions = [
   'Sugar-Free',
   'Organic',
 ];
-
 
 const ProposeNewFood: React.FC = () => {
   const navigate = useNavigate();
@@ -64,7 +33,6 @@ const ProposeNewFood: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
@@ -112,15 +80,15 @@ const ProposeNewFood: React.FC = () => {
     return Math.round((proteinScore + balanceScore) / 2);
   };
 
-  const handleDietaryOptionsChange = (event: SelectChangeEvent<string[]>) => {
-    const {
-      target: { value },
-    } = event;
-    setSelectedDietaryOptions(
-      typeof value === 'string' ? value.split(',') : value,
-    );
+  const handleDietaryOptionsChange = (option: string) => {
+    setSelectedDietaryOptions(prev => {
+      if (prev.includes(option)) {
+        return prev.filter(item => item !== option);
+      } else {
+        return [...prev, option];
+      }
+    });
   };
-
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -166,189 +134,263 @@ const ProposeNewFood: React.FC = () => {
   };
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <h1 className="nh-title text-center mb-4">Propose New Food</h1>
-        
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+    <div className="w-full py-12">
+      <div className="nh-container">
+        <div className="flex flex-col md:flex-row gap-6">
+          {/* Left column - Empty */}
+          <div className="w-full md:w-1/5"></div>
 
-        <Paper elevation={3} sx={{ p: 3 }}>
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              {/* Basic Information */}
-              <Box>
-                <TextField
-                  required
-                  fullWidth
-                  label="Food Name"
-                  value={foodName}
-                  onChange={(e) => setFoodName(e.target.value)}
-                  error={!!validationErrors.foodName}
-                  helperText={validationErrors.foodName}
-                />
-              </Box>
-
-              <Box>
-                <TextField
-                  required
-                  fullWidth
-                  label="Food Category"
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  error={!!validationErrors.category}
-                  helperText={validationErrors.category}
-                />
-              </Box>
-              
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Serving Size (g)"
-                    value={servingSize}
-                    onChange={(e) => setServingSize(e.target.value)}
-                    error={!!validationErrors.servingSize}
-                    helperText={validationErrors.servingSize}
-                  />
-                </Box>
-                
-                <Box sx={{ flex: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Calories per Serving"
-                    value={calories}
-                    onChange={(e) => setCalories(e.target.value)}
-                    error={!!validationErrors.calories}
-                    helperText={validationErrors.calories}
-                  />
-                </Box>
-              </Box>
-
-              {/* Macronutrients */}
-              <Box>    
-                <h2 className="nh-subtitle">
-                  Macronutrients (per serving)
-                </h2>
-              </Box>
-
-              <Box sx={{ display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 2 }}>
-                <Box sx={{ flex: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Carbohydrates (g)"
-                    value={carbs}
-                    onChange={(e) => setCarbs(e.target.value)}
-                    error={!!validationErrors.carbs}
-                    helperText={validationErrors.carbs}
-                  />
-                </Box>
-
-                <Box sx={{ flex: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Protein (g)"
-                    value={protein}
-                    onChange={(e) => setProtein(e.target.value)}
-                    error={!!validationErrors.protein}
-                    helperText={validationErrors.protein}
-                  />
-                </Box>
-
-                <Box sx={{ flex: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="number"
-                    label="Fat (g)"
-                    value={fat}
-                    onChange={(e) => setFat(e.target.value)}
-                    error={!!validationErrors.fat}
-                    helperText={validationErrors.fat}
-                  />
-                </Box>
-              </Box>
-              
-
-              <Box>    
-                <h2 className="nh-subtitle">
-                  Dietary Information
-                </h2>
-              </Box>
-
-              <Box>
-                <Box sx={{ flex: 1 }}>
-                  <FormControl fullWidth>
-                    <InputLabel id="dietary-options-label">Dietary Options</InputLabel>
-                    <Select
-                      labelId="dietary-options-label"
-                      multiple
-                      value={selectedDietaryOptions}
-                      onChange={handleDietaryOptionsChange}
-                      input={<OutlinedInput label="Dietary Options" />}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {(selected as string[]).map((value) => (
-                            <Chip key={value} label={value} />
-                          ))}
-                        </Box>
-                      )}
-                      MenuProps={MenuProps}
-                    >
-                      {dietaryOptions.map((option) => (
-                        <MenuItem key={option} value={option}>
-                          <Checkbox checked={selectedDietaryOptions.indexOf(option) > -1} />
-                          <ListItemText primary={option} />
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Box>
-              </Box>
-              
-              {/* Image URL */}
-              <Box>
-                <TextField
-                  fullWidth
-                  label="Image URL (optional)"
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  error={!!validationErrors.imageUrl}
-                  helperText={validationErrors.imageUrl || "Provide a URL to an image of this food (optional)"}
-                />
-              </Box>
-
-              {/* Submit Button */}
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
-                <Button
-                  variant="outlined"
+          {/* Middle column - Food Creation Form */}
+          <div className="w-full md:w-3/5">
+            <div className="nh-card">
+              <div className="flex justify-start items-center gap-6 mb-2">
+                <button 
                   onClick={() => navigate('/foods')}
-                  disabled={isSubmitting}
+                  className="nh-button-square nh-button-primary flex items-center gap-2 px-2 py-2"
                 >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={isSubmitting}
+                  <ArrowLeft size={20} weight="bold" /> 
+                </button>
+                <div className="flex justify-center items-center">
+                  <h1 className="nh-title-custom">Propose New Food</h1>
+                </div>
+              </div>
+
+              {/* Display success message if present */}
+              {success && (
+                <div 
+                  className="px-4 py-3 rounded-md mb-6 flex items-start gap-2 border"
+                  style={{
+                    backgroundColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.1)',
+                    borderColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.3)',
+                    color: 'var(--color-success)'
+                  }}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
-                </Button>
-              </Box>
-            </Stack>
-          </form>
-        </Paper>
-      </Box>
-    </Container>
+                  <span>{success}</span>
+                </div>
+              )}
+              
+              {/* Display validation error if present */}
+              {error && (
+                <div className="nh-error-message mb-6">
+                  <WarningCircle size={20} className="flex-shrink-0 mt-0.5 mr-2" />
+                  <span>{error}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} id="proposeFoodForm">
+                {/* Basic Information */}
+                <div className="mb-6">
+                  <h2 className="nh-subtitle mb-4">Basic Information</h2>
+                  
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">
+                      Food Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                      value={foodName}
+                      onChange={(e) => setFoodName(e.target.value)}
+                      placeholder="Enter food name"
+                      required
+                    />
+                    {validationErrors.foodName && (
+                      <p className="mt-1 text-red-500 text-sm">{validationErrors.foodName}</p>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">
+                      Food Category <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                      value={category}
+                      onChange={(e) => setCategory(e.target.value)}
+                      placeholder="E.g., Fruits, Vegetables, Grains, etc."
+                      required
+                    />
+                    {validationErrors.category && (
+                      <p className="mt-1 text-red-500 text-sm">{validationErrors.category}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                    <div>
+                      <label className="block mb-2 font-medium">
+                        Serving Size (g) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                        value={servingSize}
+                        onChange={(e) => setServingSize(e.target.value)}
+                        placeholder="100"
+                        min="1"
+                        required
+                      />
+                      {validationErrors.servingSize && (
+                        <p className="mt-1 text-red-500 text-sm">{validationErrors.servingSize}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-medium">
+                        Calories per Serving <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                        value={calories}
+                        onChange={(e) => setCalories(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        required
+                      />
+                      {validationErrors.calories && (
+                        <p className="mt-1 text-red-500 text-sm">{validationErrors.calories}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Macronutrients */}
+                <div className="mb-6">
+                  <h2 className="nh-subtitle mb-4">Macronutrients (per serving)</h2>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block mb-2 font-medium">
+                        Carbohydrates (g) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                        value={carbs}
+                        onChange={(e) => setCarbs(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        required
+                      />
+                      {validationErrors.carbs && (
+                        <p className="mt-1 text-red-500 text-sm">{validationErrors.carbs}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-medium">
+                        Protein (g) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                        value={protein}
+                        onChange={(e) => setProtein(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        required
+                      />
+                      {validationErrors.protein && (
+                        <p className="mt-1 text-red-500 text-sm">{validationErrors.protein}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 font-medium">
+                        Fat (g) <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="number"
+                        className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                        value={fat}
+                        onChange={(e) => setFat(e.target.value)}
+                        placeholder="0"
+                        min="0"
+                        required
+                      />
+                      {validationErrors.fat && (
+                        <p className="mt-1 text-red-500 text-sm">{validationErrors.fat}</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Dietary Information */}
+                <div className="mb-6">
+                  <h2 className="nh-subtitle mb-4">Dietary Information</h2>
+                  
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">
+                      Dietary Options
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {dietaryOptions.map((option) => (
+                        <div 
+                          key={option}
+                          className={`px-3 py-2 rounded-full cursor-pointer border transition-colors ${
+                            selectedDietaryOptions.includes(option)
+                              ? 'bg-primary text-white border-primary'
+                              : 'bg-[var(--forum-default-bg)] text-[var(--forum-default-text)] border-[var(--forum-search-border)] hover:bg-[var(--forum-default-hover-bg)]'
+                          }`}
+                          onClick={() => handleDietaryOptionsChange(option)}
+                        >
+                          {option}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Image URL */}
+                <div className="mb-6">
+                  <h2 className="nh-subtitle mb-4">Additional Information</h2>
+                  
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">
+                      Image URL (optional)
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                      value={imageUrl}
+                      onChange={(e) => setImageUrl(e.target.value)}
+                      placeholder="https://example.com/image.jpg"
+                    />
+                    {validationErrors.imageUrl && (
+                      <p className="mt-1 text-red-500 text-sm">{validationErrors.imageUrl}</p>
+                    )}
+                    <p className="mt-1 text-sm text-gray-500">Provide a URL to an image of this food (optional)</p>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="flex justify-end items-center mt-6 gap-3">
+                  <button
+                    type="button"
+                    onClick={() => navigate('/foods')}
+                    className="nh-button nh-button-secondary flex items-center gap-2 px-6 py-2"
+                    disabled={isSubmitting}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="nh-button nh-button-primary flex items-center gap-2 px-6 py-2"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          {/* Right column - Empty */}
+          <div className="w-full md:w-1/5"></div>
+        </div>
+      </div>
+    </div>
   );
 };
 
