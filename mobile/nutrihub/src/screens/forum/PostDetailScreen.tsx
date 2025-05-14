@@ -4,7 +4,7 @@
  * Displays the full content of a forum post with comments.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -29,6 +29,7 @@ import Card from '../../components/common/Card';
 import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
 import { forumService } from '../../services/api/forum.service';
+import { usePosts } from '../../context/PostsContext';
 
 type PostDetailRouteProp = RouteProp<ForumStackParamList, 'PostDetail'>;
 type PostDetailNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'PostDetail'>;
@@ -37,6 +38,7 @@ const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailNavigationProp>();
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
+  const { posts, updatePost } = usePosts();
   
   const postId = route.params.postId;
   const [post, setPost] = useState<ForumTopic | null>(null);
@@ -46,35 +48,47 @@ const PostDetailScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
   
+  // Get post and comments from API - no dependency on context methods
+  const fetchPostData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      // First try to get the post from our posts array
+      let postData = posts.find(p => p.id === postId);
+      
+      // If not found in array, fetch from API
+      if (!postData) {
+        try {
+          postData = await forumService.getPost(postId);
+        } catch (err) {
+          console.error('Error fetching post from API:', err);
+          throw err;
+        }
+      }
+      
+      setPost(postData);
+      
+      // Fetch comments for the post
+      try {
+        const commentsData = await forumService.getComments(postId);
+        setComments(commentsData);
+      } catch (err) {
+        console.error('Error fetching comments:', err);
+        // Don't set an error just for comments - we can still show the post
+      }
+    } catch (err) {
+      console.error('Error fetching post data:', err);
+      setError('Failed to load post. Please try again later.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [postId, posts]);
+  
   // Fetch post and comments data
   useEffect(() => {
-    const fetchPostData = async () => {
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        // Fetch post details
-        const postData = await forumService.getPost(postId);
-        setPost(postData);
-        
-        // Fetch comments for the post
-        try {
-          const commentsData = await forumService.getComments(postId);
-          setComments(commentsData);
-        } catch (err) {
-          console.error('Error fetching comments:', err);
-          // Don't set an error just for comments - we can still show the post
-        }
-      } catch (err) {
-        console.error('Error fetching post data:', err);
-        setError('Failed to load post. Please try again later.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
     fetchPostData();
-  }, [postId]);
+  }, [fetchPostData]);
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -101,13 +115,16 @@ const PostDetailScreen: React.FC = () => {
         
         // Add comment to list and update post comment count
         setComments(prevComments => [...prevComments, createdComment]);
-        setPost(prev => {
-          if (!prev) return null;
-          return { 
-            ...prev, 
-            commentsCount: (prev.commentsCount || 0) + 1 
-          };
-        });
+        
+        // Update post in both local state and global context
+        const updatedPost = {
+          ...post,
+          commentsCount: (post.commentsCount || 0) + 1
+        };
+        
+        setPost(updatedPost);
+        updatePost(updatedPost); // Update in global context
+        
         setNewComment('');
       } catch (err) {
         console.error('Error adding comment:', err);
@@ -141,6 +158,31 @@ const PostDetailScreen: React.FC = () => {
       console.error('Error toggling comment like:', err);
       // Optionally alert the user
       Alert.alert('Error', 'Failed to update comment like status.');
+    }
+  };
+  
+  // Handle post like
+  const handlePostLike = async (postToLike: ForumTopic) => {
+    try {
+      const isLiked = await forumService.toggleLike(postToLike.id);
+      
+      // Create an updated post with the new like status
+      const updatedPost = {
+        ...postToLike,
+        isLiked: isLiked,
+        likesCount: isLiked 
+          ? (postToLike.likesCount || 0) + 1 
+          : Math.max((postToLike.likesCount || 0) - 1, 0)
+      };
+      
+      // Update post in local state
+      setPost(updatedPost);
+      
+      // Update post in global context
+      updatePost(updatedPost);
+    } catch (err) {
+      console.error('Error toggling like:', err);
+      Alert.alert('Error', 'Failed to update like status. Please try again.');
     }
   };
   
@@ -249,21 +291,7 @@ const PostDetailScreen: React.FC = () => {
             post={post}
             preview={false}
             showTags={true}
-            onLike={async (updatedPost) => {
-              try {
-                const isLiked = await forumService.toggleLike(post.id);
-                setPost(prev => prev ? {
-                  ...prev,
-                  isLiked,
-                  likesCount: isLiked 
-                    ? (prev.likesCount || 0) + 1 
-                    : Math.max((prev.likesCount || 0) - 1, 0) // Ensure count doesn't go below 0
-                } : null);
-              } catch (err) {
-                console.error('Error toggling like:', err);
-                Alert.alert('Error', 'Failed to update like status. Please try again.');
-              }
-            }}
+            onLike={handlePostLike}
           />
           
           {/* Comments Section */}

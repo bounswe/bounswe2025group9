@@ -4,7 +4,7 @@
  * Displays the community forum with posts and interaction options.
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -24,6 +24,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { ForumTopic } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
 import { forumService, ApiTag } from '../../services/api/forum.service';
+import { usePosts } from '../../context/PostsContext';
 
 type ForumScreenNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'ForumList'>;
 type ForumScreenRouteProp = RouteProp<ForumStackParamList, 'ForumList'>;
@@ -35,11 +36,13 @@ const ForumScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<ForumScreenNavigationProp>();
   const route = useRoute<ForumScreenRouteProp>();
-  const [posts, setPosts] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
+  
+  // Use the global posts context
+  const { posts, setPosts, updatePost } = usePosts();
 
   // Fetch tags and posts
   useEffect(() => {
@@ -50,7 +53,7 @@ const ForumScreen: React.FC = () => {
         const tags = await forumService.getTags();
         setAvailableTags(tags);
         
-        // Then fetch posts
+        // Then fetch posts directly from the service
         try {
           const fetchedPosts = await forumService.getPosts();
           setPosts(fetchedPosts);
@@ -67,7 +70,7 @@ const ForumScreen: React.FC = () => {
     };
 
     fetchTagsAndPosts();
-  }, []);
+  }, []); // No dependencies to avoid refresh loops
 
   // Handle new post from navigation params
   useEffect(() => {
@@ -77,57 +80,21 @@ const ForumScreen: React.FC = () => {
       // Clear the navigation params
       navigation.setParams({ action: undefined, postData: undefined });
     }
-  }, [route.params, navigation]);
+  }, [route.params, navigation, setPosts]);
 
-  // Fetch posts when filters change
-  useEffect(() => {
-    const fetchFilteredPosts = async () => {
-      if (selectedTagIds.length === 0) {
-        // If no filters, fetch all posts
-        try {
-          console.log('Fetching all posts...');
-          const fetchedPosts = await forumService.getPosts();
-          // Preserve like status for existing posts
-          const updatedPosts = preserveLikeStatus(fetchedPosts, posts);
-          setPosts(updatedPosts);
-        } catch (err) {
-          console.error('Error fetching posts:', err);
-        }
-      } else {
-        // Fetch filtered posts
-        try {
-          console.log('Fetching filtered posts with tags:', selectedTagIds);
-          const filteredPosts = await forumService.getPosts(selectedTagIds);
-          // Preserve like status for existing posts
-          const updatedPosts = preserveLikeStatus(filteredPosts, posts);
-          setPosts(updatedPosts);
-        } catch (err) {
-          console.error('Error fetching filtered posts:', err);
-        }
-      }
-    };
-
-    // Helper function to preserve like status from existing posts
-    const preserveLikeStatus = (newPosts: ForumTopic[], oldPosts: ForumTopic[]): ForumTopic[] => {
-      return newPosts.map(newPost => {
-        const existingPost = oldPosts.find(oldPost => oldPost.id === newPost.id);
-        if (existingPost && existingPost.isLiked) {
-          return {
-            ...newPost,
-            isLiked: existingPost.isLiked,
-            likesCount: existingPost.likesCount
-          };
-        }
-        return newPost;
-      });
-    };
-
-    // Only run this effect if we're not in the initial loading state
-    if (!loading) {
-      setLoading(true);
-      fetchFilteredPosts().finally(() => setLoading(false));
+  // Handle filter change manually instead of in useEffect
+  const handleFilterChange = useCallback(async (tagIds: number[]) => {
+    setLoading(true);
+    try {
+      const filteredPosts = await forumService.getPosts(tagIds);
+      setPosts(filteredPosts);
+    } catch (err) {
+      console.error('Error fetching filtered posts:', err);
+      setError('Failed to filter posts. Please try again.');
+    } finally {
+      setLoading(false);
     }
-  }, [selectedTagIds]);
+  }, [setPosts]);
 
   // Convert serialized post to ForumTopic
   const deserializePost = (serializedPost: SerializedForumPost): ForumTopic => ({
@@ -145,15 +112,13 @@ const ForumScreen: React.FC = () => {
   const handlePostLike = async (post: ForumTopic) => {
     try {
       const isLiked = await forumService.toggleLike(post.id);
-      setPosts(prevPosts => 
-        prevPosts.map(p => 
-          p.id === post.id ? {
-            ...p,
-            isLiked,
-            likesCount: isLiked ? p.likesCount + 1 : p.likesCount - 1
-          } : p
-        )
-      );
+      
+      // Update post in global context
+      updatePost({
+        ...post,
+        isLiked,
+        likesCount: isLiked ? post.likesCount + 1 : post.likesCount - 1
+      });
     } catch (err) {
       console.error('Error toggling like:', err);
     }
@@ -174,24 +139,14 @@ const ForumScreen: React.FC = () => {
     // If loading, don't allow filtering
     if (loading) return;
     
-    setLoading(true);
-    setSelectedTagIds(prev => {
-      // Create new selected tags array
-      const newSelectedTags = prev.includes(tagId) ? [] : [tagId];
-      
-      // Fetch posts with the new filter
-      forumService.getPosts(newSelectedTags)
-        .then(fetchedPosts => {
-          setPosts(fetchedPosts);
-        })
-        .catch(err => {
-          console.error('Error filtering posts:', err);
-          setError('Failed to filter posts. Please try again.');
-        })
-        .finally(() => setLoading(false));
-      
-      return newSelectedTags;
-    });
+    // Create new selected tags array
+    const newSelectedTags = selectedTagIds.includes(tagId) ? [] : [tagId];
+    
+    // Update state
+    setSelectedTagIds(newSelectedTags);
+    
+    // Fetch posts with the new filter
+    handleFilterChange(newSelectedTags);
   };
 
   // Find tag by name or ID
@@ -202,6 +157,25 @@ const ForumScreen: React.FC = () => {
     }
     return availableTags.find(tag => tag && tag.name && tag.name.toLowerCase() === name.toLowerCase());
   };
+  
+  // Handle refresh
+  const handleRefresh = useCallback(async () => {
+    setLoading(true);
+    try {
+      if (selectedTagIds.length > 0) {
+        const fetchedPosts = await forumService.getPosts(selectedTagIds);
+        setPosts(fetchedPosts);
+      } else {
+        const fetchedPosts = await forumService.getPosts();
+        setPosts(fetchedPosts);
+      }
+    } catch (err) {
+      console.error('Error refreshing posts:', err);
+      Alert.alert('Error', 'Failed to refresh posts. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, [selectedTagIds, setPosts]);
 
   // Render forum post
   const renderItem = ({ item }: { item: ForumTopic }) => (
@@ -248,7 +222,7 @@ const ForumScreen: React.FC = () => {
               setError(null);
               setLoading(true);
               forumService.getPosts()
-                .then(posts => setPosts(posts))
+                .then(fetchedPosts => setPosts(fetchedPosts))
                 .catch(err => setError('Failed to load posts. Please try again.'))
                 .finally(() => setLoading(false));
             }}
@@ -379,50 +353,7 @@ const ForumScreen: React.FC = () => {
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         refreshing={loading}
-        onRefresh={() => {
-          setLoading(true);
-          
-          // Helper function to preserve like status
-          const preserveLikeStatus = (newPosts: ForumTopic[], oldPosts: ForumTopic[]): ForumTopic[] => {
-            return newPosts.map(newPost => {
-              const existingPost = oldPosts.find(oldPost => oldPost.id === newPost.id);
-              if (existingPost && existingPost.isLiked) {
-                return {
-                  ...newPost,
-                  isLiked: existingPost.isLiked,
-                  likesCount: existingPost.likesCount
-                };
-              }
-              return newPost;
-            });
-          };
-          
-          if (selectedTagIds.length > 0) {
-            forumService.getPosts(selectedTagIds)
-              .then(fetchedPosts => {
-                // Preserve like status
-                const updatedPosts = preserveLikeStatus(fetchedPosts, posts);
-                setPosts(updatedPosts);
-              })
-              .catch(err => {
-                console.error('Error refreshing posts:', err);
-                Alert.alert('Error', 'Failed to refresh posts. Please try again.');
-              })
-              .finally(() => setLoading(false));
-          } else {
-            forumService.getPosts()
-              .then(fetchedPosts => {
-                // Preserve like status
-                const updatedPosts = preserveLikeStatus(fetchedPosts, posts);
-                setPosts(updatedPosts);
-              })
-              .catch(err => {
-                console.error('Error refreshing posts:', err);
-                Alert.alert('Error', 'Failed to refresh posts. Please try again.');
-              })
-              .finally(() => setLoading(false));
-          }
-        }}
+        onRefresh={handleRefresh}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="forum-outline" size={64} color={theme.textSecondary} />
