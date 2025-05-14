@@ -285,3 +285,23 @@
 .light-theme .food-image-placeholder {
   background-color: #fef3c7; /* amber-200 */
 }
+
+/* Ingredient text styling for PostDetail.tsx */
+.nh-ingredient-main-text {
+  color: var(--color-gray-200); /* Light text for dark mode */
+  /* font-weight, etc., can be inherited or set on the <span> inside if needed */
+}
+
+.light-theme .nh-ingredient-main-text {
+  color: var(--color-gray-900); /* Dark text for light mode */
+}
+
+.nh-ingredient-nutrient-text {
+  color: var(--color-gray-400); /* Dimmer light text for dark mode */
+  font-size: var(--font-size-xs);
+  margin-left: var(--space-1);
+}
+
+.light-theme .nh-ingredient-nutrient-text {
+  color: #000000; /* Pure black for light mode */
+}
