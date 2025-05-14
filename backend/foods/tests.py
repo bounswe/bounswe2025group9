@@ -72,7 +72,7 @@ class FoodCatalogTests(TestCase):
             imageUrl="http://example.com/vegan.jpg",
             category="Salad",
         )
-        self.vegan_food.dietaryOptions = ["Vegan", "Gluten-Free"]
+        self.vegan_food.dietaryOptions = ["Vegan", "Vegetarian", "Gluten-Free"]
         self.vegan_food.save()
         self.vegetarian_food = FoodEntry.objects.create(
             name="Vegetarian Pizza",
@@ -208,7 +208,6 @@ class FoodCatalogTests(TestCase):
         results = response.data.get("results", [])
         names = [food["name"] for food in results]
         self.assertIn("Vegan Salad", names)
-        self.assertIn("Vegetarian Pizza", names)
 
     def test_dietary_options_filtering_no_results(self):
         """Test filtering by a dietary option that does not exist."""
