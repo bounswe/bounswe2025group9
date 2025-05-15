@@ -13,6 +13,7 @@ import requests
 
 from django.conf import settings
 
+
 class TranslationService:
     def __init__(self):
         self.api_key = settings.DEEPL_API_KEY
@@ -25,14 +26,16 @@ class TranslationService:
             raise ValueError("Target language cannot be empty")
         return True
 
-    def translate_text(self, text: str, target_lang: str, source_lang: str = None) -> dict:
+    def translate_text(
+        self, text: str, target_lang: str, source_lang: str = None
+    ) -> dict:
         self.validate_params(text, target_lang, source_lang)
-        
+
         headers = {
             "Authorization": f"DeepL-Auth-Key {self.api_key}",
-            "Content-Type": "application/json"
+            "Content-Type": "application/json",
         }
-        
+
         payload = {
             "text": [text],
             "target_lang": target_lang,
@@ -41,16 +44,17 @@ class TranslationService:
             payload["source_lang"] = source_lang
 
         response = requests.post(self.api_url, headers=headers, json=payload)
-        
+
         if response.status_code != 200:
             raise Exception(f"Translation service error: {response.text}")
-            
+
         data = response.json()
         return {
-            'translated_text': data['translations'][0]['text'],
-            'source_lang': data['translations'][0]['detected_source_language'],
-            'target_lang': target_lang
+            "translated_text": data["translations"][0]["text"],
+            "source_lang": data["translations"][0]["detected_source_language"],
+            "target_lang": target_lang,
         }
+
 
 class TranslationView(APIView):
     permission_classes = []
@@ -58,16 +62,16 @@ class TranslationView(APIView):
     def post(self, request: Request) -> Response:
         """
         POST /api/translate
-        
+
         Translates text using DeepL API.
-        
+
         Request body:
         {
             "text": "Text to translate",
             "target_lang": "TR",  # Language code (e.g., EN, TR, DE, FR)
             "source_lang": "EN"   # Optional: source language
         }
-        
+
         Response:
         {
             "translated_text": "Translated content",
@@ -77,15 +81,15 @@ class TranslationView(APIView):
         """
         try:
             # Get request data
-            text = request.data.get('text')
-            target_lang = request.data.get('target_lang')
-            source_lang = request.data.get('source_lang')
+            text = request.data.get("text")
+            target_lang = request.data.get("target_lang")
+            source_lang = request.data.get("source_lang")
 
             # Validate input
             if not text or not target_lang:
                 return Response(
                     {"error": "text and target_lang are required"},
-                    status=status.HTTP_400_BAD_REQUEST
+                    status=status.HTTP_400_BAD_REQUEST,
                 )
 
             # DeepL API configuration
@@ -98,32 +102,34 @@ class TranslationView(APIView):
                 "target_lang": target_lang,
                 "auth_key": api_key,
             }
-            
+
             if source_lang:
                 params["source_lang"] = source_lang
 
             # Make API request
             response = requests.post(url, data=params)
-            
+
             if response.status_code == 200:
                 result = response.json()
-                return Response({
-                    "translated_text": result["translations"][0]["text"],
-                    "source_lang": result["translations"][0].get("detected_source_language", source_lang),
-                    "target_lang": target_lang
-                })
+                return Response(
+                    {
+                        "translated_text": result["translations"][0]["text"],
+                        "source_lang": result["translations"][0].get(
+                            "detected_source_language", source_lang
+                        ),
+                        "target_lang": target_lang,
+                    }
+                )
             else:
                 return Response(
                     {"error": "Translation service error", "details": response.text},
-                    status=status.HTTP_503_SERVICE_UNAVAILABLE
+                    status=status.HTTP_503_SERVICE_UNAVAILABLE,
                 )
 
         except Exception as e:
             return Response(
-                {"error": str(e)},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-
 
 
 class TimeView(APIView):
@@ -251,9 +257,10 @@ class WikidataEntityView(APIView):
                 return f"https://en.wikipedia.org/wiki/{title.replace(' ', '_')}"
         return None
 
+
 class WikidataFoodView(APIView):
     permission_classes = []
-    
+
     def get(self, request: Request) -> Response:
         """
         GET /food?query={query}&limit={limit}
@@ -261,37 +268,33 @@ class WikidataFoodView(APIView):
         """
         query = request.query_params.get("query")
         limit = request.query_params.get("limit", "10")
-        
+
         try:
             limit = int(limit)
         except ValueError:
             limit = 10
-            
+
         if not query:
             return Response(
-                {"error": "query parameter is required"}, 
-                status=status.HTTP_400_BAD_REQUEST
+                {"error": "query parameter is required"},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            
+
         try:
             results = self.search_wikidata_entities(query, limit)
-            return Response({
-                "results": results,
-                "count": len(results),
-                "query": query
-            })
+            return Response({"results": results, "count": len(results), "query": query})
         except Exception as e:
             return Response(
                 {"error": f"Failed to query Wikidata: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
             )
-    
+
     def search_wikidata_entities(self, query, limit):
         """
         Uses the wbsearchentities API to search for food-related entities
         """
         api_url = "https://www.wikidata.org/w/api.php"
-        
+
         # Parameters for wbsearchentities
         params = {
             "action": "wbsearchentities",
@@ -299,17 +302,15 @@ class WikidataFoodView(APIView):
             "search": query,
             "language": "en",
             "limit": limit,
-            "type": "item"
+            "type": "item",
         }
-        
+
         response = requests.get(
-            api_url, 
-            params=params,
-            headers={"User-Agent": "WikidataFoodApp/1.0"}
+            api_url, params=params, headers={"User-Agent": "WikidataFoodApp/1.0"}
         )
         response.raise_for_status()
         data = response.json()
-        
+
         # Process the search results
         results = []
         for item in data.get("search", []):
@@ -317,11 +318,12 @@ class WikidataFoodView(APIView):
                 "id": item.get("id"),
                 "label": item.get("label", "Unknown"),
                 "description": item.get("description", ""),
-                "url": item.get("url", "")
+                "url": item.get("url", ""),
             }
             results.append(result)
-            
+
         return results
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])

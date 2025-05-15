@@ -20,6 +20,7 @@ sys.path.append(
 )
 
 from scraper import make_request, extract_food_info, get_fatsecret_image_url
+from nutrition_score import calculate_nutrition_score
 
 
 class FoodCatalog(ListAPIView):
@@ -285,8 +286,9 @@ def get_random_meal(request):
 class FoodProposalSubmitView(APIView):
     def post(self, request):
         serializer = FoodProposalSerializer(data=request.data)
+        nutrition_score = calculate_nutrition_score(serializer.data)
         if serializer.is_valid():
-            serializer.save(proposedBy=request.user)
+            serializer.save(proposedBy=request.user, nutritionScore=nutrition_score)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

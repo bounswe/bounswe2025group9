@@ -3,7 +3,7 @@ from .views import TimeView, WikidataEntityView, random_food_image, TranslationV
 
 urlpatterns = [
     path("time", TimeView.as_view(), name="get-time"),
-    path('translate/', TranslationView.as_view(), name='translate'),
+    path("translate/", TranslationView.as_view(), name="translate"),
     path(
         "wiki-data/<str:entity_id>",
         WikidataEntityView.as_view(),
