@@ -71,8 +71,7 @@ const ProposeNewFood: React.FC = () => {
     const proteinValue = Number(protein);
     const carbsValue = Number(carbs);
     const fatValue = Number(fat);
-    const caloriesValue = Number(calories);
-    const servingSizeValue = Number(servingSize);
+  
     
     // 1. Protein content (30% of score)
     const proteinScore = Math.min(proteinValue / 10, 3) * (0.3 * 10 / 3);
