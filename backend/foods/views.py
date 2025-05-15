@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from foods.models import FoodEntry, FoodProposal
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from foods.serializers import FoodEntrySerializer, FoodProosalSerializer
+from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
 from rest_framework.generics import ListAPIView
 from rest_framework import status
 from django.db import transaction
