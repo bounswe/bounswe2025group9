@@ -5,7 +5,7 @@ const AdminRedirect = () => {
     // redirect to backend admin on component mount
     useEffect(() => {
         // backend api url from .env or hardcoded - same as in apiClient.ts
-        const backendUrl = "http://localhost:8081";
+        const backendUrl = "/";
         
         // construct admin url
         const adminUrl = `${backendUrl}/admin/`;

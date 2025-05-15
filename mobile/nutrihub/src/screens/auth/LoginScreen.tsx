@@ -14,6 +14,7 @@ import {
   Platform,
   ScrollView,
   TouchableOpacity,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -39,7 +40,7 @@ interface LoginFormData {
  * Login screen component for user authentication
  */
 const LoginScreen: React.FC = () => {
-  const { theme, textStyles } = useTheme();
+  const { theme, textStyles, themeType } = useTheme();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { login, error: authError, clearError } = useAuth();
   
@@ -110,7 +111,7 @@ const LoginScreen: React.FC = () => {
   };
   
   return (
-    <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+    <SafeAreaView style={[styles.container, { backgroundColor: themeType === 'light' ? '#0d7c5f' : theme.background }]}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         style={styles.keyboardView}
@@ -118,85 +119,98 @@ const LoginScreen: React.FC = () => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           {/* Logo and Title */}
           <View style={styles.logoContainer}>
-            <Icon name="heart-pulse" size={40} color={theme.primary} />
-            <Text style={[styles.logoText, textStyles.heading1]}>NutriHub</Text>
-          </View>
-          
-          <Text style={[styles.welcomeText, textStyles.heading2]}>Welcome Back</Text>
-          <Text style={[styles.subtitleText, textStyles.body]}>
-            Sign in to your account to continue
-          </Text>
-          
-          {/* Authentication Error Message */}
-          {authError && (
-            <View style={[
-              styles.errorContainer, 
-              { 
-                backgroundColor: theme.errorContainerBg,
-                borderLeftWidth: 3,
-                borderLeftColor: theme.error
-              }
-            ]}>
-              <Icon name="alert-circle" size={20} color={theme.error} />
-              <Text style={[styles.errorText, { color: theme.error }]}>
-                {getErrorMessage()}
+            <Image 
+              source={require('../../../assets/logo.png')} 
+              style={styles.logoImage} 
+              resizeMode="contain"
+            />
+            <View style={styles.logoTextContainer}>
+              <Text style={[styles.logoTextNutri, textStyles.heading1, { color: 'white', fontFamily: 'Poppins_400Regular' }]}>
+                Nutri
+              </Text>
+              <Text style={[styles.logoTextHub, textStyles.heading1, { color: 'white', fontFamily: 'Poppins_900Black' }]}>
+                Hub
               </Text>
             </View>
-          )}
-          
-          {/* Login Form */}
-          <View style={styles.formContainer}>
-            {/* Username Input */}
-            <TextInput
-              label="Username"
-              value={values.username}
-              onChangeText={handleChange('username')}
-              onBlur={handleBlur('username')}
-              error={getFieldError('username')}
-              autoCapitalize="none"
-              iconName="account-outline"
-              testID="username-input"
-              editable={!isSubmitting}
-            />
-            
-            {/* Password Input */}
-            <TextInput
-              label="Password"
-              value={values.password}
-              onChangeText={handleChange('password')}
-              onBlur={handleBlur('password')}
-              error={getFieldError('password')}
-              secureTextEntry
-              toggleSecureEntry
-              iconName="lock-outline"
-              testID="password-input"
-              editable={!isSubmitting}
-            />
-            
-            {/* Login Button */}
-            <Button
-              title="Login"
-              onPress={handleSubmit}
-              loading={isSubmitting}
-              disabled={isSubmitting}
-              fullWidth
-              variant="primary"
-              size="large"
-              style={styles.loginButton}
-              testID="login-button"
-            />
           </View>
           
-          {/* Sign Up Link */}
-          <View style={styles.signUpContainer}>
-            <Text style={[styles.signUpText, textStyles.body]}>Don't have an account? </Text>
-            <TouchableOpacity 
-              onPress={handleSignUp}
-              testID="signup-button"
-              disabled={isSubmitting}
-            >
-              <Text style={[styles.signUpLink, { color: theme.primary }]}>Sign Up</Text>
-            </TouchableOpacity>
+          <View style={[styles.cardContainer, { backgroundColor: theme.surface }]}>
+            <View style={styles.cardHeader}>
+              <Icon name="login" size={28} color={themeType === 'light' ? theme.text : "white"} style={styles.cardIcon} />
+              <Text style={[styles.cardTitle, textStyles.heading2]}>Login</Text>
+            </View>
+          
+            {/* Authentication Error Message */}
+            {authError && (
+              <View style={[
+                styles.errorContainer, 
+                { 
+                  backgroundColor: theme.errorContainerBg,
+                  borderLeftWidth: 3,
+                  borderLeftColor: theme.error
+                }
+              ]}>
+                <Icon name="alert-circle" size={20} color={theme.error} />
+                <Text style={[styles.errorText, { color: theme.error }]}>
+                  {getErrorMessage()}
+                </Text>
+              </View>
+            )}
+            
+            {/* Login Form */}
+            <View style={styles.formContainer}>
+              {/* Username Input */}
+              <TextInput
+                label="Username"
+                value={values.username}
+                onChangeText={handleChange('username')}
+                onBlur={handleBlur('username')}
+                error={getFieldError('username')}
+                autoCapitalize="none"
+                iconName="account-outline"
+                testID="username-input"
+                editable={!isSubmitting}
+              />
+              
+              {/* Password Input */}
+              <TextInput
+                label="Password"
+                value={values.password}
+                onChangeText={handleChange('password')}
+                onBlur={handleBlur('password')}
+                error={getFieldError('password')}
+                secureTextEntry
+                toggleSecureEntry
+                iconName="lock-outline"
+                testID="password-input"
+                editable={!isSubmitting}
+              />
+              
+              {/* Login Button */}
+              <Button
+                title={isSubmitting ? "Signing in..." : "Sign In"}
+                onPress={handleSubmit}
+                loading={isSubmitting}
+                disabled={isSubmitting}
+                fullWidth
+                variant="primary"
+                size="large"
+                style={styles.loginButton}
+                testID="login-button"
+              />
+            </View>
+            
+            {/* Sign Up Link */}
+            <View style={styles.signUpContainer}>
+              <Text style={[styles.signUpText, textStyles.body]}>Don't have an account? </Text>
+              <TouchableOpacity 
+                onPress={handleSignUp}
+                testID="signup-button"
+                disabled={isSubmitting}
+              >
+                <Text style={[styles.signUpLink, { color: theme.primary }]}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -213,50 +227,78 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: SPACING.xl,
+    padding: SPACING.lg,
     justifyContent: 'center',
   },
   logoContainer: {
+    alignItems: 'center',
+    marginBottom: SPACING.lg,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  logoImage: {
+    width: 60,
+    height: 60,
+    marginRight: SPACING.sm,
+  },
+  logoTextContainer: {
+    flexDirection: 'row',
+  },
+  logoTextNutri: {
+    fontWeight: 'normal',
+  },
+  logoTextHub: {
+    fontWeight: '900',
+  },
+  cardContainer: {
+    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: SPACING.xl,
+    marginBottom: SPACING.md,
   },
-  logoText: {
-    marginLeft: SPACING.sm,
+  cardIcon: {
+    marginRight: SPACING.sm,
   },
-  welcomeText: {
-    textAlign: 'center',
-    marginBottom: SPACING.xs,
+  cardTitle: {
+    fontWeight: 'bold',
   },
-  subtitleText: {
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
+  formContainer: {
+    marginTop: SPACING.md,
   },
   errorContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
-    marginBottom: SPACING.lg,
+    borderRadius: BORDER_RADIUS.sm,
+    marginBottom: SPACING.md,
   },
   errorText: {
     marginLeft: SPACING.sm,
     flex: 1,
   },
-  formContainer: {
-    marginBottom: SPACING.xl,
-  },
   loginButton: {
-    marginTop: SPACING.lg,
+    marginTop: SPACING.md,
   },
   signUpContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: SPACING.lg,
   },
-  signUpText: {},
+  signUpText: {
+    opacity: 0.7,
+  },
   signUpLink: {
     fontWeight: 'bold',
   },

@@ -17,6 +17,8 @@ import os, sys
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+STATIC_URL = "/static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
@@ -30,7 +32,13 @@ SECRET_KEY = os.environ.get(
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+# TODO: Temporarily allow all host for development
+ALLOWED_HOSTS = ["*"]
+
+CSRF_TRUSTED_ORIGINS = [
+    "https://nutrihub.fit",
+    "https://www.nutrihub.fit",
+]
 
 
 # Application definition
@@ -171,14 +179,14 @@ SIMPLE_JWT = {
 }
 
 # cors settings for development
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",  # vite development server
-    "http://127.0.0.1:5173",  # alternative localhost
-    "http://localhost:8000",    
-    "http://127.0.0.1:8000",  
-    "http://localhost:8081",    
-    "http://127.0.0.1:8081"  
-]
+
+
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:5173",  # vite development server
+#     "http://127.0.0.1:5173",  # alternative localhost
+# ]
+CORS_ALLOW_ALL_ORIGINS = True  # TODO: allow all origins for development
+
 
 # allow postman to make requests
 CORS_ALLOW_HEADERS = [

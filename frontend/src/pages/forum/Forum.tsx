@@ -201,10 +201,21 @@ const Forum = () => {
             // Use local storage as the primary source of truth for liked status
             const userLikedPosts = getUserLikedPostsFromStorage();
 
-            const fetchedPosts = response.results.map(post => ({
-                ...post,
-                liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
-            }));
+            const fetchedPosts = response.results.map(post => {
+                // Normalize the author field to ensure it's an object with an id and username
+                let normalizedAuthor = post.author;
+                if (typeof post.author === 'string') {
+                    normalizedAuthor = { id: 0, username: post.author };
+                } else if (!post.author || !post.author.username) {
+                    normalizedAuthor = { id: 0, username: 'Anonymous' };
+                }
+                
+                return {
+                    ...post,
+                    author: normalizedAuthor,
+                    liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+                };
+            });
 
             // Handle pagination if necessary (though large page_size reduces need)
             let allResults = [...fetchedPosts];
@@ -215,10 +226,21 @@ const Forum = () => {
                 currentPageNum++;
                 try {
                     const nextPageResponse = await apiClient.getForumPosts({ ...params, page: currentPageNum });
-                    const nextPagePosts = nextPageResponse.results.map(post => ({
-                        ...post,
-                        liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
-                    }));
+                    const nextPagePosts = nextPageResponse.results.map(post => {
+                        // Normalize the author field to ensure it's an object with an id and username
+                        let normalizedAuthor = post.author;
+                        if (typeof post.author === 'string') {
+                            normalizedAuthor = { id: 0, username: post.author };
+                        } else if (!post.author || !post.author.username) {
+                            normalizedAuthor = { id: 0, username: 'Anonymous' };
+                        }
+                        
+                        return {
+                            ...post,
+                            author: normalizedAuthor,
+                            liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+                        };
+                    });
                     allResults.push(...nextPagePosts);
                     nextUrl = nextPageResponse.next;
                 } catch (err) {
@@ -299,10 +321,21 @@ const Forum = () => {
             // Use local storage as the primary source of truth for liked status
             const userLikedPosts = getUserLikedPostsFromStorage();
             
-            const searchPosts = response.results.map(post => ({
-                ...post,
-                liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
-            }));
+            const searchPosts = response.results.map(post => {
+                // Normalize the author field to ensure it's an object with an id and username
+                let normalizedAuthor = post.author;
+                if (typeof post.author === 'string') {
+                    normalizedAuthor = { id: 0, username: post.author };
+                } else if (!post.author || !post.author.username) {
+                    normalizedAuthor = { id: 0, username: 'Anonymous' };
+                }
+                
+                return {
+                    ...post,
+                    author: normalizedAuthor,
+                    liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
+                };
+            });
             
             setSearchResults(searchPosts);
             setSearchResultsCount(response.count);
@@ -704,7 +737,9 @@ const Forum = () => {
                                                 <div className="flex items-center justify-center">
                                                     <User size={16} className="flex-shrink-0" />
                                                 </div>
-                                                Posted by: {post.author.username} • {formatDate(post.created_at)}
+                                                Posted by: {typeof post.author === 'string' 
+                                                    ? post.author 
+                                                    : post.author?.username || 'Anonymous'} • {formatDate(post.created_at)}
                                             </span>
                                             <div className="flex items-center gap-4">
                                                 <Link 

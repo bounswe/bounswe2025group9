@@ -98,32 +98,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
   
   /**
-   * Log in with username and password
-   */
+ * Log in with username and password
+ */
   const login = async (credentials: LoginCredentials): Promise<void> => {
     setIsLoading(true);
     setError(null);
     
     try {
+      console.log("Attempting login for:", credentials.username);
       // Get tokens
       const tokens = await authService.login(credentials);
+      console.log("Login successful, saving tokens");
       
-      // Store tokens
-      await AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.access);
-      await AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refresh);
+      // Store tokens - ensure these complete before continuing
+      await Promise.all([
+        AsyncStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, tokens.access),
+        AsyncStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, tokens.refresh)
+      ]);
       
       // Get user profile
+      console.log("Fetching user profile");
       const userProfile = await authService.getUserProfile();
       
       // Store user data
       await AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userProfile));
       
-      // Update state
+      // Update state AFTER all storage operations complete
+      console.log("Login complete, updating state");
       setUser(userProfile);
       setIsLoggedIn(true);
     } catch (err) {
       const error = err as Error;
       let authError: AuthError;
+      console.error("Login failed:", error.message);
       
       if (error.message.includes('Invalid username or password')) {
         authError = {
@@ -148,7 +155,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       setIsLoading(false);
     }
   };
-  
   /**
    * Register a new user
    */

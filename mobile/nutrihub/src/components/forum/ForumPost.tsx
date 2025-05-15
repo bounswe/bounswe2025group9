@@ -4,7 +4,7 @@
  * A flexible component for displaying forum posts with various interaction options.
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
@@ -78,8 +78,6 @@ const ForumPost: React.FC<ForumPostProps> = ({
   testID,
 }) => {
   const { theme, textStyles } = useTheme();
-  const [isLiked, setIsLiked] = useState(post.isLiked);
-  const [likesCount, setLikesCount] = useState(post.likesCount);
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -104,6 +102,38 @@ const ForumPost: React.FC<ForumPostProps> = ({
     }
   };
   
+  // Get icon for tag
+  const getTagIcon = (tagName: string): React.ComponentProps<typeof Icon>['name'] => {
+    // Check for prefix 'dietary' in case of inconsistent tag naming
+    const lowerTag = tagName.toLowerCase();
+    if (lowerTag.includes('diet') || lowerTag.includes('nutrition') || lowerTag.includes('tip')) {
+      return 'lightbulb-outline';
+    }
+    if (lowerTag.includes('recipe')) {
+      return 'chef-hat';
+    }
+    if (lowerTag.includes('meal') || lowerTag.includes('plan')) {
+      return 'calendar-text';
+    }
+    return 'tag';
+  };
+  
+  // Get color for tag
+  const getTagColor = (tagName: string): string => {
+    // Check for prefix in case of inconsistent tag naming
+    const lowerTag = tagName.toLowerCase();
+    if (lowerTag.includes('diet') || lowerTag.includes('nutrition') || lowerTag.includes('tip')) {
+      return '#4CAF50'; // Green
+    }
+    if (lowerTag.includes('recipe')) {
+      return '#FFA000'; // Amber
+    }
+    if (lowerTag.includes('meal') || lowerTag.includes('plan')) {
+      return '#2196F3'; // Blue
+    }
+    return theme.primary;
+  };
+  
   // Handle post press
   const handlePress = () => {
     if (onPress) {
@@ -113,11 +143,9 @@ const ForumPost: React.FC<ForumPostProps> = ({
   
   // Handle like press
   const handleLike = () => {
-    setIsLiked(!isLiked);
-    setLikesCount(prevCount => isLiked ? prevCount - 1 : prevCount + 1);
-    
     if (onLike) {
-      onLike({ ...post, isLiked: !isLiked, likesCount: isLiked ? likesCount - 1 : likesCount + 1 });
+      // Let parent handle like status updates completely
+      onLike(post);
     }
   };
   
@@ -134,19 +162,20 @@ const ForumPost: React.FC<ForumPostProps> = ({
       key={index} 
       style={[
         styles.tagContainer, 
-        { backgroundColor: theme.badgeBackground }
+        { backgroundColor: `${getTagColor(tag)}20` } // 20% opacity
       ]}
     >
-      <Text style={[styles.tagText, { color: theme.badgeText }]}>
+      <Icon name={getTagIcon(tag)} size={12} color={getTagColor(tag)} style={styles.tagIcon} />
+      <Text style={[styles.tagText, { color: getTagColor(tag) }]}>
         {tag}
       </Text>
     </View>
   );
   
-  // Create like button text style
+  // Create like button text style based on post props, not local state
   const likeButtonTextStyle: TextStyle = {
     ...styles.actionText,
-    ...(isLiked ? { color: theme.primary } : {})
+    ...(post.isLiked ? { color: theme.primary } : {})
   };
   
   return (
@@ -195,8 +224,8 @@ const ForumPost: React.FC<ForumPostProps> = ({
       {/* Footer with actions */}
       <View style={[styles.footer, { borderTopColor: theme.divider }]}>
         <Button
-          iconName={isLiked ? "thumb-up" : "thumb-up-outline"}
-          title={likesCount.toString()}
+          iconName={post.isLiked ? "thumb-up" : "thumb-up-outline"}
+          title={(post.likesCount || 0).toString()}
           variant="text"
           size="small"
           onPress={handleLike}
@@ -206,7 +235,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
         
         <Button
           iconName="comment-outline"
-          title={post.commentsCount.toString()}
+          title={(post.commentsCount || 0).toString()}
           variant="text"
           size="small"
           onPress={handleComment}
@@ -245,11 +274,16 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   tagContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.xs,
     marginLeft: SPACING.xs,
     marginBottom: SPACING.xs,
+  },
+  tagIcon: {
+    marginRight: 3,
   },
   tagText: {
     fontSize: 12,

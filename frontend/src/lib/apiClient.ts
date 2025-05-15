@@ -26,15 +26,14 @@ export interface Food {
 export interface FoodProposal {
   name: string;
   category: string;
-  nutrition: {
-    calories: number;
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    vitamins?: Record<string, number>;
-    minerals?: Record<string, number>;
-  };
-  dietaryTags?: string[];
+  servingSize: number;
+  caloriesPerServing: number;
+  proteinContent: number;
+  fatContent: number;
+  carbohydrateContent: number;
+  allergens?: number[];
+  dietaryOptions?: string[];
+  nutritionScore: number;
   imageUrl?: string;
 }
 
@@ -101,6 +100,7 @@ export interface ForumPost {
   tags: ForumTag[];
   likes: number;
   liked: boolean;
+  has_recipe?: boolean;
 }
 
 export interface ForumTag {
@@ -131,8 +131,44 @@ export interface CreateCommentRequest {
   body: string;
 }
 
+// Recipe types
+export interface RecipeIngredient {
+  id?: number;
+  food_id: number;
+  food_name?: string;
+  amount: number;
+  protein?: number;
+  fat?: number;
+  carbs?: number;
+  calories?: number;
+}
+
+export interface Recipe {
+  id: number;
+  post_id?: number;
+  post_title?: string;
+  author?: string;
+  instructions: string;
+  ingredients: RecipeIngredient[];
+  total_protein: number;
+  total_fat: number;
+  total_carbohydrates: number;
+  total_calories: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateRecipeRequest {
+  post_id: number;
+  instructions: string;
+  ingredients: {
+    food_id: number;
+    amount: number;
+  }[];
+}
+
 // api base urls
-const BACKEND_API_URL = "http://localhost:8081";
+const BACKEND_API_URL = import.meta.env.VITE_API_BASE_URL;
 const MOCK_API_URL = "/api";
 
 // token storage
@@ -237,7 +273,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number, search?: string}) => {
+  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string }) => {
     let url = "/foods";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
@@ -245,6 +281,12 @@ export const apiClient = {
     }
     if (params && params.search) {
       queryParams.append('search', params.search);
+    }
+    if (params && params.sort_by) {
+      queryParams.append('sort_by', params.sort_by);
+    }
+    if (params && params.order) {
+      queryParams.append('order', params.order);
     }
     const queryString = queryParams.toString();
     if (queryString) {
@@ -256,10 +298,10 @@ export const apiClient = {
   },
 
   proposeFood: (proposal: FoodProposal) =>
-    fetchJson<FoodProposalResponse>("/foods/propose", {
+    fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
-    }),
+    }, true),
 
   // auth - use real backend
   login: (username: string, password: string) =>
@@ -545,4 +587,39 @@ export const apiClient = {
       // Just log the error but don't throw
     });
   },
+
+  // recipes
+  createRecipe: (recipeData: CreateRecipeRequest) =>
+    fetchJson<Recipe>("/forum/recipes/", {
+      method: "POST",
+      body: JSON.stringify(recipeData)
+    }, true),
+    
+  getRecipe: (recipeId: number) =>
+    fetchJson<Recipe>(`/forum/recipes/${recipeId}/`, {
+      method: "GET"
+    }, true),
+    
+  getRecipeForPost: (postId: number) => {
+    console.log(`[API] Fetching recipe for post ID: ${postId}`);
+    return fetchJson<PaginatedResponse<Recipe>>(`/forum/recipes/?post=${postId}`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received recipe for post ID ${postId}:`, response);
+      // Return the first recipe if it exists
+      if (response && response.results && response.results.length > 0) {
+        return response.results[0];
+      }
+      return null;
+    }).catch(error => {
+      console.error(`[API] Error fetching recipe for post ID ${postId}:`, error);
+      throw error;
+    });
+  },
+    
+  updateRecipe: (recipeId: number, updateData: Partial<CreateRecipeRequest>) =>
+    fetchJson<Recipe>(`/forum/recipes/${recipeId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData)
+    }, true),
 };

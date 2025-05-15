@@ -23,6 +23,17 @@
   cursor: pointer;
 }
 
+.nh-button-square {
+  display: inline-block;
+  padding: var(--space-2) var(--space-2);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  transition: all 0.2s ease;
+  text-align: center;
+  cursor: pointer;
+}
+
+
 .nh-button-lg {
   padding: var(--space-4) var(--space-8);
   font-size: var(--font-size-xl);
@@ -67,6 +78,14 @@
   font-size: var(--font-size-3xl);
   font-weight: bold;
   margin-bottom: var(--space-4);
+  color: var(--color-light);
+  transition: color 0.3s ease;
+}
+
+.nh-title-custom{
+  font-size: var(--font-size-3xl);
+  font-weight: bold;
+  margin-bottom: 0;
   color: var(--color-light);
   transition: color 0.3s ease;
 }
@@ -189,6 +208,53 @@
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* mobile menu styles */
+.nh-navbar .mobile-menu {
+  background-color: var(--color-gray-800);
+  color: white;
+  border-radius: var(--radius-md);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+.light-theme .nh-navbar .mobile-menu {
+  background-color: white;
+  color: var(--color-gray-900);
+  border: 1px solid var(--color-gray-200);
+}
+
+.nh-navbar .mobile-menu a {
+  color: white;
+  transition: color 0.3s ease;
+}
+
+.nh-navbar .mobile-menu a:hover {
+  color: var(--color-gray-300);
+}
+
+.light-theme .nh-navbar .mobile-menu a {
+  color: var(--color-gray-900);
+}
+
+.light-theme .nh-navbar .mobile-menu a:hover {
+  color: var(--color-gray-700);
+}
+
+.nh-navbar .mobile-menu .divider {
+  border-color: var(--color-gray-700);
+}
+
+.light-theme .nh-navbar .mobile-menu .divider {
+  border-color: var(--color-gray-200);
+}
+
+.nh-navbar .mobile-menu .welcome-text {
+  color: white;
+}
+
+.light-theme .nh-navbar .mobile-menu .welcome-text {
+  color: var(--color-gray-900);
+}
+
 .nh-footer {
   background-color: var(--color-dark);
   color: white;
@@ -265,4 +331,24 @@
 
 .light-theme .food-image-placeholder {
   background-color: #fef3c7; /* amber-200 */
+}
+
+/* Ingredient text styling for PostDetail.tsx */
+.nh-ingredient-main-text {
+  color: var(--color-gray-200); /* Light text for dark mode */
+  /* font-weight, etc., can be inherited or set on the <span> inside if needed */
+}
+
+.light-theme .nh-ingredient-main-text {
+  color: var(--color-gray-900); /* Dark text for light mode */
+}
+
+.nh-ingredient-nutrient-text {
+  color: var(--color-gray-400); /* Dimmer light text for dark mode */
+  font-size: var(--font-size-xs);
+  margin-left: var(--space-1);
+}
+
+.light-theme .nh-ingredient-nutrient-text {
+  color: #000000; /* Pure black for light mode */
 }

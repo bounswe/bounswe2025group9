@@ -6,11 +6,13 @@ from rest_framework import status
 from unittest.mock import patch, Mock
 from django.urls import reverse
 from api.views import TranslationService  # Add this import
+from django.urls import reverse
 
 
 class GetTimeTest(TestCase):
     def test_get_time_success(self):
-        response = cast(HttpResponse, self.client.get("/api/time?name=Arda"))
+        url = reverse("get-time") + "?name=Arda"
+        response = cast(HttpResponse, self.client.get(url))
         self.assertEqual(response.status_code, 200)
         self.assertIn("time", response.json())  # type: ignore
         self.assertEqual(response.json()["name"], "Arda")  # type:ignore
