@@ -179,11 +179,14 @@ SIMPLE_JWT = {
 }
 
 # cors settings for development
+
+
 # CORS_ALLOWED_ORIGINS = [
 #     "http://localhost:5173",  # vite development server
 #     "http://127.0.0.1:5173",  # alternative localhost
 # ]
 CORS_ALLOW_ALL_ORIGINS = True  # TODO: allow all origins for development
+
 
 # allow postman to make requests
 CORS_ALLOW_HEADERS = [
@@ -200,3 +203,7 @@ CORS_ALLOW_HEADERS = [
 
 # allow credentials (cookies, authorization headers)
 CORS_ALLOW_CREDENTIALS = True
+
+
+# DeepL API configuration
+DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "7225230f-59a5-42eb-b576-7fb2d5cf2db1:fx")
