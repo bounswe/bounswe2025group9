@@ -6,6 +6,8 @@ Visit our website 👇
   <img src="https://github.com/user-attachments/assets/f44d84fe-ac8d-44e2-b643-bbebab4e09ef" alt="Nutrihub Logo" width="800"/>
 </a>  
 
+Or watch our [website](https://www.youtube.com/watch?v=Uglpcuw_Zg0) and [mobile](https://drive.google.com/file/d/1FJ-BgY_uusbCjsC7Lncxc12e4Ob1NKFR/view?usp=sharing) demos.
+
 ---
 
 # About Us
