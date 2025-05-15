@@ -67,17 +67,76 @@ const ProposeNewFood: React.FC = () => {
   };
 
   const calculateNutritionScore = () => {
-    // Simple nutrition score calculation (this would be more sophisticated in a real app)
+    // Calculating nutrition score following the backend logic
     const proteinValue = Number(protein);
     const carbsValue = Number(carbs);
     const fatValue = Number(fat);
     const caloriesValue = Number(calories);
+    const servingSizeValue = Number(servingSize);
     
-    // Basic formula: higher protein is good, balanced macros are good
-    const proteinScore = proteinValue * 4;
-    const balanceScore = 100 - Math.abs((carbsValue * 4) - (fatValue * 9)) / caloriesValue * 100;
+    // 1. Protein content (30% of score)
+    const proteinScore = Math.min(proteinValue / 10, 3) * (0.3 * 10 / 3);
     
-    return Math.round((proteinScore + balanceScore) / 2);
+    // 2. Carbohydrate quality (30% of score)
+    let carbQualityScore = 1.5; // Default moderate score
+    
+    const lowerCategory = category.toLowerCase();
+    if (lowerCategory.includes('vegetable') || lowerCategory.includes('fruit')) {
+      carbQualityScore = 3; // Max score
+    } else if (foodName.toLowerCase().includes('whole') && lowerCategory.includes('grain')) {
+      carbQualityScore = 2.5; // Whole grains
+    } else if (lowerCategory.includes('grain')) {
+      carbQualityScore = 2; // Regular grains
+    } else if (lowerCategory.includes('dairy')) {
+      carbQualityScore = 1.5; // Dairy
+    } else if (lowerCategory.includes('sweets') || lowerCategory.includes('snacks')) {
+      carbQualityScore = 0.5; // Sweets and snacks
+    }
+    
+    // Scale carb quality to 30% of total score
+    carbQualityScore = carbQualityScore * (0.3 * 10 / 3);
+    
+    // 3. Nutrient balance (40% of score)
+    const totalMacros = proteinValue * 4 + carbsValue * 4 + fatValue * 9;
+    
+    let nutrientBalanceScore = 0;
+    if (totalMacros > 0) {
+      // Calculate percentage of calories from each macro
+      const proteinPct = (proteinValue * 4) / totalMacros;
+      const carbsPct = (carbsValue * 4) / totalMacros;
+      const fatPct = (fatValue * 9) / totalMacros;
+      
+      // Score for each macronutrient's balance
+      let proteinBalance = 0.5;
+      if (proteinPct >= 0.1 && proteinPct <= 0.35) {
+        proteinBalance = 1.0; // Good range
+      } else if (proteinPct > 0.35) {
+        proteinBalance = 0.7; // Too high
+      }
+      
+      let carbsBalance = 0.7;
+      if (carbsPct >= 0.45 && carbsPct <= 0.65) {
+        carbsBalance = 1.0; // Good range
+      } else if (carbsPct > 0.65) {
+        carbsBalance = 0.7; // Too high
+      }
+      
+      let fatBalance = 0.7;
+      if (fatPct >= 0.2 && fatPct <= 0.35) {
+        fatBalance = 1.0; // Good range
+      } else if (fatPct > 0.35) {
+        fatBalance = 0.5; // Too high
+      }
+      
+      // Combine the balance scores
+      nutrientBalanceScore = (proteinBalance + carbsBalance + fatBalance) * (0.4 * 10 / 3);
+    }
+    
+    // Calculate final score (0-10 scale)
+    const finalScore = proteinScore + carbQualityScore + nutrientBalanceScore;
+    
+    // Cap at 10 and round to 2 decimal places
+    return Math.round(Math.min(finalScore, 10.0) * 100) / 100;
   };
 
   const handleDietaryOptionsChange = (option: string) => {
