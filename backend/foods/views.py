@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from foods.models import FoodEntry, FoodProposal
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from foods.serializers import FoodEntrySerializer, FoodProosalSerializer
+from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
 from rest_framework.generics import ListAPIView
 from rest_framework import status
 from django.db import transaction
@@ -20,6 +20,7 @@ sys.path.append(
 )
 
 from scraper import make_request, extract_food_info, get_fatsecret_image_url
+from nutrition_score import calculate_nutrition_score
 
 
 class FoodCatalog(ListAPIView):
@@ -286,7 +287,8 @@ class FoodProposalSubmitView(APIView):
     def post(self, request):
         serializer = FoodProposalSerializer(data=request.data)
         if serializer.is_valid():
-            serializer.save(proposedBy=request.user)
+            nutrition_score = calculate_nutrition_score(serializer.validated_data)
+            serializer.save(proposedBy=request.user, nutritionScore=nutrition_score)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 

@@ -206,4 +206,6 @@ CORS_ALLOW_CREDENTIALS = True
 
 
 # DeepL API configuration
-DEEPL_API_KEY = os.environ.get("DEEPL_API_KEY", "7225230f-59a5-42eb-b576-7fb2d5cf2db1:fx")
+DEEPL_API_KEY = os.environ.get(
+    "DEEPL_API_KEY", "7225230f-59a5-42eb-b576-7fb2d5cf2db1:fx"
+)

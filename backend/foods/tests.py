@@ -116,7 +116,7 @@ class FoodCatalogTests(TestCase):
             response.data["warning"],
             "Some categories are not available: nonexistentcategory",
         )
-        
+
     def test_search_returns_successful(self):
         response = self.client.get(reverse("get_foods"), {"search": "frUit"})
         self.assertEqual(response.data.get("status"), status.HTTP_200_OK)
