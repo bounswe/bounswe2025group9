@@ -286,8 +286,8 @@ def get_random_meal(request):
 class FoodProposalSubmitView(APIView):
     def post(self, request):
         serializer = FoodProposalSerializer(data=request.data)
-        nutrition_score = calculate_nutrition_score(serializer.data)
         if serializer.is_valid():
+            nutrition_score = calculate_nutrition_score(serializer.validated_data)
             serializer.save(proposedBy=request.user, nutritionScore=nutrition_score)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
