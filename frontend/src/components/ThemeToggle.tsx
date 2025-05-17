@@ -1,28 +1,47 @@
-import { useEffect } from "react";
+import { useState, useEffect } from 'react'
+import { Sun, Moon } from '@phosphor-icons/react'
 
-export default function SwaggerPage() {
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui-bundle.js";
-    script.onload = () => {
-      window.SwaggerUIBundle({
-        url: "/openapi.yaml",
-        dom_id: "#swagger-ui",
-        layout: "BaseLayout",
-        presets: [window.SwaggerUIBundle.presets.apis],
-      });
-    };
-    document.body.appendChild(script);
-  }, []);
+// theme toggle component for switching between light and dark mode
+const ThemeToggle = () => {
+    // initialize state from localStorage or default to dark mode
+    const [isDarkMode, setIsDarkMode] = useState(() => {
+        const savedTheme = localStorage.getItem('theme')
+        return savedTheme ? savedTheme === 'dark' : true // default to dark if not set
+    })
 
-  return (
-    <div>
-      <link
-        rel="stylesheet"
-        href="https://cdn.jsdelivr.net/npm/swagger-ui-dist/swagger-ui.css"
-      />
-      <div id="swagger-ui" />
-    </div>
-  );
+    useEffect(() => {
+        // apply theme class to document body
+        if (isDarkMode) {
+            document.documentElement.classList.add('dark-theme')
+            document.documentElement.classList.remove('light-theme')
+            // save preference to localStorage
+            localStorage.setItem('theme', 'dark')
+        } else {
+            document.documentElement.classList.add('light-theme')
+            document.documentElement.classList.remove('dark-theme')
+            // save preference to localStorage
+            localStorage.setItem('theme', 'light')
+        }
+    }, [isDarkMode])
+
+    const toggleTheme = () => {
+        setIsDarkMode(!isDarkMode)
+    }
+
+    return (
+        <button
+            onClick={toggleTheme}
+            className="p-2 rounded-full focus:outline-none border border-transparent cursor-pointer"
+            aria-label={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+            title={isDarkMode ? "Switch to light mode" : "Switch to dark mode"}
+        >
+            {isDarkMode ? (
+                <Moon size={20} weight="fill" className="text-white" />
+            ) : (
+                <Sun size={20} weight="fill" className="text-yellow-300" />
+            )}
+        </button>
+    )
 }
 
+export default ThemeToggle 

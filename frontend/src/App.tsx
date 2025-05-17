@@ -18,6 +18,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Swagger documentation - completely standalone route */}
+          <Route path="/docs" element={<SwaggerPage />} />
+          
           <Route path="/" element={<MainLayout />}>
             {/* Public Routes - only login and signup */}
             <Route path="login" element={<Login />} />
@@ -31,9 +34,8 @@ function App() {
               <Route path="forum" element={<Forum />} />
               <Route path="forum/post/:postId" element={<PostDetail />} />
               <Route path="forum/create" element={<CreatePost />} />
-            <Route path="/docs" element={<SwaggerPage />} />
             </Route>
-            
+
             <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
           </Route>
         </Routes>
