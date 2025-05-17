@@ -106,6 +106,28 @@ python manage.py runserver 9000
 
 ### Frontend Setup
 
+
+#### Nginx Configuration
+
+The project uses Nginx as a reverse proxy and web server. The configuration is located in `frontend/nginx.conf` and handles:
+
+1. Serving the frontend static files
+2. Proxying API requests to the backend
+3. SSL/TLS configuration (when enabled)
+4. Static file caching
+5. Gzip compression
+
+The Nginx configuration is automatically set up when using Docker Compose. For manual setup:
+
+1. Install Nginx on your system
+2. Copy the configuration from `frontend/nginx.conf` to your Nginx configuration directory
+3. Update the configuration with your specific paths and domains
+4. Restart Nginx
+
+Note: The Docker setup includes SSL/TLS support through Certbot. The certificates are stored in:
+- `./certbot/www` - Web root for certificate validation
+- `./certbot/conf` - SSL/TLS certificates
+
 1. Navigate to the frontend directory:
 ```bash
 cd frontend
@@ -118,7 +140,7 @@ npm install
 
 3. Start the development server:
 ```bash
-npm start
+npm run dev
 ```
 
 ### Mobile App Setup
