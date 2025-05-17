@@ -8,8 +8,6 @@ export default function SwaggerPage() {
       window.SwaggerUIBundle({
         url: "/openapi.yaml",
         dom_id: "#swagger-ui",
-        layout: "BaseLayout",
-        presets: [window.SwaggerUIBundle.presets.apis],
       });
     };
     document.body.appendChild(script);
@@ -25,4 +23,3 @@ export default function SwaggerPage() {
     </div>
   );
 }
-
