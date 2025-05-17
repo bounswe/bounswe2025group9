@@ -10,6 +10,7 @@ import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
+import SwaggerPage from './components/SwaggerPage';
 
 // app component with react-router setup
 function App() {
@@ -17,6 +18,9 @@ function App() {
     <AuthProvider>
       <BrowserRouter>
         <Routes>
+          {/* Swagger documentation - completely standalone route */}
+          <Route path="/docs" element={<SwaggerPage />} />
+          
           <Route path="/" element={<MainLayout />}>
             {/* Public Routes - only login and signup */}
             <Route path="login" element={<Login />} />
@@ -31,7 +35,7 @@ function App() {
               <Route path="forum/post/:postId" element={<PostDetail />} />
               <Route path="forum/create" element={<CreatePost />} />
             </Route>
-            
+
             <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
           </Route>
         </Routes>
