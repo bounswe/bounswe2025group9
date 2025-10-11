@@ -1,0 +1,962 @@
+[
+  {
+    "food_name": "Biscotti",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Pine Nuts",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Lemon",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Polenta",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Cola",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Bulgur",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Pie",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Apricot",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Almonds",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Ghee",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Apple Juice",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Tomato Juice",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Lassi",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Walnuts",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Milk",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Pudding",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Kombucha",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Peach",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Tempeh",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Dragon Fruit",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Spelt",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Crackers",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Pecans",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Flaxseeds",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Watermelon",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Carrot",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Fennel",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Seitan",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Beef Steak",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Smoothie",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Couscous",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Canola Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Turnip",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Mozzarella",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Brussels Sprouts",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Taffy",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Cashews",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Butter",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Latte",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Brazil Nuts",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Pomegranate",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Ice Cream Cone",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Iced Tea",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Celery",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Papaya",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Buttermilk",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Caramel",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Lychee",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Mayonnaise",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Energy Drink",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Espresso",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Vegetable Juice",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Millet",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Spinach",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Lentils",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Pork Chop",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Lemonade",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Lettuce",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Fruit Punch",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Milkshake",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Cornmeal",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Farro",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Duck",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Kefir",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Granola",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Sour Cream",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Clotted Cream",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Chicken Breast",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Whole Grain Cereal",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Barley Tea",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "English Muffin",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Gummy Bears",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Probiotic Drink",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Soybeans",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Veal",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Peanut Butter",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Coconut Water",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Kale",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Crab",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Water",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Cantaloupe",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Passion Fruit",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Tuna",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Soba Noodles",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Nutella",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Protein Shake",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Peanut Brittle",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Pumpkin Seeds",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Tahini",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Radish",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Green Beans",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Cauliflower",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Grapeseed Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Anchovies",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Corn",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Shrimp",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Sunflower Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Plum",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Strawberry",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Zucchini",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Chickpeas",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Tomato",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Soybean Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Raspberry",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Grapes",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Root Beer",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Artichoke",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Paneer",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Cheddar",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Octopus",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Ghee",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Ice Cream",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Muffins",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Tangerine",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Cucumber",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Rice",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Cottage Cheese",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Butter",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "White Bread",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Candy",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Lollipops",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Jackfruit",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Rice Krispies Treats",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Oats",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Potato Chips",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Tofu",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Chocolate Bar",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Herbal Tea",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Avocado",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Pineapple",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Cake",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Lamb",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Bubble Tea",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Custard",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Bison",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Garlic",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Coffee",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Parmesan",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Tea",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Chia Seeds",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Orange Juice",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Grits",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Peas",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Churros",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Popcorn",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Dulce de Leche",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Onion",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Wheat Bread",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Cookies",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Multigrain Bread",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Pumpkin",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Parsnip",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Blue Cheese",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Rice Noodles",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Bagel",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Leek",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Date",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Barley",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Pretzels",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Quinoa",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Guava",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Coconut Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Granola Bar",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Pear",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Cream",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Sardines",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Scallops",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Black Beans",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Ricotta",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Edamame",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Fruit Snacks",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Skyr",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Evaporated Milk",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Goat Cheese",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Milkshake",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Tilapia",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Blueberry",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Potato",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Banana",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Ginger Ale",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Condensed Milk",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Cranberry",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Flatbread",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Eggs",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Nougat",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Macarons",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Lime",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Soda",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Hot Chocolate",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Lard",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Rye Bread",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Broccoli",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Turkey",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Tallow",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Buckwheat",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Yogurt",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Whipped Cream",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Doughnuts",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Udon",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Chocolate Chip Cookies",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Avocado",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Okra",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Olive Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Buttermilk",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Ham",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Sesame Seeds",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Toffee",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Sports Drink",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Peas",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Macadamia Nuts",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Goat Meat",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Mussels",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Ramen",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Tortilla",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Frozen Yogurt",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Fig",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Margarine",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Kiwi",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Brownie",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Trail Mix",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Mocha",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Bell Pepper",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Rice Cake",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Salmon",
+    "food_category": "Protein"
+  },
+  {
+    "food_name": "Beetroot",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Green Tea",
+    "food_category": "Beverage"
+  },
+  {
+    "food_name": "Mango",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Pasta",
+    "food_category": "Grain"
+  },
+  {
+    "food_name": "Chard",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Eggplant",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Asparagus",
+    "food_category": "Vegetable"
+  },
+  {
+    "food_name": "Marshmallows",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Vegetable Oil",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Cream Cheese",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Hazelnuts",
+    "food_category": "Fats & Oils"
+  },
+  {
+    "food_name": "Cupcake",
+    "food_category": "Sweets & Snacks"
+  },
+  {
+    "food_name": "Apple",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Orange",
+    "food_category": "Fruit"
+  },
+  {
+    "food_name": "Cheese",
+    "food_category": "Dairy"
+  },
+  {
+    "food_name": "Palm Oil",
+    "food_category": "Fats & Oils"
+  }
+]

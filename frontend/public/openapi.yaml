@@ -1,0 +1,550 @@
+openapi: 3.0.0
+info:
+  title: Forum & Food API
+  version: 1.0.0
+  description: >
+    A REST API for managing forum posts, tags, comments, recipes, and food catalog.
+
+servers:
+  - url: nutrihub.fit/api
+
+tags:
+  - name: Forum
+    description: Endpoints related to posts, comments, tags, and recipes in the forum.
+  - name: Food
+    description: Endpoints related to food catalog, recipe suggestions, and proposals.
+  - name: Account
+    description: Endpoints for user registration, authentication, and profile management.
+
+
+paths:
+  /forum/posts/:
+    get:
+      tags: [Forum]
+      summary: List posts
+      description: Returns all posts. Supports filtering by tag or author, and ordering by creation date.
+      parameters:
+        - name: tags
+          in: query
+          schema: { type: integer }
+        - name: author
+          in: query
+          schema: { type: integer }
+        - name: ordering
+          in: query
+          schema: { type: string }
+      responses:
+        '200':
+          description: A list of posts
+    post:
+      tags: [Forum]
+      summary: Create post
+      description: Creates a new post with the given title, body, and tags.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreate'
+      responses:
+        '201':
+          description: Post created successfully
+
+  /forum/posts/{id}/:
+    get:
+      tags: [Forum]
+      summary: Retrieve post
+      description: Fetch a single post by its ID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Post found
+    put:
+      tags: [Forum]
+      summary: Update post
+      description: Update title, body, or tags of an existing post (owner only).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PostCreate'
+      responses:
+        '200':
+          description: Post updated
+    delete:
+      tags: [Forum]
+      summary: Delete post
+      description: Permanently deletes the post if the user is the owner.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Post deleted
+
+  /forum/posts/search/:
+    get:
+      tags: [Forum]
+      summary: Fuzzy search posts
+      description: Performs fuzzy string matching on post titles using fuzzywuzzy.
+      parameters:
+        - name: q
+          in: query
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: Matched posts returned
+
+  /forum/posts/{id}/like/:
+    post:
+      tags: [Forum]
+      summary: Toggle like on a post
+      description: Likes or unlikes the post based on previous state.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Like toggled successfully
+
+  /forum/comments/:
+    get:
+      tags: [Forum]
+      summary: List comments
+      description: List all comments with optional filters.
+      parameters:
+        - name: post
+          in: query
+          schema: { type: integer }
+        - name: author
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Comments retrieved
+    post:
+      tags: [Forum]
+      summary: Create comment
+      description: Adds a comment to a post.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '201':
+          description: Comment created
+
+  /forum/comments/{id}/:
+    get:
+      tags: [Forum]
+      summary: Retrieve comment
+      description: Fetch a single comment by ID.
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Comment retrieved
+    put:
+      tags: [Forum]
+      summary: Update comment
+      description: Edit an existing comment (author only).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CommentCreate'
+      responses:
+        '200':
+          description: Comment updated
+    delete:
+      tags: [Forum]
+      summary: Delete comment
+      description: Delete a comment (author only).
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Comment deleted
+
+  /forum/tags/:
+    get:
+      tags: [Forum]
+      summary: List tags
+      description: Returns all available tags.
+      responses:
+        '200':
+          description: Tag list
+
+  /forum/recipes/:
+    get:
+      tags: [Forum]
+      summary: List recipes
+      description: Fetch recipes optionally filtered by `post` ID.
+      parameters:
+        - name: post
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Recipes retrieved
+    post:
+      tags: [Forum]
+      summary: Create recipe
+      description: Creates a recipe and attaches it to an existing post.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeCreate'
+      responses:
+        '201':
+          description: Recipe created
+
+  /forum/recipes/{id}/:
+    get:
+      tags: [Forum]
+      summary: Retrieve recipe
+      description: Returns the recipe with the given ID.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Recipe retrieved
+    put:
+      tags: [Forum]
+      summary: Update recipe
+      description: Updates instructions and ingredient list (post owner only).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RecipeCreate'
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Recipe updated
+    delete:
+      tags: [Forum]
+      summary: Delete recipe
+      description: Deletes the recipe (post owner only).
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '204':
+          description: Recipe deleted
+
+  /food/catalog/:
+    get:
+      tags: [Food]
+      summary: Food catalog
+      description: List food items, with optional filtering by category and search term.
+      parameters:
+        - name: search
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Food items retrieved
+        '204':
+          description: No content found
+        '206':
+          description: Partial content or warnings
+
+  /food/manual-proposal/:
+    post:
+      tags: [Food]
+      summary: Submit a food proposal manually
+      description: Authenticated users can propose new food items.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: true
+      responses:
+        '201':
+          description: Food proposal submitted
+        '400':
+          description: Validation error
+
+  /food/suggest_recipe/:
+    get:
+      tags: [Food]
+      summary: Suggest recipe
+      description: Suggests a recipe using TheMealDB based on a food name.
+      parameters:
+        - name: food_name
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Recipe suggestion returned
+        '400':
+          description: Missing parameter
+        '404':
+          description: No recipe found
+        '500':
+          description: Server error during fetch
+
+  /food/random-meal/:
+    get:
+      tags: [Food]
+      summary: Get random meal
+      description: Fetches a random meal suggestion from TheMealDB API.
+      responses:
+        '200':
+          description: Meal fetched successfully
+        '404':
+          description: No random meal found
+        '500':
+          description: Server or fetch error
+
+  /users/:
+    get:
+      tags: [Account]
+      summary: List all users
+      description: Returns a list of all users (admin access).
+      responses:
+        '200':
+          description: A list of users
+
+  /users/create/:
+    post:
+      summary: Register new user
+      description: Creates a new user account.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: User created successfully
+        '400':
+          description: Validation error
+
+  /users/token/:
+    post:
+      tags: [Account]
+      summary: Obtain JWT tokens
+      description: Returns access and refresh tokens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                username:
+                  type: string
+                password:
+                  type: string
+              required: [username, password]
+      responses:
+        '200':
+          description: JWT tokens returned
+        '401':
+          description: Authentication failed
+
+  /users/token/refresh/:
+    post:
+      tags: [Account]
+      summary: Refresh access token
+      description: Refresh the access token using the refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+              required: [refresh]
+      responses:
+        '200':
+          description: Access token refreshed
+
+  /users/token/logout/:
+    post:
+      tags: [Account]
+      summary: Logout
+      description: Blacklists a refresh token to log the user out.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                refresh:
+                  type: string
+              required: [refresh]
+      responses:
+        '205':
+          description: Logged out
+        '400':
+          description: Invalid token
+
+  /users/change-password/:
+    post:
+      summary: Change password
+      description: Authenticated users can change their password.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePassword'
+      responses:
+        '200':
+          description: Password changed
+        '400':
+          description: Invalid old password or validation failed
+
+  /users/profile/:
+    get:
+      summary: Get current user's profile
+      description: Returns the authenticated user's profile details.
+      responses:
+        '200':
+          description: User profile returned
+
+
+components:
+  schemas:
+    PostCreate:
+      type: object
+      description: Schema for creating or updating a post
+      properties:
+        title:
+          type: string
+          description: Title of the post
+        body:
+          type: string
+          description: Body content of the post
+        tag_ids:
+          type: array
+          items:
+            type: integer
+          description: List of tag IDs to associate
+      required: [title, body, tag_ids]
+
+    CommentCreate:
+      type: object
+      description: Schema for creating a comment
+      properties:
+        post:
+          type: integer
+          description: ID of the related post
+        body:
+          type: string
+          description: Comment text
+      required: [post, body]
+
+    RecipeIngredient:
+      type: object
+      description: One ingredient in a recipe
+      properties:
+        food_id:
+          type: integer
+          description: ID of the food item
+        amount:
+          type: number
+          description: Amount in grams
+      required: [food_id, amount]
+
+    RecipeCreate:
+      type: object
+      description: Schema for creating a recipe
+      properties:
+        post_id:
+          type: integer
+          description: ID of the post the recipe belongs to
+        instructions:
+          type: string
+          description: Recipe instructions
+        ingredients:
+          type: array
+          items:
+            $ref: '#/components/schemas/RecipeIngredient'
+          description: List of ingredients with food references and amounts
+      required: [post_id, instructions, ingredients]
+
+    UserCreate:
+      type: object
+      description: Schema for creating a new user
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        surname:
+          type: string
+        address:
+          type: string
+      required: [username, password, email]
+
+    ChangePassword:
+      type: object
+      description: Schema for changing the user's password
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+      required: [old_password, new_password]
+
+

@@ -1,0 +1,920 @@
+{
+	"info": {
+		"_postman_id": "2b7a68d6-7c34-4f76-b021-1ee2ab69ece9",
+		"name": "352",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "17560267"
+	},
+	"item": [
+		{
+			"name": "register_user",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n            \"username\": \"eren1\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren1@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": []\r\n        }",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/create/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"create",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "get_token_jwt",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\" : \"eren1\", \"password\": \"securepassword1235\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/token/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"token",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "refresh_token_jwt",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"refresh\" : \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0NTQzODk5NiwiaWF0IjoxNzQ1MzUyNTk2LCJqdGkiOiIyYTUzNDNkZGQxNDc0YTliYjEzN2VkNmYxZTdhMWJhMSIsInVzZXJfaWQiOjR9.1beuuvVPObEbNtlhpUirqOMaukKCkui5pTqXiYMT32I\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/token/refresh/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"token",
+						"refresh",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_all_users_with_token",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1MzU0NTgxLCJpYXQiOjE3NDUzNTA5ODEsImp0aSI6ImVjN2E3ZjBkZWZkMzQ1NDc5ZWFhOTNiOTNjNDI0YTUyIiwidXNlcl9pZCI6Mn0.9xlv1Y7Na_pEQbk0gNIpr4w7G1Z9LKUaV8FVW3x3oic",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "time",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/time?name=osman",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"api",
+						"time"
+					],
+					"query": [
+						{
+							"key": "name",
+							"value": "osman"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_food_catalog",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/foods?limit=10&categories=Fruit,Protein",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"foods"
+					],
+					"query": [
+						{
+							"key": "limit",
+							"value": "10"
+						},
+						{
+							"key": "categories",
+							"value": "Fruit,Protein"
+						}
+					]
+				},
+				"description": "Fetch a list of food entries.\n\nQuery parameters:\n- limit: The maximum number of food entries to return (default 10).\n- categories: Comma-separated list of categories to filter (case-insensitive, e.g. 'Fruit,Protein').\n  If omitted or empty, all categories are returned. If any category is invalid, a warning is returned and only valid categories are used.\n\n"
+			},
+			"response": []
+		},
+		{
+			"name": "get_or_fetch_food_by_name",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+				"raw": "http://localhost:8081/foods/get-or-fetch/?name=apple",
+				"protocol": "http",
+				"host": ["localhost"],
+				"port": "8081",
+				"path": ["foods","get-or-fetch",""],
+				"query": [
+					{
+					"key": "name",
+					"value": "apple"
+					}
+				]
+				},
+				"description": "Check if a food with the given name exists in the DB; if not, fetch from FatSecret API and save to DB."
+			},
+			"response": []
+		},
+		{
+			"name": "fuzzy_search_posts",
+			"request": {
+			  "method": "GET",
+			  "header": [
+				{
+				  "key": "Authorization",
+				  "value": "Bearer {{access_token}}",
+				  "type": "text"
+				}
+			  ],
+			  "url": {
+				"raw": "https://nutrihub.fit/api/forum/posts/search/?q=vegetarian",
+				"protocol": "http",
+				"host": ["127.0.0.1"],
+				"port": "8081",
+				"path": ["forum", "posts", "search", ""],
+				"query": [
+				  {
+					"key": "q",
+					"value": "vegetarian",
+					"description": "Search term for fuzzy matching post titles"
+				  }
+				]
+			  },
+			  "description": "**Search posts using fuzzy matching**\n\nSearches post titles using fuzzy matching with a similarity threshold of 50%.\n\nQuery parameter:\n- `q`: The search term to match against post titles\n\nReturns posts where the title matches the search term with a similarity score >= 50%.\nResults are sorted by similarity score (highest first).\n\nExample response:\n```json\n{\n  \"results\": [\n    {\n      \"id\": 1,\n      \"title\": \"Best vegetarian alternatives for meat?\",\n      \"body\": \"I've been trying to cut down on meat consumption...\",\n      \"author\": \"Berkay Bile5n\",\n      \"tags\": [\n        { \"id\": 1, \"name\": \"Dietary tip\" },\n        { \"id\": 2, \"name\": \"Recipe\" }\n      ],\n      \"like_count\": 0,\n      \"created_at\": \"2025-05-12T15:54:54.584200Z\",\n      \"updated_at\": \"2025-05-12T15:54:54.584259Z\"\n    }\n  ],\n  \"count\": 1\n}\n```"
+			},
+			"response": []
+		},
+		{
+			"name": "list_posts",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/posts/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"forum",
+						"posts",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_post_detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer {{access_token}}",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/posts/1/",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "8081",
+					"path": [
+						"forum",
+						"posts",
+						"1",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "change_password",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2ODkxMTIyLCJpYXQiOjE3NDY4ODc1MjIsImp0aSI6ImI1YmJhNTc2M2JiODRiYTg5Njg0N2I4YWZjZTM1ODJmIiwidXNlcl9pZCI6Mn0.9414qQ1kh-xuK2iesfzHG8LdgQu9O7X4jKzIBSs6jU0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "old_password",
+							"value": "deneme123",
+							"type": "text"
+						},
+						{
+							"key": "new_password",
+							"value": "yusuf123",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/change-password/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"change-password",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ2OTU1NjI5LCJpYXQiOjE3NDY5NTIwMjksImp0aSI6IjgyNTYxY2JhYzUwNDQ0NGE4ZWExOGZhZGVmZTMwZGYzIiwidXNlcl9pZCI6NH0.Ixpk0lYgHUwTPXAlbEljHxCppcbVy2IRCIyYRI17RCY",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"refresh\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc0NzAzODQyOSwiaWF0IjoxNzQ2OTUyMDI5LCJqdGkiOiI1NzdhZDNiZDJiZTk0NzE1OWFhYTI0ZWEzYjQ0NTE5YiIsInVzZXJfaWQiOjR9.mCMDLwWOdpcbeO8pH06IAPTLY0a6vySSrmxqcx2JZfc\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/token/logout/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"token",
+						"logout",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+{
+			"name": "get_user_name",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{access_token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/users/profile/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"users",
+						"profile",
+						""
+					]
+				},
+				"description": "Get the current user's profile information including name using their authentication token"
+			},
+			"response": []
+		},
+        {
+          "name": "get_post_detail",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", "1"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "get_available_tags",
+          "request": {
+            "method": "GET",
+            "header": [
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/tags/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "tags", ""]
+            },
+            "description": "**Get available post tags**\n\nUse this endpoint to retrieve all predefined tags.\nEach tag object contains:\n\n- `id` (integer): used to assign tags when creating a post\n- `name` (string): human-readable tag label\n\nThe frontend should call this once to populate the tag selection UI.\n\n### Example response:\n```json\n[\n  { \"id\": 1, \"name\": \"Dietary tip\" },\n  { \"id\": 2, \"name\": \"Recipe\" },\n  { \"id\": 3, \"name\": \"Meal plan\" }\n]\n```"
+          }
+        },
+        {
+          "name": "create_post_with_tags",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Grilled Chicken Bowl\",\n  \"body\": \"High-protein recipe great for lunch.\",\n  \"tag_ids\": [1, 2]\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""]
+            },
+            "description": "**Create a new forum post with tag assignments**\n\nTo create a post, provide:\n\n- `title` (string): title of the post\n- `body` (string): free-text content\n- `tag_ids` (array of integers): list of tag IDs to attach (from `/forum/tags/`)\n\nYou must be authenticated.\n\n### Example request body:\n```json\n{\n  \"title\": \"Grilled Chicken Bowl\",\n  \"body\": \"High-protein recipe great for lunch.\",\n  \"tag_ids\": [1, 2]\n}\n```"
+          }
+        },
+        {
+          "name": "filter_posts_by_single_tag",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/?tags=1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "tags", "value": "1" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "filter_posts_by_multiple_tags",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/?tags=1&tags=2",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "tags", "value": "1" },
+                { "key": "tags", "value": "2" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "filter_and_order_posts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/?tags=1&ordering=-created_at",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "tags", "value": "1" },
+                { "key": "ordering", "value": "-created_at" }
+              ]
+            }
+          }
+        },
+        {
+          "name": "update_own_post",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Updated Post Title\",\n  \"body\": \"Updated content of the post.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", "1", ""]
+            },
+            "description": "**Update a post (must be the author)**\n\nThis allows partial update of the post (e.g., title or body).\n\nOnly the author of the post can perform this operation.\n\n### Example body:\n```json\n{\n  \"title\": \"Updated Post Title\",\n  \"body\": \"Updated content of the post.\"\n}\n```\n\nReturns:\n- `200 OK` on success\n- `403 Forbidden` if not the author"
+          }
+        },
+        {
+          "name": "filter_posts_by_author",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/?author=1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", ""],
+              "query": [
+                { "key": "author", "value": "1" }
+              ]
+            },
+            "description": "**Filter posts by author**\n\nReturns posts authored by the user with ID `1`.\n\nTo get the ID of the currently logged-in user, use the `/users/me/` endpoint (if available) or decode the JWT token payload.\n\nExample:\n```http\nGET /forum/posts/?author=1\n```"
+          }
+        },
+        {
+          "name": "create_comment",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"post\": 1,\n  \"body\": \"This is a great post!\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/comments/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", ""]
+            },
+            "description": "**Create a comment**\n\nSubmit a comment on a given post by including the `post` ID in the payload.\n\nRequires authentication.\n\n### Request Body\n```json\n{\n  \"post\": 1,\n  \"body\": \"This is a great post!\"\n}\n```"
+          }
+        },
+        {
+          "name": "list_comments_for_post",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/comments/?post=1",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", ""],
+              "query": [
+                { "key": "post", "value": "1" }
+              ]
+            },
+            "description": "**List comments for a given post**\n\nReturns all comments where `post=1`.\n\nQuery param required: `?post=<post_id>`"
+          }
+        },
+        {
+          "name": "delete_own_comment",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/comments/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", "1", ""]
+            },
+            "description": "**Delete your own comment**\n\nThis deletes comment with ID `1`. Only the comment's author can delete it.\n\nReturns:\n- `204 No Content` on success\n- `403 Forbidden` if user is not the author"
+          }
+        },
+        {
+          "name": "update_own_comment",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+              { "key": "Content-Type", "value": "application/json", "type": "text" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"body\": \"Actually I changed my mind.\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/comments/1/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "comments", "1", ""]
+            },
+            "description": "**Update your own comment**\n\nSend a `PATCH` request to modify a comment’s body. Only the comment author can perform this action.\n\n### Example body:\n```json\n{\n  \"body\": \"Actually I changed my mind.\"\n}\n```\n\nReturns:\n- `200 OK` with updated comment\n- `403 Forbidden` if not the author"
+          }
+        },
+        {
+          "name": "toggle_like_on_post",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{access_token}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "https://nutrihub.fit/api/forum/posts/1/like/",
+              "protocol": "http",
+              "host": ["127.0.0.1"],
+              "port": "8081",
+              "path": ["forum", "posts", "1", "like", ""]
+            },
+            "description": "**Toggle like/unlike for a post**\n\nSend a `POST` request to like or unlike a post.\n\n- If the user hasn't liked the post → it creates a like and returns:\n```json\n{ \"liked\": true }\n```\n- If the user already liked it → it unlikes the post and returns:\n```json\n{ \"liked\": false }\n```\n\nReturns:\n- `201 Created` if a like was added\n- `200 OK` if a like was removed\n- `403 Forbidden` if user is not allowed\n- `401 Unauthorized` if not authenticated"
+          }
+        },
+		    {
+      "name": "Suggest Recipe",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://nutrihub.fit/api/foods/suggest_recipe?food_name=chicken",
+          "host": ["http://127.0.0.1:8081"],
+          "path": ["foods", "suggest_recipe"],
+          "query": [
+            {
+              "key": "food_name",
+              "value": "chicken"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+		{
+			"name": "create_recipe",
+			"request": {
+				"method": "POST",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+					{ "key": "Content-Type", "value": "application/json", "type": "text" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"post_id\": 1,\n  \"instructions\": \"1. Preheat oven to 350°F.\\n2. Season chicken with salt and pepper.\\n3. Bake for 25 minutes.\\n4. Cook rice according to package instructions.\\n5. Serve chicken over rice.\",\n  \"ingredients\": [\n    {\n      \"food_id\": 1,\n      \"amount\": 200\n    },\n    {\n      \"food_id\": 2,\n      \"amount\": 150\n    }\n  ]\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/recipes/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", ""]
+				},
+				"description": "**Create a recipe for a post**\n\nAdd a recipe to an existing post. You must be the author of the post.\n\nRequired fields:\n- `post_id`: ID of the post to attach the recipe to\n- `instructions`: Step-by-step cooking instructions\n- `ingredients`: Array of ingredients with food_id and amount (in grams)\n\nThe API will calculate nutritional totals automatically based on ingredients.\n\nReturns:\n- `201 Created` with full recipe details\n- `403 Forbidden` if not the post author\n- `400 Bad Request` if validation fails"
+			}
+		},
+		{
+			"name": "get_recipe_detail",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+				],
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/recipes/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", "1", ""]
+				},
+				"description": "**Get recipe details**\n\nRetrieve complete information about a recipe, including:\n- Instructions\n- Ingredients with amounts\n- Nutritional information (protein, fat, carbs, calories)\n- Author and post information\n\nAuthentication is required but any authenticated user can view recipes."
+			}
+		},
+		{
+			"name": "get_recipes_for_post",
+			"request": {
+				"method": "GET",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+				],
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/recipes/?post=1",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", ""],
+					"query": [
+						{ "key": "post", "value": "1" }
+					]
+				},
+				"description": "**Get recipe for a specific post**\n\nFilters recipes by post ID. Since a post can have at most one recipe, this will return either an empty list or a list with exactly one recipe.\n\nQuery parameters:\n- `post`: ID of the post to get the recipe for"
+			}
+		},
+		{
+			"name": "update_recipe",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" },
+					{ "key": "Content-Type", "value": "application/json", "type": "text" }
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"instructions\": \"1. Updated cooking instructions.\\n2. Add more details on preparation.\\n3. New serving suggestions.\",\n  \"ingredients\": [\n    {\n      \"food_id\": 1,\n      \"amount\": 250\n    },\n    {\n      \"food_id\": 3,\n      \"amount\": 100\n    }\n  ]\n}",
+					"options": { "raw": { "language": "json" } }
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/recipes/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", "1", ""]
+				},
+				"description": "**Update a recipe**\n\nModify the instructions or ingredients of a recipe. Only the post author can update the recipe.\n\nYou can update:\n- `instructions`: New cooking instructions\n- `ingredients`: New list of ingredients (completely replaces existing ingredients)\n\nNutritional totals will be recalculated based on the new ingredients.\n\nReturns:\n- `200 OK` with updated recipe\n- `403 Forbidden` if not the post author"
+			}
+		},
+		{
+			"name": "Get Random Meal",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/foods/random-meal/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["foods", "random-meal", ""]
+				},
+				"description": "**Get a random meal from TheMealDB API**\n\nReturns a random meal with complete details including:\n- id\n- name\n- category\n- area (cuisine type)\n- instructions\n- image URL\n- tags\n- youtube link\n- ingredients (with measurements)\n\nNo authentication required."
+			},
+			"response": []
+		},
+		{
+			"name": "delete_recipe",
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{ "key": "Authorization", "value": "Bearer {{access_token}}", "type": "text" }
+				],
+				"url": {
+					"raw": "https://nutrihub.fit/api/forum/recipes/1/",
+					"protocol": "http",
+					"host": ["127.0.0.1"],
+					"port": "8081",
+					"path": ["forum", "recipes", "1", ""]
+				},
+				"description": "**Delete a recipe**\n\nRemove a recipe from a post. Only the post author can delete the recipe.\n\nReturns:\n- `204 No Content` on successful deletion\n- `403 Forbidden` if not the post author\n- `404 Not Found` if recipe doesn't exist"
+			}
+		},
+		{
+			"name": "submit_food_proposal",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Greek Salad\",\n  \"category\": \"Salad\",\n  \"servingSize\": 150,\n  \"caloriesPerServing\": 120,\n  \"proteinContent\": 4.5,\n  \"fatContent\": 8.0,\n  \"carbohydrateContent\": 10.0,\n  \"dietaryOptions\": [\"Vegetarian\", \"Low-Carb\"],\n  \"nutritionScore\": 75.2,\n  \"imageUrl\": \"https://example.com/salad.jpg\",\n  \"allergens\": []\n}"
+				},
+				"url": {
+					"raw": "https://nutrihub.fit/api/foods/proposal/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8081",
+					"path": [
+						"foods",
+						"proposal",
+						""
+					]
+				},
+				"description": "**Submit a new food proposal**\n\nExample request body:\n```json\n{\n  \"name\": \"Greek Salad\",\n  \"category\": \"Salad\",\n  \"servingSize\": 150,\n  \"caloriesPerServing\": 120,\n  \"proteinContent\": 4.5,\n  \"fatContent\": 8.0,\n  \"carbohydrateContent\": 10.0,\n  \"dietaryOptions\": [\"Vegetarian\", \"Low-Carb\"],\n  \"nutritionScore\": 75.2,\n  \"imageUrl\": \"https://example.com/salad.jpg\",\n  \"allergens\": []\n}\n```"
+			},
+			"response": []
+		},
+		{
+			"name": "get_wikidata_entity",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://nutrihub.fit/api/food/Q193",
+					"protocol": "https",
+					"host": [
+						"nutrihub",
+						"fit"
+					],
+					"path": [
+						"api",
+						"food",
+						"Q193"
+					]
+				},
+				"description": "**Get detailed information for a specific food entity from Wikidata**\n\nThis endpoint retrieves detailed information about a food entity from Wikidata using its entity ID.\n\nPath parameter:\n- `entity_id`: The Wikidata entity ID (e.g., Q193 for 'beer')\n\nResponse includes:\n- Basic entity information (ID, label, description)\n- Wikipedia link if available\n- Food-related properties such as:\n  - subclass_of\n  - instance_of\n  - made_from_material\n  - has_parts\n  - has_effect\n  - has_nutritional_value\n\nExample response for beer (Q193):\n```json\n{\n  \"id\": \"Q193\",\n  \"label\": \"beer\",\n  \"description\": \"alcoholic drink fermented from starch material\",\n  \"wikipedia_link\": \"https://en.wikipedia.org/wiki/Beer\",\n  \"properties\": {\n    \"instance_of\": [\"Q2095\"],\n    \"made_from_material\": [\"Q5371\", \"Q7772\"],\n    \"has_effect\": [\"Q47495\"]\n  }\n}\n```"
+			},
+			"response": []
+		}
+	]
+}
