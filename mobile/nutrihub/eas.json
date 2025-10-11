@@ -1,0 +1,29 @@
+{
+  "build": {
+    "preview": {
+      "android": {
+        "buildType": "apk"
+      }
+    },
+    "preview2": {
+      "android": {
+        "gradleCommand": ":app:assembleRelease"
+      }
+    },
+    "preview3": {
+      "developmentClient": true
+    },
+    "production": {},
+    "local": {
+      "android": {
+        "buildType": "apk",
+        "distribution": "internal",
+        "withoutCredentials": true
+      },
+      "developmentClient": true,
+      "env": {
+        "EXPO_PUBLIC_API_URL": "http://localhost:8000"
+      }
+    }
+  }
+} 

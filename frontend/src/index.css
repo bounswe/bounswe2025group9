@@ -1,0 +1,275 @@
+/* this is the main css file for the app */
+
+/* poppins font from google fonts */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap");
+
+/* we need to import the tailwindcss in order to use styling directly in the html */
+@import "tailwindcss";
+
+/* import component styles */
+@import "./styles/components.css";
+
+/* design tokens - dark theme (default) */
+:root {
+  /* colors */
+  --color-primary: #3b82f6; /* blue-500 */
+  --color-primary-hover: #2563eb; /* blue-600 */
+  --color-primary-light: #1e3a8a; /* darker blue-900 */
+  --color-secondary: #475569; /* slate-600 */
+  --color-secondary-hover: #334155; /* slate-700 */
+
+  /* dark mode colors */
+  --color-bg-primary: #090909; /* main bg */
+  --color-bg-secondary: #121212; /* card/component bg */
+  --color-bg-tertiary: #1a1a1a; /* elevated component bg */
+
+  --color-dark: #000000; /* black */
+  --color-dark-hover: #121212; /* slightly lighter black */
+  --color-light: #e5e7eb; /* gray-200 */
+  --color-light-hover: #d1d5db; /* gray-300 */
+
+  --color-success: #059669; /* green-600 - darker for dark mode */
+  --color-warning: #d97706; /* amber-600 - darker for dark mode */
+  --color-error: #dc2626; /* red-600 - darker for dark mode */
+  --color-info: #0284c7; /* sky-600 - darker for dark mode */
+
+  /* Forum tag colors - dark mode */
+  --forum-dietary-bg: #1a3a32;
+  --forum-dietary-text: #4eebc8;
+  --forum-dietary-active-bg: #0d7c5f;
+  --forum-dietary-active-text: white;
+  --forum-dietary-hover-bg: #224a40;
+
+  --forum-recipe-bg: #2a1a40;
+  --forum-recipe-text: #c48aff;
+  --forum-recipe-active-bg: #6200ee;
+  --forum-recipe-active-text: white;
+  --forum-recipe-hover-bg: #3b2a51;
+
+  --forum-mealplan-bg: #1a2940;
+  --forum-mealplan-text: #80b3ff;
+  --forum-mealplan-active-bg: #0062cc;
+  --forum-mealplan-active-text: white;
+  --forum-mealplan-hover-bg: #233552;
+
+  --forum-default-bg: #333333;
+  --forum-default-text: #bbbbbb;
+  --forum-default-active-bg: #555555;
+  --forum-default-active-text: white;
+  --forum-default-hover-bg: #444444;
+
+  /* Forum search and filter containers - dark mode */
+  --forum-search-bg: #1f2937; /* gray-800 */
+  --forum-search-border: #374151; /* gray-700 */
+  --forum-search-placeholder: #9ca3af; /* gray-400 */
+  --forum-search-text: #e5e7eb; /* gray-200 */
+  --forum-search-icon: #6b7280; /* gray-500 */
+  --forum-search-focus-ring: var(--color-primary);
+  --forum-search-focus-border: var(--color-primary);
+  
+  --forum-filter-container-bg: #1f2937; /* gray-800 */
+  --forum-filter-container-border: #374151; /* gray-700 */
+  --forum-filter-container-text: #e5e7eb; /* gray-200 */
+
+  /* gray scale */
+  --color-gray-50: #f9fafb;
+  --color-gray-100: #f3f4f6;
+  --color-gray-200: #e5e7eb;
+  --color-gray-300: #d1d5db;
+  --color-gray-400: #9ca3af;
+  --color-gray-500: #6b7280;
+  --color-gray-600: #4b5563;
+  --color-gray-700: #374151;
+  --color-gray-800: #1f2937;
+  --color-gray-900: #111827;
+
+  /* spacing */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-24: 6rem;
+
+  /* borders */
+  --radius-sm: 0.125rem;
+  --radius-md: 0.375rem;
+  --radius-lg: 0.5rem;
+  --radius-xl: 0.75rem;
+  --radius-2xl: 1rem;
+
+  /* shadows for dark mode */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.5);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5),
+    0 2px 4px -1px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5),
+    0 4px 6px -2px rgba(0, 0, 0, 0.3);
+
+  /* typography */
+  --font-sans: "Poppins", ui-sans-serif, system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-base: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-5xl: 3rem;
+
+  /* containers */
+  --container-padding: 1rem;
+  --container-max-width: 1280px;
+}
+
+/* light theme variables */
+.light-theme {
+  --color-primary: #3b82f6; /* blue-500 */
+  --color-primary-hover: #2563eb; /* blue-600 */
+  --color-primary-light: #dbeafe; /* blue-100 */
+
+  /* yellowish white backgrounds */
+  --color-bg-primary: #fffbeb; /* amber-50 - very light yellow */
+  --color-bg-secondary: #fffdf7; /* slightly warmer white */
+  --color-bg-tertiary: #fef9c3; /* amber-100 - light yellow */
+
+  /* green colors for navbar/footer */
+  --color-dark: #0d7c5f; /* emerald-900 */
+  --color-dark-hover: #065f46; /* emerald-800 */
+  --color-light: #111827; /* gray-900 */
+  --color-light-hover: #1f2937; /* gray-800 */
+
+  --color-success: #22c55e; /* green-500 */
+  --color-warning: #eab308; /* yellow-500 */
+  --color-error: #ef4444; /* red-500 */
+  --color-info: #0ea5e9; /* sky-500 */
+
+  /* Forum tag colors - light mode */
+  --forum-dietary-bg: #d1fae5;
+  --forum-dietary-text: #065f46;
+  --forum-dietary-active-bg: #059669;
+  --forum-dietary-active-text: white;
+  --forum-dietary-hover-bg: #a7f3d0;
+
+  --forum-recipe-bg: #ede9fe;
+  --forum-recipe-text: #5b21b6;
+  --forum-recipe-active-bg: #7c3aed;
+  --forum-recipe-active-text: white;
+  --forum-recipe-hover-bg: #ddd6fe;
+
+  --forum-mealplan-bg: #dbeafe;
+  --forum-mealplan-text: #1e40af;
+  --forum-mealplan-active-bg: #2563eb;
+  --forum-mealplan-active-text: white;
+  --forum-mealplan-hover-bg: #bfdbfe;
+
+  --forum-default-bg: #f2f2f2;
+  --forum-default-text: #666666;
+  --forum-default-active-bg: #888888;
+  --forum-default-active-text: white;
+  --forum-default-hover-bg: #e5e5e5;
+
+  /* Forum search and filter containers - light mode */
+  --forum-search-bg: #d7d7d7; /* white */
+  --forum-search-border: #e5e7eb; /* gray-200 */
+  --forum-search-placeholder: #000000; /* gray-400 */
+  --forum-search-text: #1f2937; /* gray-800 */
+  --forum-search-icon: #6b7280; /* gray-500 */
+  --forum-search-focus-ring: var(--color-primary);
+  --forum-search-focus-border: var(--color-primary);
+  
+  --forum-filter-container-bg: #f9fafb; /* gray-50 */
+  --forum-filter-container-border: #e5e7eb; /* gray-200 */
+  --forum-filter-container-text: #111827; /* gray-900 */
+
+  /* shadows for light mode */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* base styles */
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-bg-primary);
+  color: var(--color-light);
+  margin: 0;
+  padding: 0;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* make sure all elements have box-sizing: border-box */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ensure min height for page content */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* basic link styling */
+a {
+  text-decoration: none;
+  color: inherit;
+  transition: color 0.2s ease;
+}
+
+/* ensure images don't overflow */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* utility classes */
+.container {
+  width: 100%;
+  max-width: var(--container-max-width);
+  padding-left: var(--container-padding);
+  padding-right: var(--container-padding);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-md);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--color-primary-hover);
+}
+
+.btn-secondary {
+  background-color: var(--color-gray-200);
+  color: var(--color-gray-800);
+}
+
+.btn-secondary:hover {
+  background-color: var(--color-gray-300);
+}
+
+.card {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+}
