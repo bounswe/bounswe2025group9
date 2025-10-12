@@ -1,9 +1,0 @@
-<script>start("/Users/nuribasar/Desktop/bounswe2025group9/mobile/nutrihub/__tests__/");</script>
-<script>onHasParentDirectory();</script>
-<script>addRow("api-client.test.ts","api-client.test.ts",0,4427,"4.3 kB",1747236506,"5/14/25, 6:28:26 PM");</script>
-<script>addRow("auth.service.test.ts","auth.service.test.ts",0,5403,"5.3 kB",1747237001,"5/14/25, 6:36:41 PM");</script>
-<script>addRow("Button.test.tsx","Button.test.tsx",0,3358,"3.3 kB",1747237159,"5/14/25, 6:39:19 PM");</script>
-<script>addRow("forum.service.test.ts","forum.service.test.ts",0,6064,"5.9 kB",1747237148,"5/14/25, 6:39:08 PM");</script>
-<script>addRow("HomeScreen.test.tsx","HomeScreen.test.tsx",0,4137,"4.0 kB",1747236740,"5/14/25, 6:32:20 PM");</script>
-<script>addRow("README.md","README.md",0,2452,"2.4 kB",1747237414,"5/14/25, 6:43:34 PM");</script>
-<script>addRow("TextInput.test.tsx","TextInput.test.tsx",0,3722,"3.6 kB",1747237159,"5/14/25, 6:39:19 PM");</script>
