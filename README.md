@@ -10,13 +10,16 @@ Or watch our [website](https://www.youtube.com/watch?v=Uglpcuw_Zg0) and [mobile]
 
 ---
 
+
 # About Us
 
 We are Computer Engineering students studying at Boğaziçi University.  
-We are taking the course [**CmpE 352: Introduction to Software Engineering**](https://www.cmpe.boun.edu.tr/tr/courses/cmpe352) together.  
+We are taking the course [**CmpE 451: Introduction to Software Engineering**](https://www.cmpe.boun.edu.tr/tr/courses/cmpe451) together.  
 To learn more about the team and the project, visit our [Wiki Page](https://github.com/bounswe/bounswe2025group9/wiki).
 
 <img src="https://github.com/user-attachments/assets/0f7b63a5-9fbc-40f5-a1ee-cf4cfe666c2e" alt="bounswe2025group9" width="800"/>
+
+[CmpE 352 Codebase](https://github.com/bounswe/bounswe2025group9/tree/cmpe352-main)
 
 # Installation
 ## Project Overview
@@ -202,4 +205,4 @@ bounswe2025group9/
 
 ## License
 
-This project is part of the CmpE 352 course at Boğaziçi University. 
+This project is part of the CmpE 451 course at Boğaziçi University. 
