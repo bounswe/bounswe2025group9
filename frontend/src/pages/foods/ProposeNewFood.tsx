@@ -386,11 +386,28 @@ const ProposeNewFood: React.FC = () => {
                       {dietaryOptions.map((option) => (
                         <div 
                           key={option}
-                          className={`px-3 py-2 rounded-full cursor-pointer border transition-colors ${
-                            selectedDietaryOptions.includes(option)
-                              ? 'bg-primary text-white border-primary'
-                              : 'bg-[var(--forum-default-bg)] text-[var(--forum-default-text)] border-[var(--forum-search-border)] hover:bg-[var(--forum-default-hover-bg)]'
-                          }`}
+                          className="px-3 py-2 rounded-full cursor-pointer border transition-colors"
+                          style={{
+                            backgroundColor: selectedDietaryOptions.includes(option)
+                              ? 'var(--dietary-option-selected-bg)'
+                              : 'var(--dietary-option-bg)',
+                            color: selectedDietaryOptions.includes(option)
+                              ? 'var(--dietary-option-selected-text)'
+                              : 'var(--dietary-option-text)',
+                            borderColor: selectedDietaryOptions.includes(option)
+                              ? 'var(--dietary-option-selected-border)'
+                              : 'var(--dietary-option-border)'
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!selectedDietaryOptions.includes(option)) {
+                              e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!selectedDietaryOptions.includes(option)) {
+                              e.currentTarget.style.backgroundColor = 'var(--dietary-option-bg)';
+                            }
+                          }}
                           onClick={() => handleDietaryOptionsChange(option)}
                         >
                           {option}

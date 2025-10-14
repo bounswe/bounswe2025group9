@@ -71,6 +71,15 @@
   --forum-filter-container-border: #374151; /* gray-700 */
   --forum-filter-container-text: #e5e7eb; /* gray-200 */
 
+  /* Dietary options selector - dark mode */
+  --dietary-option-bg: #333333;
+  --dietary-option-text: #bbbbbb;
+  --dietary-option-border: #374151;
+  --dietary-option-hover-bg: #444444;
+  --dietary-option-selected-bg: #3b82f6; /* blue-500 */
+  --dietary-option-selected-text: white;
+  --dietary-option-selected-border: #3b82f6;
+
   /* gray scale */
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -184,6 +193,15 @@
   --forum-filter-container-bg: #f9fafb; /* gray-50 */
   --forum-filter-container-border: #e5e7eb; /* gray-200 */
   --forum-filter-container-text: #111827; /* gray-900 */
+
+  /* Dietary options selector - light mode */
+  --dietary-option-bg: #f2f2f2; /* light gray */
+  --dietary-option-text: #374151; /* gray-700 */
+  --dietary-option-border: #d1d5db; /* gray-300 */
+  --dietary-option-hover-bg: #e5e5e5; /* hover gray */
+  --dietary-option-selected-bg: #2563eb; /* blue-600 - darker blue for better visibility */
+  --dietary-option-selected-text: white;
+  --dietary-option-selected-border: #2563eb;
 
   /* shadows for light mode */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
