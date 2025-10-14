@@ -42,7 +42,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    allergens = AllergenSerializer(many=True, read_only=True)
+    allergens = AllergenSerializer(many=True, required=False)
 
     class Meta:
         """
@@ -68,3 +68,16 @@ class UserSerializer(serializers.ModelSerializer):
             "address": {"required": False},
             "password": {"write_only": True},
         }
+
+    def create(self, validated_data):
+        allergens_data = validated_data.pop("allergens", [])
+
+        # Create the user
+        user = User.objects.create_user(**validated_data)
+
+        # Create or attach allergens
+        for allergen_data in allergens_data:
+            allergen, _ = Allergen.objects.get_or_create(**allergen_data)
+            user.allergens.add(allergen)
+
+        return user

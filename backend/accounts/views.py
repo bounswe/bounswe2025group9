@@ -32,7 +32,7 @@ class CreateUserView(APIView):
     def post(self, request: Request) -> Response:
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
-            user = register_user(serializer.validated_data)
+            user = serializer.create(serializer.validated_data)
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
