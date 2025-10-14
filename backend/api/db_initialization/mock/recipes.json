@@ -1,0 +1,1681 @@
+[
+    {
+      "title": "Classic Spaghetti Bolognese",
+      "body": "A rich Italian meat sauce simmered with tomatoes and herbs, served over spaghetti.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Finely chop onions and garlic and saut\u00e9 in olive oil until soft. Brown the ground beef, then add crushed tomatoes and Italian herbs. Simmer gently 30\u201340 minutes until thick and glossy. Cook spaghetti until al dente and serve with the sauce.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 400.0
+        },
+        {
+          "foodName": "Yellow Onion",
+          "amount": 150.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 12.0
+        },
+        {
+          "foodName": "Ground Beef (85%)",
+          "amount": 500.0
+        },
+        {
+          "foodName": "Tomato, Crushed",
+          "amount": 800.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 20.0
+        }
+      ]
+    },
+    {
+      "title": "Chicken Tikka Masala",
+      "body": "Tender marinated chicken in a creamy spiced tomato sauce.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Marinate chicken in yogurt, garlic, ginger, and spices. Sear in ghee until charred at the edges, then simmer in tomato sauce until tender. Stir in cream to finish and adjust salt. Serve hot with rice.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Thigh, Boneless",
+          "amount": 700.0
+        },
+        {
+          "foodName": "Yellow Onion",
+          "amount": 150.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 12.0
+        },
+        {
+          "foodName": "Ghee",
+          "amount": 20.0
+        },
+        {
+          "foodName": "Tomato Passata",
+          "amount": 400.0
+        },
+        {
+          "foodName": "Heavy Cream",
+          "amount": 150.0
+        }
+      ]
+    },
+    {
+      "title": "Vegan Buddha Bowl",
+      "body": "Roasted vegetables and quinoa with a creamy tahini dressing.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Roast sweet potato, broccoli, and chickpeas with olive oil and salt until tender. Cook quinoa until fluffy. Whisk tahini with lemon and water into a dressing. Assemble bowls and drizzle generously.",
+      "ingredients": [
+        {
+          "foodName": "Quinoa (Cooked)",
+          "amount": 300.0
+        },
+        {
+          "foodName": "Sweet Potato",
+          "amount": 250.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 200.0
+        },
+        {
+          "foodName": "Chickpeas (Cooked)",
+          "amount": 240.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 20.0
+        },
+        {
+          "foodName": "Lemon",
+          "amount": 30.0
+        },
+        {
+          "foodName": "Tahini",
+          "amount": 30.0
+        }
+      ]
+    },
+    {
+      "title": "Beef Stroganoff",
+      "body": "A delicious beef stroganoff perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Sear beef strips quickly and set aside. Saut\u00e9 onions and mushrooms in butter, add Dijon and stock, then return the beef. Stir in sour cream off the heat and season well. Serve over noodles.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 209.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 51.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 204.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 58.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 238.0
+        }
+      ]
+    },
+    {
+      "title": "Greek Salad",
+      "body": "A delicious greek salad perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Cut tomatoes, cucumber, and red onion into chunks. Toss with olives and feta, drizzle with olive oil, and sprinkle oregano and salt. Chill briefly and serve.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 226.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 330.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 181.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 204.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 67.0
+        }
+      ]
+    },
+    {
+      "title": "Shrimp Fried Rice",
+      "body": "A delicious shrimp fried rice perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Stir-fry shrimp until pink and set aside. Cook vegetables in a hot wok, scramble eggs, then add cold rice and soy sauce. Toss until heated through and return shrimp. Serve immediately.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 351.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 181.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 83.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 273.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 284.0
+        }
+      ]
+    },
+    {
+      "title": "Avocado Toast with Poached Egg",
+      "body": "A delicious avocado toast with poached egg perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Toast bread until crisp. Mash avocado with lemon juice and salt, spread on toast, and top with a freshly poached egg. Finish with pepper or chili flakes.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 93.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 336.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 129.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 299.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 281.0
+        }
+      ]
+    },
+    {
+      "title": "Teriyaki Salmon",
+      "body": "A delicious teriyaki salmon perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Sear salmon skin-side down. Combine soy, mirin, sugar, and ginger; pour into the pan and reduce until glossy. Spoon glaze over the fish and serve with rice.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 176.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 235.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 145.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 59.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 398.0
+        }
+      ]
+    },
+    {
+      "title": "Caprese Sandwich",
+      "body": "A delicious caprese sandwich perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian"
+      ],
+      "instructions": "Layer tomato and mozzarella slices with basil on good bread. Drizzle with olive oil and a little balsamic, season, and serve. Toast if you like it warm.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 210.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 134.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 350.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 362.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 255.0
+        }
+      ]
+    },
+    {
+      "title": "Lentil Soup",
+      "body": "A delicious lentil soup perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Saut\u00e9 onion, carrot, and garlic, then add rinsed lentils and stock. Simmer until tender and season with salt and lemon. Blend part of the soup for a creamier texture if desired.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 138.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 318.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 249.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 167.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 64.0
+        }
+      ]
+    },
+    {
+      "title": "Beef Tacos",
+      "body": "A delicious beef tacos perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein",
+        "Lactose-free"
+      ],
+      "instructions": "Brown seasoned beef in a skillet. Warm tortillas, then fill with beef, onion, cilantro, and salsa. Serve with lime wedges.",
+      "ingredients": [
+        {
+          "foodName": "Beef",
+          "amount": 57.0
+        },
+        {
+          "foodName": "Onion",
+          "amount": 225.0
+        },
+        {
+          "foodName": "Butter",
+          "amount": 121.0
+        },
+        {
+          "foodName": "Pepper",
+          "amount": 300.0
+        },
+        {
+          "foodName": "Mushroom",
+          "amount": 362.0
+        }
+      ]
+    },
+    {
+      "title": "Miso Soup",
+      "body": "A delicious miso soup perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Low-fat"
+      ],
+      "instructions": "Simmer stock gently with tofu and scallions. Dissolve miso in hot broth and stir back in off the heat. Add wakame if using and serve immediately.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 334.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 397.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 343.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 346.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 370.0
+        }
+      ]
+    },
+    {
+      "title": "Chocolate Chip Pancakes",
+      "body": "A delicious chocolate chip pancakes perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian"
+      ],
+      "instructions": "Whisk a simple batter, fold in chocolate chips, and ladle onto a hot skillet. Cook until bubbles form, flip, and finish until golden. Serve with syrup.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 63.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 390.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 221.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 52.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 365.0
+        }
+      ]
+    },
+    {
+      "title": "Falafel Wrap",
+      "body": "A delicious falafel wrap perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein",
+        "Lactose-free"
+      ],
+      "instructions": "Blend soaked chickpeas with herbs and spices, form balls, and fry or bake until crisp. Warm flatbreads, add tahini sauce and vegetables, and wrap tightly.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 204.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 375.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 335.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 92.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 74.0
+        }
+      ]
+    },
+    {
+      "title": "Grilled Cheese and Tomato Soup",
+      "body": "A delicious grilled cheese and tomato soup perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Butter bread, sandwich cheese, and cook in a skillet until golden and melty. Simmer canned tomatoes with onion and blend for a smooth soup. Serve together hot.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 194.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 97.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 64.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 237.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 162.0
+        }
+      ]
+    },
+    {
+      "title": "Spinach Omelette",
+      "body": "A delicious spinach omelette perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Whisk eggs, season, and pour into a warm pan. Scatter wilted spinach, cook gently, and fold once set. Serve immediately.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 123.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 366.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 268.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 393.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 255.0
+        }
+      ]
+    },
+    {
+      "title": "BBQ Pulled Pork Sandwich",
+      "body": "A delicious bbq pulled pork sandwich perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein",
+        "Lactose-free"
+      ],
+      "instructions": "Slow-cook seasoned pork shoulder until tender. Shred, mix with barbecue sauce, and pile onto buns. Add slaw if desired.",
+      "ingredients": [
+        {
+          "foodName": "Beef",
+          "amount": 281.0
+        },
+        {
+          "foodName": "Onion",
+          "amount": 360.0
+        },
+        {
+          "foodName": "Butter",
+          "amount": 361.0
+        },
+        {
+          "foodName": "Pepper",
+          "amount": 391.0
+        },
+        {
+          "foodName": "Mushroom",
+          "amount": 356.0
+        }
+      ]
+    },
+    {
+      "title": "Couscous Salad",
+      "body": "A delicious couscous salad perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Low-fat",
+        "Lactose-free"
+      ],
+      "instructions": "Steam couscous with hot stock. Fluff and toss with chopped vegetables, herbs, olive oil, and lemon. Chill briefly before serving.",
+      "ingredients": [
+        {
+          "foodName": "Beef",
+          "amount": 254.0
+        },
+        {
+          "foodName": "Onion",
+          "amount": 243.0
+        },
+        {
+          "foodName": "Butter",
+          "amount": 59.0
+        },
+        {
+          "foodName": "Pepper",
+          "amount": 188.0
+        },
+        {
+          "foodName": "Mushroom",
+          "amount": 196.0
+        }
+      ]
+    },
+    {
+      "title": "Sushi Bowl",
+      "body": "A delicious sushi bowl perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Cook and season sushi rice. Arrange in bowls with sliced fish or tofu, avocado, cucumber, and nori. Drizzle with tamari and serve.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 266.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 185.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 81.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 167.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 248.0
+        }
+      ]
+    },
+    {
+      "title": "Eggplant Parmesan",
+      "body": "A delicious eggplant parmesan perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Salt eggplant slices to draw out moisture, pat dry, and bread. Bake or fry until golden, then layer with tomato sauce and mozzarella. Bake until bubbly.",
+      "ingredients": [
+        {
+          "foodName": "Beef",
+          "amount": 175.0
+        },
+        {
+          "foodName": "Onion",
+          "amount": 394.0
+        },
+        {
+          "foodName": "Butter",
+          "amount": 88.0
+        },
+        {
+          "foodName": "Pepper",
+          "amount": 144.0
+        },
+        {
+          "foodName": "Mushroom",
+          "amount": 384.0
+        }
+      ]
+    },
+    {
+      "title": "Pesto Pasta",
+      "body": "A delicious pesto pasta perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian"
+      ],
+      "instructions": "Blend basil, pine nuts, garlic, Parmesan, and olive oil into pesto. Boil pasta until al dente, then toss with pesto, loosening with pasta water. Serve at once.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 232.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 104.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 134.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 379.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 279.0
+        }
+      ]
+    },
+    {
+      "title": "Vegetable Stir Fry",
+      "body": "A delicious vegetable stir fry perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Heat a wok until smoking, add a little oil, and stir-fry vegetables from firm to tender. Splash with soy and a little water to steam. Serve over rice or noodles.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 94.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 237.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 157.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 347.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 219.0
+        }
+      ]
+    },
+    {
+      "title": "Turkey Burger",
+      "body": "A delicious turkey burger perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Mix ground turkey with salt and grated onion, form patties, and cook until 74\u00b0C/165\u00b0F inside. Rest briefly and serve on buns with toppings.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 141.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 358.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 305.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 320.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 389.0
+        }
+      ]
+    },
+    {
+      "title": "French Onion Soup",
+      "body": "A delicious french onion soup perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Low-fat"
+      ],
+      "instructions": "Slowly caramelize onions in butter until mahogany. Deglaze with wine, add stock, and simmer. Top with toasted bread and cheese and broil until bubbling.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 316.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 331.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 383.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 168.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 274.0
+        }
+      ]
+    },
+    {
+      "title": "Mango Smoothie Bowl",
+      "body": "A delicious mango smoothie bowl perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Blend frozen mango with yogurt or milk until thick. Pour into a bowl and top with fruit and seeds. Serve immediately.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 301.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 77.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 368.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 301.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 258.0
+        }
+      ]
+    },
+    {
+      "title": "Clam Chowder",
+      "body": "A delicious clam chowder perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein"
+      ],
+      "instructions": "Saut\u00e9 onions and celery in butter, add potatoes and stock, and simmer. Stir in clams and cream, season, and serve hot.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 355.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 138.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 254.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 193.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 355.0
+        }
+      ]
+    },
+    {
+      "title": "Korean Bibimbap",
+      "body": "A delicious korean bibimbap perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Cook rice and prepare seasoned vegetables. Top with sliced beef or tofu and a fried egg. Serve with gochujang and mix well to eat.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 372.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 305.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 97.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 69.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 264.0
+        }
+      ]
+    },
+    {
+      "title": "Pumpkin Soup",
+      "body": "A delicious pumpkin soup perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Low-fat"
+      ],
+      "instructions": "Saut\u00e9 onion, add pumpkin and stock, and simmer until very soft. Blend smooth, season, and serve hot with a swirl of coconut milk if desired.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 248.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 231.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 194.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 391.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 216.0
+        }
+      ]
+    },
+    {
+      "title": "Stuffed Bell Peppers",
+      "body": "A delicious stuffed bell peppers perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Fill hollowed peppers with a mixture of cooked rice, meat or beans, and aromatics. Bake covered until peppers soften, then uncover to brown slightly.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 126.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 302.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 338.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 314.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 191.0
+        }
+      ]
+    },
+    {
+      "title": "Caesar Salad with Chicken",
+      "body": "A delicious caesar salad with chicken perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Grill chicken and slice. Toss romaine with Caesar dressing and Parmesan, then top with the chicken. Add gluten-free croutons if desired.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 326.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 331.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 98.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 174.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 321.0
+        }
+      ]
+    },
+    {
+      "title": "Fish and Chips",
+      "body": "A delicious fish and chips perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein",
+        "Lactose-free"
+      ],
+      "instructions": "Fry potatoes until crisp and keep warm. Batter fish fillets and fry until golden and flaky. Season with salt and serve with lemon.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 365.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 393.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 186.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 111.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 232.0
+        }
+      ]
+    },
+    {
+      "title": "Beetroot Hummus Bowl",
+      "body": "A delicious beetroot hummus bowl perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Blend cooked chickpeas with roasted beet, tahini, lemon, and garlic until smooth. Spread in a bowl, drizzle with olive oil, and top with seeds.",
+      "ingredients": [
+        {
+          "foodName": "Beef",
+          "amount": 54.0
+        },
+        {
+          "foodName": "Onion",
+          "amount": 174.0
+        },
+        {
+          "foodName": "Butter",
+          "amount": 389.0
+        },
+        {
+          "foodName": "Pepper",
+          "amount": 168.0
+        },
+        {
+          "foodName": "Mushroom",
+          "amount": 134.0
+        }
+      ]
+    },
+    {
+      "title": "Coconut Curry Tofu",
+      "body": "A delicious coconut curry tofu perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Brown tofu, then simmer curry paste with coconut milk. Add tofu back and cook a few minutes to absorb flavors. Serve with rice and herbs.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 281.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 106.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 350.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 290.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 80.0
+        }
+      ]
+    },
+    {
+      "title": "Beef Burrito",
+      "body": "A delicious beef burrito perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein",
+        "Lactose-free"
+      ],
+      "instructions": "Cook spiced beef with onions. Warm tortillas and add rice, beans, beef, and salsa. Roll tightly and toast seam-side down.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 88.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 321.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 282.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 318.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 167.0
+        }
+      ]
+    },
+    {
+      "title": "Ratatouille",
+      "body": "A delicious ratatouille perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Slice summer vegetables, layer with garlic and herbs, drizzle with olive oil, and bake until tender and jammy. Rest briefly and serve.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 307.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 379.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 396.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 334.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 201.0
+        }
+      ]
+    },
+    {
+      "title": "Chicken Alfredo",
+      "body": "A delicious chicken alfredo perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Cook fettuccine until al dente. Simmer cream with butter and Parmesan to make a sauce, then toss with sliced saut\u00e9ed chicken. Serve immediately.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 118.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 111.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 306.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 270.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 353.0
+        }
+      ]
+    },
+    {
+      "title": "Quiche Lorraine",
+      "body": "A delicious quiche lorraine perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Blind-bake a crust. Whisk eggs and cream with fillings, pour into crust, and bake until just set. Cool slightly before slicing.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 263.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 182.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 169.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 133.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 238.0
+        }
+      ]
+    },
+    {
+      "title": "Tuna Nicoise Salad",
+      "body": "A delicious tuna nicoise salad perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Boil potatoes and green beans, then cool. Arrange with lettuce, tomatoes, olives, eggs, and tuna on a platter. Drizzle with vinaigrette.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 145.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 263.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 260.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 274.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 187.0
+        }
+      ]
+    },
+    {
+      "title": "Banana Oatmeal",
+      "body": "A delicious banana oatmeal perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Simmer oats in milk or water, then stir in banana and cinnamon. Cook briefly, sweeten to taste, and serve warm.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 106.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 355.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 131.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 114.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 182.0
+        }
+      ]
+    },
+    {
+      "title": "Pad Thai",
+      "body": "A delicious pad thai perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Soak rice noodles until pliable. Stir-fry shrimp or tofu, push aside to scramble an egg, then toss noodles with tamarind sauce. Finish with peanuts and lime.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 99.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 103.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 141.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 383.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 369.0
+        }
+      ]
+    },
+    {
+      "title": "Vegetarian Chili",
+      "body": "A delicious vegetarian chili perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Saut\u00e9 onions and peppers, add beans, tomatoes, and spices, and simmer until thick. Adjust seasoning and serve with cilantro.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 187.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 361.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 218.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 130.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 206.0
+        }
+      ]
+    },
+    {
+      "title": "Pancit Noodles",
+      "body": "A delicious pancit noodles perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Lactose-free"
+      ],
+      "instructions": "Saut\u00e9 aromatics, cook sliced meat, then add vegetables and soaked noodles. Splash with stock and season with soy and fish sauce.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 337.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 113.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 297.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 179.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 149.0
+        }
+      ]
+    },
+    {
+      "title": "Egg Fried Rice",
+      "body": "A delicious egg fried rice perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "High-protein"
+      ],
+      "instructions": "Stir-fry shrimp until pink and set aside. Cook vegetables in a hot wok, scramble eggs, then add cold rice and soy sauce. Toss until heated through and return shrimp. Serve immediately.",
+      "ingredients": [
+        {
+          "foodName": "Rice",
+          "amount": 310.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 94.0
+        },
+        {
+          "foodName": "Egg",
+          "amount": 361.0
+        },
+        {
+          "foodName": "Carrot",
+          "amount": 230.0
+        },
+        {
+          "foodName": "Peas",
+          "amount": 87.0
+        }
+      ]
+    },
+    {
+      "title": "Margherita Pizza",
+      "body": "A delicious margherita pizza perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian"
+      ],
+      "instructions": "Stretch dough, spread tomato sauce, and top with mozzarella and basil. Bake hot until blistered and bubbly, then slice.",
+      "ingredients": [
+        {
+          "foodName": "Chicken Breast",
+          "amount": 67.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 174.0
+        },
+        {
+          "foodName": "Garlic",
+          "amount": 237.0
+        },
+        {
+          "foodName": "Tomato",
+          "amount": 276.0
+        },
+        {
+          "foodName": "Salt",
+          "amount": 155.0
+        }
+      ]
+    },
+    {
+      "title": "Tom Yum Soup",
+      "body": "A delicious tom yum soup perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Low-fat"
+      ],
+      "instructions": "Simmer aromatics in stock, add mushrooms and shrimp or tofu, and cook briefly. Season with fish sauce and lime juice. Serve hot.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 266.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 172.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 156.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 127.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 208.0
+        }
+      ]
+    },
+    {
+      "title": "Thai Green Curry",
+      "body": "A delicious thai green curry perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Lactose-free"
+      ],
+      "instructions": "Fry green curry paste briefly, add coconut milk, then chicken or tofu and vegetables. Simmer until tender and serve with rice.",
+      "ingredients": [
+        {
+          "foodName": "Beef",
+          "amount": 342.0
+        },
+        {
+          "foodName": "Onion",
+          "amount": 242.0
+        },
+        {
+          "foodName": "Butter",
+          "amount": 366.0
+        },
+        {
+          "foodName": "Pepper",
+          "amount": 121.0
+        },
+        {
+          "foodName": "Mushroom",
+          "amount": 193.0
+        }
+      ]
+    },
+    {
+      "title": "Lasagna",
+      "body": "A delicious lasagna perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "High-protein"
+      ],
+      "instructions": "Layer pasta sheets with meat sauce and b\u00e9chamel or ricotta. Bake until bubbling and browned. Rest 10 minutes before slicing.",
+      "ingredients": [
+        {
+          "foodName": "Spaghetti",
+          "amount": 327.0
+        },
+        {
+          "foodName": "Tomato Sauce",
+          "amount": 167.0
+        },
+        {
+          "foodName": "Parmesan",
+          "amount": 268.0
+        },
+        {
+          "foodName": "Basil",
+          "amount": 326.0
+        },
+        {
+          "foodName": "Olive Oil",
+          "amount": 226.0
+        }
+      ]
+    },
+    {
+      "title": "Cobb Salad",
+      "body": "A delicious cobb salad perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Gluten-free",
+        "Celiac-friendly",
+        "Low-fat"
+      ],
+      "instructions": "Arrange lettuce with rows of chicken, bacon, egg, avocado, tomatoes, and blue cheese. Drizzle with vinaigrette and serve.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 186.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 165.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 377.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 386.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 76.0
+        }
+      ]
+    },
+    {
+      "title": "Gazpacho",
+      "body": "A delicious gazpacho perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegan",
+        "Gluten-free",
+        "Celiac-friendly"
+      ],
+      "instructions": "Prepare the ingredients for Gazpacho. Cook using the typical method for this dish, seasoning as needed, then serve hot.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 278.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 205.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 66.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 378.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 362.0
+        }
+      ]
+    },
+    {
+      "title": "Gnocchi with Tomato Sauce",
+      "body": "A delicious gnocchi with tomato sauce perfect for any meal.",
+      "author_username": "demo",
+      "tags": [
+        "Vegetarian"
+      ],
+      "instructions": "Boil gnocchi until they float. Warm tomato sauce with garlic and basil, then gently toss in gnocchi and cook 1 minute more. Serve with cheese.",
+      "ingredients": [
+        {
+          "foodName": "Tofu",
+          "amount": 102.0
+        },
+        {
+          "foodName": "Broccoli",
+          "amount": 77.0
+        },
+        {
+          "foodName": "Sesame Oil",
+          "amount": 222.0
+        },
+        {
+          "foodName": "Soy Sauce",
+          "amount": 293.0
+        },
+        {
+          "foodName": "Ginger",
+          "amount": 301.0
+        }
+      ]
+    },
+    {
+      "title": "Bánh Xèo (Vietnamese Crispy Rice Pancake)",
+      "body": "A savory Vietnamese rice flour pancake filled with shrimp, pork, bean sprouts, and herbs, served with lettuce and dipping sauce.",
+      "author_username": "demo",
+      "tags": ["Gluten-free", "Lactose-free", "High-protein"],
+      "instructions": "In a bowl, whisk rice flour, water, coconut milk (or water), turmeric powder, and a pinch of salt until smooth — let rest 15 minutes. Heat a nonstick skillet with a little oil, pour a thin layer of batter and tilt to coat the surface, then top one half with shrimp, thin pork slices, and bean sprouts. Cover the pan and cook until the edges are crisp and the pancake easily lifts from the pan. Fold the pancake in half, slide onto a plate, and serve hot with fresh lettuce, herbs, and nuoc cham (dipping sauce).",
+      "ingredients": [
+        { "foodName": "Rice Flour", "amount": 200.0 },
+        { "foodName": "Coconut Milk (or water)", "amount": 100.0 },
+        { "foodName": "Water", "amount": 150.0 },
+        { "foodName": "Turmeric Powder", "amount": 5.0 },
+        { "foodName": "Shrimp (peeled)", "amount": 100.0 },
+        { "foodName": "Pork Belly, thinly sliced", "amount": 100.0 },
+        { "foodName": "Bean Sprouts", "amount": 80.0 },
+        { "foodName": "Vegetable Oil", "amount": 10.0 },
+        { "foodName": "Salt", "amount": 2.0 }
+      ]
+    },
+    {
+      "title": "Sri Lankan Aluwa (Rice Flour Sweet)",
+      "body": "A traditional Sri Lankan sweet made from roasted rice flour and treacle, typically cut into diamond shapes.",
+      "author_username": "demo",
+      "tags": ["High-protein", "High-carbohydrate", "Lactose-free", "Gluten-free", "Celiac-friendly"],
+      "instructions": "Roast rice flour in a dry pan over low heat until lightly aromatic, stirring constantly to avoid burning. Meanwhile, boil treacle (or sugar syrup) with a little water and a pinch of salt until it forms a thick, sticky consistency. Gradually mix the hot treacle into the roasted rice flour and stir vigorously until it forms a smooth dough. Spread the dough into a greased tray, allow it to cool slightly, then cut into diamond shapes while still warm. Let pieces fully cool and serve.",
+      "ingredients": [
+        { "foodName": "Rice Flour", "amount": 200.0 },
+        { "foodName": "Treacle (or Sugar Syrup)", "amount": 150.0 },
+        { "foodName": "Water", "amount": 50.0 },
+        { "foodName": "Cashew Nuts (optional)", "amount": 20.0 },
+        { "foodName": "Cardamom (ground)", "amount": 2.0 },
+        { "foodName": "Salt (a pinch)", "amount": 1.0 }
+      ]
+    }
+    
+  ]
