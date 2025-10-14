@@ -1,0 +1,2668 @@
+{
+  "meal_plans": [
+    {
+      "id": 1,
+      "name": "Quick Vegan Day",
+      "type": "vegan",
+      "dietary_type_id": null,
+      "description": "A single day of energizing plant-based meals",
+      "duration_days": 1,
+      "dietary_restrictions": ["vegan", "lactose-free"],
+      "allergens_excluded": ["dairy", "eggs", "fish", "shellfish"],
+      "budget_total": 20.00,
+      "actual_cost": 18.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-01T10:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2100,
+          "protein_g": 65,
+          "carbs_g": 280,
+          "fat_g": 70,
+          "fiber_g": 35
+        },
+        "total": {
+          "calories": 2100,
+          "protein_g": 65,
+          "carbs_g": 280,
+          "fat_g": 70,
+          "fiber_g": 35
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Oatmeal with Berries and Almonds",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 12,
+                "carbs_g": 65,
+                "fat_g": 14,
+                "fiber_g": 10
+              },
+              "cost": 3.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Rolled Oats",
+                  "quantity": 80,
+                  "unit": "g",
+                  "price_per_unit": 0.015,
+                  "total_price": 1.20
+                },
+                {
+                  "food_id": null,
+                  "name": "Mixed Berries",
+                  "quantity": 100,
+                  "unit": "g",
+                  "price_per_unit": 0.018,
+                  "total_price": 1.80
+                },
+                {
+                  "food_id": null,
+                  "name": "Almonds",
+                  "quantity": 30,
+                  "unit": "g",
+                  "price_per_unit": 0.025,
+                  "total_price": 0.75
+                }
+              ]
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Quinoa Buddha Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 24,
+                "carbs_g": 85,
+                "fat_g": 22,
+                "fiber_g": 15
+              },
+              "cost": 5.80,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Quinoa",
+                  "quantity": 100,
+                  "unit": "g",
+                  "price_per_unit": 0.032,
+                  "total_price": 3.20
+                },
+                {
+                  "food_id": null,
+                  "name": "Chickpeas",
+                  "quantity": 150,
+                  "unit": "g",
+                  "price_per_unit": 0.008,
+                  "total_price": 1.20
+                },
+                {
+                  "food_id": null,
+                  "name": "Avocado",
+                  "quantity": 80,
+                  "unit": "g",
+                  "price_per_unit": 0.015,
+                  "total_price": 1.20
+                }
+              ]
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Lentil Curry with Brown Rice",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 28,
+                "carbs_g": 95,
+                "fat_g": 20,
+                "fiber_g": 18
+              },
+              "cost": 4.20,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Red Lentils",
+                  "quantity": 120,
+                  "unit": "g",
+                  "price_per_unit": 0.012,
+                  "total_price": 1.44
+                },
+                {
+                  "food_id": null,
+                  "name": "Brown Rice",
+                  "quantity": 150,
+                  "unit": "g",
+                  "price_per_unit": 0.010,
+                  "total_price": 1.50
+                },
+                {
+                  "food_id": null,
+                  "name": "Coconut Milk",
+                  "quantity": 200,
+                  "unit": "ml",
+                  "price_per_unit": 0.006,
+                  "total_price": 1.20
+                }
+              ]
+            }
+          ],
+          "daily_totals": {
+            "calories": 1790,
+            "protein_g": 64,
+            "carbs_g": 245,
+            "fat_g": 56,
+            "fiber_g": 43,
+            "cost": 13.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "Halal Family Day",
+      "type": "halal",
+      "dietary_type_id": null,
+      "description": "A day of nutritious halal meals",
+      "duration_days": 1,
+      "dietary_restrictions": ["halal"],
+      "allergens_excluded": ["pork", "alcohol"],
+      "budget_total": 25.00,
+      "actual_cost": 23.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-02T14:30:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2200,
+          "protein_g": 95,
+          "carbs_g": 250,
+          "fat_g": 75,
+          "fiber_g": 30
+        },
+        "total": {
+          "calories": 2200,
+          "protein_g": 95,
+          "carbs_g": 250,
+          "fat_g": 75,
+          "fiber_g": 30
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Turkish Breakfast Plate",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 520,
+                "protein_g": 28,
+                "carbs_g": 45,
+                "fat_g": 24,
+                "fiber_g": 6
+              },
+              "cost": 4.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Eggs",
+                  "quantity": 100,
+                  "unit": "g",
+                  "price_per_unit": 0.025,
+                  "total_price": 2.50
+                },
+                {
+                  "food_id": null,
+                  "name": "Feta Cheese",
+                  "quantity": 50,
+                  "unit": "g",
+                  "price_per_unit": 0.030,
+                  "total_price": 1.50
+                }
+              ]
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Kebab with Rice",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 48,
+                "carbs_g": 85,
+                "fat_g": 22,
+                "fiber_g": 12
+              },
+              "cost": 8.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Chicken Breast (Halal)",
+                  "quantity": 200,
+                  "unit": "g",
+                  "price_per_unit": 0.035,
+                  "total_price": 7.00
+                }
+              ]
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Lamb Kofta",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 850,
+                "protein_g": 42,
+                "carbs_g": 65,
+                "fat_g": 38,
+                "fiber_g": 14
+              },
+              "cost": 12.00,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Ground Lamb (Halal)",
+                  "quantity": 180,
+                  "unit": "g",
+                  "price_per_unit": 0.055,
+                  "total_price": 9.90
+                }
+              ]
+            }
+          ],
+          "daily_totals": {
+            "calories": 2150,
+            "protein_g": 118,
+            "carbs_g": 195,
+            "fat_g": 84,
+            "fiber_g": 32,
+            "cost": 25.00
+          }
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "Gluten-Free Day",
+      "type": "celiac",
+      "dietary_type_id": null,
+      "description": "Safe meals for celiac and gluten sensitivity",
+      "duration_days": 1,
+      "dietary_restrictions": ["gluten-free", "celiac"],
+      "allergens_excluded": ["gluten", "wheat"],
+      "budget_total": 22.00,
+      "actual_cost": 20.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-03T09:15:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2050,
+          "protein_g": 85,
+          "carbs_g": 230,
+          "fat_g": 70,
+          "fiber_g": 28
+        },
+        "total": {
+          "calories": 2050,
+          "protein_g": 85,
+          "carbs_g": 230,
+          "fat_g": 70,
+          "fiber_g": 28
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "GF Pancakes with Berries",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 450,
+                "protein_g": 18,
+                "carbs_g": 62,
+                "fat_g": 16,
+                "fiber_g": 8
+              },
+              "cost": 4.20,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Rice Flour",
+                  "quantity": 100,
+                  "unit": "g",
+                  "price_per_unit": 0.020,
+                  "total_price": 2.00
+                }
+              ]
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Grilled Chicken Rice Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 42,
+                "carbs_g": 82,
+                "fat_g": 18,
+                "fiber_g": 8
+              },
+              "cost": 7.20,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Chicken Breast",
+                  "quantity": 180,
+                  "unit": "g",
+                  "price_per_unit": 0.035,
+                  "total_price": 6.30
+                }
+              ]
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Salmon with Sweet Potato",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 750,
+                "protein_g": 45,
+                "carbs_g": 68,
+                "fat_g": 28,
+                "fiber_g": 12
+              },
+              "cost": 11.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Salmon Fillet",
+                  "quantity": 180,
+                  "unit": "g",
+                  "price_per_unit": 0.055,
+                  "total_price": 9.90
+                }
+              ]
+            }
+          ],
+          "daily_totals": {
+            "calories": 1880,
+            "protein_g": 105,
+            "carbs_g": 212,
+            "fat_g": 62,
+            "fiber_g": 28,
+            "cost": 22.90
+          }
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "High Protein Day",
+      "type": "high_protein",
+      "dietary_type_id": null,
+      "description": "Protein-packed meals for muscle building",
+      "duration_days": 1,
+      "dietary_restrictions": ["high-protein"],
+      "allergens_excluded": [],
+      "budget_total": 28.00,
+      "actual_cost": 26.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-04T11:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2400,
+          "protein_g": 180,
+          "carbs_g": 220,
+          "fat_g": 60,
+          "fiber_g": 32
+        },
+        "total": {
+          "calories": 2400,
+          "protein_g": 180,
+          "carbs_g": 220,
+          "fat_g": 60,
+          "fiber_g": 32
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Egg White Scramble",
+              "time": "07:00",
+              "nutrition": {
+                "calories": 520,
+                "protein_g": 52,
+                "carbs_g": 45,
+                "fat_g": 12,
+                "fiber_g": 8
+              },
+              "cost": 5.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Egg Whites",
+                  "quantity": 300,
+                  "unit": "g",
+                  "price_per_unit": 0.015,
+                  "total_price": 4.50
+                }
+              ]
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Quinoa Power Bowl",
+              "time": "12:00",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 68,
+                "carbs_g": 82,
+                "fat_g": 18,
+                "fiber_g": 14
+              },
+              "cost": 9.80,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Chicken Breast",
+                  "quantity": 250,
+                  "unit": "g",
+                  "price_per_unit": 0.035,
+                  "total_price": 8.75
+                }
+              ]
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Sirloin Steak with Vegetables",
+              "time": "18:30",
+              "nutrition": {
+                "calories": 820,
+                "protein_g": 62,
+                "carbs_g": 68,
+                "fat_g": 22,
+                "fiber_g": 12
+              },
+              "cost": 14.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Sirloin Steak",
+                  "quantity": 220,
+                  "unit": "g",
+                  "price_per_unit": 0.058,
+                  "total_price": 12.76
+                }
+              ]
+            }
+          ],
+          "daily_totals": {
+            "calories": 2120,
+            "protein_g": 182,
+            "carbs_g": 195,
+            "fat_g": 52,
+            "fiber_g": 34,
+            "cost": 29.80
+          }
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "Keto Day",
+      "type": "keto",
+      "dietary_type_id": null,
+      "description": "Low-carb, high-fat ketogenic meals",
+      "duration_days": 1,
+      "dietary_restrictions": ["keto", "low-carb"],
+      "allergens_excluded": ["gluten"],
+      "budget_total": 32.00,
+      "actual_cost": 30.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-05T15:45:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2100,
+          "protein_g": 110,
+          "carbs_g": 40,
+          "fat_g": 165,
+          "fiber_g": 18
+        },
+        "total": {
+          "calories": 2100,
+          "protein_g": 110,
+          "carbs_g": 40,
+          "fat_g": 165,
+          "fiber_g": 18
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Keto Avocado Eggs",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 580,
+                "protein_g": 28,
+                "carbs_g": 12,
+                "fat_g": 48,
+                "fiber_g": 8
+              },
+              "cost": 5.80,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Eggs",
+                  "quantity": 150,
+                  "unit": "g",
+                  "price_per_unit": 0.025,
+                  "total_price": 3.75
+                },
+                {
+                  "food_id": null,
+                  "name": "Avocado",
+                  "quantity": 120,
+                  "unit": "g",
+                  "price_per_unit": 0.015,
+                  "total_price": 1.80
+                }
+              ]
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Salmon Salad",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 42,
+                "carbs_g": 10,
+                "fat_g": 58,
+                "fiber_g": 6
+              },
+              "cost": 12.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Salmon",
+                  "quantity": 200,
+                  "unit": "g",
+                  "price_per_unit": 0.055,
+                  "total_price": 11.00
+                }
+              ]
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Ribeye with Butter Vegetables",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 880,
+                "protein_g": 52,
+                "carbs_g": 14,
+                "fat_g": 70,
+                "fiber_g": 6
+              },
+              "cost": 16.80,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Ribeye Steak",
+                  "quantity": 220,
+                  "unit": "g",
+                  "price_per_unit": 0.068,
+                  "total_price": 14.96
+                }
+              ]
+            }
+          ],
+          "daily_totals": {
+            "calories": 2180,
+            "protein_g": 122,
+            "carbs_g": 36,
+            "fat_g": 176,
+            "fiber_g": 20,
+            "cost": 35.10
+          }
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "3-Day Vegan Starter",
+      "type": "vegan",
+      "dietary_type_id": null,
+      "description": "Three days of delicious plant-based meals",
+      "duration_days": 3,
+      "dietary_restrictions": ["vegan", "lactose-free"],
+      "allergens_excluded": ["dairy", "eggs", "fish", "shellfish"],
+      "budget_total": 60.00,
+      "actual_cost": 56.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-06T10:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2100,
+          "protein_g": 65,
+          "carbs_g": 280,
+          "fat_g": 70,
+          "fiber_g": 35
+        },
+        "total": {
+          "calories": 6300,
+          "protein_g": 195,
+          "carbs_g": 840,
+          "fat_g": 210,
+          "fiber_g": 105
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Smoothie Bowl",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 380,
+                "protein_g": 10,
+                "carbs_g": 72,
+                "fat_g": 8,
+                "fiber_g": 12
+              },
+              "cost": 4.50,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Banana",
+                  "quantity": 150,
+                  "unit": "g",
+                  "price_per_unit": 0.012,
+                  "total_price": 1.80
+                },
+                {
+                  "food_id": null,
+                  "name": "Frozen Berries",
+                  "quantity": 100,
+                  "unit": "g",
+                  "price_per_unit": 0.018,
+                  "total_price": 1.80
+                }
+              ]
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Black Bean Tacos",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 22,
+                "carbs_g": 95,
+                "fat_g": 18,
+                "fiber_g": 16
+              },
+              "cost": 5.20,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Black Beans",
+                  "quantity": 200,
+                  "unit": "g",
+                  "price_per_unit": 0.010,
+                  "total_price": 2.00
+                }
+              ]
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Thai Tofu Curry",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 28,
+                "carbs_g": 82,
+                "fat_g": 24,
+                "fiber_g": 14
+              },
+              "cost": 6.80,
+              "ingredients": [
+                {
+                  "food_id": null,
+                  "name": "Tofu",
+                  "quantity": 200,
+                  "unit": "g",
+                  "price_per_unit": 0.025,
+                  "total_price": 5.00
+                }
+              ]
+            }
+          ],
+          "daily_totals": {
+            "calories": 1680,
+            "protein_g": 60,
+            "carbs_g": 249,
+            "fat_g": 50,
+            "fiber_g": 42,
+            "cost": 16.50
+          }
+        },
+        {
+          "day": 2,
+          "date": "2025-10-15",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Chia Pudding",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 14,
+                "carbs_g": 58,
+                "fat_g": 16,
+                "fiber_g": 18
+              },
+              "cost": 3.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Mediterranean Wrap",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 580,
+                "protein_g": 18,
+                "carbs_g": 88,
+                "fat_g": 20,
+                "fiber_g": 12
+              },
+              "cost": 5.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Mushroom Risotto",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 20,
+                "carbs_g": 105,
+                "fat_g": 24,
+                "fiber_g": 8
+              },
+              "cost": 7.20,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1720,
+            "protein_g": 52,
+            "carbs_g": 251,
+            "fat_g": 60,
+            "fiber_g": 38,
+            "cost": 16.50
+          }
+        },
+        {
+          "day": 3,
+          "date": "2025-10-16",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Avocado Toast",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 450,
+                "protein_g": 12,
+                "carbs_g": 52,
+                "fat_g": 22,
+                "fiber_g": 14
+              },
+              "cost": 4.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Veggie Stir-Fry",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 24,
+                "carbs_g": 92,
+                "fat_g": 18,
+                "fiber_g": 16
+              },
+              "cost": 6.00,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Lentil Soup with Bread",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 26,
+                "carbs_g": 98,
+                "fat_g": 18,
+                "fiber_g": 20
+              },
+              "cost": 5.80,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1750,
+            "protein_g": 62,
+            "carbs_g": 242,
+            "fat_g": 58,
+            "fiber_g": 50,
+            "cost": 16.00
+          }
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "name": "3-Day Mediterranean Plan",
+      "type": "mediterranean",
+      "dietary_type_id": null,
+      "description": "Heart-healthy Mediterranean meals",
+      "duration_days": 3,
+      "dietary_restrictions": ["mediterranean"],
+      "allergens_excluded": [],
+      "budget_total": 70.00,
+      "actual_cost": 65.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-07T10:30:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2050,
+          "protein_g": 75,
+          "carbs_g": 240,
+          "fat_g": 88,
+          "fiber_g": 35
+        },
+        "total": {
+          "calories": 6150,
+          "protein_g": 225,
+          "carbs_g": 720,
+          "fat_g": 264,
+          "fiber_g": 105
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Greek Yogurt with Honey",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 20,
+                "carbs_g": 58,
+                "fat_g": 12,
+                "fiber_g": 6
+              },
+              "cost": 4.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Greek Salad with Fish",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 38,
+                "carbs_g": 52,
+                "fat_g": 32,
+                "fiber_g": 14
+              },
+              "cost": 10.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Pasta Primavera",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 24,
+                "carbs_g": 95,
+                "fat_g": 28,
+                "fiber_g": 16
+              },
+              "cost": 6.80,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1790,
+            "protein_g": 82,
+            "carbs_g": 205,
+            "fat_g": 72,
+            "fiber_g": 36,
+            "cost": 21.80
+          }
+        },
+        {
+          "day": 2,
+          "date": "2025-10-15",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Shakshuka",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 480,
+                "protein_g": 22,
+                "carbs_g": 48,
+                "fat_g": 22,
+                "fiber_g": 10
+              },
+              "cost": 5.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Grilled Sardines",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 42,
+                "carbs_g": 45,
+                "fat_g": 28,
+                "fiber_g": 12
+              },
+              "cost": 9.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Moussaka",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 32,
+                "carbs_g": 68,
+                "fat_g": 38,
+                "fiber_g": 14
+              },
+              "cost": 8.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1880,
+            "protein_g": 96,
+            "carbs_g": 161,
+            "fat_g": 88,
+            "fiber_g": 36,
+            "cost": 23.50
+          }
+        },
+        {
+          "day": 3,
+          "date": "2025-10-16",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Fruit and Nut Bowl",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 14,
+                "carbs_g": 62,
+                "fat_g": 16,
+                "fiber_g": 12
+              },
+              "cost": 4.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Tuna Nicoise Salad",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 45,
+                "carbs_g": 52,
+                "fat_g": 32,
+                "fiber_g": 14
+              },
+              "cost": 11.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Seafood Paella",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 850,
+                "protein_g": 38,
+                "carbs_g": 95,
+                "fat_g": 32,
+                "fiber_g": 10
+              },
+              "cost": 14.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1950,
+            "protein_g": 97,
+            "carbs_g": 209,
+            "fat_g": 80,
+            "fiber_g": 36,
+            "cost": 30.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "name": "3-Day Halal Meal Plan",
+      "type": "halal",
+      "dietary_type_id": null,
+      "description": "Three days of halal-certified meals",
+      "duration_days": 3,
+      "dietary_restrictions": ["halal"],
+      "allergens_excluded": ["pork", "alcohol"],
+      "budget_total": 75.00,
+      "actual_cost": 70.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-08T09:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2200,
+          "protein_g": 95,
+          "carbs_g": 250,
+          "fat_g": 75,
+          "fiber_g": 30
+        },
+        "total": {
+          "calories": 6600,
+          "protein_g": 285,
+          "carbs_g": 750,
+          "fat_g": 225,
+          "fiber_g": 90
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Menemen (Turkish Eggs)",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 480,
+                "protein_g": 24,
+                "carbs_g": 42,
+                "fat_g": 24,
+                "fiber_g": 8
+              },
+              "cost": 4.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Shawarma",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 48,
+                "carbs_g": 78,
+                "fat_g": 22,
+                "fiber_g": 12
+              },
+              "cost": 9.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Beef Biryani",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 880,
+                "protein_g": 45,
+                "carbs_g": 105,
+                "fat_g": 32,
+                "fiber_g": 10
+              },
+              "cost": 11.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 2080,
+            "protein_g": 117,
+            "carbs_g": 225,
+            "fat_g": 78,
+            "fiber_g": 30,
+            "cost": 25.80
+          }
+        },
+        {
+          "day": 2,
+          "date": "2025-10-15",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Labneh with Za'atar",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 18,
+                "carbs_g": 52,
+                "fat_g": 16,
+                "fiber_g": 6
+              },
+              "cost": 4.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Lamb Tagine",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 42,
+                "carbs_g": 82,
+                "fat_g": 32,
+                "fiber_g": 14
+              },
+              "cost": 13.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Grilled Kafta",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 820,
+                "protein_g": 48,
+                "carbs_g": 72,
+                "fat_g": 36,
+                "fiber_g": 12
+              },
+              "cost": 10.80,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 2020,
+            "protein_g": 108,
+            "carbs_g": 206,
+            "fat_g": 84,
+            "fiber_g": 32,
+            "cost": 28.50
+          }
+        },
+        {
+          "day": 3,
+          "date": "2025-10-16",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Foul Medames",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 450,
+                "protein_g": 22,
+                "carbs_g": 68,
+                "fat_g": 12,
+                "fiber_g": 18
+              },
+              "cost": 3.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Kabsa",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 750,
+                "protein_g": 52,
+                "carbs_g": 88,
+                "fat_g": 22,
+                "fiber_g": 8
+              },
+              "cost": 10.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Lamb Mansaf",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 920,
+                "protein_g": 48,
+                "carbs_g": 98,
+                "fat_g": 38,
+                "fiber_g": 10
+              },
+              "cost": 15.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 2120,
+            "protein_g": 122,
+            "carbs_g": 254,
+            "fat_g": 72,
+            "fiber_g": 36,
+            "cost": 29.20
+          }
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "name": "3-Day Allergy-Safe Plan",
+      "type": "allergy_safe",
+      "dietary_type_id": null,
+      "description": "Nut-free and gluten-free meals",
+      "duration_days": 3,
+      "dietary_restrictions": ["gluten-free"],
+      "allergens_excluded": ["peanuts", "tree nuts", "gluten"],
+      "budget_total": 65.00,
+      "actual_cost": 61.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-09T11:15:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2050,
+          "protein_g": 80,
+          "carbs_g": 245,
+          "fat_g": 68,
+          "fiber_g": 26
+        },
+        "total": {
+          "calories": 6150,
+          "protein_g": 240,
+          "carbs_g": 735,
+          "fat_g": 204,
+          "fiber_g": 78
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Rice Porridge",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 10,
+                "carbs_g": 78,
+                "fat_g": 8,
+                "fiber_g": 6
+              },
+              "cost": 3.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Rice Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 42,
+                "carbs_g": 82,
+                "fat_g": 18,
+                "fiber_g": 8
+              },
+              "cost": 7.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Beef Stir-Fry",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 750,
+                "protein_g": 38,
+                "carbs_g": 88,
+                "fat_g": 24,
+                "fiber_g": 10
+              },
+              "cost": 9.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1850,
+            "protein_g": 90,
+            "carbs_g": 248,
+            "fat_g": 50,
+            "fiber_g": 24,
+            "cost": 20.50
+          }
+        },
+        {
+          "day": 2,
+          "date": "2025-10-15",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "GF Oatmeal",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 400,
+                "protein_g": 12,
+                "carbs_g": 72,
+                "fat_g": 10,
+                "fiber_g": 10
+              },
+              "cost": 3.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Turkey Rice Salad",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 38,
+                "carbs_g": 78,
+                "fat_g": 18,
+                "fiber_g": 10
+              },
+              "cost": 8.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Grilled Fish with Potatoes",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 42,
+                "carbs_g": 82,
+                "fat_g": 22,
+                "fiber_g": 8
+              },
+              "cost": 11.80,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1740,
+            "protein_g": 92,
+            "carbs_g": 232,
+            "fat_g": 50,
+            "fiber_g": 28,
+            "cost": 23.50
+          }
+        },
+        {
+          "day": 3,
+          "date": "2025-10-16",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Fruit Smoothie",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 380,
+                "protein_g": 8,
+                "carbs_g": 82,
+                "fat_g": 4,
+                "fiber_g": 8
+              },
+              "cost": 4.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Quinoa Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 45,
+                "carbs_g": 78,
+                "fat_g": 20,
+                "fiber_g": 12
+              },
+              "cost": 8.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Pork Chops with Sweet Potato",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 42,
+                "carbs_g": 85,
+                "fat_g": 28,
+                "fiber_g": 12
+              },
+              "cost": 10.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1840,
+            "protein_g": 95,
+            "carbs_g": 245,
+            "fat_g": 52,
+            "fiber_g": 32,
+            "cost": 23.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "name": "3-Day Budget Friendly",
+      "type": "budget",
+      "dietary_type_id": null,
+      "description": "Affordable meals without compromising nutrition",
+      "duration_days": 3,
+      "dietary_restrictions": [],
+      "allergens_excluded": [],
+      "budget_total": 40.00,
+      "actual_cost": 38.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-10T14:20:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2000,
+          "protein_g": 70,
+          "carbs_g": 270,
+          "fat_g": 60,
+          "fiber_g": 28
+        },
+        "total": {
+          "calories": 6000,
+          "protein_g": 210,
+          "carbs_g": 810,
+          "fat_g": 180,
+          "fiber_g": 84
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Scrambled Eggs with Toast",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 380,
+                "protein_g": 18,
+                "carbs_g": 48,
+                "fat_g": 14,
+                "fiber_g": 6
+              },
+              "cost": 2.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Bean and Rice Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 22,
+                "carbs_g": 105,
+                "fat_g": 12,
+                "fiber_g": 16
+              },
+              "cost": 3.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Spaghetti with Tomato Sauce",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 24,
+                "carbs_g": 112,
+                "fat_g": 16,
+                "fiber_g": 10
+              },
+              "cost": 4.20,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1680,
+            "protein_g": 64,
+            "carbs_g": 265,
+            "fat_g": 42,
+            "fiber_g": 32,
+            "cost": 10.50
+          }
+        },
+        {
+          "day": 2,
+          "date": "2025-10-15",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Oatmeal with Banana",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 12,
+                "carbs_g": 78,
+                "fat_g": 8,
+                "fiber_g": 10
+              },
+              "cost": 2.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Lentil Soup",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 580,
+                "protein_g": 26,
+                "carbs_g": 95,
+                "fat_g": 10,
+                "fiber_g": 20
+              },
+              "cost": 3.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Chicken Thighs with Rice",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 38,
+                "carbs_g": 88,
+                "fat_g": 22,
+                "fiber_g": 6
+              },
+              "cost": 6.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1720,
+            "protein_g": 76,
+            "carbs_g": 261,
+            "fat_g": 40,
+            "fiber_g": 36,
+            "cost": 12.20
+          }
+        },
+        {
+          "day": 3,
+          "date": "2025-10-16",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Pancakes",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 450,
+                "protein_g": 14,
+                "carbs_g": 72,
+                "fat_g": 12,
+                "fiber_g": 4
+              },
+              "cost": 2.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Tuna Sandwich",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 520,
+                "protein_g": 32,
+                "carbs_g": 62,
+                "fat_g": 16,
+                "fiber_g": 8
+              },
+              "cost": 4.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Vegetable Fried Rice",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 18,
+                "carbs_g": 108,
+                "fat_g": 18,
+                "fiber_g": 12
+              },
+              "cost": 5.20,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1620,
+            "protein_g": 64,
+            "carbs_g": 242,
+            "fat_g": 46,
+            "fiber_g": 24,
+            "cost": 12.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "name": "7-Day Vegan Meal Plan",
+      "type": "vegan",
+      "dietary_type_id": null,
+      "description": "A complete week of plant-based meals",
+      "duration_days": 7,
+      "dietary_restrictions": ["vegan", "lactose-free"],
+      "allergens_excluded": ["dairy", "eggs", "fish", "shellfish"],
+      "budget_total": 150.00,
+      "actual_cost": 142.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-01T10:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2100,
+          "protein_g": 65,
+          "carbs_g": 280,
+          "fat_g": 70,
+          "fiber_g": 35
+        },
+        "total": {
+          "calories": 14700,
+          "protein_g": 455,
+          "carbs_g": 1960,
+          "fat_g": 490,
+          "fiber_g": 245
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Oatmeal with Berries",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 12,
+                "carbs_g": 65,
+                "fat_g": 14,
+                "fiber_g": 10
+              },
+              "cost": 3.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Quinoa Buddha Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 24,
+                "carbs_g": 85,
+                "fat_g": 22,
+                "fiber_g": 15
+              },
+              "cost": 5.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Lentil Curry",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 28,
+                "carbs_g": 95,
+                "fat_g": 20,
+                "fiber_g": 18
+              },
+              "cost": 4.20,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1790,
+            "protein_g": 64,
+            "carbs_g": 245,
+            "fat_g": 56,
+            "fiber_g": 43,
+            "cost": 13.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "name": "7-Day High Protein Plan",
+      "type": "high_protein",
+      "dietary_type_id": null,
+      "description": "Week-long protein-rich meal plan",
+      "duration_days": 7,
+      "dietary_restrictions": ["high-protein"],
+      "allergens_excluded": [],
+      "budget_total": 220.00,
+      "actual_cost": 208.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-05T15:45:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2400,
+          "protein_g": 180,
+          "carbs_g": 220,
+          "fat_g": 60,
+          "fiber_g": 32
+        },
+        "total": {
+          "calories": 16800,
+          "protein_g": 1260,
+          "carbs_g": 1540,
+          "fat_g": 420,
+          "fiber_g": 224
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Egg White Scramble",
+              "time": "07:00",
+              "nutrition": {
+                "calories": 520,
+                "protein_g": 52,
+                "carbs_g": 45,
+                "fat_g": 12,
+                "fiber_g": 8
+              },
+              "cost": 5.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Power Bowl",
+              "time": "12:00",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 68,
+                "carbs_g": 82,
+                "fat_g": 18,
+                "fiber_g": 14
+              },
+              "cost": 9.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Steak with Vegetables",
+              "time": "18:30",
+              "nutrition": {
+                "calories": 820,
+                "protein_g": 62,
+                "carbs_g": 68,
+                "fat_g": 22,
+                "fiber_g": 12
+              },
+              "cost": 14.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 2120,
+            "protein_g": 182,
+            "carbs_g": 195,
+            "fat_g": 52,
+            "fiber_g": 34,
+            "cost": 29.80
+          }
+        }
+      ]
+    },
+    {
+      "id": 13,
+      "name": "7-Day Keto Plan",
+      "type": "keto",
+      "dietary_type_id": null,
+      "description": "Week of low-carb ketogenic meals",
+      "duration_days": 7,
+      "dietary_restrictions": ["keto", "low-carb"],
+      "allergens_excluded": ["gluten"],
+      "budget_total": 210.00,
+      "actual_cost": 198.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-06T13:20:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2100,
+          "protein_g": 110,
+          "carbs_g": 40,
+          "fat_g": 165,
+          "fiber_g": 18
+        },
+        "total": {
+          "calories": 14700,
+          "protein_g": 770,
+          "carbs_g": 280,
+          "fat_g": 1155,
+          "fiber_g": 126
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Keto Avocado Eggs",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 580,
+                "protein_g": 28,
+                "carbs_g": 12,
+                "fat_g": 48,
+                "fiber_g": 8
+              },
+              "cost": 5.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Salmon Salad",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 42,
+                "carbs_g": 10,
+                "fat_g": 58,
+                "fiber_g": 6
+              },
+              "cost": 12.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Ribeye with Butter Vegetables",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 880,
+                "protein_g": 52,
+                "carbs_g": 14,
+                "fat_g": 70,
+                "fiber_g": 6
+              },
+              "cost": 16.80,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 2180,
+            "protein_g": 122,
+            "carbs_g": 36,
+            "fat_g": 176,
+            "fiber_g": 20,
+            "cost": 35.10
+          }
+        }
+      ]
+    },
+    {
+      "id": 14,
+      "name": "7-Day Mediterranean Plan",
+      "type": "mediterranean",
+      "dietary_type_id": null,
+      "description": "Week of heart-healthy Mediterranean meals",
+      "duration_days": 7,
+      "dietary_restrictions": ["mediterranean"],
+      "allergens_excluded": [],
+      "budget_total": 195.00,
+      "actual_cost": 182.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-07T10:30:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2050,
+          "protein_g": 75,
+          "carbs_g": 240,
+          "fat_g": 88,
+          "fiber_g": 35
+        },
+        "total": {
+          "calories": 14350,
+          "protein_g": 525,
+          "carbs_g": 1680,
+          "fat_g": 616,
+          "fiber_g": 245
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Greek Yogurt Bowl",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 480,
+                "protein_g": 18,
+                "carbs_g": 58,
+                "fat_g": 22,
+                "fiber_g": 12
+              },
+              "cost": 5.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Greek Salad with Fish",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 650,
+                "protein_g": 38,
+                "carbs_g": 52,
+                "fat_g": 32,
+                "fiber_g": 14
+              },
+              "cost": 10.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Pasta Primavera",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 24,
+                "carbs_g": 95,
+                "fat_g": 28,
+                "fiber_g": 16
+              },
+              "cost": 6.80,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1850,
+            "protein_g": 80,
+            "carbs_g": 205,
+            "fat_g": 82,
+            "fiber_g": 42,
+            "cost": 22.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 15,
+      "name": "7-Day Halal Plan",
+      "type": "halal",
+      "dietary_type_id": null,
+      "description": "Complete week of halal-certified meals",
+      "duration_days": 7,
+      "dietary_restrictions": ["halal"],
+      "allergens_excluded": ["pork", "alcohol"],
+      "budget_total": 200.00,
+      "actual_cost": 185.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-02T14:30:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2200,
+          "protein_g": 95,
+          "carbs_g": 250,
+          "fat_g": 75,
+          "fiber_g": 30
+        },
+        "total": {
+          "calories": 15400,
+          "protein_g": 665,
+          "carbs_g": 1750,
+          "fat_g": 525,
+          "fiber_g": 210
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Turkish Breakfast",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 520,
+                "protein_g": 28,
+                "carbs_g": 45,
+                "fat_g": 24,
+                "fiber_g": 6
+              },
+              "cost": 4.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Kebab",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 780,
+                "protein_g": 48,
+                "carbs_g": 85,
+                "fat_g": 22,
+                "fiber_g": 12
+              },
+              "cost": 8.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Lamb Kofta",
+              "time": "19:30",
+              "nutrition": {
+                "calories": 850,
+                "protein_g": 42,
+                "carbs_g": 65,
+                "fat_g": 38,
+                "fiber_g": 14
+              },
+              "cost": 12.00,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 2150,
+            "protein_g": 118,
+            "carbs_g": 195,
+            "fat_g": 84,
+            "fiber_g": 32,
+            "cost": 25.00
+          }
+        }
+      ]
+    },
+    {
+      "id": 16,
+      "name": "7-Day Celiac-Safe Plan",
+      "type": "celiac",
+      "dietary_type_id": null,
+      "description": "Week of completely gluten-free meals",
+      "duration_days": 7,
+      "dietary_restrictions": ["gluten-free", "celiac"],
+      "allergens_excluded": ["gluten", "wheat"],
+      "budget_total": 190.00,
+      "actual_cost": 178.50,
+      "created_by_user_id": null,
+      "created_at": "2025-10-03T09:15:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2050,
+          "protein_g": 85,
+          "carbs_g": 230,
+          "fat_g": 70,
+          "fiber_g": 28
+        },
+        "total": {
+          "calories": 14350,
+          "protein_g": 595,
+          "carbs_g": 1610,
+          "fat_g": 490,
+          "fiber_g": 196
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "GF Pancakes",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 450,
+                "protein_g": 18,
+                "carbs_g": 62,
+                "fat_g": 16,
+                "fiber_g": 8
+              },
+              "cost": 4.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Chicken Rice Bowl",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 680,
+                "protein_g": 42,
+                "carbs_g": 82,
+                "fat_g": 18,
+                "fiber_g": 8
+              },
+              "cost": 7.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Salmon with Sweet Potato",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 750,
+                "protein_g": 45,
+                "carbs_g": 68,
+                "fat_g": 28,
+                "fiber_g": 12
+              },
+              "cost": 11.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1880,
+            "protein_g": 105,
+            "carbs_g": 212,
+            "fat_g": 62,
+            "fiber_g": 28,
+            "cost": 22.90
+          }
+        }
+      ]
+    },
+    {
+      "id": 17,
+      "name": "7-Day Vegetarian Plan",
+      "type": "vegetarian",
+      "dietary_type_id": null,
+      "description": "Week of meat-free meals with dairy and eggs",
+      "duration_days": 7,
+      "dietary_restrictions": ["vegetarian"],
+      "allergens_excluded": [],
+      "budget_total": 160.00,
+      "actual_cost": 152.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-08T12:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2000,
+          "protein_g": 70,
+          "carbs_g": 265,
+          "fat_g": 68,
+          "fiber_g": 32
+        },
+        "total": {
+          "calories": 14000,
+          "protein_g": 490,
+          "carbs_g": 1855,
+          "fat_g": 476,
+          "fiber_g": 224
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Vegetable Omelette",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 420,
+                "protein_g": 22,
+                "carbs_g": 42,
+                "fat_g": 18,
+                "fiber_g": 8
+              },
+              "cost": 3.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Caprese Panini",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 24,
+                "carbs_g": 78,
+                "fat_g": 24,
+                "fiber_g": 10
+              },
+              "cost": 6.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Eggplant Parmesan",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 28,
+                "carbs_g": 82,
+                "fat_g": 32,
+                "fiber_g": 16
+              },
+              "cost": 8.20,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1760,
+            "protein_g": 74,
+            "carbs_g": 202,
+            "fat_g": 74,
+            "fiber_g": 34,
+            "cost": 18.50
+          }
+        }
+      ]
+    },
+    {
+      "id": 18,
+      "name": "7-Day Low-Fat Plan",
+      "type": "low_fat",
+      "dietary_type_id": null,
+      "description": "Week of heart-healthy low-fat meals",
+      "duration_days": 7,
+      "dietary_restrictions": ["low-fat"],
+      "allergens_excluded": [],
+      "budget_total": 175.00,
+      "actual_cost": 168.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-09T14:30:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 1950,
+          "protein_g": 90,
+          "carbs_g": 285,
+          "fat_g": 40,
+          "fiber_g": 30
+        },
+        "total": {
+          "calories": 13650,
+          "protein_g": 630,
+          "carbs_g": 1995,
+          "fat_g": 280,
+          "fiber_g": 210
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Fruit and Yogurt",
+              "time": "08:00",
+              "nutrition": {
+                "calories": 380,
+                "protein_g": 18,
+                "carbs_g": 72,
+                "fat_g": 4,
+                "fiber_g": 8
+              },
+              "cost": 3.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Grilled Chicken Salad",
+              "time": "13:00",
+              "nutrition": {
+                "calories": 520,
+                "protein_g": 42,
+                "carbs_g": 68,
+                "fat_g": 8,
+                "fiber_g": 12
+              },
+              "cost": 7.80,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Baked Tilapia with Vegetables",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 48,
+                "carbs_g": 82,
+                "fat_g": 12,
+                "fiber_g": 14
+              },
+              "cost": 9.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1520,
+            "protein_g": 108,
+            "carbs_g": 222,
+            "fat_g": 24,
+            "fiber_g": 34,
+            "cost": 20.80
+          }
+        }
+      ]
+    },
+    {
+      "id": 19,
+      "name": "7-Day Balanced Family Plan",
+      "type": "general",
+      "dietary_type_id": null,
+      "description": "Week of well-rounded family-friendly meals",
+      "duration_days": 7,
+      "dietary_restrictions": [],
+      "allergens_excluded": [],
+      "budget_total": 180.00,
+      "actual_cost": 168.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-10T09:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 2150,
+          "protein_g": 85,
+          "carbs_g": 260,
+          "fat_g": 72,
+          "fiber_g": 28
+        },
+        "total": {
+          "calories": 15050,
+          "protein_g": 595,
+          "carbs_g": 1820,
+          "fat_g": 504,
+          "fiber_g": 196
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Scrambled Eggs and Toast",
+              "time": "07:30",
+              "nutrition": {
+                "calories": 480,
+                "protein_g": 22,
+                "carbs_g": 52,
+                "fat_g": 22,
+                "fiber_g": 6
+              },
+              "cost": 4.20,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Turkey Sandwich",
+              "time": "12:30",
+              "nutrition": {
+                "calories": 620,
+                "protein_g": 38,
+                "carbs_g": 72,
+                "fat_g": 18,
+                "fiber_g": 10
+              },
+              "cost": 6.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Baked Salmon with Vegetables",
+              "time": "19:00",
+              "nutrition": {
+                "calories": 720,
+                "protein_g": 45,
+                "carbs_g": 55,
+                "fat_g": 32,
+                "fiber_g": 12
+              },
+              "cost": 11.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 1820,
+            "protein_g": 105,
+            "carbs_g": 179,
+            "fat_g": 72,
+            "fiber_g": 28,
+            "cost": 22.20
+          }
+        }
+      ]
+    },
+    {
+      "id": 20,
+      "name": "7-Day Athlete Performance Plan",
+      "type": "athlete",
+      "dietary_type_id": null,
+      "description": "Week of high-calorie, nutrient-dense meals for athletes",
+      "duration_days": 7,
+      "dietary_restrictions": ["high-protein", "high-carb"],
+      "allergens_excluded": [],
+      "budget_total": 250.00,
+      "actual_cost": 238.00,
+      "created_by_user_id": null,
+      "created_at": "2025-10-11T16:00:00Z",
+      "is_shared": true,
+      "nutritional_summary": {
+        "daily_average": {
+          "calories": 3200,
+          "protein_g": 160,
+          "carbs_g": 400,
+          "fat_g": 100,
+          "fiber_g": 40
+        },
+        "total": {
+          "calories": 22400,
+          "protein_g": 1120,
+          "carbs_g": 2800,
+          "fat_g": 700,
+          "fiber_g": 280
+        }
+      },
+      "daily_meals": [
+        {
+          "day": 1,
+          "date": "2025-10-14",
+          "meals": [
+            {
+              "meal_type": "breakfast",
+              "recipe_id": null,
+              "recipe_name": "Power Breakfast Bowl",
+              "time": "07:00",
+              "nutrition": {
+                "calories": 820,
+                "protein_g": 42,
+                "carbs_g": 105,
+                "fat_g": 28,
+                "fiber_g": 12
+              },
+              "cost": 8.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "lunch",
+              "recipe_id": null,
+              "recipe_name": "Double Chicken Rice Bowl",
+              "time": "12:00",
+              "nutrition": {
+                "calories": 1200,
+                "protein_g": 85,
+                "carbs_g": 145,
+                "fat_g": 32,
+                "fiber_g": 18
+              },
+              "cost": 14.50,
+              "ingredients": []
+            },
+            {
+              "meal_type": "dinner",
+              "recipe_id": null,
+              "recipe_name": "Steak with Sweet Potato and Quinoa",
+              "time": "18:30",
+              "nutrition": {
+                "calories": 1100,
+                "protein_g": 72,
+                "carbs_g": 125,
+                "fat_g": 38,
+                "fiber_g": 16
+              },
+              "cost": 18.50,
+              "ingredients": []
+            }
+          ],
+          "daily_totals": {
+            "calories": 3120,
+            "protein_g": 199,
+            "carbs_g": 375,
+            "fat_g": 98,
+            "fiber_g": 46,
+            "cost": 41.50
+          }
+        }
+      ]
+    }
+  ]
+}
