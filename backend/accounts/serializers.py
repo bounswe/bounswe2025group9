@@ -63,8 +63,18 @@ class UserSerializer(serializers.ModelSerializer):
             "tags",
             "allergens",
             "recipes",
+            "profile_image"
         ]
         extra_kwargs = {
             "address": {"required": False},
             "password": {"write_only": True},
+            'profile_image': {'required': False}
+        }
+
+class PhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['profile_image']
+        extra_kwargs = {
+            'profile_image': {'required': True}
         }
