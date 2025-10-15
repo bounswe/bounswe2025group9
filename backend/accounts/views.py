@@ -7,8 +7,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import UserSerializer, ChangePasswordSerializer
-from .services import register_user, list_users
+from .serializers import UserSerializer, ChangePasswordSerializer, ContactInfoSerializer
+from .services import register_user, list_users, update_user
 
 
 class UserListView(APIView):
@@ -36,6 +36,18 @@ class CreateUserView(APIView):
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class UpdateUserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        serializer = ContactInfoSerializer(data=request.data)
+        if serializer.is_valid():
+            user = update_user(request.user, serializer.validated_data)
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]

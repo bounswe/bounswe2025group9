@@ -20,6 +20,11 @@ class ChangePasswordSerializer(serializers.Serializer):
         return value
 
 
+class ContactInfoSerializer(serializers.Serializer):
+    email = serializers.CharField(required=True)
+    address = serializers.CharField(required=True)
+    
+
 class TagSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
