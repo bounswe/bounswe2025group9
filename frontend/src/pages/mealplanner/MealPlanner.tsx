@@ -35,6 +35,11 @@ const MealPlanner = () => {
         }
     };
 
+    const handleSaveMealPlan = () => {
+        // TODO: Implement save functionality
+        console.log('Saving meal plan:', localMealPlans[dietaryPreference]);
+    };
+
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const meals = ['Breakfast', 'Lunch', 'Dinner'];
 
@@ -125,6 +130,13 @@ const MealPlanner = () => {
                                     <li>• Check your available cooking time</li>
                                 </ul>
                             </div>
+
+                            <button
+                                onClick={handleSaveMealPlan}
+                                className="nh-button nh-button-primary w-full mt-4 py-3 rounded-lg flex items-center justify-center gap-2"
+                            >
+                                Save this meal plan
+                            </button>
                         </div>
                     </div>
                 </div>
