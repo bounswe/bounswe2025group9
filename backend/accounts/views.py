@@ -100,10 +100,11 @@ class LogoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-class UpdateProfileImageView(APIView):
+
+class ProfileImageView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
-
+    
     def post(self, request):
         user = request.user
         serializer = PhotoSerializer(user, data=request.data, partial=True)
@@ -111,3 +112,23 @@ class UpdateProfileImageView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def delete(self, request):
+        user = request.user
+
+        # Assuming your User model has something like:
+        # profile_image = models.ImageField(upload_to='profile_images/', null=True, blank=True)
+        if not user.profile_image:
+            return Response(
+                {"detail": "No profile image to remove."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Clear the image field in the database
+        user.profile_image = None
+        user.save()
+
+        return Response(
+            {"detail": "Profile image removed successfully."},
+            status=status.HTTP_200_OK
+        )
