@@ -22,7 +22,7 @@ const Home = () => {
                         Join Forum
                     </Link>
                     <Link to="/mealplanner" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
-                        Create Meal Plan
+                        Create a Meal Plan
                     </Link>
                 </div>
 
