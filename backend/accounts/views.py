@@ -7,7 +7,8 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import UserSerializer, ChangePasswordSerializer
+from .models import Allergen
+from .serializers import UserSerializer, ChangePasswordSerializer, AllergenSerializer
 from .services import register_user, list_users
 
 
@@ -99,3 +100,37 @@ class LogoutView(APIView):
                 {"detail": "Invalid or expired refresh token."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+class AllergenAddView(APIView):
+    # use jwt authentication
+    authentication_classes = [JWTAuthentication]
+    # require authentication
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        GET /profile/
+        Fetch the current user's profile information.
+        """
+        # current user is available in request.user
+        # serialize user data
+        serializer = AllergenSerializer(data=request.data)
+        if serializer.is_valid():
+            allergen = serializer.save()
+            return Response(AllergenSerializer(allergen).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class GetCommonAllergensView(APIView):
+    # use jwt authentication
+    authentication_classes = []
+    # require authentication
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        """
+        GET /common-allergens/
+        Fetch a list of common allergens.
+        """
+        common_allergens = Allergen.objects.filter(common=True)
+        serializer = AllergenSerializer(common_allergens, many=True)
+        return Response(serializer.data)
