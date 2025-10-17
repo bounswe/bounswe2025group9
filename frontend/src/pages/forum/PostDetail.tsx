@@ -42,6 +42,21 @@ const getTagStyle = (tagName: string) => {
                 bg: 'var(--forum-mealplan-bg)',
                 text: 'var(--forum-mealplan-text)'
             };
+        case "vegan":
+            return { 
+                bg: 'var(--forum-vegan-bg)',
+                text: 'var(--forum-vegan-text)'
+            };
+        case "halal":
+            return { 
+                bg: 'var(--forum-halal-bg)',
+                text: 'var(--forum-halal-text)'
+            };
+        case "high-protein":
+            return { 
+                bg: 'var(--forum-high-protein-bg)',
+                text: 'var(--forum-high-protein-text)'
+            };
         default:
             return { 
                 bg: 'var(--forum-default-bg)',

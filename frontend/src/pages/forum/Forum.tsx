@@ -38,6 +38,30 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-mealplan-active-text)',
                 hoverBg: 'var(--forum-mealplan-hover-bg)'
             };
+        case "vegan":
+            return { 
+                bg: 'var(--forum-vegan-bg)',
+                text: 'var(--forum-vegan-text)',
+                activeBg: 'var(--forum-vegan-active-bg)',
+                activeText: 'var(--forum-vegan-active-text)',
+                hoverBg: 'var(--forum-vegan-hover-bg)'
+            };
+        case "halal":
+            return { 
+                bg: 'var(--forum-halal-bg)',
+                text: 'var(--forum-halal-text)',
+                activeBg: 'var(--forum-halal-active-bg)',
+                activeText: 'var(--forum-halal-active-text)',
+                hoverBg: 'var(--forum-halal-hover-bg)'
+            };
+        case "high-protein":
+            return { 
+                bg: 'var(--forum-high-protein-bg)',
+                text: 'var(--forum-high-protein-text)',
+                activeBg: 'var(--forum-high-protein-active-bg)',
+                activeText: 'var(--forum-high-protein-active-text)',
+                hoverBg: 'var(--forum-high-protein-hover-bg)'
+            };
         default:
             return { 
                 bg: 'var(--forum-default-bg)',
@@ -49,11 +73,14 @@ const getTagStyle = (tagName: string) => {
     }
 };
 
-// Hard-coded tag IDs for filtering
+// Hard-coded tag IDs for filtering - these will be updated dynamically
 const TAG_IDS = {
     "Dietary tip": 1,
     "Recipe": 2,
-    "Meal plan": 3
+    "Meal plan": 3,
+    "vegan": 4,
+    "halal": 5,
+    "high-protein": 6
 };
 
 const Forum = () => {
@@ -588,6 +615,55 @@ const Forum = () => {
                                 >
                                     <Tag size={18} weight="fill" className="flex-shrink-0" />
                                     <span className="flex-grow text-center">Meal Plans</span>
+                                </button>
+                                
+                                {/* Dietary Tags */}
+                                <button 
+                                    onClick={() => handleFilterByTag(TAG_IDS["vegan"], "vegan")}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: activeFilter === TAG_IDS["vegan"] 
+                                            ? getTagStyle("vegan").activeBg 
+                                            : getTagStyle("vegan").bg,
+                                        color: activeFilter === TAG_IDS["vegan"] 
+                                            ? getTagStyle("vegan").activeText 
+                                            : getTagStyle("vegan").text
+                                    }}
+                                >
+                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Vegan</span>
+                                </button>
+                                
+                                <button 
+                                    onClick={() => handleFilterByTag(TAG_IDS["halal"], "halal")}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: activeFilter === TAG_IDS["halal"] 
+                                            ? getTagStyle("halal").activeBg 
+                                            : getTagStyle("halal").bg,
+                                        color: activeFilter === TAG_IDS["halal"] 
+                                            ? getTagStyle("halal").activeText 
+                                            : getTagStyle("halal").text
+                                    }}
+                                >
+                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Halal</span>
+                                </button>
+                                
+                                <button 
+                                    onClick={() => handleFilterByTag(TAG_IDS["high-protein"], "high-protein")}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: activeFilter === TAG_IDS["high-protein"] 
+                                            ? getTagStyle("high-protein").activeBg 
+                                            : getTagStyle("high-protein").bg,
+                                        color: activeFilter === TAG_IDS["high-protein"] 
+                                            ? getTagStyle("high-protein").activeText 
+                                            : getTagStyle("high-protein").text
+                                    }}
+                                >
+                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">High Protein</span>
                                 </button>
                                 
                                 {activeFilter !== null && !isSearching && (

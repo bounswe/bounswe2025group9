@@ -7,8 +7,8 @@ import { Tag } from '@phosphor-icons/react'
 
 // required post types
 const POST_TYPES = {
-  1: "Dietary tip",
-  2: "Recipe"
+    1: "Dietary tip",
+    2: "Recipe"
 };
 
 // only these tags are allowed to be selected
@@ -19,7 +19,7 @@ const getTagStyle = (tagName: string) => {
     // Check for exact tag types from backend
     switch (tagName) {
         case "Dietary tip":
-            return { 
+            return {
                 bg: 'var(--forum-dietary-bg)',
                 text: 'var(--forum-dietary-text)',
                 activeBg: 'var(--forum-dietary-active-bg)',
@@ -27,16 +27,40 @@ const getTagStyle = (tagName: string) => {
                 hoverBg: 'var(--forum-dietary-hover-bg)'
             };
         case "Recipe":
-            return { 
+            return {
                 bg: 'var(--forum-recipe-bg)',
                 text: 'var(--forum-recipe-text)',
                 activeBg: 'var(--forum-recipe-active-bg)',
                 activeText: 'var(--forum-recipe-active-text)',
                 hoverBg: 'var(--forum-recipe-hover-bg)'
             };
+        case "vegan":
+            return {
+                bg: 'var(--forum-vegan-bg)',
+                text: 'var(--forum-vegan-text)',
+                activeBg: 'var(--forum-vegan-active-bg)',
+                activeText: 'var(--forum-vegan-active-text)',
+                hoverBg: 'var(--forum-vegan-hover-bg)'
+            };
+        case "halal":
+            return {
+                bg: 'var(--forum-halal-bg)',
+                text: 'var(--forum-halal-text)',
+                activeBg: 'var(--forum-halal-active-bg)',
+                activeText: 'var(--forum-halal-active-text)',
+                hoverBg: 'var(--forum-halal-hover-bg)'
+            };
+        case "high-protein":
+            return {
+                bg: 'var(--forum-high-protein-bg)',
+                text: 'var(--forum-high-protein-text)',
+                activeBg: 'var(--forum-high-protein-active-bg)',
+                activeText: 'var(--forum-high-protein-active-text)',
+                hoverBg: 'var(--forum-high-protein-hover-bg)'
+            };
         // Removed "Meal plan" as it's not a post type here
         default: // Fallback for any other tag, though only "Dietary tip" and "Recipe" are used for selection
-            return { 
+            return {
                 bg: 'var(--forum-default-bg)',
                 text: 'var(--forum-default-text)',
                 activeBg: 'var(--forum-default-active-bg)',
@@ -49,7 +73,10 @@ const getTagStyle = (tagName: string) => {
 // Hard-coded tag IDs for mapping (subset of Forum.tsx's TAG_IDS)
 const TAG_IDS = {
     "Dietary tip": 1,
-    "Recipe": 2
+    "Recipe": 2,
+    "vegan": 4,
+    "halal": 5,
+    "high-protein": 6
     // "Meal plan": 3 // Not a creatable post type here
 };
 
@@ -60,20 +87,21 @@ const CreatePost = () => {
     const [content, setContent] = useState('');
     const [, setTags] = useState<ForumTag[]>([]);
     const [selectedTagId, setSelectedTagId] = useState<number>(1); // default to dietary tip
+    const [selectedDietaryTags, setSelectedDietaryTags] = useState<number[]>([]); // for dietary tags
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [validationError, setValidationError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
-    
+
     // Recipe specific state
     const [recipeInstructions, setRecipeInstructions] = useState('');
     const [foodOptions, setFoodOptions] = useState<Food[]>([]);
     const [loadingFoods, setLoadingFoods] = useState(false);
-    const [ingredients, setIngredients] = useState<{food_id: number; food_name: string; amount: number}[]>([]);
+    const [ingredients, setIngredients] = useState<{ food_id: number; food_name: string; amount: number }[]>([]);
     const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
     const [selectedFoodAmount, setSelectedFoodAmount] = useState<number>(100);
     const [foodSearchTerm, setFoodSearchTerm] = useState('');
-    
+
     // Check authentication status when component mounts
     useEffect(() => {
         console.log('Auth status in CreatePost:', {
@@ -82,12 +110,12 @@ const CreatePost = () => {
             user
         });
     }, [isAuthenticated, user]);
-    
+
     // Fetch tags when component mounts
     useEffect(() => {
         fetchTags();
     }, []);
-    
+
     // Fetch available tags from API
     const fetchTags = async () => {
         setLoading(true);
@@ -97,10 +125,10 @@ const CreatePost = () => {
                 isAuthenticated,
                 tokenExists: !!getAccessToken()
             });
-            
+
             const data = await apiClient.getForumTags();
             console.log('Tags response:', data);
-            
+
             // Check if data is an array
             if (Array.isArray(data)) {
                 setTags(data);
@@ -124,14 +152,14 @@ const CreatePost = () => {
             setLoading(false);
         }
     };
-    
+
     // Fetch food options when search term changes
     useEffect(() => {
         if (selectedTagId === 2 && foodSearchTerm.length >= 2) {
             fetchFoods();
         }
     }, [foodSearchTerm]);
-    
+
     // Fetch food options
     const fetchFoods = async () => {
         setLoadingFoods(true);
@@ -146,31 +174,49 @@ const CreatePost = () => {
             setLoadingFoods(false);
         }
     };
-    
+
     // select tag (radio button style selection)
     const selectTag = (tagId: number) => {
         // only allow selecting from allowed tags
         if (!ALLOWED_TAG_IDS.includes(tagId)) {
             return;
         }
-        
+
         setSelectedTagId(tagId);
         setValidationError('');
+
+        // Clear dietary tags when switching post type
+        if (tagId !== 2) {
+            setSelectedDietaryTags([]);
+        }
     };
-    
+
+    // toggle dietary tag selection (for recipes only)
+    const toggleDietaryTag = (tagId: number) => {
+        if (selectedTagId !== 2) return; // only for recipes
+
+        setSelectedDietaryTags(prev => {
+            if (prev.includes(tagId)) {
+                return prev.filter(id => id !== tagId);
+            } else {
+                return [...prev, tagId];
+            }
+        });
+    };
+
     // Add ingredient to the recipe
     const addIngredient = () => {
         if (!selectedFoodId) {
             setValidationError('Please select a food item');
             return;
         }
-        
+
         const selectedFood = foodOptions.find(food => food.id === selectedFoodId);
         if (!selectedFood) {
             setValidationError('Selected food not found');
             return;
         }
-        
+
         // Check if ingredient already exists
         const existingIndex = ingredients.findIndex(item => item.food_id === selectedFoodId);
         if (existingIndex >= 0) {
@@ -189,53 +235,53 @@ const CreatePost = () => {
                 }
             ]);
         }
-        
+
         // Reset selection
         setSelectedFoodId(null);
         setSelectedFoodAmount(100);
         setFoodSearchTerm('');
         setValidationError('');
     };
-    
+
     // Remove ingredient from the recipe
     const removeIngredient = (index: number) => {
         const updatedIngredients = [...ingredients];
         updatedIngredients.splice(index, 1);
         setIngredients(updatedIngredients);
     };
-    
+
     // Handle form submission
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
+
         if (!isAuthenticated || !getAccessToken()) {
             console.error('User is not authenticated. Cannot submit post.');
             alert('You must be logged in to create a post. Please log in and try again.');
             navigate('/login');
             return;
         }
-        
+
         if (title.trim() === '' || content.trim() === '') {
             setValidationError('Please fill in all required fields');
             return;
         }
-        
+
         // Validate recipe fields if recipe is selected
         if (selectedTagId === 2) {
             if (recipeInstructions.trim() === '') {
                 setValidationError('Please provide cooking instructions for the recipe');
                 return;
             }
-            
+
             if (ingredients.length === 0) {
                 setValidationError('Please add at least one ingredient to the recipe');
                 return;
             }
         }
-        
+
         setSubmitting(true);
         setValidationError('');
-        
+
         try {
             // Log authentication status before submission
             console.log('Before post submission - Auth status:', {
@@ -243,20 +289,25 @@ const CreatePost = () => {
                 tokenExists: !!getAccessToken(),
                 tokenFirstChars: getAccessToken()?.substring(0, 10)
             });
-            
+
             // Create post data according to the API spec
+            const allTagIds = [selectedTagId];
+            if (selectedTagId === 2 && selectedDietaryTags.length > 0) {
+                allTagIds.push(...selectedDietaryTags);
+            }
+
             const postData: CreateForumPostRequest = {
                 title,
                 body: content,
-                tag_ids: [selectedTagId] // include only the selected tag
+                tag_ids: allTagIds
             };
-            
+
             console.log('Submitting post with data:', postData);
-            
+
             // Use the apiClient to create the post
             const response = await apiClient.createForumPost(postData);
             console.log('Post created:', response);
-            
+
             // If it's a recipe post, create the recipe
             if (selectedTagId === 2) {
                 try {
@@ -269,9 +320,9 @@ const CreatePost = () => {
                             amount: item.amount
                         }))
                     };
-                    
+
                     console.log('Creating recipe with data:', recipeData);
-                    
+
                     // Create the recipe
                     const recipeResponse = await apiClient.createRecipe(recipeData);
                     console.log('Recipe created:', recipeResponse);
@@ -280,10 +331,10 @@ const CreatePost = () => {
                     // Continue with the post creation flow even if recipe creation fails
                 }
             }
-            
+
             // Show success message
             setSuccessMessage('Post created successfully! Redirecting to forum...');
-            
+
             // Force refresh forum posts by navigating with a state parameter
             setTimeout(() => {
                 navigate('/forum', { state: { refreshPosts: true } });
@@ -332,30 +383,30 @@ const CreatePost = () => {
                             <div className="flex justify-start items-center mt-6 gap-6 mb-2">
 
 
-                        <button 
-                        onClick={() => navigate('/forum')}
-                        className="nh-button-square nh-button-primary flex items-center gap-2 px-2 py-2" /* Primary styling */
-                        disabled={ loading}
-                    >
-                        <ArrowLeft size={20} weight="bold" /> 
-                    </button>
-                    <div className="flex justify-center items-center">
-                    <h1 className="nh-title-custom">Create New Post</h1>
+                                <button
+                                    onClick={() => navigate('/forum')}
+                                    className="nh-button-square nh-button-primary flex items-center gap-2 px-2 py-2" /* Primary styling */
+                                    disabled={loading}
+                                >
+                                    <ArrowLeft size={20} weight="bold" />
+                                </button>
+                                <div className="flex justify-center items-center">
+                                    <h1 className="nh-title-custom">Create New Post</h1>
 
-                    </div>
+                                </div>
 
                             </div>
 
-                            
+
                             {user && (
                                 <p className="mb-4 text-sm">
                                     Posting as: <span className="font-semibold">{user.username}</span>
                                 </p>
                             )}
-                            
+
                             {/* Display success message if present */}
                             {successMessage && (
-                                <div 
+                                <div
                                     className="px-4 py-3 rounded-md mb-6 flex items-start gap-2 border"
                                     style={{
                                         backgroundColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.1)', /* fallback to green-500 rgb */
@@ -366,7 +417,7 @@ const CreatePost = () => {
                                     <span>{successMessage}</span>
                                 </div>
                             )}
-                            
+
                             {/* Display validation error if present */}
                             {validationError && (
                                 <div className="nh-error-message mb-6"> {/* Use nh-error-message class */}
@@ -374,7 +425,7 @@ const CreatePost = () => {
                                     <span>{validationError}</span>
                                 </div>
                             )}
-                            
+
                             <form onSubmit={handleSubmit} id="createPostForm"> {/* Added id to form */}
                                 {/* Post Title */}
                                 <div className="mb-6">
@@ -390,11 +441,11 @@ const CreatePost = () => {
                                         placeholder="Enter post title"
                                     />
                                 </div>
-                                
+
                                 {/* Post Type Selection - required radio button style selection */}
                                 <div className="mb-6">
                                     <label className="block mb-2 nh-subtitle text-base">
-                                        Post Type 
+                                        Post Type
 
                                     </label>
                                     {loading ? (
@@ -431,7 +482,7 @@ const CreatePost = () => {
                                                         }}
                                                     >
                                                         <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                                        <span className="flex-grow text-left">{name}</span> 
+                                                        <span className="flex-grow text-left">{name}</span>
                                                         {/* Ensure text aligns left if buttons are different widths */}
                                                     </button>
                                                 );
@@ -439,7 +490,7 @@ const CreatePost = () => {
                                         </div>
                                     )}
                                 </div>
-                                
+
                                 {/* Post content */}
                                 <div className="mb-6">
                                     <label className="block mb-2 nh-subtitle text-base">Content</label>
@@ -449,18 +500,79 @@ const CreatePost = () => {
                                         value={content}
                                         onChange={(e) => setContent(e.target.value)}
                                         required
-                                        placeholder={selectedTagId === 2 
+                                        placeholder={selectedTagId === 2
                                             ? "Describe your recipe here... Include any tips, serving suggestions, or nutritional benefits."
                                             : "Share your thoughts here..."}
                                     ></textarea>
                                 </div>
-                                
+
+                                {/* Dietary Tags - only show if Recipe is selected */}
+                                {selectedTagId === 2 && (
+                                    <div className="mb-6">
+                                        <label className="block mb-2 nh-subtitle text-base">
+                                            Dietary Tags <span className="text-sm font-normal text-gray-500">(optional)</span>
+                                        </label>
+                                        <div className="flex flex-wrap gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleDietaryTag(TAG_IDS["vegan"])}
+                                                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                                style={{
+                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["vegan"])
+                                                        ? getTagStyle("vegan").activeBg
+                                                        : getTagStyle("vegan").bg,
+                                                    color: selectedDietaryTags.includes(TAG_IDS["vegan"])
+                                                        ? getTagStyle("vegan").activeText
+                                                        : getTagStyle("vegan").text
+                                                }}
+                                            >
+                                                <Tag size={16} weight="fill" className="flex-shrink-0" />
+                                                <span>Vegan</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleDietaryTag(TAG_IDS["halal"])}
+                                                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                                style={{
+                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["halal"])
+                                                        ? getTagStyle("halal").activeBg
+                                                        : getTagStyle("halal").bg,
+                                                    color: selectedDietaryTags.includes(TAG_IDS["halal"])
+                                                        ? getTagStyle("halal").activeText
+                                                        : getTagStyle("halal").text
+                                                }}
+                                            >
+                                                <Tag size={16} weight="fill" className="flex-shrink-0" />
+                                                <span>Halal</span>
+                                            </button>
+
+                                            <button
+                                                type="button"
+                                                onClick={() => toggleDietaryTag(TAG_IDS["high-protein"])}
+                                                className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                                style={{
+                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["high-protein"])
+                                                        ? getTagStyle("high-protein").activeBg
+                                                        : getTagStyle("high-protein").bg,
+                                                    color: selectedDietaryTags.includes(TAG_IDS["high-protein"])
+                                                        ? getTagStyle("high-protein").activeText
+                                                        : getTagStyle("high-protein").text
+                                                }}
+                                            >
+                                                <Tag size={16} weight="fill" className="flex-shrink-0" />
+                                                <span>High Protein</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {/* Recipe fields - only show if Recipe is selected */}
                                 {selectedTagId === 2 && (
                                     <div className="mb-6">
                                         <div className="border rounded-md p-4 bg-[var(--color-bg-tertiary)] border-[var(--forum-search-border)]">
                                             <h3 className="nh-subtitle text-base mb-4">Recipe Details</h3>
-                                            
+
                                             {/* Recipe Instructions */}
                                             <div className="mb-4">
                                                 <label className="block mb-2 font-medium">
@@ -474,13 +586,13 @@ const CreatePost = () => {
                                                     placeholder="1. Preheat oven to 350°F.&#10;2. Mix the ingredients...&#10;3. Cook for 25 minutes.&#10;..."
                                                 ></textarea>
                                             </div>
-                                            
+
                                             {/* Ingredients Selection */}
                                             <div className="mb-4">
                                                 <label className="block mb-2 font-medium">
                                                     Ingredients <span className="text-red-500">*</span>
                                                 </label>
-                                                
+
                                                 {/* Food search */}
                                                 <div className="mb-4">
                                                     <div className="flex flex-col md:flex-row gap-2 mb-2">
@@ -510,10 +622,10 @@ const CreatePost = () => {
                                                             disabled={!selectedFoodId}
                                                         >
                                                             <Plus size={20} weight="bold" className="mr-1" />
-                                                            
+
                                                         </button>
                                                     </div>
-                                                    
+
                                                     {/* Food search results */}
                                                     {foodSearchTerm.length >= 2 && (
                                                         <div className="mb-4 border border-[var(--forum-search-border)] rounded-md overflow-hidden max-h-60 overflow-y-auto">
@@ -524,7 +636,7 @@ const CreatePost = () => {
                                                             ) : (
                                                                 <div className="divide-y divide-[var(--forum-search-border)]">
                                                                     {foodOptions.map(food => (
-                                                                        <div 
+                                                                        <div
                                                                             key={food.id}
                                                                             className={`p-3 cursor-pointer hover:bg-[var(--color-bg-tertiary)] transition-colors flex items-center ${selectedFoodId === food.id ? 'bg-primary/10 dark:bg-primary/20' : ''}`}
                                                                             onClick={() => setSelectedFoodId(food.id)}
@@ -538,10 +650,10 @@ const CreatePost = () => {
                                                                             <div>
                                                                                 <div className="font-medium">{food.name}</div>
                                                                                 <div className="text-xs text-gray-500">
-                                                                                    {food.category} • 
-                                                                                    {food.proteinContent}g protein • 
-                                                                                    {food.fatContent}g fat • 
-                                                                                    {food.carbohydrateContent}g carbs • 
+                                                                                    {food.category} •
+                                                                                    {food.proteinContent}g protein •
+                                                                                    {food.fatContent}g fat •
+                                                                                    {food.carbohydrateContent}g carbs •
                                                                                     {food.caloriesPerServing} calories
                                                                                 </div>
                                                                             </div>
@@ -552,7 +664,7 @@ const CreatePost = () => {
                                                         </div>
                                                     )}
                                                 </div>
-                                                
+
                                                 {/* Ingredient List */}
                                                 <div className="mb-2">
                                                     <h4 className="font-medium mb-2">Selected Ingredients:</h4>
@@ -561,7 +673,7 @@ const CreatePost = () => {
                                                     ) : (
                                                         <ul className="space-y-2">
                                                             {ingredients.map((ingredient, index) => (
-                                                                <li 
+                                                                <li
                                                                     key={index}
                                                                     className="flex justify-between items-center p-2 border border-[var(--forum-search-border)] rounded-md"
                                                                 >
@@ -584,21 +696,21 @@ const CreatePost = () => {
                                 )}
                             </form>
 
-                              {/* Buttons row - MOVED TO BOTTOM */}
-                        <div className="flex justify-end items-center mt-6"> {/* Changed mb-6 to mt-6 */}
-                    
-                    <button 
-                        type="submit" 
-                        form="createPostForm" // Associate with the form
-                        className="nh-button nh-button-primary  flex items-center gap-2 px-6 py-2" /* Primary styling */
-                        disabled={submitting || loading}
-                    >
-                        {submitting ? 'Posting...' : 'Create Post'}
-                    </button>
-                </div>
+                            {/* Buttons row - MOVED TO BOTTOM */}
+                            <div className="flex justify-end items-center mt-6"> {/* Changed mb-6 to mt-6 */}
+
+                                <button
+                                    type="submit"
+                                    form="createPostForm" // Associate with the form
+                                    className="nh-button nh-button-primary  flex items-center gap-2 px-6 py-2" /* Primary styling */
+                                    disabled={submitting || loading}
+                                >
+                                    {submitting ? 'Posting...' : 'Create Post'}
+                                </button>
+                            </div>
                         </div>
 
-                      
+
                     </div>
 
                     {/* Right column - Empty */}
