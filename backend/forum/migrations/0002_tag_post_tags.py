@@ -3,6 +3,39 @@
 from django.db import migrations, models
 
 
+def create_initial_tags(apps, schema_editor):
+    Tag = apps.get_model('forum', 'Tag')
+    
+    # Create initial tags including dietary tags
+    initial_tags = [
+        'Dietary tip',
+        'Recipe', 
+        'Meal plan',
+        'vegan',
+        'halal',
+        'high-protein'
+    ]
+    
+    for tag_name in initial_tags:
+        Tag.objects.get_or_create(name=tag_name)
+
+
+def remove_initial_tags(apps, schema_editor):
+    Tag = apps.get_model('forum', 'Tag')
+    
+    # Remove all initial tags
+    initial_tags = [
+        'Dietary tip',
+        'Recipe',
+        'Meal plan', 
+        'vegan',
+        'halal',
+        'high-protein'
+    ]
+    
+    Tag.objects.filter(name__in=initial_tags).delete()
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -30,4 +63,5 @@ class Migration(migrations.Migration):
             name="tags",
             field=models.ManyToManyField(blank=True, to="forum.tag"),
         ),
+        migrations.RunPython(create_initial_tags, remove_initial_tags),
     ]
