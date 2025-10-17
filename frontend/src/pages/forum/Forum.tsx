@@ -101,6 +101,8 @@ const Forum = () => {
     // State for active filter
     const [activeFilter, setActiveFilter] = useState<number | null>(null);
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
+    const [activeSubFilter, setActiveSubFilter] = useState<number | null>(null);
+    const [subFilterLabel, setSubFilterLabel] = useState<string | null>(null);
     
     // Search related state
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -146,11 +148,24 @@ const Forum = () => {
     
     // Apply pagination to filtered posts
     useEffect(() => {
-        if (isSearching && activeFilter) {
+        if (isSearching && (activeFilter || activeSubFilter)) {
             // When both searching and filtering, show intersection
-            const filteredSearchResults = searchResults.filter(post => 
-                post.tags.some(tag => tag.id === activeFilter)
-            );
+            let filteredSearchResults = searchResults;
+            
+            // Apply main filter
+            if (activeFilter) {
+                filteredSearchResults = filteredSearchResults.filter(post => 
+                    post.tags.some(tag => tag.id === activeFilter)
+                );
+            }
+            
+            // Apply sub-filter (requires both Recipe tag and sub-tag)
+            if (activeSubFilter) {
+                filteredSearchResults = filteredSearchResults.filter(post => 
+                    post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
+                    post.tags.some(tag => tag.id === activeSubFilter)
+                );
+            }
             
             setTotalCount(filteredSearchResults.length);
             
@@ -172,9 +187,22 @@ const Forum = () => {
             setPosts(currentPosts);
         } else if (allPosts.length > 0) {
             // When only filtering or no filters, use allPosts
-            const filteredPosts = activeFilter 
-                ? allPosts.filter(post => post.tags.some(tag => tag.id === activeFilter))
-                : allPosts;
+            let filteredPosts = allPosts;
+            
+            // Apply main filter
+            if (activeFilter) {
+                filteredPosts = filteredPosts.filter(post => 
+                    post.tags.some(tag => tag.id === activeFilter)
+                );
+            }
+            
+            // Apply sub-filter (requires both Recipe tag and sub-tag)
+            if (activeSubFilter) {
+                filteredPosts = filteredPosts.filter(post => 
+                    post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
+                    post.tags.some(tag => tag.id === activeSubFilter)
+                );
+            }
                 
             setTotalCount(filteredPosts.length);
             
@@ -185,7 +213,7 @@ const Forum = () => {
             
             setPosts(currentPosts);
         }
-    }, [allPosts, currentPage, postsPerPage, activeFilter, isSearching, searchResults, searchResultsCount]);
+    }, [allPosts, currentPage, postsPerPage, activeFilter, activeSubFilter, isSearching, searchResults, searchResultsCount]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
@@ -306,10 +334,31 @@ const Forum = () => {
             // If clicking the active filter, clear it
             setActiveFilter(null);
             setFilterLabel(null);
+            // Also clear sub-filter when main filter is cleared
+            setActiveSubFilter(null);
+            setSubFilterLabel(null);
         } else {
             // Apply the new filter
             setActiveFilter(tagId);
             setFilterLabel(tagName);
+            // Clear sub-filter when changing main filter
+            setActiveSubFilter(null);
+            setSubFilterLabel(null);
+        }
+        // Reset to first page when changing filters
+        setCurrentPage(1);
+    };
+
+    // Apply a sub-tag filter (only for recipes)
+    const handleFilterBySubTag = (tagId: number, tagName: string) => {
+        if (activeSubFilter === tagId) {
+            // If clicking the active sub-filter, clear it
+            setActiveSubFilter(null);
+            setSubFilterLabel(null);
+        } else {
+            // Apply the new sub-filter
+            setActiveSubFilter(tagId);
+            setSubFilterLabel(tagName);
         }
         // Reset to first page when changing filters
         setCurrentPage(1);
@@ -319,6 +368,8 @@ const Forum = () => {
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
+        setActiveSubFilter(null);
+        setSubFilterLabel(null);
         setCurrentPage(1); // Reset to first page
         
         // Clear search if active
@@ -617,56 +668,63 @@ const Forum = () => {
                                     <span className="flex-grow text-center">Meal Plans</span>
                                 </button>
                                 
-                                {/* Dietary Tags */}
-                                <button 
-                                    onClick={() => handleFilterByTag(TAG_IDS["vegan"], "vegan")}
-                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                                    style={{
-                                        backgroundColor: activeFilter === TAG_IDS["vegan"] 
-                                            ? getTagStyle("vegan").activeBg 
-                                            : getTagStyle("vegan").bg,
-                                        color: activeFilter === TAG_IDS["vegan"] 
-                                            ? getTagStyle("vegan").activeText 
-                                            : getTagStyle("vegan").text
-                                    }}
-                                >
-                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Vegan</span>
-                                </button>
+                                {/* Recipe Sub-tags - Only show when Recipe is selected */}
+                                {activeFilter === TAG_IDS["Recipe"] && (
+                                    <>
+                                        <div className="border-t border-gray-300 dark:border-gray-600 my-2"></div>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">Recipe Filters:</p>
+                                        
+                                        <button 
+                                            onClick={() => handleFilterBySubTag(TAG_IDS["vegan"], "vegan")}
+                                            className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                            style={{
+                                                backgroundColor: activeSubFilter === TAG_IDS["vegan"] 
+                                                    ? getTagStyle("vegan").activeBg 
+                                                    : getTagStyle("vegan").bg,
+                                                color: activeSubFilter === TAG_IDS["vegan"] 
+                                                    ? getTagStyle("vegan").activeText 
+                                                    : getTagStyle("vegan").text
+                                            }}
+                                        >
+                                            <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                            <span className="flex-grow text-center">Vegan</span>
+                                        </button>
+                                        
+                                        <button 
+                                            onClick={() => handleFilterBySubTag(TAG_IDS["halal"], "halal")}
+                                            className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                            style={{
+                                                backgroundColor: activeSubFilter === TAG_IDS["halal"] 
+                                                    ? getTagStyle("halal").activeBg 
+                                                    : getTagStyle("halal").bg,
+                                                color: activeSubFilter === TAG_IDS["halal"] 
+                                                    ? getTagStyle("halal").activeText 
+                                                    : getTagStyle("halal").text
+                                            }}
+                                        >
+                                            <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                            <span className="flex-grow text-center">Halal</span>
+                                        </button>
+                                        
+                                        <button 
+                                            onClick={() => handleFilterBySubTag(TAG_IDS["high-protein"], "high-protein")}
+                                            className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                            style={{
+                                                backgroundColor: activeSubFilter === TAG_IDS["high-protein"] 
+                                                    ? getTagStyle("high-protein").activeBg 
+                                                    : getTagStyle("high-protein").bg,
+                                                color: activeSubFilter === TAG_IDS["high-protein"] 
+                                                    ? getTagStyle("high-protein").activeText 
+                                                    : getTagStyle("high-protein").text
+                                            }}
+                                        >
+                                            <Tag size={18} weight="fill" className="flex-shrink-0" />
+                                            <span className="flex-grow text-center">High Protein</span>
+                                        </button>
+                                    </>
+                                )}
                                 
-                                <button 
-                                    onClick={() => handleFilterByTag(TAG_IDS["halal"], "halal")}
-                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                                    style={{
-                                        backgroundColor: activeFilter === TAG_IDS["halal"] 
-                                            ? getTagStyle("halal").activeBg 
-                                            : getTagStyle("halal").bg,
-                                        color: activeFilter === TAG_IDS["halal"] 
-                                            ? getTagStyle("halal").activeText 
-                                            : getTagStyle("halal").text
-                                    }}
-                                >
-                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Halal</span>
-                                </button>
-                                
-                                <button 
-                                    onClick={() => handleFilterByTag(TAG_IDS["high-protein"], "high-protein")}
-                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                                    style={{
-                                        backgroundColor: activeFilter === TAG_IDS["high-protein"] 
-                                            ? getTagStyle("high-protein").activeBg 
-                                            : getTagStyle("high-protein").bg,
-                                        color: activeFilter === TAG_IDS["high-protein"] 
-                                            ? getTagStyle("high-protein").activeText 
-                                            : getTagStyle("high-protein").text
-                                    }}
-                                >
-                                    <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">High Protein</span>
-                                </button>
-                                
-                                {activeFilter !== null && !isSearching && (
+                                {(activeFilter !== null || activeSubFilter !== null) && !isSearching && (
                                     <button 
                                         onClick={clearFilter}
                                         className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -736,11 +794,15 @@ const Forum = () => {
                         )}
                         
                         {/* Active filter indicator */}
-                        {filterLabel && (
+                        {(filterLabel || subFilterLabel) && (
                             <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm nh-text">
-                                        Filtered by tag: <span className="font-medium">{filterLabel}</span>
+                                        Filtered by: <span className="font-medium">
+                                            {filterLabel}
+                                            {filterLabel && subFilterLabel && " + "}
+                                            {subFilterLabel}
+                                        </span>
                                     </p>
                                     <button
                                         onClick={clearFilter}
