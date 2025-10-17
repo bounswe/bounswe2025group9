@@ -22,6 +22,7 @@ export interface FoodItem {
   description: string;
   iconName: string; // Icon name from MaterialCommunityIcons
   category: FoodCategoryType;
+  imageUrl?: string;
   nutritionScore?: number;
   macronutrients?: {
     calories: number;
