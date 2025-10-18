@@ -30,6 +30,7 @@ import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
 import { forumService } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
+import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Storage key for liked posts - must match the one in forum.service.ts
@@ -43,6 +44,7 @@ const PostDetailScreen: React.FC = () => {
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
   const { posts, updatePost } = usePosts();
+  const { user: currentUser } = useAuth();
   
   const postId = route.params.postId;
   const [post, setPost] = useState<ForumTopic | null>(null);
@@ -357,6 +359,12 @@ const PostDetailScreen: React.FC = () => {
             preview={false}
             showTags={true}
             onLike={handlePostLike}
+            onAuthorPress={() => {
+              const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
+              const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
+              const targetUsername = isSelf ? currentUser!.username : post.author;
+              navigation.navigate('UserProfile', { username: targetUsername, userId: post.authorId || undefined });
+            }}
           />
           
           {/* Comments Section */}

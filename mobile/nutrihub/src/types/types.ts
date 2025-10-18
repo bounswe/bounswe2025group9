@@ -128,6 +128,11 @@ export interface User {
   tags?: string[];
   allergens?: string[];
   createdAt?: Date;
+  // Optional public profile fields
+  profilePhoto?: string; // URL
+  profession?: string;
+  bio?: string;
+  badges?: string[];
 }
 
 export interface AuthTokens {
