@@ -76,6 +76,14 @@ export type ForumStackParamList = {
    * Create new forum post screen
    */
   CreatePost: undefined;
+
+  /**
+   * View another user's public profile
+   */
+  UserProfile: {
+    username: string;
+    userId?: number;
+  };
 };
 
 /**

@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { View, Text, StyleSheet, ViewStyle, TextStyle, GestureResponderEvent } from 'react-native';
+import { View, Text, StyleSheet, ViewStyle, TextStyle, GestureResponderEvent, Image } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING, getValidIconName } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
@@ -106,13 +106,21 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
       testID={testID}
     >
       <View style={styles.listContentInner}>
-        {/* Icon */}
-        <View style={[styles.iconContainer, { backgroundColor: theme.placeholder }]}>
-          <Icon 
-            name={getValidIconName(item.iconName)} 
-            size={32} 
-            color={theme.primary} 
-          />
+        {/* Image or Icon */}
+        <View style={[styles.iconContainer, { backgroundColor: theme.placeholder }]}> 
+          {item.imageUrl ? (
+            <Image
+              source={{ uri: item.imageUrl }}
+              style={styles.listImage}
+              resizeMode="cover"
+            />
+          ) : (
+            <Icon 
+              name={getValidIconName(item.iconName)} 
+              size={32} 
+              color={theme.primary} 
+            />
+          )}
         </View>
         
         {/* Text content */}
@@ -173,13 +181,21 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
       style={style}
       testID={testID}
     >
-      {/* Icon */}
-      <View style={[styles.gridIconContainer, { backgroundColor: theme.placeholder }]}>
-        <Icon 
-          name={getValidIconName(item.iconName)} 
-          size={40} 
-          color={theme.primary} 
-        />
+      {/* Image or Icon */}
+      <View style={[styles.gridIconContainer, { backgroundColor: theme.placeholder }]}> 
+        {item.imageUrl ? (
+          <Image 
+            source={{ uri: item.imageUrl }} 
+            style={styles.gridImage}
+            resizeMode="cover"
+          />
+        ) : (
+          <Icon 
+            name={getValidIconName(item.iconName)} 
+            size={40} 
+            color={theme.primary} 
+          />
+        )}
         
         {/* Nutrition score overlay */}
         {showNutritionScore && item.nutritionScore !== undefined && (
@@ -373,6 +389,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginRight: SPACING.md,
   },
+  listImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: BORDER_RADIUS.sm,
+  },
   textContainer: {
     flex: 1,
   },
@@ -431,6 +452,12 @@ const styles = StyleSheet.create({
     height: 120,
     justifyContent: 'center',
     alignItems: 'center',
+    borderTopLeftRadius: BORDER_RADIUS.md,
+    borderTopRightRadius: BORDER_RADIUS.md,
+  },
+  gridImage: {
+    width: '100%',
+    height: '100%',
     borderTopLeftRadius: BORDER_RADIUS.md,
     borderTopRightRadius: BORDER_RADIUS.md,
   },

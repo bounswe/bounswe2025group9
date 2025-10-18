@@ -45,6 +45,17 @@ const HomeScreen: React.FC = () => {
     navigation.navigate('Forum');
   };
 
+  const handleViewProfile = () => {
+    if (!user) return;
+    // Navigate to Forum tab's nested UserProfile screen
+    // Using nested navigation to the Forum stack
+    // @ts-ignore - nested navigation params
+    navigation.navigate('Forum', {
+      screen: 'UserProfile',
+      params: { username: user.username },
+    });
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
@@ -69,6 +80,16 @@ const HomeScreen: React.FC = () => {
             variant="secondary" 
             onPress={handleJoinForum} 
           />
+          {user && (
+            <>
+              <View style={{ width: SPACING.md }} />
+              <Button 
+                title="My Profile" 
+                variant="secondary" 
+                onPress={handleViewProfile} 
+              />
+            </>
+          )}
         </View>
 
         {/* Feature Cards Section */}

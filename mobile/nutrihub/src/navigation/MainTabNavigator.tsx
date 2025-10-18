@@ -11,6 +11,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ForumScreen from '../screens/forum/ForumScreen';
 import PostDetailScreen from '../screens/forum/PostDetailScreen';
 import CreatePostScreen from '../screens/forum/CreatePostScreen';
+import UserProfileScreen from '../screens/user/UserProfileScreen';
 import FoodScreen from '../screens/food/FoodScreen';
 import { MainTabParamList, RootStackParamList, ForumStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
@@ -91,6 +92,7 @@ const ForumStackNavigator = () => {
       <ForumStack.Screen name="ForumList" component={ForumScreen} />
       <ForumStack.Screen name="PostDetail" component={PostDetailScreen} />
       <ForumStack.Screen name="CreatePost" component={CreatePostScreen} />
+      <ForumStack.Screen name="UserProfile" component={UserProfileScreen} />
     </ForumStack.Navigator>
   );
 };

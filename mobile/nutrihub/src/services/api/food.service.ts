@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { API_CONFIG } from '../../config';
 import { FoodItem, FoodCategoryType } from '../../types/types';
 
 // API response interfaces
@@ -63,12 +64,17 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
     }
   };
 
+  const normalizedImageUrl = apiFood.imageUrl
+    ? (apiFood.imageUrl.startsWith('http') ? apiFood.imageUrl : `${API_CONFIG.BASE_URL}${apiFood.imageUrl}`)
+    : undefined;
+
   return {
     id: apiFood.id,
     title: apiFood.name,
     description: apiFood.description || '',
     iconName: getCategoryIcon(apiFood.category),
     category: apiFood.category as FoodCategoryType,
+    imageUrl: normalizedImageUrl,
     nutritionScore: apiFood.nutritionScore,
     macronutrients: {
       calories: apiFood.caloriesPerServing,

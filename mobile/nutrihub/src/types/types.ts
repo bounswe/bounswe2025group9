@@ -22,6 +22,7 @@ export interface FoodItem {
   description: string;
   iconName: string; // Icon name from MaterialCommunityIcons
   category: FoodCategoryType;
+  imageUrl?: string;
   nutritionScore?: number;
   macronutrients?: {
     calories: number;
@@ -127,6 +128,11 @@ export interface User {
   tags?: string[];
   allergens?: string[];
   createdAt?: Date;
+  // Optional public profile fields
+  profilePhoto?: string; // URL
+  profession?: string;
+  bio?: string;
+  badges?: string[];
 }
 
 export interface AuthTokens {
