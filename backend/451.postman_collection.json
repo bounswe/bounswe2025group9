@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "32842cb7-43ae-45a2-a1ee-bd097e76922e",
+		"_postman_id": "fc27b419-b000-4437-92b2-c07c55d41570",
 		"name": "451",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "17560267"
@@ -21,16 +21,56 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost:9000/api/users/create/",
+					"raw": "http://localhost/api/users/create/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
-					"port": "9000",
 					"path": [
 						"api",
 						"users",
 						"create",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "update_user",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNDkyMzQ1LCJpYXQiOjE3NjA0ODg3NDUsImp0aSI6ImUyNGU2NDkxYjk5ZDRjYTg5NDg5Njc3NjQxYTJlNGU4IiwidXNlcl9pZCI6IjEifQ.mMVA-hR5UPd0hzf0O2IRp2UvP0Kfw6l4d66u7IHKmHI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{     \r\n    \"email\": \"eren33@example.com\",\r\n    \"address\": \"Bogazici University asd\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/api/users/update/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"api",
+						"users",
+						"update",
 						""
 					]
 				},
