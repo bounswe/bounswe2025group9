@@ -79,6 +79,137 @@
 			"response": []
 		},
 		{
+			"name": "add_allergen",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ1NjQ3LCJpYXQiOjE3NjA2NDIwNDcsImp0aSI6IjYyMTJmZTEwYmZiNDQ0ODRiYzNhMjIzZjYyYTc4OGEwIiwidXNlcl9pZCI6IjEifQ.Vmztrbn0Q_8_3F35RdDl40q1yYtyzL20FHx10A4ktOI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Peanuts\",\r\n  \"common\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/allergen/add/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"allergen",
+						"add",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "set_allergen",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzY2ODI4LCJpYXQiOjE3NjA3NjMyMjgsImp0aSI6Ijk4M2Y2MTUyOWQyZjRkM2JhZmUxMGI0OTE5MGRkYjkyIiwidXNlcl9pZCI6IjIifQ.5_Q7WG6R2-9EZZoVQZ0n0rN2dAMAkD5gcm57k1Mx0cI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\"name\": \"peanut\"}, {\"name\": \"soy sauce\"}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/allergen/set/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"allergen",
+						"set",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "get_common_allergens",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ1NjQ3LCJpYXQiOjE3NjA2NDIwNDcsImp0aSI6IjYyMTJmZTEwYmZiNDQ0ODRiYzNhMjIzZjYyYTc4OGEwIiwidXNlcl9pZCI6IjEifQ.Vmztrbn0Q_8_3F35RdDl40q1yYtyzL20FHx10A4ktOI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"name\": \"Peanuts\",\r\n  \"common\": true\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost/api/users/allergen/common-list/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"api",
+						"users",
+						"allergen",
+						"common-list",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
 			"name": "get_image",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true

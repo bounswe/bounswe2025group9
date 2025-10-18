@@ -9,7 +9,10 @@ from .views import (
     ChangePasswordView,
     LogoutView,
     UserProfileView,
-    ProfileImageView
+    AllergenAddView,
+    AllergenSetView,
+    GetCommonAllergensView,
+    ProfileImageView,
 )
 
 urlpatterns = [
@@ -21,6 +24,9 @@ urlpatterns = [
     path("token/logout/", LogoutView.as_view(), name="token_logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
-    path('image/', ProfileImageView.as_view(), name='image')
+    path("allergen/set/", AllergenSetView.as_view(), name="set-allergens"),
+    path("allergen/add/", AllergenAddView.as_view(), name="add-allergen"),
+    path("allergen/common-list/", GetCommonAllergensView.as_view(), name="list-allergens"),
+    path('image/', ProfileImageView.as_view(), name='image'),
 
 ] 

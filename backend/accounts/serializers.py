@@ -31,11 +31,17 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
-class AllergenSerializer(serializers.ModelSerializer):
+# Serializer for creating/updating allergens (input)
+class AllergenInputSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(max_length=255, required=False)
+    common = serializers.BooleanField(default=False, required=False)
+
+# Serializer for returning allergens (output)
+class AllergenOutputSerializer(serializers.ModelSerializer):
     class Meta:
         model = Allergen
-        fields = ["id", "name"]
-
+        fields = ["id", "name", "common"]
 
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -47,7 +53,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    allergens = AllergenSerializer(many=True, read_only=True)
+    allergens = AllergenInputSerializer(many=True, required=False)
 
     class Meta:
         """
@@ -83,3 +89,16 @@ class PhotoSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             'profile_image': {'required': True}
         }
+
+    def create(self, validated_data):
+        allergens_data = validated_data.pop("allergens", [])
+
+        # Create the user
+        user = User.objects.create_user(**validated_data)
+
+        # Create or attach allergens
+        for allergen_data in allergens_data:
+            allergen, _ = Allergen.objects.get_or_create(**allergen_data)
+            user.allergens.add(allergen)
+
+        return user
