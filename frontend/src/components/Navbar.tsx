@@ -41,6 +41,9 @@ const Navbar = () => {
                         <Link to="/forum" className="text-white hover:text-gray-300">
                             Forum
                         </Link>
+                        <Link to="/mealplanner" className="text-white hover:text-gray-300">
+                            Meal Planner
+                        </Link>
                     </div>
                 ) : (
                     <div className="hidden lg:flex justify-center">

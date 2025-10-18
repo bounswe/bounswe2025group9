@@ -13,3 +13,9 @@ def get_all_users():
 
 def create_user(data):
     return User.objects.create_user(**data)
+
+def update_user(user, data):
+    for key, value in data.items():
+        setattr(user, key, value)
+    user.save()
+    return user
