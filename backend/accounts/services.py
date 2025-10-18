@@ -1,4 +1,4 @@
-from .repositories import get_all_users, create_user
+from .repositories import get_all_users, create_user, update_user as repo_update_user
 
 """
 Main logic of backend application is generally placed in services layer. 
@@ -14,3 +14,6 @@ def list_users():
 
 def register_user(validated_data):
     return create_user(validated_data)
+
+def update_user(user, validated_data):
+    return repo_update_user(user, validated_data)

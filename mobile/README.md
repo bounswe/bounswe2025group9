@@ -31,7 +31,7 @@ To develop and run this project, you need a few key tools:
     ```
 3.  **Install Dependencies:** Use **npm** to download and install all the required libraries listed in the `package.json` file.
     ```bash
-    npm install
+    npm ci --no-audit --no-fund --legacy-peer-deps
     ```
 
 ## Project Setup Explained
