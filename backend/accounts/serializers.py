@@ -33,7 +33,7 @@ class TagInputSerializer(serializers.Serializer):
 class TagOutputSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ["id", "name", "verified"]
+        fields = ["id", "name", "verified", "certificate"]
 
 
 # Serializer for creating/updating allergens (input)
@@ -111,4 +111,12 @@ class PhotoSerializer(serializers.ModelSerializer):
         fields = ['profile_image']
         extra_kwargs = {
             'profile_image': {'required': True}
+        }
+
+class CertificateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Tag
+        fields = ['certificate']
+        extra_kwargs = {
+            'certificate': {'required': True}
         }

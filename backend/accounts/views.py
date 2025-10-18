@@ -8,7 +8,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .serializers import (UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer,
-                           AllergenInputSerializer, AllergenOutputSerializer, TagInputSerializer, TagOutputSerializer)
+                           AllergenInputSerializer, AllergenOutputSerializer, TagInputSerializer, TagOutputSerializer,
+                           CertificateSerializer)
 from .services import register_user, list_users, update_user
 from .models import User, Allergen, Tag
 import os
@@ -321,3 +322,46 @@ class ProfileImageView(APIView):
             {"detail": "Profile image removed successfully."},
             status=status.HTTP_200_OK
         )
+
+
+class CertificateView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        tag_id = request.data.get("tag_id")
+        certificate = request.FILES.get("certificate")
+
+        if not tag_id:
+            return Response({"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not certificate:
+            return Response({"detail": "No certificate file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Ensure the tag belongs to the user
+        try:
+            tag = user.tags.get(id=tag_id)
+        except Tag.DoesNotExist:
+            return Response({"detail": "Tag not found or not associated with user."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Validate file size (max 5 MB)
+        max_size = 5 * 1024 * 1024  # 5 MB
+        if certificate.size > max_size:
+            return Response({"detail": "File size exceeds 5 MB limit."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Validate file type
+        valid_mime_types = ["image/jpeg", "image/png", "application/pdf"]
+        if certificate.content_type not in valid_mime_types:
+            return Response({"detail": "Only JPG, PNG, or PDF files are allowed."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Save certificate to tag
+        tag.certificate = certificate
+        tag.save()
+
+        # ✅ Return updated tag info
+        serializer = TagOutputSerializer(tag)
+        return Response(serializer.data, status=status.HTTP_200_OK)
