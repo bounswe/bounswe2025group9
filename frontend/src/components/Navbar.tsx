@@ -41,9 +41,6 @@ const Navbar = () => {
                         <Link to="/forum" className="text-white hover:text-gray-300">
                             Forum
                         </Link>
-                        <Link to="/profile" className="text-white hover:text-gray-300">
-                            Profile
-                        </Link>
                     </div>
                 ) : (
                     <div className="hidden lg:flex justify-center">
@@ -136,7 +133,7 @@ const Navbar = () => {
                             >
                                 Forum
                             </Link>
-                            <div className="flex items-center gap-3 pb-2">
+                            <div className="pt-2 border-t divider flex flex-col gap-3">
                                 <Link 
                                     to="/profile" 
                                     onClick={() => setIsMobileMenuOpen(false)}
@@ -155,8 +152,6 @@ const Navbar = () => {
                                     )}
                                     <span>Profile</span>
                                 </Link>
-                            </div>
-                            <div className="pt-2 border-t divider">
                                 <button 
                                     onClick={() => {
                                         handleLogout();

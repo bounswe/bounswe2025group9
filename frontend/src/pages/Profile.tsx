@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, Funnel } from '@phosphor-icons/react'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X } from '@phosphor-icons/react'
 import { apiClient, ForumPost, Recipe } from '../lib/apiClient'
 
 // Predefined allergen list
@@ -350,12 +350,20 @@ const Profile = () => {
       <div className="nh-container">
         {/* Success/Error Messages */}
         {successMessage && (
-          <div className="mb-4 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded">
+          <div className="mb-4 px-4 py-3 rounded" style={{
+            backgroundColor: 'var(--color-success)',
+            color: 'white',
+            border: '1px solid var(--color-success)'
+          }}>
             {successMessage}
           </div>
         )}
         {errorMessage && (
-          <div className="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          <div className="mb-4 px-4 py-3 rounded" style={{
+            backgroundColor: 'var(--color-error)',
+            color: 'white',
+            border: '1px solid var(--color-error)'
+          }}>
             {errorMessage}
           </div>
         )}
@@ -364,78 +372,81 @@ const Profile = () => {
           {/* Left column - Navigation */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20">
-              <h3 className="nh-subtitle mb-4 flex items-center gap-2">
-                <Funnel size={20} weight="fill" className="text-primary" />
+              <h3 className="nh-subtitle mb-4">
                 Profile Sections
               </h3>
               <div className="flex flex-col gap-3">
                 <button
                   onClick={() => setActiveTab('overview')}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow ${
-                    activeTab === 'overview'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
-                  }`}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'overview' 
+                      ? 'var(--forum-default-active-bg)' 
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'overview' 
+                      ? 'var(--forum-default-active-text)' 
+                      : 'var(--forum-default-text)',
+                  }}
                 >
                   <User size={18} weight="fill" />
                   <span className="flex-grow text-center">Overview</span>
                 </button>
                 
                 <button
-                  onClick={() => setActiveTab('allergens')}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow ${
-                    activeTab === 'allergens'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
-                  }`}
+                  disabled
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  style={{
+                    backgroundColor: 'var(--forum-default-bg)',
+                    color: 'var(--forum-default-text)',
+                  }}
                 >
                   <Warning size={18} weight="fill" />
                   <span className="flex-grow text-center">Allergens</span>
                 </button>
                 
                 <button
-                  onClick={() => setActiveTab('posts')}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow ${
-                    activeTab === 'posts'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
-                  }`}
+                  disabled
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  style={{
+                    backgroundColor: 'var(--forum-default-bg)',
+                    color: 'var(--forum-default-text)',
+                  }}
                 >
                   <Heart size={18} weight="fill" />
                   <span className="flex-grow text-center">Liked Posts</span>
                 </button>
                 
                 <button
-                  onClick={() => setActiveTab('recipes')}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow ${
-                    activeTab === 'recipes'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
-                  }`}
+                  disabled
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  style={{
+                    backgroundColor: 'var(--forum-default-bg)',
+                    color: 'var(--forum-default-text)',
+                  }}
                 >
                   <BookOpen size={18} weight="fill" />
                   <span className="flex-grow text-center">Liked Recipes</span>
                 </button>
                 
                 <button
-                  onClick={() => setActiveTab('tags')}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow ${
-                    activeTab === 'tags'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
-                  }`}
+                  disabled
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  style={{
+                    backgroundColor: 'var(--forum-default-bg)',
+                    color: 'var(--forum-default-text)',
+                  }}
                 >
                   <Certificate size={18} weight="fill" />
                   <span className="flex-grow text-center">Profession Tags</span>
                 </button>
                 
                 <button
-                  onClick={() => setActiveTab('report')}
-                  className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow ${
-                    activeTab === 'report'
-                      ? 'bg-primary text-white'
-                      : 'bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200'
-                  }`}
+                  disabled
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  style={{
+                    backgroundColor: 'var(--forum-default-bg)',
+                    color: 'var(--forum-default-text)',
+                  }}
                 >
                   <Warning size={18} weight="fill" />
                   <span className="flex-grow text-center">Report User</span>
@@ -453,7 +464,7 @@ const Profile = () => {
                 
                 {/* Profile Picture */}
                 <div className="nh-card">
-                  <h3 className="text-lg font-semibold mb-4">Profile Picture</h3>
+                  <h3 className="nh-subtitle mb-4">Profile Picture</h3>
                   <div className="flex items-center gap-6">
                     {profilePicture ? (
                       <img 
@@ -462,8 +473,10 @@ const Profile = () => {
                         className="w-24 h-24 rounded-full object-cover border-4 border-primary-500"
                       />
                     ) : (
-                      <div className="w-24 h-24 rounded-full bg-primary-500 flex items-center justify-center">
-                        <User size={48} className="text-white" weight="fill" />
+                      <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{
+                        backgroundColor: 'var(--dietary-option-bg)'
+                      }}>
+                        <User size={48} className="text-primary" weight="fill" />
                       </div>
                     )}
                     <div className="flex flex-col gap-2">
@@ -477,6 +490,9 @@ const Profile = () => {
                       <label
                         htmlFor="profile-picture-input"
                         className="nh-button nh-button-outline cursor-pointer inline-block text-center"
+                        style={{
+                          color: 'var(--dietary-option-text)'
+                        }}
                       >
                         Choose Picture
                       </label>
@@ -500,31 +516,31 @@ const Profile = () => {
                       )}
                     </div>
                   </div>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                  <p className="text-sm nh-text mt-2">
                     Supported formats: JPEG, PNG. Maximum size: 5MB.
                   </p>
                 </div>
 
                 {/* Account Information */}
                 <div className="nh-card">
-                  <h3 className="text-lg font-semibold mb-4">Account Information</h3>
+                  <h3 className="nh-subtitle mb-4">Account Information</h3>
                   <div className="space-y-3">
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Username</label>
-                      <p className="nh-text">{user?.username}</p>
+                      <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Username</label>
+                      <p className="nh-text text-sm">{user?.username}</p>
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Full Name</label>
-                      <p className="nh-text">{user?.name} {user?.surname}</p>
+                      <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Full Name</label>
+                      <p className="nh-text text-sm">{user?.name} {user?.surname}</p>
                     </div>
                     <div>
-                      <label className="text-sm text-gray-500 dark:text-gray-400">Email</label>
-                      <p className="nh-text">{user?.email}</p>
+                      <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Email</label>
+                      <p className="nh-text text-sm">{user?.email}</p>
                     </div>
                     {user?.address && (
                       <div>
-                        <label className="text-sm text-gray-500 dark:text-gray-400">Address</label>
-                        <p className="nh-text">{user.address}</p>
+                        <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Address</label>
+                        <p className="nh-text text-sm">{user.address}</p>
                       </div>
                     )}
                   </div>
@@ -861,29 +877,6 @@ const Profile = () => {
           {/* Right column - Stats & Info */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">
-              {/* Quick Stats */}
-              <div className="nh-card rounded-lg shadow-md">
-                <h3 className="nh-subtitle mb-3 text-sm">Quick Stats</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Allergens</span>
-                    <span className="text-lg font-bold text-primary">{selectedAllergens.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Liked Posts</span>
-                    <span className="text-lg font-bold text-primary">{likedPosts.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Liked Recipes</span>
-                    <span className="text-lg font-bold text-primary">{likedRecipes.length}</span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs">Profession Tags</span>
-                    <span className="text-lg font-bold text-primary">{professionTags.length}</span>
-                  </div>
-                </div>
-              </div>
-
               {/* Profile Info */}
               <div className="nh-card rounded-lg shadow-md">
                 <h3 className="nh-subtitle mb-3 text-sm">Profile Tips</h3>
