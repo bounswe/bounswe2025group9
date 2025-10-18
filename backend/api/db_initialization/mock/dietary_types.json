@@ -1,0 +1,705 @@
+[
+  {
+    "id": 1,
+    "name": {
+      "en": "Vegan",
+      "tr": "Vegan"
+    },
+    "definition": {
+      "en": "A plant-based diet excluding all animal products.",
+      "tr": "Hayvansal ürünlerin tamamını hariç tutan bitki bazlı bir diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No meat",
+        "tr": "Et yok"
+      },
+      {
+        "en": "No dairy",
+        "tr": "Süt ürünleri yok"
+      },
+      {
+        "en": "No eggs",
+        "tr": "Yumurta yok"
+      },
+      {
+        "en": "No honey",
+        "tr": "Bal yok"
+      }
+    ]
+  },
+  {
+    "id": 2,
+    "name": {
+      "en": "Vegetarian",
+      "tr": "Vejetaryen"
+    },
+    "definition": {
+      "en": "A diet excluding meat but allowing dairy and eggs.",
+      "tr": "Et hariç tutulur, süt ürünleri ve yumurta izin verilen bir diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No meat",
+        "tr": "Et yok"
+      },
+      {
+        "en": "No poultry",
+        "tr": "Tavuk yok"
+      },
+      {
+        "en": "No fish",
+        "tr": "Balık yok"
+      }
+    ]
+  },
+  {
+    "id": 3,
+    "name": {
+      "en": "Lacto-Vegetarian",
+      "tr": "Lakto-Vejetaryen"
+    },
+    "definition": {
+      "en": "Vegetarian diet including dairy but excluding eggs.",
+      "tr": "Süt ürünleri dahil, yumurta hariç vejetaryen diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No eggs",
+        "tr": "Yumurta yok"
+      },
+      {
+        "en": "No meat",
+        "tr": "Et yok"
+      },
+      {
+        "en": "No fish",
+        "tr": "Balık yok"
+      }
+    ]
+  },
+  {
+    "id": 4,
+    "name": {
+      "en": "Ovo-Vegetarian",
+      "tr": "Ovo-Vejetaryen"
+    },
+    "definition": {
+      "en": "Vegetarian diet including eggs but excluding dairy.",
+      "tr": "Yumurta dahil, süt ürünleri hariç vejetaryen diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No dairy",
+        "tr": "Süt ürünleri yok"
+      },
+      {
+        "en": "No meat",
+        "tr": "Et yok"
+      },
+      {
+        "en": "No fish",
+        "tr": "Balık yok"
+      }
+    ]
+  },
+  {
+    "id": 5,
+    "name": {
+      "en": "Lacto-Ovo Vegetarian",
+      "tr": "Lakto-Ovo Vejetaryen"
+    },
+    "definition": {
+      "en": "Vegetarian diet including both dairy and eggs.",
+      "tr": "Hem süt ürünleri hem yumurta dahil vejetaryen diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No meat",
+        "tr": "Et yok"
+      },
+      {
+        "en": "No fish",
+        "tr": "Balık yok"
+      }
+    ]
+  },
+  {
+    "id": 6,
+    "name": {
+      "en": "Pescatarian",
+      "tr": "Peskateryen"
+    },
+    "definition": {
+      "en": "Vegetarian diet including fish and seafood.",
+      "tr": "Balık ve deniz ürünleri dahil vejetaryen diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No red meat",
+        "tr": "Kırmızı et yok"
+      },
+      {
+        "en": "No poultry",
+        "tr": "Tavuk yok"
+      }
+    ]
+  },
+  {
+    "id": 7,
+    "name": {
+      "en": "Flexitarian",
+      "tr": "Fleksitaryen"
+    },
+    "definition": {
+      "en": "Mostly plant-based with occasional meat consumption.",
+      "tr": "Çoğunlukla bitki bazlı, ara sıra et tüketimi."
+    },
+    "restrictions": [
+      {
+        "en": "Limited meat",
+        "tr": "Sınırlı et"
+      }
+    ]
+  },
+  {
+    "id": 8,
+    "name": {
+      "en": "Keto",
+      "tr": "Keto"
+    },
+    "definition": {
+      "en": "High-fat, low-carb diet for ketosis.",
+      "tr": "Ketozis için yüksek yağ, düşük karbonhidrat diyeti."
+    },
+    "restrictions": [
+      {
+        "en": "Low carbs",
+        "tr": "Düşük karbonhidrat"
+      },
+      {
+        "en": "No sugars",
+        "tr": "Şeker yok"
+      },
+      {
+        "en": "Limited grains",
+        "tr": "Tahıl sınırlı"
+      }
+    ]
+  },
+  {
+    "id": 9,
+    "name": {
+      "en": "Atkins",
+      "tr": "Atkins"
+    },
+    "definition": {
+      "en": "Low-carb diet with phased carbohydrate introduction.",
+      "tr": "Aşamalı karbonhidrat tanıtımı ile düşük karbonhidrat diyeti."
+    },
+    "restrictions": [
+      {
+        "en": "Very low carbs initially",
+        "tr": "Başlangıçta çok düşük karbonhidrat"
+      },
+      {
+        "en": "No refined carbs",
+        "tr": "Rafine karbonhidrat yok"
+      }
+    ]
+  },
+  {
+    "id": 10,
+    "name": {
+      "en": "Paleo",
+      "tr": "Paleo"
+    },
+    "definition": {
+      "en": "Diet mimicking ancestral eating patterns.",
+      "tr": "Atalaların yeme alışkanlıklarını taklit eden diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No processed foods",
+        "tr": "İşlenmiş gıdalar yok"
+      },
+      {
+        "en": "No grains",
+        "tr": "Tahıl yok"
+      },
+      {
+        "en": "No dairy",
+        "tr": "Süt ürünleri yok"
+      }
+    ]
+  },
+  {
+    "id": 11,
+    "name": {
+      "en": "Primal",
+      "tr": "Primal"
+    },
+    "definition": {
+      "en": "Similar to Paleo but allows some dairy.",
+      "tr": "Paleo'ya benzer ancak bazı süt ürünleri izinli."
+    },
+    "restrictions": [
+      {
+        "en": "No grains",
+        "tr": "Tahıl yok"
+      },
+      {
+        "en": "No processed foods",
+        "tr": "İşlenmiş gıdalar yok"
+      }
+    ]
+  },
+  {
+    "id": 12,
+    "name": {
+      "en": "Whole30",
+      "tr": "Whole30"
+    },
+    "definition": {
+      "en": "30-day elimination diet to reset habits.",
+      "tr": "Alışkanlıkları sıfırlamak için 30 günlük eliminasyon diyeti."
+    },
+    "restrictions": [
+      {
+        "en": "No sugar",
+        "tr": "Şeker yok"
+      },
+      {
+        "en": "No grains",
+        "tr": "Tahıl yok"
+      },
+      {
+        "en": "No dairy",
+        "tr": "Süt ürünleri yok"
+      },
+      {
+        "en": "No legumes",
+        "tr": "Baklagil yok"
+      }
+    ]
+  },
+  {
+    "id": 13,
+    "name": {
+      "en": "Low-Carb",
+      "tr": "Düşük Karbonhidratlı"
+    },
+    "definition": {
+      "en": "Diet reducing carbohydrate intake.",
+      "tr": "Karbonhidrat alımını azaltan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "Limited carbs",
+        "tr": "Sınırlı karbonhidrat"
+      },
+      {
+        "en": "No sugary foods",
+        "tr": "Şekerli gıdalar yok"
+      }
+    ]
+  },
+  {
+    "id": 14,
+    "name": {
+      "en": "Low-Fat",
+      "tr": "Düşük Yağlı"
+    },
+    "definition": {
+      "en": "Diet limiting fat consumption.",
+      "tr": "Yağ tüketimini sınırlayan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "Low saturated fats",
+        "tr": "Düşük doymuş yağ"
+      },
+      {
+        "en": "No fried foods",
+        "tr": "Kızarmış gıdalar yok"
+      }
+    ]
+  },
+  {
+    "id": 15,
+    "name": {
+      "en": "Mediterranean",
+      "tr": "Akdeniz"
+    },
+    "definition": {
+      "en": "Diet rich in fruits, veggies, and healthy fats.",
+      "tr": "Meyve, sebze ve sağlıklı yağlar açısından zengin diyet."
+    },
+    "restrictions": [
+      {
+        "en": "Limited red meat",
+        "tr": "Sınırlı kırmızı et"
+      },
+      {
+        "en": "Moderate dairy",
+        "tr": "Orta süt ürünleri"
+      }
+    ]
+  },
+  {
+    "id": 16,
+    "name": {
+      "en": "DASH",
+      "tr": "DASH"
+    },
+    "definition": {
+      "en": "Dietary Approaches to Stop Hypertension.",
+      "tr": "Hipertansiyonu Durdurmak İçin Diyet Yaklaşımları."
+    },
+    "restrictions": [
+      {
+        "en": "Low sodium",
+        "tr": "Düşük sodyum"
+      },
+      {
+        "en": "Limited sweets",
+        "tr": "Sınırlı tatlı"
+      }
+    ]
+  },
+  {
+    "id": 17,
+    "name": {
+      "en": "MIND",
+      "tr": "MIND"
+    },
+    "definition": {
+      "en": "Mediterranean-DASH hybrid for brain health.",
+      "tr": "Beyin sağlığı için Akdeniz-DASH hibriti."
+    },
+    "restrictions": [
+      {
+        "en": "No fried food",
+        "tr": "Kızarmış gıda yok"
+      },
+      {
+        "en": "Limited pastries",
+        "tr": "Sınırlı hamur işi"
+      }
+    ]
+  },
+  {
+    "id": 18,
+    "name": {
+      "en": "Volumetrics",
+      "tr": "Volumetrik"
+    },
+    "definition": {
+      "en": "Diet focusing on low-calorie, high-volume foods.",
+      "tr": "Düşük kalorili, yüksek hacimli gıdalara odaklanan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "Avoid high-fat foods",
+        "tr": "Yüksek yağlı gıdalardan kaçın"
+      }
+    ]
+  },
+  {
+    "id": 19,
+    "name": {
+      "en": "Ornish",
+      "tr": "Ornish"
+    },
+    "definition": {
+      "en": "Very low-fat, plant-based diet for heart health.",
+      "tr": "Kalp sağlığı için çok düşük yağlı, bitki bazlı diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No animal products",
+        "tr": "Hayvansal ürünler yok"
+      },
+      {
+        "en": "Very low fat",
+        "tr": "Çok düşük yağ"
+      }
+    ]
+  },
+  {
+    "id": 20,
+    "name": {
+      "en": "Zone",
+      "tr": "Zone"
+    },
+    "definition": {
+      "en": "Balanced macronutrient diet in 40-30-30 ratio.",
+      "tr": "40-30-30 oranında dengeli makro besin diyeti."
+    },
+    "restrictions": [
+      {
+        "en": "Balanced carbs/protein/fat",
+        "tr": "Dengeli karbonhidrat/protein/yağ"
+      },
+      {
+        "en": "No high-glycemic carbs",
+        "tr": "Yüksek glisemik indeksli karbonhidrat yok"
+      }
+    ]
+  },
+  {
+    "id": 21,
+    "name": {
+      "en": "Raw Food",
+      "tr": "Çiğ Gıda"
+    },
+    "definition": {
+      "en": "Diet of uncooked and unprocessed foods.",
+      "tr": "Pişmemiş ve işlenmemiş gıdalardan oluşan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No cooked foods",
+        "tr": "Pişmiş gıdalar yok"
+      },
+      {
+        "en": "No processed items",
+        "tr": "İşlenmiş ürünler yok"
+      }
+    ]
+  },
+  {
+    "id": 22,
+    "name": {
+      "en": "Macrobiotic",
+      "tr": "Makrobiyotik"
+    },
+    "definition": {
+      "en": "Whole grains, veggies, and fermented foods diet.",
+      "tr": "Tam tahıl, sebze ve fermente gıdalar diyeti."
+    },
+    "restrictions": [
+      {
+        "en": "Limited tropical foods",
+        "tr": "Sınırlı tropik gıdalar"
+      },
+      {
+        "en": "No red meat",
+        "tr": "Kırmızı et yok"
+      }
+    ]
+  },
+  {
+    "id": 23,
+    "name": {
+      "en": "Ayurvedic",
+      "tr": "Ayurvedik"
+    },
+    "definition": {
+      "en": "Diet based on body type and doshas.",
+      "tr": "Vücut tipi ve doşalara dayalı diyet."
+    },
+    "restrictions": [
+      {
+        "en": "Varies by dosha",
+        "tr": "Doşa'ya göre değişir"
+      },
+      {
+        "en": "No incompatible foods",
+        "tr": "Uyumsuz gıdalar yok"
+      }
+    ]
+  },
+  {
+    "id": 24,
+    "name": {
+      "en": "Carnivore",
+      "tr": "Karnivor"
+    },
+    "definition": {
+      "en": "All-animal-product diet.",
+      "tr": "Tamamen hayvansal ürün diyeti."
+    },
+    "restrictions": [
+      {
+        "en": "No plants",
+        "tr": "Bitki yok"
+      },
+      {
+        "en": "No carbs",
+        "tr": "Karbonhidrat yok"
+      }
+    ]
+  },
+  {
+    "id": 25,
+    "name": {
+      "en": "Gluten-Free",
+      "tr": "Glutensiz"
+    },
+    "definition": {
+      "en": "Diet avoiding gluten-containing grains.",
+      "tr": "Gluten içeren tahıllardan kaçınan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No wheat",
+        "tr": "Buğday yok"
+      },
+      {
+        "en": "No barley",
+        "tr": "Arpa yok"
+      },
+      {
+        "en": "No rye",
+        "tr": "Çavdar yok"
+      }
+    ]
+  },
+  {
+    "id": 26,
+    "name": {
+      "en": "Dairy-Free",
+      "tr": "Süt Ürünsüz"
+    },
+    "definition": {
+      "en": "Diet excluding all dairy products.",
+      "tr": "Tüm süt ürünlerini hariç tutan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No milk",
+        "tr": "Süt yok"
+      },
+      {
+        "en": "No cheese",
+        "tr": "Peynir yok"
+      },
+      {
+        "en": "No yogurt",
+        "tr": "Yoğurt yok"
+      }
+    ]
+  },
+  {
+    "id": 27,
+    "name": {
+      "en": "Egg-Free",
+      "tr": "Yumurtasız"
+    },
+    "definition": {
+      "en": "Diet avoiding eggs and egg products.",
+      "tr": "Yumurta ve yumurta ürünlerinden kaçınan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No eggs",
+        "tr": "Yumurta yok"
+      },
+      {
+        "en": "No egg-based ingredients",
+        "tr": "Yumurta bazlı içerik yok"
+      }
+    ]
+  },
+  {
+    "id": 28,
+    "name": {
+      "en": "Nut-Free",
+      "tr": "Kuruyemişsiz"
+    },
+    "definition": {
+      "en": "Diet excluding nuts and nut products.",
+      "tr": "Kuruyemiş ve kuruyemiş ürünlerini hariç tutan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No peanuts",
+        "tr": "Fıstık yok"
+      },
+      {
+        "en": "No tree nuts",
+        "tr": "Ağaç kuruyemiş yok"
+      }
+    ]
+  },
+  {
+    "id": 29,
+    "name": {
+      "en": "Soy-Free",
+      "tr": "Soya Ürünsüz"
+    },
+    "definition": {
+      "en": "Diet avoiding soy and soy-derived products.",
+      "tr": "Soya ve soya türevli ürünlerden kaçınan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No soy milk",
+        "tr": "Soya sütü yok"
+      },
+      {
+        "en": "No tofu",
+        "tr": "Tofu yok"
+      },
+      {
+        "en": "No soy sauce",
+        "tr": "Soya sosu yok"
+      }
+    ]
+  },
+  {
+    "id": 30,
+    "name": {
+      "en": "Shellfish-Free",
+      "tr": "Kabuklu Deniz Ürünsüz"
+    },
+    "definition": {
+      "en": "Diet excluding shellfish for allergy or preference.",
+      "tr": "Alerji veya tercih için kabuklu deniz ürünlerini hariç tutan diyet."
+    },
+    "restrictions": [
+      {
+        "en": "No shrimp",
+        "tr": "Karides yok"
+      },
+      {
+        "en": "No lobster",
+        "tr": "Istakoz yok"
+      },
+      {
+        "en": "No crab",
+        "tr": "Yengeç yok"
+      }
+    ]
+  },
+  {
+    "id": 31,
+    "name": {
+      "en": "Halal",
+      "tr": "Helal"
+    },
+    "definition": {
+      "en": "Dietary guidelines in Islam permitting certain foods and prohibiting others.",
+      "tr": "İslam'da belirli gıdaların izinli, diğerlerinin yasak olduğu diyet kuralları."
+    },
+    "restrictions": [
+      {
+        "en": "No pork",
+        "tr": "Domuz eti yok"
+      },
+      {
+        "en": "No alcohol",
+        "tr": "Alkol yok"
+      },
+      {
+        "en": "Meat must be halal-slaughtered",
+        "tr": "Et helal kesim olmalı"
+      },
+      {
+        "en": "No blood products",
+        "tr": "Kan ürünleri yok"
+      }
+    ]
+  }
+]

@@ -7,9 +7,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import Allergen
-from .serializers import UserSerializer, ChangePasswordSerializer, AllergenInputSerializer, AllergenOutputSerializer
-from .services import register_user, list_users
+from .serializers import UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer, AllergenInputSerializer, AllergenOutputSerializer
+from .services import register_user, list_users, update_user
+from .models import User, Allergen
+import os
 
 
 class UserListView(APIView):
@@ -37,6 +38,18 @@ class CreateUserView(APIView):
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+
+class UpdateUserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request: Request) -> Response:
+        serializer = ContactInfoSerializer(data=request.data)
+        if serializer.is_valid():
+            user = update_user(request.user, serializer.validated_data)
+            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -183,3 +196,84 @@ class GetCommonAllergensView(APIView):
         common_allergens = Allergen.objects.filter(common=True)
         serializer = AllergenOutputSerializer(common_allergens, many=True)
         return Response(serializer.data)
+
+class ProfileImageView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_permissions(self):
+        if self.request.method == 'GET':
+            return [AllowAny()]
+        return [permission() for permission in self.permission_classes]
+
+    def get(self, request):
+        user_id = request.query_params.get('user_id') or request.user.id  # Optional user_id param
+        try:
+            user = User.objects.get(id=user_id)
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = PhotoSerializer(user)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    def post(self, request):
+        user = request.user
+        image = request.FILES.get('profile_image')
+
+        if not image:
+            return Response(
+                {"detail": "No image file uploaded."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ Validate file size (max 5 MB)
+        max_size = 5 * 1024 * 1024  # 5 MB in bytes
+        if image.size > max_size:
+            return Response(
+                {"detail": "File size exceeds 5 MB limit."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ Validate file type
+        valid_mime_types = ["image/jpeg", "image/png"]
+        if image.content_type not in valid_mime_types:
+            return Response(
+                {"detail": "Only JPG and PNG images are allowed."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ Save valid image
+        serializer = PhotoSerializer(user, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def delete(self, request):
+        user = request.user
+
+        if not user.profile_image:
+            return Response(
+                {"detail": "No profile image to remove."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # ✅ Get full path to the image file
+        image_path = user.profile_image.path
+
+        # ✅ Clear the field and save to DB
+        user.profile_image = None
+        user.save()
+
+        # ✅ Delete the actual file if it exists
+        if os.path.exists(image_path):
+            try:
+                os.remove(image_path)
+            except Exception as e:
+                # Optional: log the error but still return success
+                print(f"Error deleting image file: {e}")
+
+        return Response(
+            {"detail": "Profile image removed successfully."},
+            status=status.HTTP_200_OK
+        )

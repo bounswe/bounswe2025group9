@@ -29,6 +29,12 @@ class User(AbstractUser):
     tags = models.ManyToManyField(Tag, blank=True)
     allergens = models.ManyToManyField(Allergen, blank=True)
 
+    profile_image = models.ImageField(
+        upload_to='profile_images/',  # folder inside MEDIA_ROOT
+        null=True,
+        blank=True
+    )
+
     groups = models.ManyToManyField(
         Group,
         related_name="custom_user_set",
