@@ -299,7 +299,23 @@ const Foods = () => {
                                         <button 
                                             onClick={() => handlePageChange(Math.max(1, page - 1))}
                                             disabled={!previous || page <= 1}
-                                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${!previous || page <= 1 ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                                            className="flex items-center justify-center w-10 h-10 rounded-full transition-all cursor-pointer"
+                                            style={{
+                                                color: (!previous || page <= 1) ? 'var(--pagination-disabled-text)' : 'var(--color-primary)',
+                                                cursor: (!previous || page <= 1) ? 'not-allowed' : 'pointer',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (previous && page > 1) {
+                                                    e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (previous && page > 1) {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }
+                                            }}
                                         >
                                             <CaretLeft size={20} weight="bold" />
                                         </button>
@@ -310,11 +326,24 @@ const Foods = () => {
                                                 <button
                                                     key={index}
                                                     onClick={() => handlePageChange(index + 1)}
-                                                    className={`w-10 h-10 rounded-full transition-all ${
-                                                        page === index + 1 
-                                                        ? 'bg-primary text-white shadow' 
-                                                        : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                                    }`}
+                                                    className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                                    style={{
+                                                        backgroundColor: page === index + 1 ? 'var(--color-primary)' : 'transparent',
+                                                        color: page === index + 1 ? 'white' : 'var(--pagination-inactive-text)',
+                                                        boxShadow: page === index + 1 ? 'var(--shadow-sm)' : 'none',
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (page !== index + 1) {
+                                                            e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        if (page !== index + 1) {
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                        }
+                                                    }}
                                                 >
                                                     {index + 1}
                                                 </button>
@@ -325,17 +354,30 @@ const Foods = () => {
                                                 {/* First page */}
                                                 <button
                                                     onClick={() => handlePageChange(1)}
-                                                    className={`w-10 h-10 rounded-full transition-all ${
-                                                        page === 1 
-                                                        ? 'bg-primary text-white shadow' 
-                                                        : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                                    }`}
+                                                    className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                                    style={{
+                                                        backgroundColor: page === 1 ? 'var(--color-primary)' : 'transparent',
+                                                        color: page === 1 ? 'white' : 'var(--pagination-inactive-text)',
+                                                        boxShadow: page === 1 ? 'var(--shadow-sm)' : 'none',
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (page !== 1) {
+                                                            e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        if (page !== 1) {
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                        }
+                                                    }}
                                                 >
                                                     1
                                                 </button>
                                                 
                                                 {/* Ellipsis for many pages */}
-                                                {page > 3 && <span className="mx-1">...</span>}
+                                                {page > 3 && <span className="mx-1" style={{ color: 'var(--pagination-ellipsis-text)' }}>...</span>}
                                                 
                                                 {/* Pages around current page */}
                                                 {Array.from(
@@ -356,11 +398,24 @@ const Foods = () => {
                                                             <button
                                                                 key={pageNum}
                                                                 onClick={() => handlePageChange(pageNum)}
-                                                                className={`w-10 h-10 rounded-full transition-all ${
-                                                                    page === pageNum
-                                                                    ? 'bg-primary text-white shadow'
-                                                                    : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                                                }`}
+                                                                className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                                                style={{
+                                                                    backgroundColor: page === pageNum ? 'var(--color-primary)' : 'transparent',
+                                                                    color: page === pageNum ? 'white' : 'var(--pagination-inactive-text)',
+                                                                    boxShadow: page === pageNum ? 'var(--shadow-sm)' : 'none',
+                                                                }}
+                                                                onMouseEnter={(e) => {
+                                                                    if (page !== pageNum) {
+                                                                        e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                                        e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                                    }
+                                                                }}
+                                                                onMouseLeave={(e) => {
+                                                                    if (page !== pageNum) {
+                                                                        e.currentTarget.style.backgroundColor = 'transparent';
+                                                                        e.currentTarget.style.boxShadow = 'none';
+                                                                    }
+                                                                }}
                                                             >
                                                                 {pageNum}
                                                             </button>
@@ -369,16 +424,29 @@ const Foods = () => {
                                                 )}
 
                                                 {/* Ellipsis for many pages */}
-                                                {page < totalPages - 2 && <span className="mx-1">...</span>}
+                                                {page < totalPages - 2 && <span className="mx-1" style={{ color: 'var(--pagination-ellipsis-text)' }}>...</span>}
 
                                                 {/* Last page */}
                                                 <button
                                                     onClick={() => handlePageChange(totalPages)}
-                                                    className={`w-10 h-10 rounded-full transition-all ${
-                                                        page === totalPages
-                                                        ? 'bg-primary text-white shadow'
-                                                        : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                                    }`}
+                                                    className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                                    style={{
+                                                        backgroundColor: page === totalPages ? 'var(--color-primary)' : 'transparent',
+                                                        color: page === totalPages ? 'white' : 'var(--pagination-inactive-text)',
+                                                        boxShadow: page === totalPages ? 'var(--shadow-sm)' : 'none',
+                                                    }}
+                                                    onMouseEnter={(e) => {
+                                                        if (page !== totalPages) {
+                                                            e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                        }
+                                                    }}
+                                                    onMouseLeave={(e) => {
+                                                        if (page !== totalPages) {
+                                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                                            e.currentTarget.style.boxShadow = 'none';
+                                                        }
+                                                    }}
                                                 >
                                                     {totalPages}
                                                 </button>
@@ -388,7 +456,23 @@ const Foods = () => {
                                         <button
                                             onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
                                             disabled={!next || page >= totalPages}
-                                            className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${!next || page >= totalPages ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                                            className="flex items-center justify-center w-10 h-10 rounded-full transition-all cursor-pointer"
+                                            style={{
+                                                color: (!next || page >= totalPages) ? 'var(--pagination-disabled-text)' : 'var(--color-primary)',
+                                                cursor: (!next || page >= totalPages) ? 'not-allowed' : 'pointer',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (next && page < totalPages) {
+                                                    e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (next && page < totalPages) {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }
+                                            }}
                                         >
                                             <CaretRight size={20} weight="bold" />
                                         </button>

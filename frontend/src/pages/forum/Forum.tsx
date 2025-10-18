@@ -776,7 +776,23 @@ const Forum = () => {
                                 <button 
                                     onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
                                     disabled={currentPage === 1}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${currentPage === 1 ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                                    className="flex items-center justify-center w-10 h-10 rounded-full transition-all cursor-pointer"
+                                    style={{
+                                        color: currentPage === 1 ? 'var(--pagination-disabled-text)' : 'var(--color-primary)',
+                                        cursor: currentPage === 1 ? 'not-allowed' : 'pointer',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (currentPage !== 1) {
+                                            e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (currentPage !== 1) {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.boxShadow = 'none';
+                                        }
+                                    }}
                                 >
                                     <CaretLeft size={20} weight="bold" />
                                 </button>
@@ -787,11 +803,24 @@ const Forum = () => {
                                         <button
                                             key={index}
                                             onClick={() => handlePageChange(index + 1)}
-                                            className={`w-10 h-10 rounded-full transition-all ${
-                                                currentPage === index + 1 
-                                                ? 'bg-primary text-white shadow' 
-                                                : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                            }`}
+                                            className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                            style={{
+                                                backgroundColor: currentPage === index + 1 ? 'var(--color-primary)' : 'transparent',
+                                                color: currentPage === index + 1 ? 'white' : 'var(--pagination-inactive-text)',
+                                                boxShadow: currentPage === index + 1 ? 'var(--shadow-sm)' : 'none',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (currentPage !== index + 1) {
+                                                    e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (currentPage !== index + 1) {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }
+                                            }}
                                         >
                                             {index + 1}
                                         </button>
@@ -802,17 +831,30 @@ const Forum = () => {
                                         {/* First page */}
                                         <button
                                             onClick={() => handlePageChange(1)}
-                                            className={`w-10 h-10 rounded-full transition-all ${
-                                                currentPage === 1 
-                                                ? 'bg-primary text-white shadow' 
-                                                : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                            }`}
+                                            className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                            style={{
+                                                backgroundColor: currentPage === 1 ? 'var(--color-primary)' : 'transparent',
+                                                color: currentPage === 1 ? 'white' : 'var(--pagination-inactive-text)',
+                                                boxShadow: currentPage === 1 ? 'var(--shadow-sm)' : 'none',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (currentPage !== 1) {
+                                                    e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (currentPage !== 1) {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }
+                                            }}
                                         >
                                             1
                                         </button>
                                         
                                         {/* Ellipsis for many pages */}
-                                        {currentPage > 3 && <span className="mx-1">...</span>}
+                                        {currentPage > 3 && <span className="mx-1" style={{ color: 'var(--pagination-ellipsis-text)' }}>...</span>}
                                         
                                         {/* Pages around current page */}
                                         {Array.from(
@@ -833,11 +875,24 @@ const Forum = () => {
                                                     <button
                                                         key={pageNum}
                                                         onClick={() => handlePageChange(pageNum)}
-                                                        className={`w-10 h-10 rounded-full transition-all ${
-                                                            currentPage === pageNum
-                                                            ? 'bg-primary text-white shadow'
-                                                            : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                                        }`}
+                                                        className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                                        style={{
+                                                            backgroundColor: currentPage === pageNum ? 'var(--color-primary)' : 'transparent',
+                                                            color: currentPage === pageNum ? 'white' : 'var(--pagination-inactive-text)',
+                                                            boxShadow: currentPage === pageNum ? 'var(--shadow-sm)' : 'none',
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            if (currentPage !== pageNum) {
+                                                                e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                                e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                            }
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            if (currentPage !== pageNum) {
+                                                                e.currentTarget.style.backgroundColor = 'transparent';
+                                                                e.currentTarget.style.boxShadow = 'none';
+                                                            }
+                                                        }}
                                                     >
                                                         {pageNum}
                                                     </button>
@@ -846,16 +901,29 @@ const Forum = () => {
                                         )}
 
                                         {/* Ellipsis for many pages */}
-                                        {currentPage < totalPages - 2 && <span className="mx-1">...</span>}
+                                        {currentPage < totalPages - 2 && <span className="mx-1" style={{ color: 'var(--pagination-ellipsis-text)' }}>...</span>}
 
                                         {/* Last page */}
                                         <button
                                             onClick={() => handlePageChange(totalPages)}
-                                            className={`w-10 h-10 rounded-full transition-all ${
-                                                currentPage === totalPages
-                                                ? 'bg-primary text-white shadow'
-                                                : 'text-gray-400 hover:bg-gray-800 hover:shadow'
-                                            }`}
+                                            className="w-10 h-10 rounded-full transition-all cursor-pointer"
+                                            style={{
+                                                backgroundColor: currentPage === totalPages ? 'var(--color-primary)' : 'transparent',
+                                                color: currentPage === totalPages ? 'white' : 'var(--pagination-inactive-text)',
+                                                boxShadow: currentPage === totalPages ? 'var(--shadow-sm)' : 'none',
+                                            }}
+                                            onMouseEnter={(e) => {
+                                                if (currentPage !== totalPages) {
+                                                    e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                                    e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                                }
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                if (currentPage !== totalPages) {
+                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                    e.currentTarget.style.boxShadow = 'none';
+                                                }
+                                            }}
                                         >
                                             {totalPages}
                                         </button>
@@ -865,7 +933,23 @@ const Forum = () => {
                                 <button
                                     onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
                                     disabled={currentPage === totalPages}
-                                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${currentPage === totalPages ? 'text-gray-500 cursor-not-allowed' : 'text-primary hover:bg-gray-800 hover:shadow'}`}
+                                    className="flex items-center justify-center w-10 h-10 rounded-full transition-all cursor-pointer"
+                                    style={{
+                                        color: currentPage === totalPages ? 'var(--pagination-disabled-text)' : 'var(--color-primary)',
+                                        cursor: currentPage === totalPages ? 'not-allowed' : 'pointer',
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (currentPage !== totalPages) {
+                                            e.currentTarget.style.backgroundColor = 'var(--pagination-inactive-hover-bg)';
+                                            e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (currentPage !== totalPages) {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.boxShadow = 'none';
+                                        }
+                                    }}
                                 >
                                     <CaretRight size={20} weight="bold" />
                                 </button>
