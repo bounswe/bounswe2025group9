@@ -34,10 +34,23 @@ const UserProfileScreen: React.FC = () => {
   const { username } = route.params;
   const { user: currentUser } = useAuth();
 
+  const getCurrentUserDisplayName = (): string => {
+    if (!currentUser) return '';
+    if (currentUser.name || currentUser.surname) {
+      return `${currentUser.name || ''} ${currentUser.surname || ''}`.trim();
+    }
+    return currentUser.username;
+  };
+
+  // Owner check computed later when userProfile is known; default false initially
+  const [isOwner, setIsOwner] = useState<boolean>(false);
+
   // State for user's posts (fetched independently from filters)
   const [userPosts, setUserPosts] = useState<ForumTopic[]>([]);
   const [likedPosts, setLikedPosts] = useState<ForumTopic[]>([]);
   const [userProfile, setUserProfile] = useState<User | null>(null);
+  const [viewMode, setViewMode] = useState<'shared' | 'liked'>('shared');
+  const [likedFilter, setLikedFilter] = useState<'all' | 'recipes'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -48,16 +61,40 @@ const UserProfileScreen: React.FC = () => {
     
     try {
       // Attempt to fetch profile (flexible endpoint)
+      let fetchedProfile: User | null = null;
       try {
-        const profile = await userService.getUserByUsername(username);
-        setUserProfile(profile);
+        fetchedProfile = await userService.getUserByUsername(username);
+        setUserProfile(fetchedProfile);
       } catch (e) {
+        fetchedProfile = null;
         setUserProfile(null);
       }
 
+      // Compute owner after profile fetch
+      const displayName = getCurrentUserDisplayName();
+      const owner = Boolean(
+        currentUser && (
+          currentUser.username === username ||
+          username === displayName ||
+          (fetchedProfile && currentUser.id === fetchedProfile.id)
+        )
+      );
+      setIsOwner(owner);
+
       // Fetch all posts without tag filters
       const allPosts = await forumService.getPosts();
-      const filteredUserPosts = allPosts.filter(post => post.author === username);
+      // Determine match by username or full name (for flexibility)
+      const matchesUser = (post: ForumTopic): boolean => {
+        if (post.author === username) return true;
+        const fullName = fetchedProfile && (fetchedProfile.name || fetchedProfile.surname)
+          ? `${fetchedProfile.name || ''} ${fetchedProfile.surname || ''}`.trim()
+          : '';
+        if (fullName && post.author === fullName) return true;
+        // Fallback: if viewing own profile and backend uses full name for author field
+        if (owner && displayName && post.author === displayName) return true;
+        return false;
+      };
+      const filteredUserPosts = allPosts.filter(matchesUser);
       setUserPosts(filteredUserPosts);
 
       // Build liked posts from AsyncStorage and current posts
@@ -156,23 +193,27 @@ const UserProfileScreen: React.FC = () => {
       </View>
 
       <FlatList
-        data={userPosts}
-        keyExtractor={(item) => item.id.toString()}
+        data={
+          viewMode === 'shared'
+            ? userPosts
+            : likedFilter === 'recipes'
+              ? likedPosts.filter(p => (p.tags || []).some(t => t.toLowerCase().includes('recipe')))
+              : likedPosts
+        }
+        keyExtractor={(item) => `${viewMode}-${item.id}`}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
           <View>
             <View style={styles.profileHeader}>
               <ProfilePhotoPicker
                 uri={userProfile?.profilePhoto || null}
-                editable={currentUser?.username === username}
+                editable={Boolean(currentUser && (currentUser.username === username || username === getCurrentUserDisplayName() || (userProfile && currentUser.id === userProfile.id)))}
                 onUploaded={async (localUri) => {
                   try {
                     const name = localUri.split('/').pop() || 'profile.jpg';
                     const res = await userService.uploadProfilePhoto(localUri, name);
                     setUserProfile(prev => prev ? { ...prev, profilePhoto: res.profilePhoto } : prev);
-                  } catch (e) {
-                    // Swallow and show toast in future
-                  }
+                  } catch (e) {}
                 }}
                 onRemoved={async () => {
                   try {
@@ -184,9 +225,13 @@ const UserProfileScreen: React.FC = () => {
               />
               <View style={styles.profileInfo}>
                 <Text style={[styles.displayName, textStyles.heading4]}>
-                  {userProfile?.name && userProfile?.surname ? `${userProfile.name} ${userProfile.surname}` : username}
+                  {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname)))
+                    ? `${userProfile?.name || currentUser?.name || ''} ${userProfile?.surname || currentUser?.surname || ''}`.trim()
+                    : `@${username}`}
                 </Text>
-                <Text style={[styles.usernameText, textStyles.caption]}>@{username}</Text>
+                {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname))) && (
+                  <Text style={[styles.usernameText, textStyles.caption]}>@{username}</Text>
+                )}
                 {userProfile?.profession && (
                   <View style={[styles.professionBadge, { backgroundColor: `${theme.primary}20` }]}>
                     <Icon name="certificate" size={14} color={theme.primary} style={styles.badgeIcon} />
@@ -209,55 +254,71 @@ const UserProfileScreen: React.FC = () => {
               </View>
             </View>
 
-            {/* Liked posts section */}
-            <View style={styles.sectionHeader}>
-              <Icon name="thumb-up-outline" size={16} color={theme.text} />
-              <Text style={[styles.sectionTitle, textStyles.subtitle]}>Liked posts</Text>
+            {/* Tabs for Posts / Liked */}
+            <View style={styles.tabsContainer}>
+              <TouchableOpacity
+                style={[styles.tabButton, viewMode === 'shared' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }]}
+                onPress={() => setViewMode('shared')}
+              >
+                <Text style={[styles.tabText, viewMode === 'shared' && { color: theme.primary }]}>Posts</Text>
+              </TouchableOpacity>
+
+              {(() => {
+                const displayName = getCurrentUserDisplayName();
+                const isOwner = !!currentUser && (currentUser.username === username || username === displayName || (userProfile && currentUser.id === userProfile.id));
+                return isOwner;
+              })() && (
+                <TouchableOpacity
+                  style={[styles.tabButton, viewMode === 'liked' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }]}
+                  onPress={() => setViewMode('liked')}
+                >
+                  <Text style={[styles.tabText, viewMode === 'liked' && { color: theme.primary }]}>Liked</Text>
+                </TouchableOpacity>
+              )}
             </View>
+
+            {/* Sub-filters when on Liked tab: All / Recipes */}
+            {viewMode === 'liked' && (() => {
+              const displayName = getCurrentUserDisplayName();
+              const isOwner = !!currentUser && (currentUser.username === username || username === displayName || (userProfile && currentUser.id === userProfile.id));
+              return isOwner;
+            })() && (
+              <View style={styles.subFiltersContainer}>
+                <TouchableOpacity
+                  style={[styles.chip, likedFilter === 'all' && { backgroundColor: `${theme.primary}20` }]}
+                  onPress={() => setLikedFilter('all')}
+                >
+                  <Text style={[styles.chipText, likedFilter === 'all' && { color: theme.primary }]}>All</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.chip, likedFilter === 'recipes' && { backgroundColor: `${theme.primary}20` }]}
+                  onPress={() => setLikedFilter('recipes')}
+                >
+                  <Text style={[styles.chipText, likedFilter === 'recipes' && { color: theme.primary }]}>Recipes</Text>
+                </TouchableOpacity>
+              </View>
+            )}
           </View>
         }
         renderItem={({ item }) => (
           <ForumPost
             post={item}
             onPress={handleOpenPost}
-            onLike={() => { /* like handled on detail/list screens */ }}
+            onLike={() => {}}
             onComment={handleOpenPost}
-            onAuthorPress={() => { /* already on profile */ }}
+            onAuthorPress={() => navigation.navigate('UserProfile', { username: item.author })}
           />
         )}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="post-outline" size={48} color={theme.textSecondary} />
-            <Text style={[styles.emptyText, textStyles.body]}>No posts from this user yet.</Text>
+            <Text style={[styles.emptyText, textStyles.body]}>
+              {viewMode === 'shared' ? 'No posts from this user yet.' : 'No liked posts yet.'}
+            </Text>
           </View>
         }
         showsVerticalScrollIndicator={false}
       />
-
-      {/* Liked posts are visible only on own profile */}
-      {currentUser?.username === username && likedPosts.length > 0 && (
-        <FlatList
-          data={likedPosts}
-          keyExtractor={(item) => `liked-${item.id}`}
-          contentContainerStyle={[styles.listContent, { paddingTop: 0 }]}
-          renderItem={({ item }) => (
-            <ForumPost
-              post={item}
-              onPress={handleOpenPost}
-              onLike={() => {}}
-              onComment={handleOpenPost}
-              onAuthorPress={() => navigation.navigate('UserProfile', { username: item.author })}
-            />
-          )}
-          ListHeaderComponent={
-            <View style={styles.sectionHeader}>
-              <Icon name="heart" size={16} color={theme.text} />
-              <Text style={[styles.sectionTitle, textStyles.subtitle]}>Your liked posts</Text>
-            </View>
-          }
-          showsVerticalScrollIndicator={false}
-        />
-      )}
     </SafeAreaView>
   );
 };
@@ -315,6 +376,35 @@ const styles = StyleSheet.create({
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  tabButton: {
+    marginRight: SPACING.lg,
+    paddingBottom: SPACING.xs,
+  },
+  tabText: {
+    fontWeight: '600',
+  },
+  subFiltersContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+  },
+  chip: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 6,
+    borderRadius: BORDER_RADIUS.xs,
+    marginRight: SPACING.sm,
+  },
+  chipText: {
+    fontWeight: '600',
   },
   professionBadge: {
     flexDirection: 'row',

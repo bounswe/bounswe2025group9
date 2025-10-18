@@ -25,6 +25,7 @@ import { ForumTopic } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
 import { forumService, ApiTag } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
+import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Storage key for liked posts - must match the one in forum.service.ts
@@ -47,6 +48,7 @@ const ForumScreen: React.FC = () => {
   
   // Use the global posts context
   const { posts, setPosts, updatePost } = usePosts();
+  const { user: currentUser } = useAuth();
 
   // Helper function to preserve like status when loading new posts
   const preserveLikeStatus = useCallback(async (newPosts: ForumTopic[], currentPosts: ForumTopic[]): Promise<ForumTopic[]> => {
@@ -217,9 +219,12 @@ const ForumScreen: React.FC = () => {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
-  // Handle author press -> navigate to user profile
+  // Handle author press -> navigate to user profile, normalize self-username
   const handleAuthorPress = (post: ForumTopic) => {
-    navigation.navigate('UserProfile', { username: post.author, userId: post.authorId || undefined });
+    const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
+    const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
+    const targetUsername = isSelf ? currentUser!.username : post.author;
+    navigation.navigate('UserProfile', { username: targetUsername, userId: post.authorId || undefined });
   };
 
   // Handle new post creation
