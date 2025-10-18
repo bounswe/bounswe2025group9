@@ -33,6 +33,11 @@ interface ForumPostProps {
    * Function to call when the comment button is pressed
    */
   onComment?: (post: ForumTopic) => void;
+
+  /**
+   * Function to call when the author (avatar/name) is pressed
+   */
+  onAuthorPress?: (post: ForumTopic) => void;
   
   /**
    * Whether to show a truncated preview of the post content
@@ -71,6 +76,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
   onPress,
   onLike,
   onComment,
+  onAuthorPress,
   preview = true,
   previewLines = 3,
   showTags = true,
@@ -155,6 +161,13 @@ const ForumPost: React.FC<ForumPostProps> = ({
       onComment(post);
     }
   };
+
+  // Handle author press
+  const handleAuthor = () => {
+    if (onAuthorPress) {
+      onAuthorPress(post);
+    }
+  };
   
   // Render tag badge
   const renderTag = (tag: string, index: number) => (
@@ -186,13 +199,13 @@ const ForumPost: React.FC<ForumPostProps> = ({
     >
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.authorContainer}>
+        <TouchableOpacity style={styles.authorContainer} onPress={handleAuthor} activeOpacity={0.7}>
           <Icon name="account-circle" size={24} color={theme.primary} />
           <View style={styles.authorTextContainer}>
             <Text style={[styles.authorName, textStyles.subtitle]}>{post.author}</Text>
             <Text style={[styles.postDate, textStyles.small]}>{formatDate(post.createdAt)}</Text>
           </View>
-        </View>
+        </TouchableOpacity>
         
         {/* Tags */}
         {showTags && post.tags && post.tags.length > 0 && (

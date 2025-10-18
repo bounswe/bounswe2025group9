@@ -217,6 +217,11 @@ const ForumScreen: React.FC = () => {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
+  // Handle author press -> navigate to user profile
+  const handleAuthorPress = (post: ForumTopic) => {
+    navigation.navigate('UserProfile', { username: post.author, userId: post.authorId || undefined });
+  };
+
   // Handle new post creation
   const handleNewPost = () => {
     navigation.navigate('CreatePost');
@@ -275,6 +280,7 @@ const ForumScreen: React.FC = () => {
       onPress={handlePostPress}
       onLike={handlePostLike}
       onComment={handlePostComment}
+      onAuthorPress={handleAuthorPress}
     />
   );
 

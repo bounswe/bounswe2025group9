@@ -357,6 +357,7 @@ const PostDetailScreen: React.FC = () => {
             preview={false}
             showTags={true}
             onLike={handlePostLike}
+            onAuthorPress={() => navigation.navigate('UserProfile', { username: post.author, userId: post.authorId || undefined })}
           />
           
           {/* Comments Section */}
