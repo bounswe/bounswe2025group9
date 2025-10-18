@@ -63,6 +63,11 @@ export type ForumStackParamList = {
   ForumList: {
     action?: 'addPost';
     postData?: SerializedForumPost;
+    // When set, ForumList should immediately navigate to the target screen
+    openUserProfile?: {
+      username: string;
+      userId?: number;
+    };
   } | undefined;
   
   /**

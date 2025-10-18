@@ -146,6 +146,13 @@ const ForumScreen: React.FC = () => {
       // Clear the navigation params
       navigation.setParams({ action: undefined, postData: undefined });
     }
+
+    // If instructed, open a specific user's profile, then clear the flag
+    if (route.params?.openUserProfile) {
+      const { username, userId } = route.params.openUserProfile;
+      navigation.navigate('UserProfile', { username, userId });
+      navigation.setParams({ openUserProfile: undefined });
+    }
   }, [route.params, navigation, setPosts]);
 
   // Handle filter change manually instead of in useEffect
