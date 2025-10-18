@@ -7,9 +7,10 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer, AllergenInputSerializer, AllergenOutputSerializer
+from .serializers import (UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer,
+                           AllergenInputSerializer, AllergenOutputSerializer, TagInputSerializer, TagOutputSerializer)
 from .services import register_user, list_users, update_user
-from .models import User, Allergen
+from .models import User, Allergen, Tag
 import os
 
 
@@ -180,6 +181,49 @@ class AllergenSetView(APIView):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+class TagSetView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        user = request.user
+
+        # Expecting a list of tag objects
+        if not isinstance(data, list):
+            return Response(
+                {"detail": "Expected a list of tags."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = TagInputSerializer(data=data, many=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        tags = []
+        for tag_data in serializer.validated_data:
+            if "id" in tag_data:
+                try:
+                    tag = Tag.objects.get(id=tag_data["id"])
+                except Tag.DoesNotExist:
+                    continue
+            elif "name" in tag_data:
+                tag, _ = Tag.objects.get_or_create(
+                    name=tag_data["name"],
+                    defaults={"verified": tag_data.get("verified", False)}
+                )
+            else:
+                continue  # skip invalid entries
+
+            tags.append(tag)
+
+        # Update user's tags
+        user.tags.set(tags)
+
+        # Serialize response
+        response_serializer = TagOutputSerializer(tags, many=True)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
     
 
 class GetCommonAllergensView(APIView):

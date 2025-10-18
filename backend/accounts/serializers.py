@@ -25,10 +25,15 @@ class ContactInfoSerializer(serializers.Serializer):
     address = serializers.CharField(required=True)
     
 
-class TagSerializer(serializers.ModelSerializer):
+class TagInputSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(max_length=255, required=False)
+    verified = serializers.BooleanField(default=False, required=False, read_only=True)
+
+class TagOutputSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ["id", "name"]
+        fields = ["id", "name", "verified"]
 
 
 # Serializer for creating/updating allergens (input)
@@ -52,7 +57,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 # In Model-API interactions we need to convert our Python objects into JSON data.
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
-    tags = TagSerializer(many=True, read_only=True)
+    tags = TagInputSerializer(many=True, required=False)
     allergens = AllergenInputSerializer(many=True, required=False)
 
     class Meta:
@@ -84,6 +89,7 @@ class UserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         allergens_data = validated_data.pop("allergens", [])
+        tags_data = validated_data.pop("tags", [])
 
         # Create the user
         user = User.objects.create_user(**validated_data)
@@ -92,6 +98,10 @@ class UserSerializer(serializers.ModelSerializer):
         for allergen_data in allergens_data:
             allergen, _ = Allergen.objects.get_or_create(**allergen_data)
             user.allergens.add(allergen)
+
+        for tag_data in tags_data:
+            tag, _ = Tag.objects.get_or_create(**tag_data)
+            user.tags.add(tag)
 
         return user
 
