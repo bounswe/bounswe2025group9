@@ -10,7 +10,8 @@ class Tag(models.Model):
 
 
 class Allergen(models.Model):
-    name = models.CharField(max_length=64)
+    name = models.CharField(max_length=64, unique=True)
+    common = models.BooleanField(default=False)
 
     def __str__(self):
         return self.name
@@ -27,6 +28,12 @@ class User(AbstractUser):
 
     tags = models.ManyToManyField(Tag, blank=True)
     allergens = models.ManyToManyField(Allergen, blank=True)
+
+    profile_image = models.ImageField(
+        upload_to='profile_images/',  # folder inside MEDIA_ROOT
+        null=True,
+        blank=True
+    )
 
     groups = models.ManyToManyField(
         Group,
