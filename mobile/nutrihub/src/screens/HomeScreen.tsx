@@ -47,15 +47,8 @@ const HomeScreen: React.FC = () => {
 
   const handleViewProfile = () => {
     if (!user) return;
-    // Navigate to Forum tab and request ForumList to open UserProfile.
-    // This ensures back navigation returns to ForumList, not Home.
-    // @ts-ignore - nested navigation params for nested stack
-    navigation.navigate('Forum', {
-      screen: 'ForumList',
-      params: {
-        openUserProfile: { username: user.username },
-      },
-    });
+    // Navigate directly to MyProfile tab
+    navigation.navigate('MyProfile');
   };
 
   return (
