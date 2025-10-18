@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "5a10d54b-16f8-49b1-85ff-7178565e6f32",
-		"name": "352",
+		"_postman_id": "32842cb7-43ae-45a2-a1ee-bd097e76922e",
+		"name": "451",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "17560267"
 	},
@@ -21,11 +21,12 @@
 					}
 				},
 				"url": {
-					"raw": "http://localhost/api/users/create/",
+					"raw": "http://localhost:9000/api/users/create/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
+					"port": "9000",
 					"path": [
 						"api",
 						"users",
@@ -38,49 +39,7 @@
 			"response": []
 		},
 		{
-			"name": "add_allergen",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ1NjQ3LCJpYXQiOjE3NjA2NDIwNDcsImp0aSI6IjYyMTJmZTEwYmZiNDQ0ODRiYzNhMjIzZjYyYTc4OGEwIiwidXNlcl9pZCI6IjEifQ.Vmztrbn0Q_8_3F35RdDl40q1yYtyzL20FHx10A4ktOI",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"name\": \"Peanuts\",\r\n  \"common\": true\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost/api/users/allergen/add/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"path": [
-						"api",
-						"users",
-						"allergen",
-						"add",
-						""
-					]
-				},
-				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
-			},
-			"response": []
-		},
-		{
-			"name": "get_common_allergens",
+			"name": "get_image",
 			"protocolProfileBehavior": {
 				"disableBodyPruning": true
 			},
@@ -90,7 +49,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ1NjQ3LCJpYXQiOjE3NjA2NDIwNDcsImp0aSI6IjYyMTJmZTEwYmZiNDQ0ODRiYzNhMjIzZjYyYTc4OGEwIiwidXNlcl9pZCI6IjEifQ.Vmztrbn0Q_8_3F35RdDl40q1yYtyzL20FHx10A4ktOI",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ3MTc3LCJpYXQiOjE3NjA2NDM1NzcsImp0aSI6IjM3MmYxZmYxYjY5ZjRkYjZhNTA5ZTFlZWI2YmY4NDg4IiwidXNlcl9pZCI6IjEifQ.uDjEGYcrO0hAHosRrUTYB16gXW9-MKauPFpJ_tonfVU",
 							"type": "string"
 						}
 					]
@@ -98,58 +57,17 @@
 				"method": "GET",
 				"header": [],
 				"body": {
-					"mode": "raw",
-					"raw": "{\r\n  \"name\": \"Peanuts\",\r\n  \"common\": true\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "http://localhost/api/users/allergen/common-list/",
-					"protocol": "http",
-					"host": [
-						"localhost"
-					],
-					"path": [
-						"api",
-						"users",
-						"allergen",
-						"common-list",
-						""
-					]
-				},
-				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
-			},
-			"response": []
-		},
-		{
-			"name": "update_user",
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
+					"mode": "formdata",
+					"formdata": [
 						{
-							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNDkyMzQ1LCJpYXQiOjE3NjA0ODg3NDUsImp0aSI6ImUyNGU2NDkxYjk5ZDRjYTg5NDg5Njc3NjQxYTJlNGU4IiwidXNlcl9pZCI6IjEifQ.mMVA-hR5UPd0hzf0O2IRp2UvP0Kfw6l4d66u7IHKmHI",
-							"type": "string"
+							"key": "profile_image",
+							"type": "file",
+							"src": "/C:/Users/fatih/OneDrive/Masaüstü/PNG_transparency_demonstration_1.png"
 						}
 					]
 				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "raw",
-					"raw": "{     \r\n    \"email\": \"eren33@example.com\",\r\n    \"address\": \"Bogazici University asd\"\r\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
 				"url": {
-					"raw": "http://localhost/api/users/update/",
+					"raw": "http://localhost/api/users/image?user_id=1",
 					"protocol": "http",
 					"host": [
 						"localhost"
@@ -157,8 +75,13 @@
 					"path": [
 						"api",
 						"users",
-						"update",
-						""
+						"image"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "1"
+						}
 					]
 				},
 				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
@@ -173,7 +96,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ3MTc3LCJpYXQiOjE3NjA2NDM1NzcsImp0aSI6IjM3MmYxZmYxYjY5ZjRkYjZhNTA5ZTFlZWI2YmY4NDg4IiwidXNlcl9pZCI6IjEifQ.uDjEGYcrO0hAHosRrUTYB16gXW9-MKauPFpJ_tonfVU",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzYxNTQ0LCJpYXQiOjE3NjA3NTc5NDQsImp0aSI6IjY1M2JlMTllNTcyMTQ3ODFhYTFlZjljMDkxNjk2OThhIiwidXNlcl9pZCI6IjEifQ.U8Ph0_0_GFvjteOH6NLMoBq-FsdYQbknzjSo0bph28Q",
 							"type": "string"
 						}
 					]
@@ -191,11 +114,12 @@
 					]
 				},
 				"url": {
-					"raw": "http://localhost/api/users/image/",
+					"raw": "http://localhost:9000/api/users/image/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
+					"port": "9000",
 					"path": [
 						"api",
 						"users",
@@ -215,7 +139,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ1NjQ3LCJpYXQiOjE3NjA2NDIwNDcsImp0aSI6IjYyMTJmZTEwYmZiNDQ0ODRiYzNhMjIzZjYyYTc4OGEwIiwidXNlcl9pZCI6IjEifQ.Vmztrbn0Q_8_3F35RdDl40q1yYtyzL20FHx10A4ktOI",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzYxNTQ0LCJpYXQiOjE3NjA3NTc5NDQsImp0aSI6IjY1M2JlMTllNTcyMTQ3ODFhYTFlZjljMDkxNjk2OThhIiwidXNlcl9pZCI6IjEifQ.U8Ph0_0_GFvjteOH6NLMoBq-FsdYQbknzjSo0bph28Q",
 							"type": "string"
 						}
 					]
@@ -223,11 +147,12 @@
 				"method": "DELETE",
 				"header": [],
 				"url": {
-					"raw": "http://localhost/api/users/image/",
+					"raw": "http://localhost:9000/api/users/image/",
 					"protocol": "http",
 					"host": [
 						"localhost"
 					],
+					"port": "9000",
 					"path": [
 						"api",
 						"users",
