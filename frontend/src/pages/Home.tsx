@@ -18,7 +18,7 @@ const Home = () => {
                     <Link to="/foods" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
                         Explore Foods
                     </Link>
-                    <Link to="/forum" className="nh-button nh-button-lg nh-button-secondary flex items-center justify-center">
+                    <Link to="/forum" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
                         Join Forum
                     </Link>
                     <Link to="/mealplanner" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
