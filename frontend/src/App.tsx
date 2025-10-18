@@ -8,6 +8,7 @@ import ProposeNewFood from './pages/foods/ProposeNewFood'
 import Forum from './pages/forum/Forum'
 import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
+import Profile from './pages/Profile'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SwaggerPage from './components/SwaggerPage';
@@ -35,6 +36,7 @@ function App() {
               <Route path="forum" element={<Forum />} />
               <Route path="forum/post/:postId" element={<PostDetail />} />
               <Route path="forum/create" element={<CreatePost />} />
+              <Route path="profile" element={<Profile />} />
               <Route path="mealplanner" element={<MealPlanner/>}/>
             </Route>
 

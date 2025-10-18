@@ -181,13 +181,6 @@ const Foods = () => {
     return (
         <div className="w-full py-12">
             <div className="nh-container">
-                <div className="mb-8 flex flex-col items-center">
-                    <h1 className="nh-title text-center">Foods Catalog</h1>
-                    <p className="nh-text text-lg max-w-2xl text-center">
-                        Browse our selection of available foods.
-                    </p>
-                </div>
-
                 <div className="flex flex-col md:flex-row gap-6">
                     {/* Left column - Filters */}
                     <div className="w-full md:w-1/5">
