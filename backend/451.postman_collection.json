@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n            \"username\": \"eren2\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren2@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": [{\"name\": \"soy sauce\"}]\r\n        }",
+					"raw": "{\r\n            \"username\": \"eren4\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren4@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [{\"name\": \"dietian\", \"verified\": true}],\r\n            \"allergens\": [{\"name\": \"soy sauce\"}]\r\n        }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -95,7 +95,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"name\": \"Peanuts\",\r\n  \"common\": true\r\n}",
+					"raw": "{\r\n  \"name\": \"preservatives\",\r\n  \"common\": true\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
