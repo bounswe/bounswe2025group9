@@ -8,16 +8,20 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { ForumStackParamList } from '../../navigation/types';
-import { ForumTopic } from '../../types/types';
+import { ForumTopic, User } from '../../types/types';
 import ForumPost from '../../components/forum/ForumPost';
 import { forumService } from '../../services/api/forum.service';
+import ProfilePhotoPicker from '../../components/user/ProfilePhotoPicker';
+import { userService } from '../../services/api/user.service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useAuth } from '../../context/AuthContext';
 
 type UserProfileRouteProp = RouteProp<ForumStackParamList, 'UserProfile'>;
 type UserProfileNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'UserProfile'>;
@@ -28,35 +32,67 @@ const UserProfileScreen: React.FC = () => {
   const route = useRoute<UserProfileRouteProp>();
 
   const { username } = route.params;
+  const { user: currentUser } = useAuth();
 
   // State for user's posts (fetched independently from filters)
   const [userPosts, setUserPosts] = useState<ForumTopic[]>([]);
+  const [likedPosts, setLikedPosts] = useState<ForumTopic[]>([]);
+  const [userProfile, setUserProfile] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch ALL posts and filter by username to avoid filter dependency
-  const fetchUserPosts = useCallback(async () => {
+  const fetchUserData = useCallback(async () => {
     setLoading(true);
     setError(null);
     
     try {
-      // Fetch all posts without any tag filters
+      // Attempt to fetch profile (flexible endpoint)
+      try {
+        const profile = await userService.getUserByUsername(username);
+        setUserProfile(profile);
+      } catch (e) {
+        setUserProfile(null);
+      }
+
+      // Fetch all posts without tag filters
       const allPosts = await forumService.getPosts();
-      // Filter to show only posts by this user
       const filteredUserPosts = allPosts.filter(post => post.author === username);
       setUserPosts(filteredUserPosts);
+
+      // Build liked posts from AsyncStorage and current posts
+      const likedIdsRaw = await AsyncStorage.getItem('nutrihub_liked_posts');
+      const likedIds: number[] = likedIdsRaw ? JSON.parse(likedIdsRaw) : [];
+      const liked = allPosts.filter(p => likedIds.includes(p.id));
+      setLikedPosts(liked);
     } catch (err) {
-      console.error('Error fetching user posts:', err);
-      setError('Failed to load user posts');
+      console.error('Error fetching user profile:', err);
+      setError('Failed to load user profile');
     } finally {
       setLoading(false);
     }
   }, [username]);
 
-  // Fetch user posts on mount
+  // Fetch user data on mount
   useEffect(() => {
-    fetchUserPosts();
-  }, [fetchUserPosts]);
+    fetchUserData();
+  }, [fetchUserData]);
+
+  // Refresh liked posts on screen focus so it stays in sync with likes toggled elsewhere
+  useFocusEffect(
+    useCallback(() => {
+      const refreshLiked = async () => {
+        try {
+          const allPosts = await forumService.getPosts();
+          const likedIdsRaw = await AsyncStorage.getItem('nutrihub_liked_posts');
+          const likedIds: number[] = likedIdsRaw ? JSON.parse(likedIdsRaw) : [];
+          const liked = allPosts.filter(p => likedIds.includes(p.id));
+          setLikedPosts(liked);
+        } catch {}
+      };
+      refreshLiked();
+    }, [])
+  );
 
   const handleBack = () => {
     navigation.goBack();
@@ -99,7 +135,7 @@ const UserProfileScreen: React.FC = () => {
           <Text style={[styles.errorText, textStyles.body]}>{error}</Text>
           <TouchableOpacity
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
-            onPress={fetchUserPosts}
+            onPress={fetchUserData}
           >
             <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>Retry</Text>
           </TouchableOpacity>
@@ -124,20 +160,59 @@ const UserProfileScreen: React.FC = () => {
         keyExtractor={(item) => item.id.toString()}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
-          <View style={styles.profileHeader}>
-            <View style={[styles.avatar, { backgroundColor: theme.placeholder }]}>
-              <Icon name="account" size={36} color={theme.primary} />
-            </View>
-            <View style={styles.profileInfo}>
-              <Text style={[styles.username, textStyles.heading4]}>{username}</Text>
-              {/* Profession/credential badges placeholder; extend when backend exposes fields */}
-              <View style={styles.badgesRow}>
-                {/* Example badge rendering: uncomment and populate from profile data when available */}
-                {/* <View style={[styles.badge, { backgroundColor: `${theme.primary}20` }]}> */}
-                {/*   <Icon name="certificate" size={14} color={theme.primary} style={styles.badgeIcon} /> */}
-                {/*   <Text style={[styles.badgeText, { color: theme.primary }]}>Dietitian</Text> */}
-                {/* </View> */}
+          <View>
+            <View style={styles.profileHeader}>
+              <ProfilePhotoPicker
+                uri={userProfile?.profilePhoto || null}
+                editable={currentUser?.username === username}
+                onUploaded={async (localUri) => {
+                  try {
+                    const name = localUri.split('/').pop() || 'profile.jpg';
+                    const res = await userService.uploadProfilePhoto(localUri, name);
+                    setUserProfile(prev => prev ? { ...prev, profilePhoto: res.profilePhoto } : prev);
+                  } catch (e) {
+                    // Swallow and show toast in future
+                  }
+                }}
+                onRemoved={async () => {
+                  try {
+                    await userService.removeProfilePhoto();
+                    setUserProfile(prev => prev ? { ...prev, profilePhoto: undefined } : prev);
+                  } catch (e) {}
+                }}
+                removable={!!userProfile?.profilePhoto}
+              />
+              <View style={styles.profileInfo}>
+                <Text style={[styles.displayName, textStyles.heading4]}>
+                  {userProfile?.name && userProfile?.surname ? `${userProfile.name} ${userProfile.surname}` : username}
+                </Text>
+                <Text style={[styles.usernameText, textStyles.caption]}>@{username}</Text>
+                {userProfile?.profession && (
+                  <View style={[styles.professionBadge, { backgroundColor: `${theme.primary}20` }]}>
+                    <Icon name="certificate" size={14} color={theme.primary} style={styles.badgeIcon} />
+                    <Text style={[styles.badgeText, { color: theme.primary }]}>{userProfile.profession}</Text>
+                  </View>
+                )}
+                {userProfile?.bio && (
+                  <Text style={[styles.bioText, textStyles.body]}>{userProfile.bio}</Text>
+                )}
+                {userProfile?.badges && userProfile.badges.length > 0 && (
+                  <View style={styles.badgesRow}>
+                    {userProfile.badges.map((badge, index) => (
+                      <View key={index} style={[styles.badge, { backgroundColor: `${theme.primary}15` }]}>
+                        <Icon name="star" size={12} color={theme.primary} style={styles.badgeIcon} />
+                        <Text style={[styles.badgeText, { color: theme.primary }]}>{badge}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
               </View>
+            </View>
+
+            {/* Liked posts section */}
+            <View style={styles.sectionHeader}>
+              <Icon name="thumb-up-outline" size={16} color={theme.text} />
+              <Text style={[styles.sectionTitle, textStyles.subtitle]}>Liked posts</Text>
             </View>
           </View>
         }
@@ -158,6 +233,31 @@ const UserProfileScreen: React.FC = () => {
         }
         showsVerticalScrollIndicator={false}
       />
+
+      {/* Liked posts are visible only on own profile */}
+      {currentUser?.username === username && likedPosts.length > 0 && (
+        <FlatList
+          data={likedPosts}
+          keyExtractor={(item) => `liked-${item.id}`}
+          contentContainerStyle={[styles.listContent, { paddingTop: 0 }]}
+          renderItem={({ item }) => (
+            <ForumPost
+              post={item}
+              onPress={handleOpenPost}
+              onLike={() => {}}
+              onComment={handleOpenPost}
+              onAuthorPress={() => navigation.navigate('UserProfile', { username: item.author })}
+            />
+          )}
+          ListHeaderComponent={
+            <View style={styles.sectionHeader}>
+              <Icon name="heart" size={16} color={theme.text} />
+              <Text style={[styles.sectionTitle, textStyles.subtitle]}>Your liked posts</Text>
+            </View>
+          }
+          showsVerticalScrollIndicator={false}
+        />
+      )}
     </SafeAreaView>
   );
 };
@@ -203,12 +303,30 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.md,
     flex: 1,
   },
+  displayName: {
+    marginBottom: SPACING.xs,
+  },
   username: {
     marginBottom: SPACING.xs,
+  },
+  usernameText: {
+    marginBottom: SPACING.sm,
   },
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
+  },
+  professionBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    marginBottom: SPACING.sm,
+  },
+  bioText: {
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   badge: {
     flexDirection: 'row',
@@ -224,6 +342,16 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 12,
     fontWeight: '500',
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  sectionTitle: {
+    marginLeft: SPACING.xs,
+    fontWeight: '600',
   },
   emptyContainer: {
     alignItems: 'center',
