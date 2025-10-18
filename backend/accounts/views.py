@@ -8,7 +8,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .models import Allergen
-from .serializers import UserSerializer, ChangePasswordSerializer, AllergenSerializer
+from .serializers import UserSerializer, ChangePasswordSerializer, AllergenInputSerializer, AllergenOutputSerializer
 from .services import register_user, list_users
 
 
@@ -114,11 +114,60 @@ class AllergenAddView(APIView):
         """
         # current user is available in request.user
         # serialize user data
-        serializer = AllergenSerializer(data=request.data)
+        serializer = AllergenOutputSerializer(data=request.data)
         if serializer.is_valid():
             allergen = serializer.save()
-            return Response(AllergenSerializer(allergen).data, status=status.HTTP_201_CREATED)
+            return Response(AllergenOutputSerializer(allergen).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class AllergenSetView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        """
+        POST /allergens/
+        Set or add allergens for the current user.
+        Accepts a list of allergens, each with optional id or name/common fields.
+        """
+        data = request.data
+        user = request.user
+
+        if not isinstance(data, list):
+            return Response({"detail": "Expected a list of allergens."}, status=status.HTTP_400_BAD_REQUEST)
+
+        serializer = AllergenInputSerializer(data=data, many=True)
+        if serializer.is_valid():
+            allergens = []
+            for allergen_data in serializer.validated_data:
+                if "id" in allergen_data:
+                    # Attach existing allergen by ID
+                    try:
+                        allergen = Allergen.objects.get(id=allergen_data["id"])
+                    except Allergen.DoesNotExist:
+                        continue
+                elif "name" in allergen_data:
+                    # Create new allergen if not exists
+                    allergen, _ = Allergen.objects.get_or_create(
+                        name=allergen_data["name"],
+                        defaults={"common": allergen_data.get("common", False)}
+                    )
+                else:
+                    # Skip invalid entries
+                    continue
+
+                allergens.append(allergen)
+
+            # Replace user's allergens
+            user.allergens.set(allergens)
+
+            # Return serialized allergens
+            response_serializer = AllergenOutputSerializer(allergens, many=True)
+            return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 class GetCommonAllergensView(APIView):
     # use jwt authentication
@@ -132,5 +181,5 @@ class GetCommonAllergensView(APIView):
         Fetch a list of common allergens.
         """
         common_allergens = Allergen.objects.filter(common=True)
-        serializer = AllergenSerializer(common_allergens, many=True)
+        serializer = AllergenOutputSerializer(common_allergens, many=True)
         return Response(serializer.data)

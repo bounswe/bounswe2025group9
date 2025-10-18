@@ -26,11 +26,17 @@ class TagSerializer(serializers.ModelSerializer):
         fields = ["id", "name"]
 
 
-class AllergenSerializer(serializers.ModelSerializer):
+# Serializer for creating/updating allergens (input)
+class AllergenInputSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=False)
+    name = serializers.CharField(max_length=255, required=False)
+    common = serializers.BooleanField(default=False, required=False)
+
+# Serializer for returning allergens (output)
+class AllergenOutputSerializer(serializers.ModelSerializer):
     class Meta:
         model = Allergen
         fields = ["id", "name", "common"]
-
 
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -42,7 +48,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
     tags = TagSerializer(many=True, read_only=True)
-    allergens = AllergenSerializer(many=True, required=False)
+    allergens = AllergenInputSerializer(many=True, required=False)
 
     class Meta:
         """
