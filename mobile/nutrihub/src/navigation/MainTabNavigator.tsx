@@ -12,6 +12,7 @@ import ForumScreen from '../screens/forum/ForumScreen';
 import PostDetailScreen from '../screens/forum/PostDetailScreen';
 import CreatePostScreen from '../screens/forum/CreatePostScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
+import MyProfileScreen from '../screens/user/MyProfileScreen';
 import FoodScreen from '../screens/food/FoodScreen';
 import { MainTabParamList, RootStackParamList, ForumStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
@@ -129,6 +130,8 @@ const MainTabNavigator = () => {
               iconName = focused ? 'food-apple' : 'food-apple-outline';
             } else if (route.name === 'Forum') {
               iconName = focused ? 'forum' : 'forum-outline';
+            } else if (route.name === 'MyProfile') {
+              iconName = focused ? 'account' : 'account-outline';
             } else {
               iconName = 'help-circle'; 
             }
@@ -140,6 +143,7 @@ const MainTabNavigator = () => {
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Food" component={FoodScreen} />
         <Tab.Screen name="Forum" component={ForumStackNavigator} />
+        <Tab.Screen name="MyProfile" component={MyProfileScreen} />
       </Tab.Navigator>
     </View>
   );

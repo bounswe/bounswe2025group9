@@ -32,6 +32,11 @@ export type MainTabParamList = {
    * Food tab with no parameters
    */
   Food: undefined;
+  
+  /**
+   * My Profile tab with no parameters
+   */
+  MyProfile: undefined;
 };
 
 /**
