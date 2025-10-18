@@ -82,14 +82,6 @@ class UserSerializer(serializers.ModelSerializer):
             'profile_image': {'required': False}
         }
 
-class PhotoSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = User
-        fields = ['profile_image']
-        extra_kwargs = {
-            'profile_image': {'required': True}
-        }
-
     def create(self, validated_data):
         allergens_data = validated_data.pop("allergens", [])
 
@@ -102,3 +94,11 @@ class PhotoSerializer(serializers.ModelSerializer):
             user.allergens.add(allergen)
 
         return user
+
+class PhotoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['profile_image']
+        extra_kwargs = {
+            'profile_image': {'required': True}
+        }

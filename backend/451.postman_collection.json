@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n            \"username\": \"eren188\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren188@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": [{\"name\": \"soy sauce\", \"common\": false}]\r\n        }",
+					"raw": "{\r\n            \"username\": \"eren2\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren2@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": [{\"name\": \"soy sauce\"}]\r\n        }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -45,7 +45,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNDkyMzQ1LCJpYXQiOjE3NjA0ODg3NDUsImp0aSI6ImUyNGU2NDkxYjk5ZDRjYTg5NDg5Njc3NjQxYTJlNGU4IiwidXNlcl9pZCI6IjEifQ.mMVA-hR5UPd0hzf0O2IRp2UvP0Kfw6l4d66u7IHKmHI",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
 							"type": "string"
 						}
 					]
@@ -54,7 +54,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{     \r\n    \"email\": \"eren33@example.com\",\r\n    \"address\": \"Bogazici University asd\"\r\n}",
+					"raw": "{     \r\n    \"email\": \"eren331@example.com\",\r\n    \"address\": \"Bogazici University asd\"\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -86,7 +86,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ1NjQ3LCJpYXQiOjE3NjA2NDIwNDcsImp0aSI6IjYyMTJmZTEwYmZiNDQ0ODRiYzNhMjIzZjYyYTc4OGEwIiwidXNlcl9pZCI6IjEifQ.Vmztrbn0Q_8_3F35RdDl40q1yYtyzL20FHx10A4ktOI",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
 							"type": "string"
 						}
 					]
@@ -129,7 +129,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzY2ODI4LCJpYXQiOjE3NjA3NjMyMjgsImp0aSI6Ijk4M2Y2MTUyOWQyZjRkM2JhZmUxMGI0OTE5MGRkYjkyIiwidXNlcl9pZCI6IjIifQ.5_Q7WG6R2-9EZZoVQZ0n0rN2dAMAkD5gcm57k1Mx0cI",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
 							"type": "string"
 						}
 					]
@@ -216,14 +216,7 @@
 			},
 			"request": {
 				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ3MTc3LCJpYXQiOjE3NjA2NDM1NzcsImp0aSI6IjM3MmYxZmYxYjY5ZjRkYjZhNTA5ZTFlZWI2YmY4NDg4IiwidXNlcl9pZCI6IjEifQ.uDjEGYcrO0hAHosRrUTYB16gXW9-MKauPFpJ_tonfVU",
-							"type": "string"
-						}
-					]
+					"type": "noauth"
 				},
 				"method": "GET",
 				"header": [],
@@ -267,7 +260,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzYxNTQ0LCJpYXQiOjE3NjA3NTc5NDQsImp0aSI6IjY1M2JlMTllNTcyMTQ3ODFhYTFlZjljMDkxNjk2OThhIiwidXNlcl9pZCI6IjEifQ.U8Ph0_0_GFvjteOH6NLMoBq-FsdYQbknzjSo0bph28Q",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
 							"type": "string"
 						}
 					]
@@ -310,7 +303,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzYxNTQ0LCJpYXQiOjE3NjA3NTc5NDQsImp0aSI6IjY1M2JlMTllNTcyMTQ3ODFhYTFlZjljMDkxNjk2OThhIiwidXNlcl9pZCI6IjEifQ.U8Ph0_0_GFvjteOH6NLMoBq-FsdYQbknzjSo0bph28Q",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
 							"type": "string"
 						}
 					]
@@ -342,7 +335,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"username\" : \"eren1\", \"password\": \"securepassword1235\"}",
+					"raw": "{\"username\" : \"eren188\", \"password\": \"securepassword1235\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -410,7 +403,7 @@
 					"bearer": [
 						{
 							"key": "token",
-							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzQ1MzU0NTgxLCJpYXQiOjE3NDUzNTA5ODEsImp0aSI6ImVjN2E3ZjBkZWZkMzQ1NDc5ZWFhOTNiOTNjNDI0YTUyIiwidXNlcl9pZCI6Mn0.9xlv1Y7Na_pEQbk0gNIpr4w7G1Z9LKUaV8FVW3x3oic",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
 							"type": "string"
 						}
 					]
@@ -418,16 +411,14 @@
 				"method": "GET",
 				"header": [],
 				"url": {
-					"raw": "http://127.0.0.1:8081/users/",
+					"raw": "http://localhost:9000/api/users/",
 					"protocol": "http",
 					"host": [
-						"127",
-						"0",
-						"0",
-						"1"
+						"localhost"
 					],
-					"port": "8081",
+					"port": "9000",
 					"path": [
+						"api",
 						"users",
 						""
 					]
