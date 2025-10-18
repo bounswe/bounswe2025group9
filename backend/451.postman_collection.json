@@ -13,7 +13,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n            \"username\": \"eren2\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren2@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [],\r\n            \"allergens\": [{\"name\": \"soy sauce\"}]\r\n        }",
+					"raw": "{\r\n            \"username\": \"eren4\",\r\n            \"password\": \"securepassword1235\",\r\n            \"name\": \"Berkay\",\r\n            \"surname\": \"Bile5n\",\r\n            \"email\": \"eren4@example.com\",\r\n            \"address\": \"Bogazici University\",\r\n            \"tags\": [{\"name\": \"dietian\", \"verified\": true}],\r\n            \"allergens\": [{\"name\": \"soy sauce\"}]\r\n        }",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -79,6 +79,49 @@
 			"response": []
 		},
 		{
+			"name": "set_tag",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "[{\"name\": \"dietian\"}, {\"name\": \"psy\"}]",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/tag/set/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"tag",
+						"set",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
 			"name": "add_allergen",
 			"request": {
 				"auth": {
@@ -95,7 +138,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"name\": \"Peanuts\",\r\n  \"common\": true\r\n}",
+					"raw": "{\r\n  \"name\": \"preservatives\",\r\n  \"common\": true\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -329,13 +372,61 @@
 			"response": []
 		},
 		{
+			"name": "update_certificate",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwODAwMDk0LCJpYXQiOjE3NjA3OTY0OTQsImp0aSI6ImFmNmQzYjM5NTRiMjQwOTY5NzNmM2JiOGU2Y2ZlYjA3IiwidXNlcl9pZCI6IjEifQ.fmB5M31kIZfkRdOZMxzUQ-v2CdcifF94VedqbXzfMrI",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "certificate",
+							"type": "file",
+							"src": "/C:/Users/fatih/OneDrive/Masaüstü/PNG_transparency_demonstration_1.png"
+						},
+						{
+							"key": "tag_id",
+							"value": "1",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/certificate/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"certificate",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
 			"name": "get_token_jwt",
 			"request": {
 				"method": "POST",
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\"username\" : \"eren188\", \"password\": \"securepassword1235\"}",
+					"raw": "{\"username\" : \"eren4\", \"password\": \"securepassword1235\"}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -389,6 +480,38 @@
 						"users",
 						"token",
 						"refresh",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_user",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzk1NjkxLCJpYXQiOjE3NjA3OTIwOTEsImp0aSI6ImIxZjBlMmNmNGJkZDQ5MjZiMTFhZjY3MTYwNWFhNzY0IiwidXNlcl9pZCI6IjEifQ.g7TLnIbefeycJVHBWAqH1ozriSizJaq9w5zFm2C3BiE",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9000/api/users/profile/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"profile",
 						""
 					]
 				}

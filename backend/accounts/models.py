@@ -4,6 +4,12 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class Tag(models.Model):
     name = models.CharField(max_length=64)
+    verified = models.BooleanField(default=False)
+    certificate = models.FileField(
+        upload_to='certificates/',  # folder inside MEDIA_ROOT
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.name

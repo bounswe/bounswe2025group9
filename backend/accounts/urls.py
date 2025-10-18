@@ -13,6 +13,8 @@ from .views import (
     AllergenSetView,
     GetCommonAllergensView,
     ProfileImageView,
+    TagSetView,
+    CertificateView,
 )
 
 urlpatterns = [
@@ -25,8 +27,10 @@ urlpatterns = [
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
     path("allergen/set/", AllergenSetView.as_view(), name="set-allergens"),
+    path("tag/set/", TagSetView.as_view(), name="set-tags"),
     path("allergen/add/", AllergenAddView.as_view(), name="add-allergen"),
     path("allergen/common-list/", GetCommonAllergensView.as_view(), name="list-allergens"),
     path('image/', ProfileImageView.as_view(), name='image'),
+    path('certificate/', CertificateView.as_view(), name='certificate'),
 
 ] 
