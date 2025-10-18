@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "5a10d54b-16f8-49b1-85ff-7178565e6f32",
+		"_postman_id": "fc27b419-b000-4437-92b2-c07c55d41570",
 		"name": "451",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "17560267"
@@ -71,6 +71,132 @@
 						"api",
 						"users",
 						"update",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "get_image",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNjQ3MTc3LCJpYXQiOjE3NjA2NDM1NzcsImp0aSI6IjM3MmYxZmYxYjY5ZjRkYjZhNTA5ZTFlZWI2YmY4NDg4IiwidXNlcl9pZCI6IjEifQ.uDjEGYcrO0hAHosRrUTYB16gXW9-MKauPFpJ_tonfVU",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "profile_image",
+							"type": "file",
+							"src": "/C:/Users/fatih/OneDrive/Masaüstü/PNG_transparency_demonstration_1.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost/api/users/image?user_id=1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"path": [
+						"api",
+						"users",
+						"image"
+					],
+					"query": [
+						{
+							"key": "user_id",
+							"value": "1"
+						}
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "update_image",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzYxNTQ0LCJpYXQiOjE3NjA3NTc5NDQsImp0aSI6IjY1M2JlMTllNTcyMTQ3ODFhYTFlZjljMDkxNjk2OThhIiwidXNlcl9pZCI6IjEifQ.U8Ph0_0_GFvjteOH6NLMoBq-FsdYQbknzjSo0bph28Q",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "profile_image",
+							"type": "file",
+							"src": "/C:/Users/fatih/OneDrive/Masaüstü/PNG_transparency_demonstration_1.png"
+						}
+					]
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/image/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"image",
+						""
+					]
+				},
+				"description": "Generated from cURL: curl -X POST http://127.0.0.1:8081/signup/ \\\r\n  -d \"username=testuser\" \\\r\n  -d \"email=test@example.com\" \\\r\n  -d \"password1=12345\" \\\r\n  -d \"password2=12345\""
+			},
+			"response": []
+		},
+		{
+			"name": "remove_image",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYwNzYxNTQ0LCJpYXQiOjE3NjA3NTc5NDQsImp0aSI6IjY1M2JlMTllNTcyMTQ3ODFhYTFlZjljMDkxNjk2OThhIiwidXNlcl9pZCI6IjEifQ.U8Ph0_0_GFvjteOH6NLMoBq-FsdYQbknzjSo0bph28Q",
+							"type": "string"
+						}
+					]
+				},
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:9000/api/users/image/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"image",
 						""
 					]
 				},
