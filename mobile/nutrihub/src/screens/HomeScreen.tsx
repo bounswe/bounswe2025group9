@@ -47,13 +47,8 @@ const HomeScreen: React.FC = () => {
 
   const handleViewProfile = () => {
     if (!user) return;
-    // Navigate to Forum tab's nested UserProfile screen
-    // Using nested navigation to the Forum stack
-    // @ts-ignore - nested navigation params
-    navigation.navigate('Forum', {
-      screen: 'UserProfile',
-      params: { username: user.username },
-    });
+    // Navigate directly to MyProfile tab
+    navigation.navigate('MyProfile');
   };
 
   return (
