@@ -405,23 +405,31 @@ const Profile = () => {
                 </button>
                 
                 <button
-                  disabled
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  onClick={() => setActiveTab('posts')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
-                    backgroundColor: 'var(--forum-default-bg)',
-                    color: 'var(--forum-default-text)',
+                    backgroundColor: activeTab === 'posts'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'posts'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
                   }}
                 >
                   <Heart size={18} weight="fill" />
                   <span className="flex-grow text-center">Liked Posts</span>
                 </button>
-                
+
                 <button
-                  disabled
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  onClick={() => setActiveTab('recipes')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
-                    backgroundColor: 'var(--forum-default-bg)',
-                    color: 'var(--forum-default-text)',
+                    backgroundColor: activeTab === 'recipes'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'recipes'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
                   }}
                 >
                   <BookOpen size={18} weight="fill" />

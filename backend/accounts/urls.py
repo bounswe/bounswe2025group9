@@ -15,6 +15,8 @@ from .views import (
     ProfileImageView,
     TagSetView,
     CertificateView,
+    LikedPostsView,
+    LikedRecipesView,
 )
 
 urlpatterns = [
@@ -26,11 +28,14 @@ urlpatterns = [
     path("token/logout/", LogoutView.as_view(), name="token_logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
+    path("profile/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),
+    path("profile/liked-recipes/", LikedRecipesView.as_view(), name="liked-recipes"),
     path("allergen/set/", AllergenSetView.as_view(), name="set-allergens"),
     path("tag/set/", TagSetView.as_view(), name="set-tags"),
     path("allergen/add/", AllergenAddView.as_view(), name="add-allergen"),
-    path("allergen/common-list/", GetCommonAllergensView.as_view(), name="list-allergens"),
-    path('image/', ProfileImageView.as_view(), name='image'),
-    path('certificate/', CertificateView.as_view(), name='certificate'),
-
-] 
+    path(
+        "allergen/common-list/", GetCommonAllergensView.as_view(), name="list-allergens"
+    ),
+    path("image/", ProfileImageView.as_view(), name="image"),
+    path("certificate/", CertificateView.as_view(), name="certificate"),
+]
