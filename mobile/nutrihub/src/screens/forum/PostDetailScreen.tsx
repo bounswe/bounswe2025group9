@@ -30,6 +30,7 @@ import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
 import { forumService } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
+import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Storage key for liked posts - must match the one in forum.service.ts
@@ -43,6 +44,7 @@ const PostDetailScreen: React.FC = () => {
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
   const { posts, updatePost } = usePosts();
+  const { user: currentUser } = useAuth();
   
   const postId = route.params.postId;
   const [post, setPost] = useState<ForumTopic | null>(null);
@@ -255,10 +257,20 @@ const PostDetailScreen: React.FC = () => {
   const renderComment = (comment: Comment) => (
     <Card key={comment.id} style={styles.commentCard}>
       <View style={styles.commentHeader}>
-        <View style={styles.commentAuthorContainer}>
+        <TouchableOpacity
+          style={styles.commentAuthorContainer}
+          onPress={() => {
+            const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
+            const isSelf = !!currentUser && (comment.author === currentUser.username || (displayName && comment.author === displayName));
+            const targetUsername = isSelf ? currentUser!.username : comment.author;
+            navigation.navigate('UserProfile', { username: targetUsername, userId: (comment as any).authorId || undefined });
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`View ${comment.author}'s profile`}
+        >
           <Icon name="account-circle" size={20} color={theme.primary} />
           <Text style={[styles.commentAuthor, textStyles.subtitle]}>{comment.author}</Text>
-        </View>
+        </TouchableOpacity>
         <Text style={[styles.commentDate, textStyles.small]}>{formatDate(comment.createdAt)}</Text>
       </View>
       <Text style={[styles.commentContent, textStyles.body]}>{comment.content}</Text>
@@ -357,6 +369,12 @@ const PostDetailScreen: React.FC = () => {
             preview={false}
             showTags={true}
             onLike={handlePostLike}
+            onAuthorPress={() => {
+              const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
+              const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
+              const targetUsername = isSelf ? currentUser!.username : post.author;
+              navigation.navigate('UserProfile', { username: targetUsername, userId: post.authorId || undefined });
+            }}
           />
           
           {/* Comments Section */}

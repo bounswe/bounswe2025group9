@@ -25,6 +25,7 @@ import { ForumTopic } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
 import { forumService, ApiTag } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
+import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Storage key for liked posts - must match the one in forum.service.ts
@@ -47,6 +48,7 @@ const ForumScreen: React.FC = () => {
   
   // Use the global posts context
   const { posts, setPosts, updatePost } = usePosts();
+  const { user: currentUser } = useAuth();
 
   // Helper function to preserve like status when loading new posts
   const preserveLikeStatus = useCallback(async (newPosts: ForumTopic[], currentPosts: ForumTopic[]): Promise<ForumTopic[]> => {
@@ -144,6 +146,13 @@ const ForumScreen: React.FC = () => {
       // Clear the navigation params
       navigation.setParams({ action: undefined, postData: undefined });
     }
+
+    // If instructed, open a specific user's profile, then clear the flag
+    if (route.params?.openUserProfile) {
+      const { username, userId } = route.params.openUserProfile;
+      navigation.navigate('UserProfile', { username, userId });
+      navigation.setParams({ openUserProfile: undefined });
+    }
   }, [route.params, navigation, setPosts]);
 
   // Handle filter change manually instead of in useEffect
@@ -217,6 +226,14 @@ const ForumScreen: React.FC = () => {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
+  // Handle author press -> navigate to user profile, normalize self-username
+  const handleAuthorPress = (post: ForumTopic) => {
+    const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
+    const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
+    const targetUsername = isSelf ? currentUser!.username : post.author;
+    navigation.navigate('UserProfile', { username: targetUsername, userId: post.authorId || undefined });
+  };
+
   // Handle new post creation
   const handleNewPost = () => {
     navigation.navigate('CreatePost');
@@ -275,6 +292,7 @@ const ForumScreen: React.FC = () => {
       onPress={handlePostPress}
       onLike={handlePostLike}
       onComment={handlePostComment}
+      onAuthorPress={handleAuthorPress}
     />
   );
 
