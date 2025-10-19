@@ -192,7 +192,7 @@ class GetOrFetchFoodEntry(APIView):
                     proposedBy=request.user,
                 )
 
-            serializer = FoodProosalSerializer(food)
+            serializer = FoodProposalSerializer(food)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
 
         except Exception as e:

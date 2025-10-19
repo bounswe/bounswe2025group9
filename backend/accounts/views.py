@@ -6,12 +6,23 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.pagination import PageNumberPagination
 
-from .serializers import (UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer,
-                           AllergenInputSerializer, AllergenOutputSerializer, TagInputSerializer, TagOutputSerializer,
-                           CertificateSerializer)
+from .serializers import (
+    UserSerializer,
+    ChangePasswordSerializer,
+    ContactInfoSerializer,
+    PhotoSerializer,
+    AllergenInputSerializer,
+    AllergenOutputSerializer,
+    TagInputSerializer,
+    TagOutputSerializer,
+    CertificateSerializer,
+)
 from .services import register_user, list_users, update_user
 from .models import User, Allergen, Tag
+from forum.models import Like, Post, Recipe
+from forum.serializers import PostSerializer, RecipeSerializer
 import os
 
 
@@ -51,7 +62,7 @@ class UpdateUserView(APIView):
             user = update_user(request.user, serializer.validated_data)
             return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
 class ChangePasswordView(APIView):
     permission_classes = [IsAuthenticated]
@@ -116,6 +127,7 @@ class LogoutView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
 class AllergenAddView(APIView):
     # use jwt authentication
     authentication_classes = [JWTAuthentication]
@@ -132,9 +144,11 @@ class AllergenAddView(APIView):
         serializer = AllergenOutputSerializer(data=request.data)
         if serializer.is_valid():
             allergen = serializer.save()
-            return Response(AllergenOutputSerializer(allergen).data, status=status.HTTP_201_CREATED)
+            return Response(
+                AllergenOutputSerializer(allergen).data, status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
 
 class AllergenSetView(APIView):
     authentication_classes = [JWTAuthentication]
@@ -150,7 +164,10 @@ class AllergenSetView(APIView):
         user = request.user
 
         if not isinstance(data, list):
-            return Response({"detail": "Expected a list of allergens."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Expected a list of allergens."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         serializer = AllergenInputSerializer(data=data, many=True)
         if serializer.is_valid():
@@ -166,7 +183,7 @@ class AllergenSetView(APIView):
                     # Create new allergen if not exists
                     allergen, _ = Allergen.objects.get_or_create(
                         name=allergen_data["name"],
-                        defaults={"common": allergen_data.get("common", False)}
+                        defaults={"common": allergen_data.get("common", False)},
                     )
                 else:
                     # Skip invalid entries
@@ -182,7 +199,8 @@ class AllergenSetView(APIView):
             return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
+
 class TagSetView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
@@ -195,7 +213,7 @@ class TagSetView(APIView):
         if not isinstance(data, list):
             return Response(
                 {"detail": "Expected a list of tags."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         serializer = TagInputSerializer(data=data, many=True)
@@ -212,7 +230,7 @@ class TagSetView(APIView):
             elif "name" in tag_data:
                 tag, _ = Tag.objects.get_or_create(
                     name=tag_data["name"],
-                    defaults={"verified": tag_data.get("verified", False)}
+                    defaults={"verified": tag_data.get("verified", False)},
                 )
             else:
                 continue  # skip invalid entries
@@ -225,7 +243,7 @@ class TagSetView(APIView):
         # Serialize response
         response_serializer = TagOutputSerializer(tags, many=True)
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
-    
+
 
 class GetCommonAllergensView(APIView):
     # use jwt authentication
@@ -242,33 +260,38 @@ class GetCommonAllergensView(APIView):
         serializer = AllergenOutputSerializer(common_allergens, many=True)
         return Response(serializer.data)
 
+
 class ProfileImageView(APIView):
     authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def get_permissions(self):
-        if self.request.method == 'GET':
+        if self.request.method == "GET":
             return [AllowAny()]
         return [permission() for permission in self.permission_classes]
 
     def get(self, request):
-        user_id = request.query_params.get('user_id') or request.user.id  # Optional user_id param
+        user_id = (
+            request.query_params.get("user_id") or request.user.id
+        )  # Optional user_id param
         try:
             user = User.objects.get(id=user_id)
         except User.DoesNotExist:
-            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND
+            )
 
         serializer = PhotoSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
-    
+
     def post(self, request):
         user = request.user
-        image = request.FILES.get('profile_image')
+        image = request.FILES.get("profile_image")
 
         if not image:
             return Response(
                 {"detail": "No image file uploaded."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ✅ Validate file size (max 5 MB)
@@ -276,7 +299,7 @@ class ProfileImageView(APIView):
         if image.size > max_size:
             return Response(
                 {"detail": "File size exceeds 5 MB limit."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ✅ Validate file type
@@ -284,7 +307,7 @@ class ProfileImageView(APIView):
         if image.content_type not in valid_mime_types:
             return Response(
                 {"detail": "Only JPG and PNG images are allowed."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ✅ Save valid image
@@ -293,14 +316,14 @@ class ProfileImageView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
+
     def delete(self, request):
         user = request.user
 
         if not user.profile_image:
             return Response(
                 {"detail": "No profile image to remove."},
-                status=status.HTTP_400_BAD_REQUEST
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         # ✅ Get full path to the image file
@@ -319,8 +342,7 @@ class ProfileImageView(APIView):
                 print(f"Error deleting image file: {e}")
 
         return Response(
-            {"detail": "Profile image removed successfully."},
-            status=status.HTTP_200_OK
+            {"detail": "Profile image removed successfully."}, status=status.HTTP_200_OK
         )
 
 
@@ -334,29 +356,40 @@ class CertificateView(APIView):
         certificate = request.FILES.get("certificate")
 
         if not tag_id:
-            return Response({"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST
+            )
 
         if not certificate:
-            return Response({"detail": "No certificate file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "No certificate file uploaded."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # ✅ Ensure the tag belongs to the user
         try:
             tag = user.tags.get(id=tag_id)
         except Tag.DoesNotExist:
-            return Response({"detail": "Tag not found or not associated with user."},
-                            status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"detail": "Tag not found or not associated with user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
 
         # ✅ Validate file size (max 5 MB)
         max_size = 5 * 1024 * 1024  # 5 MB
         if certificate.size > max_size:
-            return Response({"detail": "File size exceeds 5 MB limit."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "File size exceeds 5 MB limit."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # ✅ Validate file type
         valid_mime_types = ["image/jpeg", "image/png", "application/pdf"]
         if certificate.content_type not in valid_mime_types:
-            return Response({"detail": "Only JPG, PNG, or PDF files are allowed."},
-                            status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"detail": "Only JPG, PNG, or PDF files are allowed."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         # ✅ Save certificate to tag
         tag.certificate = certificate
@@ -365,3 +398,67 @@ class CertificateView(APIView):
         # ✅ Return updated tag info
         serializer = TagOutputSerializer(tag)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class LikedPostsView(APIView):
+    """
+    GET /users/profile/liked-posts/
+    Fetch posts that the current user has liked.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get all likes by this user
+        liked_post_ids = Like.objects.filter(user=user).values_list(
+            "post_id", flat=True
+        )
+
+        # Get the posts that were liked
+        liked_posts = Post.objects.filter(id__in=liked_post_ids).order_by("-created_at")
+
+        # Paginate results
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        paginated_posts = paginator.paginate_queryset(liked_posts, request)
+
+        # Serialize the posts
+        serializer = PostSerializer(paginated_posts, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
+
+
+class LikedRecipesView(APIView):
+    """
+    GET /users/profile/liked-recipes/
+    Fetch recipes whose posts the current user has liked.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        # Get all post IDs that the user has liked
+        liked_post_ids = Like.objects.filter(user=user).values_list(
+            "post_id", flat=True
+        )
+
+        # Get recipes where the post is in the liked posts
+        liked_recipes = Recipe.objects.filter(post_id__in=liked_post_ids).order_by(
+            "-created_at"
+        )
+
+        # Paginate results
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        paginated_recipes = paginator.paginate_queryset(liked_recipes, request)
+
+        # Serialize the recipes
+        serializer = RecipeSerializer(paginated_recipes, many=True)
+
+        return paginator.get_paginated_response(serializer.data)
