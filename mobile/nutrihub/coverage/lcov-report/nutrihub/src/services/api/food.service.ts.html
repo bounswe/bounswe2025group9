@@ -3,15 +3,15 @@
 <html lang="en">
 
 <head>
-    <title>Code coverage report for nutrihub/src/utils/validation.ts</title>
+    <title>Code coverage report for nutrihub/src/services/api/food.service.ts</title>
     <meta charset="utf-8" />
-    <link rel="stylesheet" href="../../../prettify.css" />
-    <link rel="stylesheet" href="../../../base.css" />
-    <link rel="shortcut icon" type="image/x-icon" href="../../../favicon.png" />
+    <link rel="stylesheet" href="../../../../prettify.css" />
+    <link rel="stylesheet" href="../../../../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../../../../favicon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style type='text/css'>
         .coverage-summary .sorter {
-            background-image: url(../../../sort-arrow-sprite.png);
+            background-image: url(../../../../sort-arrow-sprite.png);
         }
     </style>
 </head>
@@ -19,34 +19,34 @@
 <body>
 <div class='wrapper'>
     <div class='pad1'>
-        <h1><a href="../../../index.html">All files</a> / <a href="index.html">nutrihub/src/utils</a> validation.ts</h1>
+        <h1><a href="../../../../index.html">All files</a> / <a href="index.html">nutrihub/src/services/api</a> food.service.ts</h1>
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/68</span>
+                <span class='fraction'>0/71</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/51</span>
+                <span class='fraction'>0/56</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/15</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/52</span>
+                <span class='fraction'>0/70</span>
             </div>
         
             
@@ -270,12 +270,266 @@
 <a name='L205'></a><a href='#L205'>205</a>
 <a name='L206'></a><a href='#L206'>206</a>
 <a name='L207'></a><a href='#L207'>207</a>
-<a name='L208'></a><a href='#L208'>208</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L208'></a><a href='#L208'>208</a>
+<a name='L209'></a><a href='#L209'>209</a>
+<a name='L210'></a><a href='#L210'>210</a>
+<a name='L211'></a><a href='#L211'>211</a>
+<a name='L212'></a><a href='#L212'>212</a>
+<a name='L213'></a><a href='#L213'>213</a>
+<a name='L214'></a><a href='#L214'>214</a>
+<a name='L215'></a><a href='#L215'>215</a>
+<a name='L216'></a><a href='#L216'>216</a>
+<a name='L217'></a><a href='#L217'>217</a>
+<a name='L218'></a><a href='#L218'>218</a>
+<a name='L219'></a><a href='#L219'>219</a>
+<a name='L220'></a><a href='#L220'>220</a>
+<a name='L221'></a><a href='#L221'>221</a>
+<a name='L222'></a><a href='#L222'>222</a>
+<a name='L223'></a><a href='#L223'>223</a>
+<a name='L224'></a><a href='#L224'>224</a>
+<a name='L225'></a><a href='#L225'>225</a>
+<a name='L226'></a><a href='#L226'>226</a>
+<a name='L227'></a><a href='#L227'>227</a>
+<a name='L228'></a><a href='#L228'>228</a>
+<a name='L229'></a><a href='#L229'>229</a>
+<a name='L230'></a><a href='#L230'>230</a>
+<a name='L231'></a><a href='#L231'>231</a>
+<a name='L232'></a><a href='#L232'>232</a>
+<a name='L233'></a><a href='#L233'>233</a>
+<a name='L234'></a><a href='#L234'>234</a>
+<a name='L235'></a><a href='#L235'>235</a>
+<a name='L236'></a><a href='#L236'>236</a>
+<a name='L237'></a><a href='#L237'>237</a>
+<a name='L238'></a><a href='#L238'>238</a>
+<a name='L239'></a><a href='#L239'>239</a>
+<a name='L240'></a><a href='#L240'>240</a>
+<a name='L241'></a><a href='#L241'>241</a>
+<a name='L242'></a><a href='#L242'>242</a>
+<a name='L243'></a><a href='#L243'>243</a>
+<a name='L244'></a><a href='#L244'>244</a>
+<a name='L245'></a><a href='#L245'>245</a>
+<a name='L246'></a><a href='#L246'>246</a>
+<a name='L247'></a><a href='#L247'>247</a>
+<a name='L248'></a><a href='#L248'>248</a>
+<a name='L249'></a><a href='#L249'>249</a>
+<a name='L250'></a><a href='#L250'>250</a>
+<a name='L251'></a><a href='#L251'>251</a>
+<a name='L252'></a><a href='#L252'>252</a>
+<a name='L253'></a><a href='#L253'>253</a>
+<a name='L254'></a><a href='#L254'>254</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -292,170 +546,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -466,241 +563,282 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
- * Validation Utilities
- * 
- * A collection of common validation functions for form inputs.
- */
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { apiClient } from './client';
+import { API_CONFIG } from '../../config';
+import { FoodItem, FoodCategoryType } from '../../types/types';
 &nbsp;
-/**
- * Check if a value is empty (undefined, null, or empty string)
- * 
- * @param value - The value to check
- * @returns True if the value is empty, false otherwise
- */
-export const isEmpty = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: any): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return value === undefined || value === null || value === '';</span>
+// API response interfaces
+export interface ApiFoodItem {
+  id: number;
+  name: string;
+  category: string;
+  description?: string;
+  servingSize: number;
+  caloriesPerServing: number;
+  proteinContent: number;
+  fatContent: number;
+  carbohydrateContent: number;
+  fiberContent?: number;
+  sugarContent?: number;
+  dietaryOptions?: string[];
+  allergens?: string[];
+  nutritionScore?: number;
+  imageUrl?: string;
+  price?: number;
+}
+&nbsp;
+export interface ApiPaginatedResponse&lt;T&gt; {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  results: T[];
+  status?: number;
+  warning?: string;
+}
+&nbsp;
+export interface FoodProposalData {
+  name: string;
+  category: string;
+  servingSize: number;
+  caloriesPerServing: number;
+  proteinContent: number;
+  fatContent: number;
+  carbohydrateContent: number;
+  dietaryOptions?: string[];
+  nutritionScore?: number;
+  imageUrl?: string;
+  allergens?: string[];
+}
+&nbsp;
+// Transform API food item to app FoodItem format
+const transformFoodItem = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(a</span>piFood: ApiFoodItem): FoodItem =&gt; {</span>
+  // Map category to icon name based on category
+  const getCategoryIcon = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>ategory: string): string =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    switch (category) {</span>
+      case 'Fruit': <span class="cstat-no" title="statement not covered" >return 'food-apple';</span>
+      case 'Vegetable': <span class="cstat-no" title="statement not covered" >return 'food-broccoli';</span>
+      case 'Dairy': <span class="cstat-no" title="statement not covered" >return 'food-variant';</span>
+      case 'Meat': <span class="cstat-no" title="statement not covered" >return 'food-drumstick';</span>
+      case 'Grain': <span class="cstat-no" title="statement not covered" >return 'barley';</span>
+      case 'Legume': <span class="cstat-no" title="statement not covered" >return 'food-bean';</span>
+      case 'Nuts &amp; Seeds': <span class="cstat-no" title="statement not covered" >return 'peanut';</span>
+      case 'Beverage': <span class="cstat-no" title="statement not covered" >return 'cup';</span>
+      case 'Snack': <span class="cstat-no" title="statement not covered" >return 'cookie';</span>
+      case 'Condiment': <span class="cstat-no" title="statement not covered" >return 'sauce';</span>
+      default: <span class="cstat-no" title="statement not covered" >return 'food';</span>
+    }
+  };
+&nbsp;
+  const normalizedImageUrl = <span class="cstat-no" title="statement not covered" >apiFood.imageUrl</span>
+    ? (apiFood.imageUrl.startsWith('http') ? apiFood.imageUrl : `${API_CONFIG.BASE_URL}${apiFood.imageUrl}`)
+    : undefined;
+&nbsp;
+<span class="cstat-no" title="statement not covered" >  return {</span>
+    id: apiFood.id,
+    title: apiFood.name,
+    description: apiFood.description || '',
+    iconName: getCategoryIcon(apiFood.category),
+    category: apiFood.category as FoodCategoryType,
+    imageUrl: normalizedImageUrl,
+    nutritionScore: apiFood.nutritionScore,
+    macronutrients: {
+      calories: apiFood.caloriesPerServing,
+      protein: apiFood.proteinContent,
+      carbohydrates: apiFood.carbohydrateContent,
+      fat: apiFood.fatContent,
+      fiber: apiFood.fiberContent,
+      sugar: apiFood.sugarContent,
+    },
+    dietaryOptions: apiFood.dietaryOptions as any[],
+    allergens: apiFood.allergens as any[],
+    price: apiFood.price,
+  };
 };
 &nbsp;
 /**
- * Check if a value is not empty (not undefined, null, or empty string)
- * 
- * @param value - The value to check
- * @returns True if the value is not empty, false otherwise
+ * Get food catalog with optional filtering and pagination
+ * @param limit Maximum number of items to return per page (default: 20)
+ * @param offset Number of items to skip (for pagination)
+ * @param categories Optional array of categories to filter by
+ * @param search Optional search term to filter by name
+ * @returns Promise with food items and pagination info
  */
-export const isNotEmpty = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: any): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return !isEmpty(value);</span>
-};
-&nbsp;
-/**
- * Check if a string is a valid email address
- * 
- * @param value - The string to check
- * @returns True if the string is a valid email address, false otherwise
- */
-export const isEmail = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
-  // Simple email validation regex
-  const emailRegex = <span class="cstat-no" title="statement not covered" >/^[^\s@]+@[^\s@]+\.[^\s@]+$/;</span>
-<span class="cstat-no" title="statement not covered" >  return emailRegex.test(value);</span>
-};
-&nbsp;
-/**
- * Check if a string has a minimum length
- * 
- * @param value - The string to check
- * @param minLength - The minimum length required
- * @returns True if the string meets the minimum length, false otherwise
- */
-export const minLength = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string, minLength: number): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  return value.length &gt;= minLength;</span>
-};
-&nbsp;
-/**
- * Check if a string has a maximum length
- * 
- * @param value - The string to check
- * @param maxLength - The maximum length allowed
- * @returns True if the string meets the maximum length, false otherwise
- */
-export const maxLength = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string, maxLength: number): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return true; </span></span>// Empty values pass max length validation
-<span class="cstat-no" title="statement not covered" >  return value.length &lt;= maxLength;</span>
-};
-&nbsp;
-/**
- * Check if a string contains at least one uppercase letter
- * 
- * @param value - The string to check
- * @returns True if the string contains at least one uppercase letter, false otherwise
- */
-export const hasUppercase = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  return /[A-Z]/.test(value);</span>
-};
-&nbsp;
-/**
- * Check if a string contains at least one lowercase letter
- * 
- * @param value - The string to check
- * @returns True if the string contains at least one lowercase letter, false otherwise
- */
-export const hasLowercase = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  return /[a-z]/.test(value);</span>
-};
-&nbsp;
-/**
- * Check if a string contains at least one number
- * 
- * @param value - The string to check
- * @returns True if the string contains at least one number, false otherwise
- */
-export const hasNumber = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  return /[0-9]/.test(value);</span>
-};
-&nbsp;
-/**
- * Check if a string contains at least one special character
- * 
- * @param value - The string to check
- * @returns True if the string contains at least one special character, false otherwise
- */
-export const hasSpecialChar = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  return /[!@#$%^&amp;*()_+\-=[\]{};':"\\|,.&lt;&gt;/?]/.test(value);</span>
-};
-&nbsp;
-/**
- * Check if a password is strong enough
- * 
- * @param value - The password to check
- * @param options - Password strength options
- * @returns True if the password is strong enough, false otherwise
- */
-export const isStrongPassword = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span></span>
-  value: string, 
-  options: {
-    minLength?: number;
-    requireUppercase?: boolean;
-    requireLowercase?: boolean;
-    requireNumber?: boolean;
-    requireSpecialChar?: boolean;
-  } = <span class="branch-0 cbranch-no" title="branch not covered" >{}</span>
-): boolean =&gt; {
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
-  const {
-    minLength: passwordMinLength = <span class="branch-0 cbranch-no" title="branch not covered" >8,</span>
-    requireUppercase = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-    requireLowercase = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-    requireNumber = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-    requireSpecialChar = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
-  } = <span class="cstat-no" title="statement not covered" >options;</span>
-  
-<span class="cstat-no" title="statement not covered" >  if (!minLength(value, passwordMinLength)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (requireUppercase &amp;&amp; !hasUppercase(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (requireLowercase &amp;&amp; !hasLowercase(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (requireNumber &amp;&amp; !hasNumber(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  if (requireSpecialChar &amp;&amp; !hasSpecialChar(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
-<span class="cstat-no" title="statement not covered" >  return true;</span>
-};
-&nbsp;
-/**
- * Check if a string is a valid username (alphanumeric characters, underscores, and hyphens only)
- * 
- * @param value - The string to check
- * @returns True if the string is a valid username, false otherwise
- */
-export const isValidUsername = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-<span class="cstat-no" title="statement not covered" >  return /^[a-zA-Z0-9_-]+$/.test(value);</span>
-};
-&nbsp;
-/**
- * Check if a number is within a range
- * 
- * @param value - The number to check
- * @param min - The minimum allowed value
- * @param max - The maximum allowed value
- * @returns True if the number is within the range, false otherwise
- */
-export const isInRange = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: number, min: number, max: number): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return value &gt;= min &amp;&amp; value &lt;= max;</span>
-};
-&nbsp;
-/**
- * Check if a string matches another string (useful for password confirmation)
- * 
- * @param value - The string to check
- * @param matchValue - The string to match against
- * @returns True if the strings match, false otherwise
- */
-export const matches = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string, matchValue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  return value === matchValue;</span>
-};
-&nbsp;
-/**
- * Check if a value is a valid URL
- * 
- * @param value - The string to check
- * @returns True if the string is a valid URL, false otherwise
- */
-export const isUrl = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
+export const getFoodCatalog = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+  limit: number = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span>
+  offset: number = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
+  categories?: string[],
+  search?: string
+): Promise&lt;{ 
+  data?: FoodItem[]; 
+  error?: string; 
+  status: number; 
+  hasMore: boolean; 
+  total: number 
+}&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
-<span class="cstat-no" title="statement not covered" >    new URL(value);</span>
-<span class="cstat-no" title="statement not covered" >    return true;</span>
-  } catch (error) {
-<span class="cstat-no" title="statement not covered" >    return false;</span>
+    // Build query parameters
+    const params = <span class="cstat-no" title="statement not covered" >new URLSearchParams();</span>
+    
+    // Calculate page number from offset/limit
+    const page = <span class="cstat-no" title="statement not covered" >Math.floor(offset / limit) + 1;</span>
+    
+    // Add pagination parameters (always required)
+<span class="cstat-no" title="statement not covered" >    params.append('page', page.toString());</span>
+<span class="cstat-no" title="statement not covered" >    params.append('page_size', limit.toString());</span>
+    
+    // Add optional filter parameters
+<span class="cstat-no" title="statement not covered" >    if (categories &amp;&amp; categories.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      params.append('category', categories.join(','));</span>
+    }
+    
+<span class="cstat-no" title="statement not covered" >    if (search &amp;&amp; search.trim() !== '') {</span>
+<span class="cstat-no" title="statement not covered" >      params.append('search', search.trim());</span>
+    }
+&nbsp;
+    // Log the request details
+    const fullUrl = <span class="cstat-no" title="statement not covered" >`/foods?${params.toString()}`;</span>
+<span class="cstat-no" title="statement not covered" >    console.log(`Requesting food catalog: ${fullUrl}`);</span>
+<span class="cstat-no" title="statement not covered" >    console.log('Request params:', { page, page_size: limit, categories, search, originalOffset: offset });</span>
+    
+    // Make the API request
+    const response = <span class="cstat-no" title="statement not covered" >await apiClient.get&lt;ApiPaginatedResponse&lt;ApiFoodItem&gt;&gt;(fullUrl);</span>
+    
+<span class="cstat-no" title="statement not covered" >    if (response.error) {</span>
+<span class="cstat-no" title="statement not covered" >      console.error('API error:', response.error);</span>
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        error: response.error,
+        status: response.status,
+        hasMore: false,
+        total: 0
+      };
+    }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    if (!response.data) {</span>
+<span class="cstat-no" title="statement not covered" >      console.error('No data received from API');</span>
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        error: 'No data received',
+        status: response.status,
+        hasMore: false,
+        total: 0
+      };
+    }
+&nbsp;
+    // Log response structure for debugging
+<span class="cstat-no" title="statement not covered" >    console.log('API response structure:', JSON.stringify({</span>
+      count: response.data.count,
+      next: response.data.next !== null,
+      previous: response.data.previous !== null,
+      resultsLength: response.data.results?.length || 0
+    }));
+&nbsp;
+    // Handle DRF paginated response
+    let foodItems: ApiFoodItem[] = <span class="cstat-no" title="statement not covered" >[];</span>
+    let total = <span class="cstat-no" title="statement not covered" >0;</span>
+    let hasMore = <span class="cstat-no" title="statement not covered" >false;</span>
+    
+<span class="cstat-no" title="statement not covered" >    if (response.data.results &amp;&amp; Array.isArray(response.data.results)) {</span>
+      // Standard DRF pagination format
+<span class="cstat-no" title="statement not covered" >      foodItems = response.data.results;</span>
+<span class="cstat-no" title="statement not covered" >      total = response.data.count || 0;</span>
+<span class="cstat-no" title="statement not covered" >      hasMore = response.data.next !== null;</span>
+      
+<span class="cstat-no" title="statement not covered" >      console.log(`Received ${foodItems.length} items, total=${total}, hasMore=${hasMore}`);</span>
+    } else <span class="cstat-no" title="statement not covered" >if (Array.isArray(response.data)) {</span>
+      // Direct array response
+<span class="cstat-no" title="statement not covered" >      foodItems = response.data;</span>
+<span class="cstat-no" title="statement not covered" >      total = foodItems.length;</span>
+<span class="cstat-no" title="statement not covered" >      hasMore = foodItems.length &gt;= limit;</span>
+      
+<span class="cstat-no" title="statement not covered" >      console.log(`Received array of ${foodItems.length} items`);</span>
+    } else {
+      // Try to extract items from a non-standard response
+<span class="cstat-no" title="statement not covered" >      console.warn('Non-standard API response format:', response.data);</span>
+      
+      // Use type assertion to handle possible non-standard response structure
+      const responseData = <span class="cstat-no" title="statement not covered" >response.data as Record&lt;string, any&gt;;</span>
+      
+      // Check various possible property names for the data array
+<span class="cstat-no" title="statement not covered" >      for (const prop of ['items', 'foods', 'data', 'results']) {</span>
+<span class="cstat-no" title="statement not covered" >        if (responseData[prop] &amp;&amp; Array.isArray(responseData[prop])) {</span>
+<span class="cstat-no" title="statement not covered" >          foodItems = responseData[prop];</span>
+<span class="cstat-no" title="statement not covered" >          total = responseData.count || responseData.total || foodItems.length;</span>
+<span class="cstat-no" title="statement not covered" >          hasMore = !!responseData.next || (offset + foodItems.length &lt; total);</span>
+<span class="cstat-no" title="statement not covered" >          break;</span>
+        }
+      }
+    }
+&nbsp;
+    // Transform API response to app format
+    const transformedData = <span class="cstat-no" title="statement not covered" >foodItems.map(transformFoodItem);</span>
+    
+    // Log the first few IDs for debugging
+<span class="cstat-no" title="statement not covered" >    if (transformedData.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      console.log('First few item IDs:', transformedData.slice(0, 3).map(<span class="fstat-no" title="function not covered" >it</span>em =&gt; <span class="cstat-no" title="statement not covered" >item.id)</span>);</span>
+    }
+&nbsp;
+<span class="cstat-no" title="statement not covered" >    return {</span>
+      data: transformedData,
+      status: response.status,
+      hasMore,
+      total
+    };
+  } catch (error: any) {
+<span class="cstat-no" title="statement not covered" >    console.error('Error fetching food catalog:', error);</span>
+<span class="cstat-no" title="statement not covered" >    return {</span>
+      error: error.message || 'Failed to fetch food catalog',
+      status: 500,
+      hasMore: false,
+      total: 0
+    };
   }
 };
 &nbsp;
 /**
- * Check if a value is a valid phone number (simple)
- * 
- * @param value - The string to check
- * @returns True if the string is a valid phone number, false otherwise
+ * Submit a food proposal for review
+ * @param data Food proposal data
+ * @returns Promise with response status
  */
-export const isPhoneNumber = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(v</span>alue: string): boolean =&gt; {</span>
-<span class="cstat-no" title="statement not covered" >  if (isEmpty(value)) <span class="cstat-no" title="statement not covered" >return false;</span></span>
-  
-  // Simple phone validation (at least 7 digits)
-  const digitsOnly = <span class="cstat-no" title="statement not covered" >value.replace(/\D/g, '');</span>
-<span class="cstat-no" title="statement not covered" >  return digitsOnly.length &gt;= 7;</span>
-};</pre></td></tr></table></pre>
+export const submitFoodProposal = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+  data: FoodProposalData
+): Promise&lt;{ data?: any; error?: string; status: number }&gt; =&gt; {
+<span class="cstat-no" title="statement not covered" >  try {</span>
+<span class="cstat-no" title="statement not covered" >    console.log('Submitting food proposal to:', '/foods/proposal/');</span>
+    const response = <span class="cstat-no" title="statement not covered" >await apiClient.post&lt;any&gt;('/foods/proposal/', data);</span>
+    
+<span class="cstat-no" title="statement not covered" >    return {</span>
+      data: response.data,
+      status: response.status,
+    };
+  } catch (error: any) {
+<span class="cstat-no" title="statement not covered" >    return {</span>
+      error: error.message || 'Failed to submit food proposal',
+      status: 500,
+    };
+  }
+};
+&nbsp;</pre></td></tr></table></pre>
 
                 <div class='push'></div><!-- for sticky footer -->
             </div><!-- /wrapper -->
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-05-14T16:30:00.308Z
+                at 2025-10-18T22:50:20.928Z
             </div>
-        <script src="../../../prettify.js"></script>
+        <script src="../../../../prettify.js"></script>
         <script>
             window.onload = function () {
                 prettyPrint();
             };
         </script>
-        <script src="../../../sorter.js"></script>
-        <script src="../../../block-navigation.js"></script>
+        <script src="../../../../sorter.js"></script>
+        <script src="../../../../block-navigation.js"></script>
     </body>
 </html>
     

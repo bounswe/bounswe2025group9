@@ -1,8 +1,8 @@
 import React from 'react';
-import { render, fireEvent } from '@testing-library/react-native';
+import { render } from '@testing-library/react-native';
 import HomeScreen from '../src/screens/HomeScreen';
 import * as NavigationHooks from '@react-navigation/native';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text } from 'react-native';
 
 // Mock the useNavigation hook
 jest.mock('@react-navigation/native', () => ({
@@ -51,20 +51,6 @@ jest.mock('../src/context/AuthContext', () => ({
   })),
 }));
 
-// Mock the Button component
-jest.mock('../src/components/common/Button', () => {
-  const { TouchableOpacity, Text } = require('react-native');
-  return function MockButton({ title, onPress, testID }: { title: string; onPress: () => void; testID?: string }) {
-    return (
-      <TouchableOpacity 
-        onPress={onPress} 
-        testID={testID || `button-${title.replace(/\s+/g, '-').toLowerCase()}`}
-      >
-        <Text>{title}</Text>
-      </TouchableOpacity>
-    );
-  };
-});
 
 // Mock the FeatureCard component
 jest.mock('../src/components/common/FeatureCard', () => {
@@ -98,33 +84,6 @@ describe('HomeScreen', () => {
     expect(getByTestId('feature-get-support')).toBeTruthy();
   });
 
-  test('navigates to Food screen when Explore Foods button is pressed', () => {
-    const mockNavigate = jest.fn();
-    jest.spyOn(NavigationHooks, 'useNavigation').mockReturnValue({
-      navigate: mockNavigate,
-    } as any);
-    
-    const { getByTestId } = render(<HomeScreen />);
-    const exploreButton = getByTestId('button-explore-foods');
-    
-    fireEvent.press(exploreButton);
-    
-    expect(mockNavigate).toHaveBeenCalledWith('Food');
-  });
-
-  test('navigates to Forum screen when Join Forum button is pressed', () => {
-    const mockNavigate = jest.fn();
-    jest.spyOn(NavigationHooks, 'useNavigation').mockReturnValue({
-      navigate: mockNavigate,
-    } as any);
-    
-    const { getByTestId } = render(<HomeScreen />);
-    const forumButton = getByTestId('button-join-forum');
-    
-    fireEvent.press(forumButton);
-    
-    expect(mockNavigate).toHaveBeenCalledWith('Forum');
-  });
 
   test('displays generic welcome when user is not logged in', () => {
     // Mock the useAuth hook to return null user for this test

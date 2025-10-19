@@ -32,6 +32,11 @@ export type MainTabParamList = {
    * Food tab with no parameters
    */
   Food: undefined;
+  
+  /**
+   * My Profile tab with no parameters
+   */
+  MyProfile: undefined;
 };
 
 /**
@@ -63,6 +68,11 @@ export type ForumStackParamList = {
   ForumList: {
     action?: 'addPost';
     postData?: SerializedForumPost;
+    // When set, ForumList should immediately navigate to the target screen
+    openUserProfile?: {
+      username: string;
+      userId?: number;
+    };
   } | undefined;
   
   /**

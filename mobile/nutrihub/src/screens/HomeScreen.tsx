@@ -17,7 +17,6 @@ import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { SPACING } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import Button from '../components/common/Button';
 import FeatureCard from '../components/common/FeatureCard';
 import { MainTabParamList } from '../navigation/types';
 
@@ -37,24 +36,6 @@ const HomeScreen: React.FC = () => {
     return user.username;
   };
 
-  const handleExploreFoods = () => {
-    navigation.navigate('Food');
-  };
-
-  const handleJoinForum = () => {
-    navigation.navigate('Forum');
-  };
-
-  const handleViewProfile = () => {
-    if (!user) return;
-    // Navigate to Forum tab's nested UserProfile screen
-    // Using nested navigation to the Forum stack
-    // @ts-ignore - nested navigation params
-    navigation.navigate('Forum', {
-      screen: 'UserProfile',
-      params: { username: user.username },
-    });
-  };
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -68,29 +49,6 @@ const HomeScreen: React.FC = () => {
           and joining a community of health enthusiasts.
         </Text>
 
-        <View style={styles.buttonContainer}>
-          <Button 
-            title="Explore Foods" 
-            onPress={handleExploreFoods} 
-            variant="primary"
-          />
-          <View style={{ width: SPACING.md }} />
-          <Button 
-            title="Join Forum" 
-            variant="secondary" 
-            onPress={handleJoinForum} 
-          />
-          {user && (
-            <>
-              <View style={{ width: SPACING.md }} />
-              <Button 
-                title="My Profile" 
-                variant="secondary" 
-                onPress={handleViewProfile} 
-              />
-            </>
-          )}
-        </View>
 
         {/* Feature Cards Section */}
         <View style={styles.featuresContainer}>
@@ -131,12 +89,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: SPACING.xl,
     lineHeight: 22,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    width: '100%',
-    marginBottom: SPACING.xl,
   },
   featuresContainer: {
     width: '100%',
