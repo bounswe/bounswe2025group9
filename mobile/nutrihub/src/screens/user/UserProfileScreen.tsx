@@ -260,7 +260,7 @@ const UserProfileScreen: React.FC = () => {
                 style={[styles.tabButton, viewMode === 'shared' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }]}
                 onPress={() => setViewMode('shared')}
               >
-                <Text style={[styles.tabText, viewMode === 'shared' && { color: theme.primary }]}>Posts</Text>
+                <Text style={[styles.tabText, { color: viewMode === 'shared' ? theme.primary : theme.text }]}>Posts</Text>
               </TouchableOpacity>
 
               {(() => {
@@ -272,7 +272,7 @@ const UserProfileScreen: React.FC = () => {
                   style={[styles.tabButton, viewMode === 'liked' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }]}
                   onPress={() => setViewMode('liked')}
                 >
-                  <Text style={[styles.tabText, viewMode === 'liked' && { color: theme.primary }]}>Liked</Text>
+                  <Text style={[styles.tabText, { color: viewMode === 'liked' ? theme.primary : theme.text }]}>Liked</Text>
                 </TouchableOpacity>
               )}
             </View>
@@ -288,13 +288,13 @@ const UserProfileScreen: React.FC = () => {
                   style={[styles.chip, likedFilter === 'all' && { backgroundColor: `${theme.primary}20` }]}
                   onPress={() => setLikedFilter('all')}
                 >
-                  <Text style={[styles.chipText, likedFilter === 'all' && { color: theme.primary }]}>All</Text>
+                  <Text style={[styles.chipText, { color: likedFilter === 'all' ? theme.primary : theme.text }]}>All</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.chip, likedFilter === 'recipes' && { backgroundColor: `${theme.primary}20` }]}
                   onPress={() => setLikedFilter('recipes')}
                 >
-                  <Text style={[styles.chipText, likedFilter === 'recipes' && { color: theme.primary }]}>Recipes</Text>
+                  <Text style={[styles.chipText, { color: likedFilter === 'recipes' ? theme.primary : theme.text }]}>Recipes</Text>
                 </TouchableOpacity>
               </View>
             )}

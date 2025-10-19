@@ -245,7 +245,7 @@ const MyProfileScreen: React.FC = () => {
                   <Text
                     style={[
                       textStyles.body,
-                      { color: viewMode === 'shared' ? theme.primary : theme.textSecondary }
+                      { color: viewMode === 'shared' ? theme.primary : theme.text }
                     ]}
                   >
                     Shared ({userPosts.length})
@@ -261,7 +261,7 @@ const MyProfileScreen: React.FC = () => {
                   <Text
                     style={[
                       textStyles.body,
-                      { color: viewMode === 'liked' ? theme.primary : theme.textSecondary }
+                      { color: viewMode === 'liked' ? theme.primary : theme.text }
                     ]}
                   >
                     Liked ({likedPosts.length})
