@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
-import { apiClient, ForumPost, Recipe } from '../lib/apiClient'
+import { apiClient, ForumPost, MealPlan, Recipe } from '../lib/apiClient'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -76,8 +76,9 @@ const Profile = () => {
   const [reportReason, setReportReason] = useState('')
   const [reportDescription, setReportDescription] = useState('')
 
-  // New state for saved meal plans
-  const [savedMealPlans, setSavedMealPlans] = useState<any[]>([])
+  // States for saved meal plans
+  // const [savedMealPlans, setSavedMealPlans] = useState<MealPlan[]>([])
+  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan|null>()
 
   // Load user data on mount
   useEffect(() => {
@@ -147,20 +148,20 @@ const Profile = () => {
   }
 
   // New function: load saved meal plans
-  const loadSavedMealPlans = async () => {
+  const loadCurrentMealPlan = async () => {
     try {
       const response = await apiClient.getCurrentMealPlan()
-      setSavedMealPlans(response.results || [])
+      setCurrentMealPlan(response || [])
     } catch (error) {
       console.error('Error loading saved meal plans:', error)
-      setSavedMealPlans([])
+      setCurrentMealPlan(null)
     }
   }
   
   // Fetch saved meal plans when 'mealPlans' tab is activated
   useEffect(() => {
     if (activeTab === 'mealPlans') {
-      loadSavedMealPlans()
+      loadCurrentMealPlan()
     }
   }, [activeTab])
 
@@ -914,24 +915,43 @@ const Profile = () => {
             {/* Saved Meal Plans Tab */}
             {activeTab === 'mealPlans' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Saved Meal Plans</h2>
-                {savedMealPlans.length === 0 ? (
-                  <div className="nh-card text-center py-12">
-                    <BookmarkSimple size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="nh-text">You haven't saved any meal plans yet</p>
+                <h2 className="nh-subtitle">
+                  {currentMealPlan ? currentMealPlan.name : 'Saved Meal Plan'}
+                </h2>
+                {currentMealPlan ? (
+                  <div className="space-y-4">
+                    {(() => {
+                      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                      // Assume that currentMealPlan.meals_details has 21 items ordered as Monday-Breakfast, Monday-Lunch, Monday-Dinner, Tuesday-Breakfast, etc.
+                      const details = currentMealPlan.meals_details || [];
+                      return days.map((day, index) => {
+                        const start = index * 3;
+                        const dayMeals = details.slice(start, start + 3);
+                        return (
+                          <div key={day} className="nh-card">
+                            <h3 className="text-lg font-semibold mb-4">{day}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {dayMeals.map((meal, i) => (
+                                <div key={`${day}-${i}`} className="bg-gray-50 rounded-md p-4 border border-gray-100">
+                                  <div className="text-sm font-medium text-gray-500 mb-2">
+                                    {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
+                                  </div>
+                                  <div className="text-sm text-gray-900">{meal.food.name}</div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    Calories: {meal.calculated_nutrition.calories}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {savedMealPlans.map(plan => (
-                      <div 
-                        key={plan.id} 
-                        className="nh-card cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => navigate(`/meal-plans/${plan.id}`)}
-                      >
-                        <h3 className="nh-subtitle">{plan.planName}</h3>
-                        <p className="nh-text mb-3 line-clamp-2">{plan.description}</p>
-                      </div>
-                    ))}
+                  <div className="nh-card text-center py-12">
+                    <BookmarkSimple size={48} className="mx-auto mb-4 opacity-50" />
+                    <p className="nh-text">You haven't saved any meal plan yet</p>
                   </div>
                 )}
               </div>
