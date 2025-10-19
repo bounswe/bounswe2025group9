@@ -129,7 +129,7 @@ export interface User {
   allergens?: string[];
   createdAt?: Date;
   // Optional public profile fields
-  profilePhoto?: string; // URL
+  profile_image?: string; // URL - matches backend field name
   profession?: string;
   bio?: string;
   badges?: string[];

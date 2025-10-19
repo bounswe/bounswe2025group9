@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -198,13 +199,20 @@ const MyProfileScreen: React.FC = () => {
             return (
               <View style={[styles.profileSection, { backgroundColor: theme.surface }]}>
                 <ProfilePhotoPicker
-                  uri={userProfile.profilePhoto}
-                  onUploaded={async (remoteUrl: string) => {
+                  uri={userProfile.profile_image}
+                  onUploaded={async (localUri: string) => {
                     try {
+                      console.log('Starting upload process for:', localUri);
+                      const name = localUri.split('/').pop() || 'profile.jpg';
+                      console.log('Uploading with filename:', name);
+                      const res = await userService.uploadProfilePhoto(localUri, name);
+                      console.log('Upload response:', res);
                       // Refresh profile data to get updated photo
                       fetchUserData();
+                      console.log('Profile updated successfully');
                     } catch (error) {
-                      console.error('Error updating profile:', error);
+                      console.error('Upload failed:', error);
+                      Alert.alert('Upload Failed', `Failed to upload image: ${error.message || error}`);
                     }
                   }}
                   onRemoved={async () => {
