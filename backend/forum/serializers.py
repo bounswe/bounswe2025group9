@@ -10,7 +10,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
+    author = serializers.CharField(source='author.username', read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all(), write_only=True, source="tags"
@@ -50,7 +50,7 @@ class PostSerializer(serializers.ModelSerializer):
 
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.StringRelatedField(read_only=True)
+    author = serializers.CharField(source='author.username', read_only=True)
 
     class Meta:
         model = Comment
@@ -89,7 +89,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Post.objects.all(), source="post", write_only=True
     )
     post_title = serializers.StringRelatedField(source="post.title", read_only=True)
-    author = serializers.StringRelatedField(source="post.author", read_only=True)
+    author = serializers.CharField(source="post.author.username", read_only=True)
     total_protein = serializers.FloatField(read_only=True)
     total_fat = serializers.FloatField(read_only=True)
     total_carbohydrates = serializers.FloatField(read_only=True)
