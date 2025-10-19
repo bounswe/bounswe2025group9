@@ -44,32 +44,15 @@ const ProfileSettingsScreen: React.FC = () => {
   const loadUserProfile = async () => {
     setLoading(true);
     try {
-      // TODO: Replace with actual API call
-      // const userData = await userService.getMyProfile();
-      // setUser(userData);
-      
-      // Mock data for now
-      const mockUser: User = {
-        id: 1,
-        username: 'johndoe',
-        email: 'john@example.com',
-        name: 'John',
-        surname: 'Doe',
-        bio: 'Passionate about healthy cooking and nutrition',
-        profile_image: undefined,
-        profession_tags: [
-          { id: 1, name: 'Dietitian', is_verified: true, created_at: new Date() },
-          { id: 2, name: 'Chef', is_verified: false, created_at: new Date() }
-        ],
-        allergens: ['gluten', 'lactose'],
-        custom_allergens: ['sesame'],
-        badges: ['Top Contributor', 'Recipe Master'],
-        account_warnings: [
-          { id: 1, type: 'warning', reason: 'Test Warning', description: 'Test', issued_at: new Date(), issued_by: 'Moderator', is_active: true }
-        ]
-      };
-      
-      setUser(mockUser);
+      // Use current user from auth context as base
+      if (currentUser) {
+        // TODO: Fetch additional profile data from API
+        // const additionalData = await userService.getMyProfile();
+        // setUser({ ...currentUser, ...additionalData });
+        
+        // For now, use current user data
+        setUser(currentUser);
+      }
     } catch (error) {
       console.error('Error loading user profile:', error);
       Alert.alert('Error', 'Failed to load profile');
@@ -139,6 +122,8 @@ const ProfileSettingsScreen: React.FC = () => {
       // TODO: Replace with actual API call
       // await userService.uploadProfilePhoto(uri);
       console.log('Profile photo uploaded:', uri);
+      // Update local state immediately
+      setUser(prev => prev ? { ...prev, profile_image: uri } : prev);
     } catch (error) {
       console.error('Error uploading profile photo:', error);
       Alert.alert('Error', 'Failed to upload profile photo');
@@ -150,6 +135,8 @@ const ProfileSettingsScreen: React.FC = () => {
       // TODO: Replace with actual API call
       // await userService.removeProfilePhoto();
       console.log('Profile photo removed');
+      // Update local state immediately
+      setUser(prev => prev ? { ...prev, profile_image: undefined } : prev);
     } catch (error) {
       console.error('Error removing profile photo:', error);
       Alert.alert('Error', 'Failed to remove profile photo');
@@ -159,11 +146,11 @@ const ProfileSettingsScreen: React.FC = () => {
   const renderProfileHeader = () => (
     <View style={[styles.profileHeader, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <ProfilePhotoPicker
-        uri={user?.profile_image}
+        uri={user?.profile_image || null}
         onUploaded={handleProfilePhotoUploaded}
         onRemoved={handleProfilePhotoRemoved}
         editable={true}
-        removable={true}
+        removable={!!user?.profile_image}
       />
       
       <View style={styles.userInfo}>
