@@ -157,8 +157,13 @@ class RecipeViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Recipe.objects.all().order_by("-created_at")
         post_id = self.request.query_params.get("post")
+        author_id = self.request.query_params.get("author")
+
         if post_id is not None:
             queryset = queryset.filter(post_id=post_id)
+        if author_id is not None:
+            queryset = queryset.filter(post__author_id=author_id)
+
         return queryset
 
     def perform_create(self, serializer):

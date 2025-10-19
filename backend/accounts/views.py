@@ -353,11 +353,13 @@ class CertificateView(APIView):
     def post(self, request):
         user = request.user
         tag_id = request.data.get("tag_id")
+        tag_name = request.data.get("tag_name")
         certificate = request.FILES.get("certificate")
 
-        if not tag_id:
+        if not tag_id and not tag_name:
             return Response(
-                {"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST
+                {"detail": "Missing tag_id or tag_name."},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
         if not certificate:
@@ -368,7 +370,10 @@ class CertificateView(APIView):
 
         # ✅ Ensure the tag belongs to the user
         try:
-            tag = user.tags.get(id=tag_id)
+            if tag_id:
+                tag = user.tags.get(id=tag_id)
+            else:
+                tag = user.tags.get(name=tag_name)
         except Tag.DoesNotExist:
             return Response(
                 {"detail": "Tag not found or not associated with user."},
