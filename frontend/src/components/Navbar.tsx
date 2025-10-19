@@ -1,7 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
-import { SignIn, UserPlus, SignOut, List } from '@phosphor-icons/react'
+import { SignIn, UserPlus, SignOut, List, User } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useState } from 'react'
 
@@ -53,20 +53,34 @@ const Navbar = () => {
 
                 <div className="flex items-center space-x-5 justify-end">
                     {/* Desktop auth buttons - hidden on mobile */}
-                    <div className="hidden lg:flex space-x-2">
+                    <div className="hidden lg:flex space-x-2 items-center">
                         {isAuthenticated ? (
                             <>
-                                {user && (
-                                    <div className="text-white mr-4 flex items-center">
-                                        Welcome, {user.name || user.username || 'User'}
-                                    </div>
-                                )}
+                                <Link 
+                                    to="/profile"
+                                    className="nh-button nh-button-primary flex items-center justify-center"
+                                    style={{ padding: '8px 12px' }}
+                                    title="View Profile"
+                                >
+                                    {user?.profile_picture ? (
+                                        <img 
+                                            src={user.profile_picture} 
+                                            alt="Profile" 
+                                            className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                                        />
+                                    ) : (
+                                        <div className="w-6 h-6 flex items-center justify-center">
+                                            <User size={24} className="text-white" weight="fill" />
+                                        </div>
+                                    )}
+                                </Link>
                                 <button 
                                     onClick={handleLogout}
-                                    className="nh-button nh-button-primary flex items-center gap-1 w-30"
+                                    className="nh-button nh-button-primary flex items-center justify-center"
+                                    style={{ padding: '8px 12px' }}
+                                    title="Logout"
                                 >
-                                    <SignOut size={16} weight="fill" className="inline-block mr-2" />
-                                    Logout
+                                    <SignOut size={24} weight="fill" />
                                 </button>
                             </>
                         ) : (
@@ -122,12 +136,25 @@ const Navbar = () => {
                             >
                                 Forum
                             </Link>
-                            <div className="pt-2 border-t divider">
-                                {user && (
-                                    <div className="mb-2 welcome-text">
-                                        Welcome, {user.name || user.username || 'User'}
-                                    </div>
-                                )}
+                            <div className="pt-2 border-t divider flex flex-col gap-3">
+                                <Link 
+                                    to="/profile" 
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex items-center gap-3"
+                                >
+                                    {user?.profile_picture ? (
+                                        <img 
+                                            src={user.profile_picture} 
+                                            alt="Profile" 
+                                            className="w-6 h-6 rounded-full object-cover border-2 border-primary-500"
+                                        />
+                                    ) : (
+                                        <div className="w-6 h-6 flex items-center justify-center">
+                                            <User size={24} className="text-gray-700 dark:text-gray-300" weight="fill" />
+                                        </div>
+                                    )}
+                                    <span>Profile</span>
+                                </Link>
                                 <button 
                                     onClick={() => {
                                         handleLogout();

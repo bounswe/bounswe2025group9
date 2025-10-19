@@ -7,9 +7,11 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .serializers import UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer, AllergenInputSerializer, AllergenOutputSerializer
+from .serializers import (UserSerializer, ChangePasswordSerializer, ContactInfoSerializer, PhotoSerializer,
+                           AllergenInputSerializer, AllergenOutputSerializer, TagInputSerializer, TagOutputSerializer,
+                           CertificateSerializer)
 from .services import register_user, list_users, update_user
-from .models import User, Allergen
+from .models import User, Allergen, Tag
 import os
 
 
@@ -181,6 +183,49 @@ class AllergenSetView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+class TagSetView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        data = request.data
+        user = request.user
+
+        # Expecting a list of tag objects
+        if not isinstance(data, list):
+            return Response(
+                {"detail": "Expected a list of tags."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        serializer = TagInputSerializer(data=data, many=True)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        tags = []
+        for tag_data in serializer.validated_data:
+            if "id" in tag_data:
+                try:
+                    tag = Tag.objects.get(id=tag_data["id"])
+                except Tag.DoesNotExist:
+                    continue
+            elif "name" in tag_data:
+                tag, _ = Tag.objects.get_or_create(
+                    name=tag_data["name"],
+                    defaults={"verified": tag_data.get("verified", False)}
+                )
+            else:
+                continue  # skip invalid entries
+
+            tags.append(tag)
+
+        # Update user's tags
+        user.tags.set(tags)
+
+        # Serialize response
+        response_serializer = TagOutputSerializer(tags, many=True)
+        return Response(response_serializer.data, status=status.HTTP_201_CREATED)
+    
 
 class GetCommonAllergensView(APIView):
     # use jwt authentication
@@ -277,3 +322,46 @@ class ProfileImageView(APIView):
             {"detail": "Profile image removed successfully."},
             status=status.HTTP_200_OK
         )
+
+
+class CertificateView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        tag_id = request.data.get("tag_id")
+        certificate = request.FILES.get("certificate")
+
+        if not tag_id:
+            return Response({"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not certificate:
+            return Response({"detail": "No certificate file uploaded."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Ensure the tag belongs to the user
+        try:
+            tag = user.tags.get(id=tag_id)
+        except Tag.DoesNotExist:
+            return Response({"detail": "Tag not found or not associated with user."},
+                            status=status.HTTP_404_NOT_FOUND)
+
+        # ✅ Validate file size (max 5 MB)
+        max_size = 5 * 1024 * 1024  # 5 MB
+        if certificate.size > max_size:
+            return Response({"detail": "File size exceeds 5 MB limit."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Validate file type
+        valid_mime_types = ["image/jpeg", "image/png", "application/pdf"]
+        if certificate.content_type not in valid_mime_types:
+            return Response({"detail": "Only JPG, PNG, or PDF files are allowed."},
+                            status=status.HTTP_400_BAD_REQUEST)
+
+        # ✅ Save certificate to tag
+        tag.certificate = certificate
+        tag.save()
+
+        # ✅ Return updated tag info
+        serializer = TagOutputSerializer(tag)
+        return Response(serializer.data, status=status.HTTP_200_OK)

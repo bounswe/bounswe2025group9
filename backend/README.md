@@ -57,12 +57,45 @@ Don't forget to apply migrations.
 ### Food DB
 
 Now that the API is exposed and the DB is running, we need to populate it with common foods.  
-A JSON file named `food.json` is located under the `db_initialization` folder.  
-Before making requests, populate the DB:
+A JSON file named `foods.json` is located under the `db_initialization` folder.
 
-```bash
-python ./backend/api/db_initialization/load_food_data.py
-```
+#### Using AI-Generated Food Images
+
+This project uses OpenAI's image generation API to create food images. The images are pre-generated and stored locally, replacing the need for external image sources.
+
+**Setup:**
+
+1. Create a config file from the template:
+   ```bash
+   cd backend/api/db_initialization
+   cp config.py.example config.py
+   ```
+
+2. Edit `config.py` and add your OpenAI API credentials:
+   - Get your API key from: https://platform.openai.com/api-keys
+   - Add your organization ID (optional)
+
+3. Generate food images:
+   ```bash
+   python backend/api/db_initialization/generate_food_images.py
+   ```
+   This will:
+   - Generate 5 sample images first for review
+   - Ask if you want to continue with all images
+   - Save images to `food_images/` directory
+   - Update `foods.json` with local image URLs
+
+4. (Optional) Convert images to WebP format for better performance:
+   ```bash
+   python backend/api/db_initialization/convert_to_webp.py
+   ```
+
+5. Load the food data into the database:
+   ```bash
+   python ./backend/api/db_initialization/load_food_data.py
+   ```
+
+**Note:** The migration `0004_load_500_common_foods.py` will automatically load food data when you run `python manage.py migrate`.
 
 ## Tests
 

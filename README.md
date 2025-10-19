@@ -50,8 +50,8 @@ docker-compose up --build -d
 ```
 
 This will start:
-- Frontend at http://localhost
-- Backend API at http://localhost/api
+- Frontend at http://localhost:8080
+- Backend API at http://localhost:8080/api/
 - MySQL database
 
 ## FatSecret API Integration
