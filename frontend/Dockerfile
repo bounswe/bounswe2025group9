@@ -10,11 +10,20 @@ RUN npm run build
 
 FROM nginx:alpine
 
+ARG BUILD=DEV
+
 COPY --from=build /app/dist /usr/share/nginx/html
 
-COPY ./nginx.conf /etc/nginx/conf.d/default.conf
-
 RUN mkdir -p /etc/nginx/certs
+
+COPY nginx-dev.conf /tmp/nginx-dev.conf
+COPY nginx.conf /tmp/nginx.conf
+
+RUN if [ "$BUILD" = "PROD" ]; then \
+        cp /tmp/nginx.conf /etc/nginx/conf.d/default.conf; \
+    else \
+        cp /tmp/nginx-dev.conf /etc/nginx/conf.d/default.conf; \
+    fi && rm /tmp/nginx*.conf
 
 EXPOSE 80 443
 
