@@ -40,6 +40,14 @@ class User(AbstractUser):
         null=True,
         blank=True
     )
+    
+    current_meal_plan = models.ForeignKey(
+        'meal_planner.MealPlan',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='current_for_users'
+    )
 
     groups = models.ManyToManyField(
         Group,

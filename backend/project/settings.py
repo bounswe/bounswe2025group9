@@ -60,6 +60,7 @@ INSTALLED_APPS = [
     "api",
     "foods",
     "forum",
+    "meal_planner",
     "corsheaders",
 ]
 
