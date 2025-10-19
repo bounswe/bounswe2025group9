@@ -101,14 +101,14 @@ export type ForumStackParamList = {
  */
 export type ProfileStackParamList = {
   /**
-   * Main profile settings screen
-   */
-  ProfileSettings: undefined;
-  
-  /**
-   * My profile screen (posts and liked content)
+   * Main profile overview screen (profile info, stats, settings hub)
    */
   MyProfile: undefined;
+  
+  /**
+   * My posts and content screen
+   */
+  MyPosts: undefined;
   
   /**
    * Allergen selection screen

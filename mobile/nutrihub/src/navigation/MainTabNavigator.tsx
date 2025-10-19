@@ -17,6 +17,7 @@ import FoodScreen from '../screens/food/FoodScreen';
 
 // Profile screens
 import ProfileSettingsScreen from '../screens/user/ProfileSettingsScreen';
+import MyPostsScreen from '../screens/user/MyPostsScreen';
 import AllergenSelectionScreen from '../screens/user/AllergenSelectionScreen';
 import PersonalRecipesScreen from '../screens/user/PersonalRecipesScreen';
 import ContactInfoScreen from '../screens/user/ContactInfoScreen';
@@ -115,8 +116,8 @@ const ForumStackNavigator = () => {
 const ProfileStackNavigator = () => {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-      <ProfileStack.Screen name="ProfileSettings" component={ProfileSettingsScreen} />
-      <ProfileStack.Screen name="MyProfile" component={MyProfileScreen} />
+      <ProfileStack.Screen name="MyProfile" component={ProfileSettingsScreen} />
+      <ProfileStack.Screen name="MyPosts" component={MyPostsScreen} />
       <ProfileStack.Screen name="AllergenSelection" component={AllergenSelectionScreen} />
       <ProfileStack.Screen name="PersonalRecipes" component={PersonalRecipesScreen} />
       <ProfileStack.Screen name="ContactInfo" component={ContactInfoScreen} />
