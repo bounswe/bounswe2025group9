@@ -168,6 +168,37 @@ export interface CreateRecipeRequest {
   }[];
 }
 
+// Meal Planner types
+export interface MealPlan {
+  id: number;
+  name: string;
+  total_calories: number;
+  total_protein: number;
+  total_fat: number;
+  total_carbohydrates: number;
+  meals: {
+    food_id: number;
+    meal_type: string;
+    serving_size: number;
+  }[];
+  meals_details: {
+    food: Food;
+    serving_size: number;
+    meal_type: string;
+    calculated_nutrition: {
+      calories: number;
+      protein: number;
+      fat: number;
+      carbohydrates: number;
+    };
+  }[];
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+};
+
+
+
 // api base urls
 const BACKEND_API_URL = import.meta.env.VITE_API_BASE_URL;
 const MOCK_API_URL = "/api";
@@ -703,8 +734,74 @@ export const apiClient = {
       body: JSON.stringify(updateData)
     }, true),
 
-  getCurrentMealPlan : () =>
-    fetchJson<any>(`/meal-planner/current/`, {
-      method: "GET",
-    }, true),
+  // Meal planner endpoints
+  createMealPlan: (mealPlanData: {
+    name: string;
+    meals: {
+      food_id: number;
+      serving_size: number;
+      meal_type: string;
+    }[];
+  }) => {
+    console.log(`[API] Creating meal plan with name: ${mealPlanData.name}`);
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    return fetchJson<MealPlan>(`/meal-planner/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(mealPlanData)
+    }, true).then(response => {
+      console.log(`[API] Meal plan created:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error creating meal plan:`, error);
+      throw error;
+    });
+  },
+
+  getMealPlans: () => {
+    console.log(`[API] Fetching meal plans`);
+    return fetchJson<PaginatedResponse<MealPlan>>(`/meal-planner/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received meal plans:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error fetching meal plans:`, error);
+      throw error;
+    });
+  },
+
+  setCurrentMealPlan: (mealPlanId: number) => {
+    console.log(`[API] Setting current meal plan: ${mealPlanId}`);
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    return fetchJson<any>(`/meal-planner/${mealPlanId}/set-current/`, {
+      method: "POST",
+      headers,
+    }, true).then(response => {
+      console.log(`[API] Meal plan set as current:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error setting current meal plan:`, error);
+      throw error;
+    });
+  },
+
+  getCurrentMealPlan: () => {
+    console.log(`[API] Fetching current meal plan`);
+    return fetchJson<MealPlan>(`/meal-planner/current/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received current meal plan:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error fetching current meal plan:`, error);
+      throw error;
+    });
+  },
 };
