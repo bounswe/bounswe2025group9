@@ -58,6 +58,25 @@
   --forum-default-active-text: white;
   --forum-default-hover-bg: #444444;
 
+  /* New dietary tags - dark mode */
+  --forum-vegan-bg: #1a3a1a;
+  --forum-vegan-text: #4ade80;
+  --forum-vegan-active-bg: #16a34a;
+  --forum-vegan-active-text: white;
+  --forum-vegan-hover-bg: #224a22;
+
+  --forum-halal-bg: #1a2e3a;
+  --forum-halal-text: #38bdf8;
+  --forum-halal-active-bg: #0284c7;
+  --forum-halal-active-text: white;
+  --forum-halal-hover-bg: #223e4a;
+
+  --forum-high-protein-bg: #3a1a1a;
+  --forum-high-protein-text: #f87171;
+  --forum-high-protein-active-bg: #dc2626;
+  --forum-high-protein-active-text: white;
+  --forum-high-protein-hover-bg: #4a2222;
+
   /* Forum search and filter containers - dark mode */
   --forum-search-bg: #1f2937; /* gray-800 */
   --forum-search-border: #374151; /* gray-700 */
@@ -186,6 +205,25 @@
   --forum-default-active-bg: #888888;
   --forum-default-active-text: white;
   --forum-default-hover-bg: #e5e5e5;
+
+  /* New dietary tags - light mode */
+  --forum-vegan-bg: #dcfce7;
+  --forum-vegan-text: #166534;
+  --forum-vegan-active-bg: #22c55e;
+  --forum-vegan-active-text: white;
+  --forum-vegan-hover-bg: #bbf7d0;
+
+  --forum-halal-bg: #e0f2fe;
+  --forum-halal-text: #0c4a6e;
+  --forum-halal-active-bg: #0ea5e9;
+  --forum-halal-active-text: white;
+  --forum-halal-hover-bg: #bae6fd;
+
+  --forum-high-protein-bg: #fee2e2;
+  --forum-high-protein-text: #991b1b;
+  --forum-high-protein-active-bg: #ef4444;
+  --forum-high-protein-active-text: white;
+  --forum-high-protein-hover-bg: #fecaca;
 
   /* Forum search and filter containers - light mode */
   --forum-search-bg: #d7d7d7; /* white */
