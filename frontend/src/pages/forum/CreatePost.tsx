@@ -34,7 +34,7 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-recipe-active-text)',
                 hoverBg: 'var(--forum-recipe-hover-bg)'
             };
-        case "vegan":
+        case "Vegan":
             return {
                 bg: 'var(--forum-vegan-bg)',
                 text: 'var(--forum-vegan-text)',
@@ -42,7 +42,7 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-vegan-active-text)',
                 hoverBg: 'var(--forum-vegan-hover-bg)'
             };
-        case "halal":
+        case "Halal":
             return {
                 bg: 'var(--forum-halal-bg)',
                 text: 'var(--forum-halal-text)',
@@ -50,7 +50,7 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-halal-active-text)',
                 hoverBg: 'var(--forum-halal-hover-bg)'
             };
-        case "high-protein":
+        case "High-Protein":
             return {
                 bg: 'var(--forum-high-protein-bg)',
                 text: 'var(--forum-high-protein-text)',
@@ -74,9 +74,9 @@ const getTagStyle = (tagName: string) => {
 const TAG_IDS = {
     "Dietary tip": 1,
     "Recipe": 2,
-    "vegan": 4,
-    "halal": 5,
-    "high-protein": 6
+    "Vegan": 4,
+    "Halal": 5,
+    "High-Protein": 6
     // "Meal plan": 3 // Not a creatable post type here
 };
 
@@ -515,15 +515,15 @@ const CreatePost = () => {
                                         <div className="flex flex-wrap gap-2">
                                             <button
                                                 type="button"
-                                                onClick={() => toggleDietaryTag(TAG_IDS["vegan"])}
+                                                onClick={() => toggleDietaryTag(TAG_IDS["Vegan"])}
                                                 className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                                 style={{
-                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["vegan"])
-                                                        ? getTagStyle("vegan").activeBg
-                                                        : getTagStyle("vegan").bg,
-                                                    color: selectedDietaryTags.includes(TAG_IDS["vegan"])
-                                                        ? getTagStyle("vegan").activeText
-                                                        : getTagStyle("vegan").text
+                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["Vegan"])
+                                                        ? getTagStyle("Vegan").activeBg
+                                                        : getTagStyle("Vegan").bg,
+                                                    color: selectedDietaryTags.includes(TAG_IDS["Vegan"])
+                                                        ? getTagStyle("Vegan").activeText
+                                                        : getTagStyle("Vegan").text
                                                 }}
                                             >
                                                 <Tag size={16} weight="fill" className="flex-shrink-0" />
@@ -532,15 +532,15 @@ const CreatePost = () => {
 
                                             <button
                                                 type="button"
-                                                onClick={() => toggleDietaryTag(TAG_IDS["halal"])}
+                                                onClick={() => toggleDietaryTag(TAG_IDS["Halal"])}
                                                 className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                                 style={{
-                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["halal"])
-                                                        ? getTagStyle("halal").activeBg
-                                                        : getTagStyle("halal").bg,
-                                                    color: selectedDietaryTags.includes(TAG_IDS["halal"])
-                                                        ? getTagStyle("halal").activeText
-                                                        : getTagStyle("halal").text
+                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["Halal"])
+                                                        ? getTagStyle("Halal").activeBg
+                                                        : getTagStyle("Halal").bg,
+                                                    color: selectedDietaryTags.includes(TAG_IDS["Halal"])
+                                                        ? getTagStyle("Halal").activeText
+                                                        : getTagStyle("Halal").text
                                                 }}
                                             >
                                                 <Tag size={16} weight="fill" className="flex-shrink-0" />
@@ -549,19 +549,19 @@ const CreatePost = () => {
 
                                             <button
                                                 type="button"
-                                                onClick={() => toggleDietaryTag(TAG_IDS["high-protein"])}
+                                                onClick={() => toggleDietaryTag(TAG_IDS["High-Protein"])}
                                                 className="flex items-center gap-1 px-3 py-2 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                                 style={{
-                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["high-protein"])
-                                                        ? getTagStyle("high-protein").activeBg
-                                                        : getTagStyle("high-protein").bg,
-                                                    color: selectedDietaryTags.includes(TAG_IDS["high-protein"])
-                                                        ? getTagStyle("high-protein").activeText
-                                                        : getTagStyle("high-protein").text
+                                                    backgroundColor: selectedDietaryTags.includes(TAG_IDS["High-Protein"])
+                                                        ? getTagStyle("High-Protein").activeBg
+                                                        : getTagStyle("High-Protein").bg,
+                                                    color: selectedDietaryTags.includes(TAG_IDS["High-Protein"])
+                                                        ? getTagStyle("High-Protein").activeText
+                                                        : getTagStyle("High-Protein").text
                                                 }}
                                             >
                                                 <Tag size={16} weight="fill" className="flex-shrink-0" />
-                                                <span>High Protein</span>
+                                                <span>High-Protein</span>
                                             </button>
                                         </div>
                                     </div>

@@ -8,9 +8,9 @@ def create_dietary_tags(apps, schema_editor):
     
     # Create dietary tags
     dietary_tags = [
-        'vegan',
-        'halal',
-        'high-protein'
+        'Vegan',
+        'Halal',
+        'High-Protein'
     ]
     
     for tag_name in dietary_tags:
@@ -22,9 +22,9 @@ def remove_dietary_tags(apps, schema_editor):
     
     # Remove dietary tags
     dietary_tags = [
-        'vegan',
-        'halal',
-        'high-protein'
+        'Vegan',
+        'Halal',
+        'High-Protein'
     ]
     
     Tag.objects.filter(name__in=dietary_tags).delete()

@@ -38,7 +38,7 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-mealplan-active-text)',
                 hoverBg: 'var(--forum-mealplan-hover-bg)'
             };
-        case "vegan":
+        case "Vegan":
             return { 
                 bg: 'var(--forum-vegan-bg)',
                 text: 'var(--forum-vegan-text)',
@@ -46,7 +46,7 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-vegan-active-text)',
                 hoverBg: 'var(--forum-vegan-hover-bg)'
             };
-        case "halal":
+        case "Halal":
             return { 
                 bg: 'var(--forum-halal-bg)',
                 text: 'var(--forum-halal-text)',
@@ -54,7 +54,7 @@ const getTagStyle = (tagName: string) => {
                 activeText: 'var(--forum-halal-active-text)',
                 hoverBg: 'var(--forum-halal-hover-bg)'
             };
-        case "high-protein":
+        case "High-Protein":
             return { 
                 bg: 'var(--forum-high-protein-bg)',
                 text: 'var(--forum-high-protein-text)',
@@ -78,9 +78,9 @@ const TAG_IDS = {
     "Dietary tip": 1,
     "Recipe": 2,
     "Meal plan": 3,
-    "vegan": 4,
-    "halal": 5,
-    "high-protein": 6
+    "Vegan": 4,
+    "Halal": 5,
+    "High-Protein": 6
 };
 
 const Forum = () => {
@@ -668,15 +668,15 @@ const Forum = () => {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">Recipe Filters:</p>
                                         
                                         <button 
-                                            onClick={() => handleFilterBySubTag(TAG_IDS["vegan"], "vegan")}
+                                            onClick={() => handleFilterBySubTag(TAG_IDS["Vegan"], "Vegan")}
                                             className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                             style={{
-                                                backgroundColor: activeSubFilter === TAG_IDS["vegan"] 
-                                                    ? getTagStyle("vegan").activeBg 
-                                                    : getTagStyle("vegan").bg,
-                                                color: activeSubFilter === TAG_IDS["vegan"] 
-                                                    ? getTagStyle("vegan").activeText 
-                                                    : getTagStyle("vegan").text
+                                                backgroundColor: activeSubFilter === TAG_IDS["Vegan"] 
+                                                    ? getTagStyle("Vegan").activeBg 
+                                                    : getTagStyle("Vegan").bg,
+                                                color: activeSubFilter === TAG_IDS["Vegan"] 
+                                                    ? getTagStyle("Vegan").activeText 
+                                                    : getTagStyle("Vegan").text
                                             }}
                                         >
                                             <Tag size={18} weight="fill" className="flex-shrink-0" />
@@ -684,15 +684,15 @@ const Forum = () => {
                                         </button>
                                         
                                         <button 
-                                            onClick={() => handleFilterBySubTag(TAG_IDS["halal"], "halal")}
+                                            onClick={() => handleFilterBySubTag(TAG_IDS["Halal"], "Halal")}
                                             className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                             style={{
-                                                backgroundColor: activeSubFilter === TAG_IDS["halal"] 
-                                                    ? getTagStyle("halal").activeBg 
-                                                    : getTagStyle("halal").bg,
-                                                color: activeSubFilter === TAG_IDS["halal"] 
-                                                    ? getTagStyle("halal").activeText 
-                                                    : getTagStyle("halal").text
+                                                backgroundColor: activeSubFilter === TAG_IDS["Halal"] 
+                                                    ? getTagStyle("Halal").activeBg 
+                                                    : getTagStyle("Halal").bg,
+                                                color: activeSubFilter === TAG_IDS["Halal"] 
+                                                    ? getTagStyle("Halal").activeText 
+                                                    : getTagStyle("Halal").text
                                             }}
                                         >
                                             <Tag size={18} weight="fill" className="flex-shrink-0" />
@@ -700,19 +700,19 @@ const Forum = () => {
                                         </button>
                                         
                                         <button 
-                                            onClick={() => handleFilterBySubTag(TAG_IDS["high-protein"], "high-protein")}
+                                            onClick={() => handleFilterBySubTag(TAG_IDS["High-Protein"], "High-Protein")}
                                             className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                             style={{
-                                                backgroundColor: activeSubFilter === TAG_IDS["high-protein"] 
-                                                    ? getTagStyle("high-protein").activeBg 
-                                                    : getTagStyle("high-protein").bg,
-                                                color: activeSubFilter === TAG_IDS["high-protein"] 
-                                                    ? getTagStyle("high-protein").activeText 
-                                                    : getTagStyle("high-protein").text
+                                                backgroundColor: activeSubFilter === TAG_IDS["High-Protein"] 
+                                                    ? getTagStyle("High-Protein").activeBg 
+                                                    : getTagStyle("High-Protein").bg,
+                                                color: activeSubFilter === TAG_IDS["High-Protein"] 
+                                                    ? getTagStyle("High-Protein").activeText 
+                                                    : getTagStyle("High-Protein").text
                                             }}
                                         >
                                             <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                            <span className="flex-grow text-center">High Protein</span>
+                                            <span className="flex-grow text-center">High-Protein</span>
                                         </button>
                                     </>
                                 )}
