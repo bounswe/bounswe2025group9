@@ -27,4 +27,5 @@ urlpatterns = [
     path("api/users/", include("django.contrib.auth.urls")),
     path("api/foods/", include("foods.urls")),
     path("api/forum/", include("forum.urls")),
+    path("api/meal-planner/", include("meal_planner.urls")),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
