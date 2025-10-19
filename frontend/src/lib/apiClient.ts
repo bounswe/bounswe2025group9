@@ -702,4 +702,9 @@ export const apiClient = {
       method: "PATCH",
       body: JSON.stringify(updateData)
     }, true),
+
+  getCurrentMealPlan : () =>
+    fetchJson<any>(`/meal-planner/current/`, {
+      method: "GET",
+    }, true),
 };

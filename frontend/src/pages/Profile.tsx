@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X } from '@phosphor-icons/react'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
 import { apiClient, ForumPost, Recipe } from '../lib/apiClient'
 
 // Predefined allergen list
@@ -57,7 +57,7 @@ const Profile = () => {
   const navigate = useNavigate()
   
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans'>('overview')
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
@@ -75,6 +75,9 @@ const Profile = () => {
   const [reportUserId, setReportUserId] = useState('')
   const [reportReason, setReportReason] = useState('')
   const [reportDescription, setReportDescription] = useState('')
+
+  // New state for saved meal plans
+  const [savedMealPlans, setSavedMealPlans] = useState<any[]>([])
 
   // Load user data on mount
   useEffect(() => {
@@ -142,6 +145,24 @@ const Profile = () => {
       setLikedRecipes([])
     }
   }
+
+  // New function: load saved meal plans
+  const loadSavedMealPlans = async () => {
+    try {
+      const response = await apiClient.getCurrentMealPlan()
+      setSavedMealPlans(response.results || [])
+    } catch (error) {
+      console.error('Error loading saved meal plans:', error)
+      setSavedMealPlans([])
+    }
+  }
+  
+  // Fetch saved meal plans when 'mealPlans' tab is activated
+  useEffect(() => {
+    if (activeTab === 'mealPlans') {
+      loadSavedMealPlans()
+    }
+  }, [activeTab])
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message)
@@ -450,6 +471,23 @@ const Profile = () => {
                 >
                   <Warning size={18} weight="fill" />
                   <span className="flex-grow text-center">Report User</span>
+                </button>
+
+                {/* New button for Saved Meal Plans */}
+                <button
+                  onClick={() => setActiveTab('mealPlans')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'mealPlans' 
+                      ? 'var(--forum-default-active-bg)' 
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'mealPlans' 
+                      ? 'var(--forum-default-active-text)' 
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <BookmarkSimple size={18} weight="fill" />
+                  <span className="flex-grow text-center">Saved Meal Plans</span>
                 </button>
               </div>
             </div>
@@ -872,8 +910,33 @@ const Profile = () => {
                 </div>
               </div>
             )}
-          </div>
 
+            {/* Saved Meal Plans Tab */}
+            {activeTab === 'mealPlans' && (
+              <div className="space-y-6">
+                <h2 className="nh-subtitle">Saved Meal Plans</h2>
+                {savedMealPlans.length === 0 ? (
+                  <div className="nh-card text-center py-12">
+                    <BookmarkSimple size={48} className="mx-auto mb-4 opacity-50" />
+                    <p className="nh-text">You haven't saved any meal plans yet</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {savedMealPlans.map(plan => (
+                      <div 
+                        key={plan.id} 
+                        className="nh-card cursor-pointer hover:shadow-lg transition-shadow"
+                        onClick={() => navigate(`/meal-plans/${plan.id}`)}
+                      >
+                        <h3 className="nh-subtitle">{plan.planName}</h3>
+                        <p className="nh-text mb-3 line-clamp-2">{plan.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {/* Right column - Stats & Info */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">
