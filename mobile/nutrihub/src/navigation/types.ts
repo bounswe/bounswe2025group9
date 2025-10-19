@@ -97,6 +97,64 @@ export type ForumStackParamList = {
 };
 
 /**
+ * Profile stack navigation parameters
+ */
+export type ProfileStackParamList = {
+  /**
+   * Main profile settings screen
+   */
+  ProfileSettings: undefined;
+  
+  /**
+   * My profile screen (posts and liked content)
+   */
+  MyProfile: undefined;
+  
+  /**
+   * Allergen selection screen
+   */
+  AllergenSelection: undefined;
+  
+  /**
+   * Personal recipes screen
+   */
+  PersonalRecipes: undefined;
+  
+  /**
+   * Contact information screen
+   */
+  ContactInfo: undefined;
+  
+  /**
+   * Liked posts screen
+   */
+  LikedPosts: undefined;
+  
+  /**
+   * Liked recipes screen
+   */
+  LikedRecipes: undefined;
+  
+  /**
+   * Profession tags screen
+   */
+  ProfessionTags: undefined;
+  
+  /**
+   * Account warnings screen
+   */
+  AccountWarnings: undefined;
+  
+  /**
+   * Report user screen
+   */
+  ReportUser: {
+    userId: number;
+    username: string;
+  };
+};
+
+/**
  * Serialized version of ForumTopic for navigation
  * This matches the API response structure
  */

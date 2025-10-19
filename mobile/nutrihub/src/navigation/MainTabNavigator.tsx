@@ -14,7 +14,19 @@ import CreatePostScreen from '../screens/forum/CreatePostScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 import MyProfileScreen from '../screens/user/MyProfileScreen';
 import FoodScreen from '../screens/food/FoodScreen';
-import { MainTabParamList, RootStackParamList, ForumStackParamList } from './types';
+
+// Profile screens
+import ProfileSettingsScreen from '../screens/user/ProfileSettingsScreen';
+import AllergenSelectionScreen from '../screens/user/AllergenSelectionScreen';
+import PersonalRecipesScreen from '../screens/user/PersonalRecipesScreen';
+import ContactInfoScreen from '../screens/user/ContactInfoScreen';
+import LikedPostsScreen from '../screens/user/LikedPostsScreen';
+import LikedRecipesScreen from '../screens/user/LikedRecipesScreen';
+import ProfessionTagsScreen from '../screens/user/ProfessionTagsScreen';
+import AccountWarningsScreen from '../screens/user/AccountWarningsScreen';
+import ReportUserScreen from '../screens/user/ReportUserScreen';
+
+import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -23,6 +35,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const ForumStack = createNativeStackNavigator<ForumStackParamList>();
+const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
 
 // Custom header component
 const Header: React.FC<{ title?: string }> = ({ title }) => {
@@ -98,6 +111,24 @@ const ForumStackNavigator = () => {
   );
 };
 
+// Profile Stack Navigator
+const ProfileStackNavigator = () => {
+  return (
+    <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
+      <ProfileStack.Screen name="ProfileSettings" component={ProfileSettingsScreen} />
+      <ProfileStack.Screen name="MyProfile" component={MyProfileScreen} />
+      <ProfileStack.Screen name="AllergenSelection" component={AllergenSelectionScreen} />
+      <ProfileStack.Screen name="PersonalRecipes" component={PersonalRecipesScreen} />
+      <ProfileStack.Screen name="ContactInfo" component={ContactInfoScreen} />
+      <ProfileStack.Screen name="LikedPosts" component={LikedPostsScreen} />
+      <ProfileStack.Screen name="LikedRecipes" component={LikedRecipesScreen} />
+      <ProfileStack.Screen name="ProfessionTags" component={ProfessionTagsScreen} />
+      <ProfileStack.Screen name="AccountWarnings" component={AccountWarningsScreen} />
+      <ProfileStack.Screen name="ReportUser" component={ReportUserScreen} />
+    </ProfileStack.Navigator>
+  );
+};
+
 const MainTabNavigator = () => {
   const { theme } = useTheme();
   
@@ -143,7 +174,7 @@ const MainTabNavigator = () => {
         <Tab.Screen name="Home" component={HomeScreen} />
         <Tab.Screen name="Food" component={FoodScreen} />
         <Tab.Screen name="Forum" component={ForumStackNavigator} />
-        <Tab.Screen name="MyProfile" component={MyProfileScreen} />
+        <Tab.Screen name="MyProfile" component={ProfileStackNavigator} />
       </Tab.Navigator>
     </View>
   );
