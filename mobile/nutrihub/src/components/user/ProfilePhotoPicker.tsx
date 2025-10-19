@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Alert, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -16,6 +16,7 @@ export interface ProfilePhotoPickerProps {
 }
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
+const SUPPORTED_FORMATS = ['jpeg', 'jpg', 'png'];
 
 const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded, onRemoved, uploading, removable = true, editable = true }) => {
   const { theme, textStyles } = useTheme();
@@ -24,8 +25,14 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
   const isUploading = uploading || localUploading;
 
   const validateFile = async (asset: ImagePicker.ImagePickerAsset): Promise<string | null> => {
-    const extOk = asset.mimeType?.includes('jpeg') || asset.mimeType?.includes('png') || asset.uri.toLowerCase().endsWith('.jpg') || asset.uri.toLowerCase().endsWith('.jpeg') || asset.uri.toLowerCase().endsWith('.png');
-    if (!extOk) return 'Only JPEG or PNG images are allowed.';
+    // Check file format
+    const fileExtension = asset.uri.split('.').pop()?.toLowerCase();
+    const mimeTypeValid = asset.mimeType?.includes('jpeg') || asset.mimeType?.includes('png');
+    const extensionValid = fileExtension && SUPPORTED_FORMATS.includes(fileExtension);
+    
+    if (!mimeTypeValid && !extensionValid) {
+      return `Only JPEG and PNG images are supported. Supported formats: ${SUPPORTED_FORMATS.join(', ')}.`;
+    }
 
     try {
       const info = await FileSystem.getInfoAsync(asset.uri);
@@ -33,7 +40,10 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
       
       // Check file size if available
       if (info.size !== undefined) {
-        if (info.size > MAX_SIZE_BYTES) return 'Image must be up to 5 MB.';
+        if (info.size > MAX_SIZE_BYTES) {
+          const sizeMB = (info.size / (1024 * 1024)).toFixed(1);
+          return `Image size (${sizeMB}MB) exceeds the maximum allowed size of 5MB.`;
+        }
       }
     } catch (e) {
       // If file system access fails, let the backend handle validation
@@ -56,7 +66,9 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
         mediaTypes: 'Images',
         quality: 0.9,
         allowsEditing: true,
-        aspect: [1, 1]
+        aspect: [1, 1],
+        exif: false, // Remove EXIF data for privacy
+        base64: false, // Don't include base64 to reduce memory usage
       });
       
       if (result.canceled || !result.assets || result.assets.length === 0) {
@@ -97,7 +109,18 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
         ) : (
           <Icon name="account" size={40} color={theme.primary} />
         )}
+        {isUploading && (
+          <View style={styles.uploadingOverlay}>
+            <ActivityIndicator size="small" color="#fff" />
+          </View>
+        )}
       </View>
+      
+      {/* File format and size information */}
+      <Text style={[textStyles.small, { color: theme.textSecondary, textAlign: 'center', marginTop: SPACING.xs }]}>
+        Supported formats: JPEG, PNG. Maximum size: 5MB
+      </Text>
+      
       {editable && (
         <View style={styles.actions}>
           <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={pickImage} disabled={isUploading}>
@@ -151,6 +174,17 @@ const styles = StyleSheet.create({
   buttonText: {
     marginLeft: 6,
     fontWeight: '600',
+  },
+  uploadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderRadius: BORDER_RADIUS.round,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
