@@ -112,8 +112,8 @@ const Profile = () => {
       await loadLikedRecipes()
       
       // Load profile picture if available
-      if (user.profile_picture) {
-        setProfilePicture(user.profile_picture)
+      if (user.profile_image) {
+        setProfilePicture(user.profile_image)
       }
     } catch (error) {
       console.error('Error loading user data:', error)
@@ -285,12 +285,12 @@ const Profile = () => {
 
   const uploadProfilePicture = async () => {
     if (!profilePictureFile) return
-    
+
     setIsLoading(true)
     try {
       const formData = new FormData()
-      formData.append('profile_picture', profilePictureFile)
-      
+      formData.append('profile_image', profilePictureFile)
+
       await apiClient.uploadProfilePicture(formData)
       await fetchUserProfile()
       setProfilePictureFile(null)
