@@ -56,16 +56,16 @@ const Navbar = () => {
                     <div className="hidden lg:flex space-x-2 items-center">
                         {isAuthenticated ? (
                             <>
-                                <Link 
+                                <Link
                                     to="/profile"
                                     className="nh-button nh-button-primary flex items-center justify-center"
                                     style={{ padding: '8px 12px' }}
                                     title="View Profile"
                                 >
-                                    {user?.profile_picture ? (
-                                        <img 
-                                            src={user.profile_picture} 
-                                            alt="Profile" 
+                                    {user?.profile_image ? (
+                                        <img
+                                            src={user.profile_image}
+                                            alt="Profile"
                                             className="w-6 h-6 rounded-full object-cover border-2 border-white"
                                         />
                                     ) : (
@@ -137,15 +137,15 @@ const Navbar = () => {
                                 Forum
                             </Link>
                             <div className="pt-2 border-t divider flex flex-col gap-3">
-                                <Link 
-                                    to="/profile" 
+                                <Link
+                                    to="/profile"
                                     onClick={() => setIsMobileMenuOpen(false)}
                                     className="flex items-center gap-3"
                                 >
-                                    {user?.profile_picture ? (
-                                        <img 
-                                            src={user.profile_picture} 
-                                            alt="Profile" 
+                                    {user?.profile_image ? (
+                                        <img
+                                            src={user.profile_image}
+                                            alt="Profile"
                                             className="w-6 h-6 rounded-full object-cover border-2 border-primary-500"
                                         />
                                     ) : (

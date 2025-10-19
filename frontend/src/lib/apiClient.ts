@@ -71,7 +71,7 @@ export interface UserResponse {
   address: string;
   tags: any[];
   allergens: any[];
-  profile_picture?: string;
+  profile_image?: string;
 }
 
 // pagination types
@@ -385,8 +385,8 @@ export const apiClient = {
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
-    
-    return fetch(`${BACKEND_API_URL}/users/profile/picture/`, {
+
+    return fetch(`${BACKEND_API_URL}/users/image/`, {
       method: "POST",
       headers,
       body: formData,
@@ -401,7 +401,7 @@ export const apiClient = {
 
   // remove profile picture
   removeProfilePicture: () =>
-    fetchJson<void>("/users/profile/picture/", {
+    fetchJson<void>("/users/image/", {
       method: "DELETE",
     }, true),
 

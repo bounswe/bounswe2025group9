@@ -33,6 +33,7 @@ services:
       DJANGO_SECRET_KEY: "super-secret-key"
     volumes:
       - static_volume:/project/staticfiles
+      - media_volume:/project/media
 
   frontend:
     build:
@@ -48,9 +49,11 @@ services:
       - backend
     volumes:
       - static_volume:/usr/share/nginx/html/static
+      - media_volume:/usr/share/nginx/html/media
       - ./certbot/www:/var/www/certbot
       - ./certbot/conf:/etc/letsencrypt
 
 volumes:
   mysql_data:
   static_volume:
+  media_volume:
