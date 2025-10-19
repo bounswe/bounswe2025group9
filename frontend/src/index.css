@@ -80,6 +80,12 @@
   --dietary-option-selected-text: white;
   --dietary-option-selected-border: #3b82f6;
 
+  /* Pagination colors - dark mode */
+  --pagination-inactive-text: #9ca3af; /* gray-400 */
+  --pagination-inactive-hover-bg: #1f2937; /* gray-800 */
+  --pagination-disabled-text: #6b7280; /* gray-500 */
+  --pagination-ellipsis-text: #9ca3af; /* gray-400 */
+
   /* gray scale */
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -202,6 +208,12 @@
   --dietary-option-selected-bg: #2563eb; /* blue-600 - darker blue for better visibility */
   --dietary-option-selected-text: white;
   --dietary-option-selected-border: #2563eb;
+
+  /* Pagination colors - light mode */
+  --pagination-inactive-text: #4b5563; /* gray-600 - darker for better visibility */
+  --pagination-inactive-hover-bg: #f3f4f6; /* gray-100 - lighter background */
+  --pagination-disabled-text: #d1d5db; /* gray-300 - lighter for disabled state */
+  --pagination-ellipsis-text: #6b7280; /* gray-500 */
 
   /* shadows for light mode */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

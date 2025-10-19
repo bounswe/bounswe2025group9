@@ -71,6 +71,7 @@ export interface UserResponse {
   address: string;
   tags: any[];
   allergens: any[];
+  profile_picture?: string;
 }
 
 // pagination types
@@ -343,6 +344,85 @@ export const apiClient = {
       method: "GET"
     }, true);
   },
+
+  // update allergens
+  updateAllergens: (allergens: string[]) =>
+    fetchJson<UserResponse>("/users/profile/allergens/", {
+      method: "POST",
+      body: JSON.stringify({ allergens }),
+    }, true),
+
+  // update profession tags
+  updateProfessionTags: (tags: any[]) =>
+    fetchJson<UserResponse>("/users/profile/tags/", {
+      method: "POST",
+      body: JSON.stringify({ tags }),
+    }, true),
+
+  // upload certificate
+  uploadCertificate: (formData: FormData) => {
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    
+    return fetch(`${BACKEND_API_URL}/users/profile/certificate/`, {
+      method: "POST",
+      headers,
+      body: formData,
+      credentials: 'include' as RequestCredentials,
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    });
+  },
+
+  // upload profile picture
+  uploadProfilePicture: (formData: FormData) => {
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    
+    return fetch(`${BACKEND_API_URL}/users/profile/picture/`, {
+      method: "POST",
+      headers,
+      body: formData,
+      credentials: 'include' as RequestCredentials,
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    });
+  },
+
+  // remove profile picture
+  removeProfilePicture: () =>
+    fetchJson<void>("/users/profile/picture/", {
+      method: "DELETE",
+    }, true),
+
+  // get liked posts
+  getLikedPosts: () =>
+    fetchJson<PaginatedResponse<ForumPost>>("/users/profile/liked-posts/", {
+      method: "GET"
+    }, true),
+
+  // get liked recipes
+  getLikedRecipes: () =>
+    fetchJson<PaginatedResponse<Recipe>>("/users/profile/liked-recipes/", {
+      method: "GET"
+    }, true),
+
+  // report user
+  reportUser: (data: { userId: string; reason: string; description: string }) =>
+    fetchJson<{ message: string }>("/users/report/", {
+      method: "POST",
+      body: JSON.stringify(data),
+    }, true),
 
   // likes
   likeItem: (itemId: number, itemType: "food" | "post") =>
