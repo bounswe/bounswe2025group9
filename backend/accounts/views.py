@@ -399,6 +399,39 @@ class CertificateView(APIView):
         serializer = TagOutputSerializer(tag)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    def delete(self, request):
+        """
+        DELETE /users/certificate/
+        Remove certificate from a profession tag.
+        Expected body: { "tag_id": <tag_id> }
+        """
+        user = request.user
+        tag_id = request.data.get("tag_id")
+
+        if not tag_id:
+            return Response(
+                {"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ensure the tag belongs to the user
+        try:
+            tag = user.tags.get(id=tag_id)
+        except Tag.DoesNotExist:
+            return Response(
+                {"detail": "Tag not found or not associated with user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Remove certificate file if it exists
+        if tag.certificate:
+            tag.certificate.delete(save=False)
+            tag.certificate = None
+            tag.save()
+
+        # Return updated tag info
+        serializer = TagOutputSerializer(tag)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
 
 class LikedPostsView(APIView):
     """
