@@ -52,6 +52,11 @@ class PostViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Post.objects.all().order_by("-created_at")
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -118,9 +123,9 @@ class PostViewSet(viewsets.ModelViewSet):
         like, created = Like.objects.get_or_create(post=post, user=user)
         if not created:
             like.delete()
-            return Response({"liked": False}, status=status.HTTP_200_OK)
+            return Response({"liked": False, "like_count": post.likes.count()}, status=status.HTTP_200_OK)
 
-        return Response({"liked": True}, status=status.HTTP_201_CREATED)
+        return Response({"liked": True, "like_count": post.likes.count()}, status=status.HTTP_201_CREATED)
 
 
 class TagViewSet(mixins.ListModelMixin, viewsets.GenericViewSet):
@@ -144,6 +149,11 @@ class CommentViewSet(viewsets.ModelViewSet):
             queryset = queryset.filter(post_id=post_id)
         return queryset
 
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
+
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
 
@@ -160,6 +170,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if post_id is not None:
             queryset = queryset.filter(post_id=post_id)
         return queryset
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
     def perform_create(self, serializer):
         # Ensure the post belongs to the current user

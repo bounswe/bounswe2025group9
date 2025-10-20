@@ -10,7 +10,7 @@ class TagSerializer(serializers.ModelSerializer):
 
 
 class PostSerializer(serializers.ModelSerializer):
-    author = serializers.CharField(source='author.username', read_only=True)
+    author = serializers.SerializerMethodField(read_only=True)
     tags = TagSerializer(many=True, read_only=True)
     tag_ids = serializers.PrimaryKeyRelatedField(
         many=True, queryset=Tag.objects.all(), write_only=True, source="tags"
@@ -48,14 +48,44 @@ class PostSerializer(serializers.ModelSerializer):
     def get_has_recipe(self, obj):
         return hasattr(obj, "recipe")
 
+    def get_author(self, obj):
+        author_data = {
+            'id': obj.author.id,
+            'username': obj.author.username
+        }
+        
+        # Include profile image URL if available
+        if obj.author.profile_image:
+            # Use relative URL instead of absolute URL to work with nginx
+            author_data['profile_image'] = obj.author.profile_image.url
+        else:
+            author_data['profile_image'] = None
+            
+        return author_data
+
 
 class CommentSerializer(serializers.ModelSerializer):
-    author = serializers.CharField(source='author.username', read_only=True)
+    author = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Comment
         fields = ["id", "post", "author", "body", "created_at"]
         read_only_fields = ["id", "author", "created_at"]
+
+    def get_author(self, obj):
+        author_data = {
+            'id': obj.author.id,
+            'username': obj.author.username
+        }
+        
+        # Include profile image URL if available
+        if obj.author.profile_image:
+            # Use relative URL instead of absolute URL to work with nginx
+            author_data['profile_image'] = obj.author.profile_image.url
+        else:
+            author_data['profile_image'] = None
+            
+        return author_data
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
@@ -89,7 +119,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         queryset=Post.objects.all(), source="post", write_only=True
     )
     post_title = serializers.StringRelatedField(source="post.title", read_only=True)
-    author = serializers.CharField(source="post.author.username", read_only=True)
+    author = serializers.SerializerMethodField(read_only=True)
     total_protein = serializers.FloatField(read_only=True)
     total_fat = serializers.FloatField(read_only=True)
     total_carbohydrates = serializers.FloatField(read_only=True)
@@ -131,6 +161,24 @@ class RecipeSerializer(serializers.ModelSerializer):
             RecipeIngredient.objects.create(recipe=recipe, **ingredient_data)
 
         return recipe
+
+    def get_author(self, obj):
+        author_data = {
+            'id': obj.post.author.id,
+            'username': obj.post.author.username
+        }
+        
+        # Include profile image URL if available
+        if obj.post.author.profile_image:
+            request = self.context.get('request')
+            if request:
+                author_data['profile_image'] = request.build_absolute_uri(obj.post.author.profile_image.url)
+            else:
+                author_data['profile_image'] = obj.post.author.profile_image.url
+        else:
+            author_data['profile_image'] = None
+            
+        return author_data
 
     def update(self, instance, validated_data):
         ingredients_data = validated_data.pop("ingredients", [])
