@@ -767,12 +767,14 @@ const PostDetail = () => {
                                 <form onSubmit={handleCommentSubmit}>
                                     <div className="flex items-start gap-3 mb-4">
                                         <div className="flex-shrink-0">
-                                            <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
-                                                <User size={18} weight="fill" className="text-primary" />
-                                            </div>
+                                            <ProfileImage 
+                                                profileImage={user?.profile_image}
+                                                username={username}
+                                                size="md"
+                                            />
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-primary mb-2">You</p>
+                                            <p className="font-semibold text-primary mb-2">{username || 'You'}</p>
                                             <textarea 
                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)] transition-all"
                                                 rows={3}
