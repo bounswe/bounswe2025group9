@@ -95,6 +95,7 @@ export interface ForumPost {
   author: {
     id: number;
     username: string;
+    profile_image?: string | null;
   };
   created_at: string;
   updated_at: string;
@@ -115,6 +116,7 @@ export interface ForumComment {
   author: {
     id: number;
     username: string;
+    profile_image?: string | null;
   };
   body: string;
   created_at: string;
@@ -494,6 +496,11 @@ export const apiClient = {
             console.log('[API] Mapping like_count to likes for post', postObj.id);
             postObj.likes = postObj.like_count;
           }
+          // Ensure likes is always a non-negative number
+          if (typeof postObj.likes !== 'number' || postObj.likes < 0) {
+            console.log('[API] Ensuring non-negative like count for post', postObj.id, 'current:', postObj.likes);
+            postObj.likes = Math.max(0, postObj.likes || 0);
+          }
           return post;
         });
       }
@@ -520,6 +527,11 @@ export const apiClient = {
       if ('like_count' in responseObj && !('likes' in responseObj)) {
         console.log('[API] Mapping like_count to likes for consistency');
         responseObj.likes = responseObj.like_count;
+      }
+      // Ensure likes is always a non-negative number
+      if (typeof responseObj.likes !== 'number' || responseObj.likes < 0) {
+        console.log('[API] Ensuring non-negative like count for post detail', postId, 'current:', responseObj.likes);
+        responseObj.likes = Math.max(0, responseObj.likes || 0);
       }
       
       return response;
