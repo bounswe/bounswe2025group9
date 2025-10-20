@@ -29,7 +29,7 @@ type MyProfileNavigationProp = BottomTabNavigationProp<MainTabParamList, 'MyProf
 const MyProfileScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<MyProfileNavigationProp>();
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, updateUser } = useAuth();
 
   const getCurrentUserDisplayName = (): string => {
     if (!currentUser) return '';
@@ -82,19 +82,28 @@ const MyProfileScreen: React.FC = () => {
     fetchUserData();
   }, [fetchUserData]);
 
-  // Refresh liked posts on screen focus so it stays in sync with likes toggled elsewhere
+  // Refresh profile and liked posts on screen focus so it stays in sync
   useFocusEffect(
     useCallback(() => {
-      const refreshLiked = async () => {
+      const refreshData = async () => {
         try {
+          // Refresh profile data
+          const profile = await userService.getMyProfile(true);
+          setUserProfile(profile);
+          // Also update the AuthContext
+          updateUser(profile);
+          
+          // Refresh liked posts
           const allPosts = await forumService.getPosts();
           const likedIdsRaw = await AsyncStorage.getItem('nutrihub_liked_posts');
           const likedIds: number[] = likedIdsRaw ? JSON.parse(likedIdsRaw) : [];
           const liked = allPosts.filter(p => likedIds.includes(p.id));
           setLikedPosts(liked);
-        } catch {}
+        } catch (error) {
+          console.warn('Failed to refresh profile data on focus:', error);
+        }
       };
-      refreshLiked();
+      refreshData();
     }, [])
   );
 
@@ -213,6 +222,8 @@ const MyProfileScreen: React.FC = () => {
                     try {
                       const refreshed = await userService.getMyProfile(true);
                       setUserProfile(refreshed);
+                      // Also update the AuthContext
+                      updateUser(refreshed);
                     } catch (refreshError) {
                       console.warn('Failed to refresh profile after upload', refreshError);
                     }
@@ -233,6 +244,8 @@ const MyProfileScreen: React.FC = () => {
                       try {
                         const refreshed = await userService.getMyProfile(true);
                         setUserProfile(refreshed);
+                        // Also update the AuthContext
+                        updateUser(refreshed);
                       } catch (refreshError) {
                         console.warn('Failed to refresh profile after removal', refreshError);
                       }

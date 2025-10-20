@@ -1,13 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
   StyleSheet,
   FlatList,
   TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -15,8 +12,6 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
-import { User } from '../../types/types';
-import ProfilePhotoPicker from '../../components/user/ProfilePhotoPicker';
 
 interface ProfileSection {
   id: string;
@@ -31,51 +26,6 @@ interface ProfileSection {
 const MyPostsScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<any>();
-
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  // Load user profile on mount
-  useEffect(() => {
-    loadUserProfile();
-  }, []);
-
-  const loadUserProfile = async () => {
-    setLoading(true);
-    try {
-      // TODO: Replace with actual API call
-      // const userData = await userService.getMyProfile();
-      // setUser(userData);
-      
-      // Mock data for now
-      const mockUser: User = {
-        id: 1,
-        username: 'johndoe',
-        email: 'john@example.com',
-        name: 'John',
-        surname: 'Doe',
-        bio: 'Passionate about healthy cooking and nutrition',
-        profile_image: null,
-        profession_tags: [
-          { id: 1, name: 'Dietitian', verified: true, certificate: null },
-          { id: 2, name: 'Chef', verified: false, certificate: null }
-        ],
-        allergens: [],
-        custom_allergens: ['sesame'],
-        badges: ['Top Contributor', 'Recipe Master'],
-        account_warnings: [
-          { id: 1, type: 'warning', reason: 'Test Warning', description: 'Test', issued_at: new Date(), issued_by: 'Moderator', is_active: true }
-        ]
-      };
-      
-      setUser(mockUser);
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      Alert.alert('Error', 'Failed to load profile');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const profileSections: ProfileSection[] = [
     {
@@ -113,81 +63,6 @@ const MyPostsScreen: React.FC = () => {
     navigation.navigate(screen as any);
   };
 
-  const handleProfilePhotoUploaded = async (uri: string) => {
-    try {
-      // TODO: Replace with actual API call
-      // await userService.uploadProfilePhoto(uri);
-      setUser(prev => prev ? { ...prev, profile_image: uri } : null);
-      Alert.alert('Success', 'Profile photo updated successfully');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to update profile photo');
-    }
-  };
-
-  const handleProfilePhotoRemoved = async () => {
-    try {
-      // TODO: Replace with actual API call
-      // await userService.removeProfilePhoto();
-      setUser(prev => prev ? { ...prev, profile_image: null } : null);
-      Alert.alert('Success', 'Profile photo removed successfully');
-    } catch (error) {
-      Alert.alert('Error', 'Failed to remove profile photo');
-    }
-  };
-
-  const renderProfileHeader = () => (
-    <View style={[styles.profileHeader, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <ProfilePhotoPicker
-        uri={user?.profile_image}
-        onUploaded={handleProfilePhotoUploaded}
-        onRemoved={handleProfilePhotoRemoved}
-        editable={true}
-        removable={true}
-      />
-      
-      <View style={styles.userInfo}>
-        <Text style={[textStyles.heading3, { color: theme.text }]}>
-          {user?.name && user?.surname ? `${user.name} ${user.surname}` : user?.username}
-        </Text>
-        <Text style={[textStyles.body, { color: theme.textSecondary }]}>
-          @{user?.username}
-        </Text>
-        {user?.bio && (
-          <Text style={[textStyles.body, { color: theme.text, marginTop: SPACING.xs }]}>
-            {user.bio}
-          </Text>
-        )}
-      </View>
-
-      {/* Quick Stats */}
-      <View style={styles.quickStats}>
-        <View style={styles.statItem}>
-          <Text style={[textStyles.heading4, { color: theme.primary }]}>
-            {user?.profession_tags?.length || 0}
-          </Text>
-          <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            Profession Tags
-          </Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={[textStyles.heading4, { color: theme.success }]}>
-            {user?.badges?.length || 0}
-          </Text>
-          <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            Badges
-          </Text>
-        </View>
-        <View style={styles.statItem}>
-          <Text style={[textStyles.heading4, { color: theme.warning }]}>
-            {(user?.allergens?.length || 0) + (user?.custom_allergens?.length || 0)}
-          </Text>
-          <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            Allergens
-          </Text>
-        </View>
-      </View>
-    </View>
-  );
 
   const renderSectionItem = ({ item }: { item: ProfileSection }) => (
     <TouchableOpacity
@@ -220,16 +95,6 @@ const MyPostsScreen: React.FC = () => {
     </TouchableOpacity>
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[textStyles.body, { color: theme.text }]}>Loading profile...</Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -244,7 +109,6 @@ const MyPostsScreen: React.FC = () => {
       <FlatList
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
-        ListHeaderComponent={renderProfileHeader}
         data={profileSections}
         renderItem={renderSectionItem}
         keyExtractor={(item) => item.id}
@@ -278,24 +142,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     paddingBottom: SPACING.xl,
-  },
-  profileHeader: {
-    padding: SPACING.lg,
-    borderBottomWidth: 1,
-    alignItems: 'center',
-  },
-  userInfo: {
-    alignItems: 'center',
-    marginTop: SPACING.md,
-    marginBottom: SPACING.lg,
-  },
-  quickStats: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-  },
-  statItem: {
-    alignItems: 'center',
   },
   sectionItem: {
     marginHorizontal: SPACING.md,
