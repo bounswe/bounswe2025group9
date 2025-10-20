@@ -97,6 +97,31 @@ export interface CreateRecipeRequest {
   ingredients: RecipeIngredient[];
 }
 
+export interface ApiRecipeIngredient {
+  id: number;
+  food_name: string;
+  amount: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  calories: number;
+}
+
+export interface RecipeDetail {
+  id: number;
+  post_id?: number;
+  post_title?: string;
+  author?: any;
+  instructions: string;
+  ingredients: ApiRecipeIngredient[];
+  total_protein: number;
+  total_fat: number;
+  total_carbohydrates: number;
+  total_calories: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 const normalizeAuthor = (author: ApiAuthor) => {
   if (!author) {
     return {
@@ -342,6 +367,35 @@ export const forumService = {
     }
     
     return response.data;
+  },
+
+  // Get recipe by post ID (uses list endpoint with ?post= filter)
+  async getRecipe(postId: number): Promise<RecipeDetail | null> {
+    try {
+      const response = await apiClient.get<any>(`/forum/recipes/?post=${postId}`);
+      if (response.error) {
+        console.error('Error fetching recipe:', response.error);
+        return null;
+      }
+
+      const data = response.data;
+      if (!data) return null;
+
+      // DRF paginated response
+      if (data.results && Array.isArray(data.results) && data.results.length > 0) {
+        return data.results[0] as RecipeDetail;
+      }
+
+      // Direct object fallback
+      if (data.id && data.ingredients) {
+        return data as RecipeDetail;
+      }
+
+      return null;
+    } catch (error) {
+      console.error('Error fetching recipe:', error);
+      return null;
+    }
   },
 
   // Update a post
