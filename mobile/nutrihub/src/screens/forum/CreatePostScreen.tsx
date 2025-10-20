@@ -29,15 +29,20 @@ import Card from '../../components/common/Card';
 import { ForumStackParamList } from '../../navigation/types';
 import { POST_TAGS } from '../../constants/forumConstants';
 import { forumService, ApiTag, CreatePostRequest } from '../../services/api/forum.service';
+import { getFoodCatalog, ApiFoodItem } from '../../services/api/food.service';
 
 type CreatePostNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'CreatePost'>;
 
 type PostType = 'nutrition' | 'recipe' | 'mealplan';
 
 interface Ingredient {
-  id: number;
-  name: string;
+  food_id: number;
+  food_name: string;
   amount: number;
+  protein: number;
+  fat: number;
+  carbs: number;
+  calories: number;
 }
 
 const CreatePostScreen: React.FC = () => {
@@ -67,14 +72,20 @@ const CreatePostScreen: React.FC = () => {
 
   // Ingredient state
   const [ingredients, setIngredients] = useState<Ingredient[]>([]);
-  const [ingredientName, setIngredientName] = useState('');
-  const [ingredientAmount, setIngredientAmount] = useState('100');
+  const [foodSearchTerm, setFoodSearchTerm] = useState('');
+  const [selectedFoodAmount, setSelectedFoodAmount] = useState('100');
   const [ingredientError, setIngredientError] = useState<string | undefined>(undefined);
+  const [foodOptions, setFoodOptions] = useState<ApiFoodItem[]>([]);
+  const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
+  const [loadingFoods, setLoadingFoods] = useState(false);
   
   // Tags state
   const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
   const [loading, setLoading] = useState(true);
   const [tagErrors, setTagErrors] = useState<string | undefined>(undefined);
+  
+  // Dietary tags for recipes (Vegan, Halal, High-Protein)
+  const [selectedDietaryTags, setSelectedDietaryTags] = useState<number[]>([]);
   
   // Fetch available tags
   useEffect(() => {
@@ -103,6 +114,46 @@ const CreatePostScreen: React.FC = () => {
     
     fetchTags();
   }, []);
+  
+  // Fetch foods when search term changes
+  useEffect(() => {
+    if (postType === 'recipe' && foodSearchTerm.length >= 2) {
+      fetchFoods();
+    } else {
+      setFoodOptions([]);
+    }
+  }, [foodSearchTerm, postType]);
+  
+  // Fetch food options
+  const fetchFoods = async () => {
+    setLoadingFoods(true);
+    try {
+      const response = await getFoodCatalog(20, 0, undefined, foodSearchTerm);
+      if (response.data) {
+        // Transform FoodItem to ApiFoodItem format
+        const apiFoods: ApiFoodItem[] = response.data.map(food => ({
+          id: food.id,
+          name: food.title,
+          category: food.category,
+          description: food.description,
+          servingSize: 100,
+          caloriesPerServing: food.macronutrients?.calories || 0,
+          proteinContent: food.macronutrients?.protein || 0,
+          fatContent: food.macronutrients?.fat || 0,
+          carbohydrateContent: food.macronutrients?.carbohydrates || 0,
+          fiberContent: food.macronutrients?.fiber,
+          sugarContent: food.macronutrients?.sugar,
+          nutritionScore: food.nutritionScore,
+          imageUrl: food.imageUrl,
+        }));
+        setFoodOptions(apiFoods);
+      }
+    } catch (error) {
+      console.error('Error fetching foods:', error);
+    } finally {
+      setLoadingFoods(false);
+    }
+  };
   
   // Validate nutrition title field
   const validateNutritionTitle = (value: string): string | undefined => {
@@ -351,26 +402,34 @@ const CreatePostScreen: React.FC = () => {
     setIsSubmittingRecipe(true);
     
     try {
-      // Format recipe content for the post body
-      const recipeContent = `Ingredients:\n${ingredients.map(ing => `• ${ing.name} (${ing.amount}g)`).join('\n')}\n\nInstructions:\n${recipeInstructions}`;
+      // Calculate total nutritional values
+      const totalCalories = ingredients.reduce((sum, ing) => sum + ing.calories, 0);
+      const totalProtein = ingredients.reduce((sum, ing) => sum + ing.protein, 0);
+      const totalFat = ingredients.reduce((sum, ing) => sum + ing.fat, 0);
+      const totalCarbs = ingredients.reduce((sum, ing) => sum + ing.carbs, 0);
+      
+      // Format recipe content for the post body (similar to frontend)
+      const recipeContent = `This is a recipe post.\n\nYou can find the full recipe details including ingredients and instructions below.`;
+      
+      // Combine recipe tag with dietary tags
+      const allTagIds = [recipeTagId, ...selectedDietaryTags];
       
       const postData: CreatePostRequest = {
         title: recipeName,
         body: recipeContent,
-        tag_ids: [recipeTagId]
+        tag_ids: allTagIds
       };
       
       // Create post
       const createdPost = await forumService.createPost(postData);
       
-      // Also create the recipe object using the dedicated recipe endpoint if available
+      // Also create the recipe object using the dedicated recipe endpoint
       try {
-        // This would use the recipe-specific endpoint we saw in the Postman collection
         await forumService.createRecipe({
           post_id: createdPost.id,
           instructions: recipeInstructions,
           ingredients: ingredients.map(ing => ({
-            food_id: ing.id, // This might need adjustment based on your food catalog
+            food_id: ing.food_id,
             amount: ing.amount
           }))
         });
@@ -387,6 +446,7 @@ const CreatePostScreen: React.FC = () => {
       setRecipeNameTouched(false);
       setRecipeInstructionsTouched(false);
       setIngredients([]);
+      setSelectedDietaryTags([]);
       
       // Navigate back with new post
       navigation.navigate('ForumList', { 
@@ -418,47 +478,72 @@ const CreatePostScreen: React.FC = () => {
   
   // Handle adding ingredient
   const addIngredient = () => {
-    // Validate ingredient name
-    if (!ingredientName.trim()) {
-      setIngredientError('Please enter an ingredient name');
+    // Validate food selection
+    if (!selectedFoodId) {
+      setIngredientError('Please select a food item');
+      return;
+    }
+    
+    const selectedFood = foodOptions.find(food => food.id === selectedFoodId);
+    if (!selectedFood) {
+      setIngredientError('Selected food not found');
       return;
     }
     
     // Validate amount
-    const amount = parseFloat(ingredientAmount);
+    const amount = parseFloat(selectedFoodAmount);
     if (isNaN(amount) || amount <= 0) {
       setIngredientError('Please enter a valid amount (greater than 0)');
       return;
     }
     
     // Check for duplicates
-    if (ingredients.some(ing => ing.name.toLowerCase() === ingredientName.trim().toLowerCase())) {
+    if (ingredients.some(ing => ing.food_id === selectedFoodId)) {
       setIngredientError('This ingredient is already in your recipe');
       return;
     }
     
-    // Add ingredient
+    // Calculate nutritional values based on amount (per 100g base)
+    const ratio = amount / 100;
+    
+    // Add ingredient with nutritional info
     setIngredients([...ingredients, { 
-      id: Date.now(), 
-      name: ingredientName.trim(),
-      amount: amount
+      food_id: selectedFoodId,
+      food_name: selectedFood.name,
+      amount: amount,
+      protein: selectedFood.proteinContent * ratio,
+      fat: selectedFood.fatContent * ratio,
+      carbs: selectedFood.carbohydrateContent * ratio,
+      calories: selectedFood.caloriesPerServing * ratio,
     }]);
     
     // Clear ingredient error if it exists
     setIngredientError(undefined);
     
     // Clear input fields
-    setIngredientName('');
-    setIngredientAmount('100'); // Reset to default
+    setSelectedFoodId(null);
+    setFoodSearchTerm('');
+    setSelectedFoodAmount('100'); // Reset to default
   };
   
   // Handle removing ingredient
-  const removeIngredient = (id: number) => {
-    setIngredients(ingredients.filter(ing => ing.id !== id));
+  const removeIngredient = (foodId: number) => {
+    setIngredients(ingredients.filter(ing => ing.food_id !== foodId));
     // If we're removing an ingredient but there are others left, clear the error
     if (ingredients.length > 1) {
       setIngredientError(undefined);
     }
+  };
+  
+  // Toggle dietary tag selection (for recipes only)
+  const toggleDietaryTag = (tagId: number) => {
+    setSelectedDietaryTags(prev => {
+      if (prev.includes(tagId)) {
+        return prev.filter(id => id !== tagId);
+      } else {
+        return [...prev, tagId];
+      }
+    });
   };
   
   // Check if nutrition form is valid for enabling submit button
@@ -650,6 +735,135 @@ const CreatePostScreen: React.FC = () => {
                 />
               </Card>
               
+              {/* Recipe Details summary (always visible in Recipe mode) */}
+              <Card style={styles.section}>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Recipe Details</Text>
+                <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
+                  <View style={styles.nutritionGrid}>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="fire" size={20} color="#EF4444" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {ingredients.reduce((sum, ing) => sum + ing.calories, 0).toFixed(0)}
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                    </View>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="weight-lifter" size={20} color="#3B82F6" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {ingredients.reduce((sum, ing) => sum + ing.protein, 0).toFixed(1)}g
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                    </View>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="water" size={20} color="#F59E0B" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {ingredients.reduce((sum, ing) => sum + ing.fat, 0).toFixed(1)}g
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                    </View>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="grain" size={20} color="#10B981" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {ingredients.reduce((sum, ing) => sum + ing.carbs, 0).toFixed(1)}g
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                    </View>
+                  </View>
+                </View>
+              </Card>
+
+              {/* Dietary Tags - only show for Recipe */}
+              <Card style={styles.section}>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>
+                  Dietary Tags <Text style={[styles.optionalLabel, textStyles.caption]}>(optional)</Text>
+                </Text>
+                <View style={styles.dietaryTagsContainer}>
+                  <TouchableOpacity
+                    style={[
+                      styles.dietaryTagButton,
+                      { borderColor: theme.border },
+                      selectedDietaryTags.includes(getTagIdByName('Vegan') || 0) && 
+                        { backgroundColor: '#10B981', borderColor: '#10B981' }
+                    ]}
+                    onPress={() => {
+                      const veganTagId = getTagIdByName('Vegan');
+                      if (veganTagId) toggleDietaryTag(veganTagId);
+                    }}
+                  >
+                    <Icon 
+                      name="leaf" 
+                      size={18} 
+                      color={selectedDietaryTags.includes(getTagIdByName('Vegan') || 0) ? '#FFFFFF' : theme.text} 
+                    />
+                    <Text 
+                      style={[
+                        styles.dietaryTagText, 
+                        textStyles.body,
+                        { color: selectedDietaryTags.includes(getTagIdByName('Vegan') || 0) ? '#FFFFFF' : theme.text }
+                      ]}
+                    >
+                      Vegan
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.dietaryTagButton,
+                      { borderColor: theme.border },
+                      selectedDietaryTags.includes(getTagIdByName('Halal') || 0) && 
+                        { backgroundColor: '#8B5CF6', borderColor: '#8B5CF6' }
+                    ]}
+                    onPress={() => {
+                      const halalTagId = getTagIdByName('Halal');
+                      if (halalTagId) toggleDietaryTag(halalTagId);
+                    }}
+                  >
+                    <Icon 
+                      name="star-crescent" 
+                      size={18} 
+                      color={selectedDietaryTags.includes(getTagIdByName('Halal') || 0) ? '#FFFFFF' : theme.text} 
+                    />
+                    <Text 
+                      style={[
+                        styles.dietaryTagText, 
+                        textStyles.body,
+                        { color: selectedDietaryTags.includes(getTagIdByName('Halal') || 0) ? '#FFFFFF' : theme.text }
+                      ]}
+                    >
+                      Halal
+                    </Text>
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    style={[
+                      styles.dietaryTagButton,
+                      { borderColor: theme.border },
+                      selectedDietaryTags.includes(getTagIdByName('High-Protein') || 0) && 
+                        { backgroundColor: '#EF4444', borderColor: '#EF4444' }
+                    ]}
+                    onPress={() => {
+                      const highProteinTagId = getTagIdByName('High-Protein');
+                      if (highProteinTagId) toggleDietaryTag(highProteinTagId);
+                    }}
+                  >
+                    <Icon 
+                      name="dumbbell" 
+                      size={18} 
+                      color={selectedDietaryTags.includes(getTagIdByName('High-Protein') || 0) ? '#FFFFFF' : theme.text} 
+                    />
+                    <Text 
+                      style={[
+                        styles.dietaryTagText, 
+                        textStyles.body,
+                        { color: selectedDietaryTags.includes(getTagIdByName('High-Protein') || 0) ? '#FFFFFF' : theme.text }
+                      ]}
+                    >
+                      High-Protein
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </Card>
+              
               <Card style={styles.section}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle]}>Ingredients</Text>
                 
@@ -658,8 +872,8 @@ const CreatePostScreen: React.FC = () => {
                   <View style={styles.ingredientNameInputContainer}>
                     <TextInput
                       placeholder="Search for ingredients..."
-                      value={ingredientName}
-                      onChangeText={setIngredientName}
+                      value={foodSearchTerm}
+                      onChangeText={setFoodSearchTerm}
                       containerStyle={styles.ingredientNameInput}
                       iconName="food-apple"
                     />
@@ -668,8 +882,8 @@ const CreatePostScreen: React.FC = () => {
                   <View style={styles.ingredientAmountInputContainer}>
                     <TextInput
                       placeholder="100"
-                      value={ingredientAmount}
-                      onChangeText={setIngredientAmount}
+                      value={selectedFoodAmount}
+                      onChangeText={setSelectedFoodAmount}
                       keyboardType="numeric"
                       containerStyle={styles.ingredientAmountInput}
                     />
@@ -681,9 +895,49 @@ const CreatePostScreen: React.FC = () => {
                     onPress={addIngredient}
                     style={styles.addIngredientButton}
                     iconName="plus"
-                    disabled={!ingredientName.trim()}
+                    disabled={!selectedFoodId}
                   />
                 </View>
+                
+                {/* Food Search Results */}
+                {foodSearchTerm.length >= 2 && (
+                  <View style={[styles.foodSearchResults, { borderColor: theme.border }]}>
+                    {loadingFoods ? (
+                      <View style={styles.foodSearchLoading}>
+                        <ActivityIndicator size="small" color={theme.primary} />
+                        <Text style={[styles.foodSearchLoadingText, textStyles.caption]}>Loading foods...</Text>
+                      </View>
+                    ) : foodOptions.length === 0 ? (
+                      <Text style={[styles.noFoodsText, textStyles.caption]}>
+                        No foods found. Try a different search term.
+                      </Text>
+                    ) : (
+                      <ScrollView style={styles.foodSearchList} nestedScrollEnabled>
+                        {foodOptions.map(food => (
+                          <TouchableOpacity
+                            key={food.id}
+                            style={[
+                              styles.foodSearchItem,
+                              { borderBottomColor: theme.border },
+                              selectedFoodId === food.id && { backgroundColor: theme.surfaceVariant }
+                            ]}
+                            onPress={() => setSelectedFoodId(food.id)}
+                          >
+                            <View style={styles.foodSearchItemContent}>
+                              <Text style={[styles.foodSearchItemName, textStyles.body]}>{food.name}</Text>
+                              <Text style={[styles.foodSearchItemDetails, textStyles.caption]}>
+                                {food.category} • {food.proteinContent}g protein • {food.fatContent}g fat • {food.carbohydrateContent}g carbs • {food.caloriesPerServing} cal
+                              </Text>
+                            </View>
+                            {selectedFoodId === food.id && (
+                              <Icon name="check-circle" size={20} color={theme.primary} />
+                            )}
+                          </TouchableOpacity>
+                        ))}
+                      </ScrollView>
+                    )}
+                  </View>
+                )}
                 
                 {/* Ingredient Error */}
                 {ingredientError && (
@@ -692,20 +946,48 @@ const CreatePostScreen: React.FC = () => {
                   </Text>
                 )}
                 
+                {/* Total Nutritional Information */}
+                {ingredients.length > 0 && (
+                  <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
+                    <Text style={[styles.nutritionSummaryTitle, textStyles.subtitle]}>Total Nutrition</Text>
+                    <View style={styles.nutritionGrid}>
+                      <View style={styles.nutritionItem}>
+                        <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.calories, 0).toFixed(1)}</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                      </View>
+                      <View style={styles.nutritionItem}>
+                        <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.protein, 0).toFixed(1)}g</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                      </View>
+                      <View style={styles.nutritionItem}>
+                        <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.fat, 0).toFixed(1)}g</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                      </View>
+                      <View style={styles.nutritionItem}>
+                        <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.carbs, 0).toFixed(1)}g</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+                
                 {/* Ingredients List */}
                 <View style={styles.ingredientsListContainer}>
+                  <Text style={[styles.ingredientsListTitle, textStyles.subtitle]}>Selected Ingredients:</Text>
                   {ingredients.map((ingredient) => (
-                    <View key={ingredient.id} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant }]}>
-                      <Text style={[styles.ingredientName, textStyles.body]}>{ingredient.name}</Text>
-                      <View style={styles.ingredientItemRight}>
-                        <Text style={[styles.ingredientAmount, textStyles.body]}>{ingredient.amount}g</Text>
-                        <TouchableOpacity
-                          onPress={() => removeIngredient(ingredient.id)}
-                          style={styles.removeButton}
-                        >
-                          <Icon name="close-circle" size={20} color={theme.error} />
-                        </TouchableOpacity>
+                    <View key={ingredient.food_id} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
+                      <View style={styles.ingredientInfo}>
+                        <Text style={[styles.ingredientName, textStyles.body]}>{ingredient.food_name}</Text>
+                        <Text style={[styles.ingredientAmount, textStyles.caption]}>
+                          {ingredient.amount}g ({ingredient.protein.toFixed(1)}g protein, {ingredient.fat.toFixed(1)}g fat, {ingredient.carbs.toFixed(1)}g carbs)
+                        </Text>
                       </View>
+                      <TouchableOpacity
+                        onPress={() => removeIngredient(ingredient.food_id)}
+                        style={styles.removeButton}
+                      >
+                        <Icon name="close-circle" size={20} color={theme.error} />
+                      </TouchableOpacity>
                     </View>
                   ))}
                 </View>
@@ -867,24 +1149,16 @@ const styles = StyleSheet.create({
   ingredientsListContainer: {
     marginTop: SPACING.xs,
   },
-  ingredientItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    marginBottom: SPACING.sm,
-  },
   ingredientName: {
-    flex: 1,
+    fontWeight: '500',
+    marginBottom: 2,
   },
   ingredientItemRight: {
     flexDirection: 'row',
     alignItems: 'center',
   },
   ingredientAmount: {
-    marginRight: SPACING.sm,
-    fontWeight: '500',
+    opacity: 0.7,
   },
   removeButton: {
     padding: 2,
@@ -909,6 +1183,107 @@ const styles = StyleSheet.create({
   },
   comingSoonButton: {
     minWidth: 150,
+  },
+  optionalLabel: {
+    fontStyle: 'italic',
+    opacity: 0.7,
+  },
+  dietaryTagsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.sm,
+  },
+  dietaryTagButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+    gap: SPACING.xs,
+  },
+  dietaryTagText: {
+    fontWeight: '500',
+  },
+  foodSearchResults: {
+    borderWidth: 1,
+    borderRadius: BORDER_RADIUS.sm,
+    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
+    maxHeight: 250,
+    overflow: 'hidden',
+  },
+  foodSearchLoading: {
+    padding: SPACING.md,
+    alignItems: 'center',
+  },
+  foodSearchLoadingText: {
+    marginTop: SPACING.xs,
+  },
+  noFoodsText: {
+    padding: SPACING.md,
+    textAlign: 'center',
+  },
+  foodSearchList: {
+    maxHeight: 250,
+  },
+  foodSearchItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.sm,
+    borderBottomWidth: 1,
+  },
+  foodSearchItemContent: {
+    flex: 1,
+  },
+  foodSearchItemName: {
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  foodSearchItemDetails: {
+    opacity: 0.7,
+  },
+  nutritionSummary: {
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+  },
+  nutritionSummaryTitle: {
+    marginBottom: SPACING.sm,
+  },
+  nutritionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  nutritionItem: {
+    alignItems: 'center',
+  },
+  nutritionValue: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  nutritionLabel: {
+    marginTop: 2,
+    opacity: 0.7,
+  },
+  ingredientsListTitle: {
+    marginBottom: SPACING.sm,
+    marginTop: SPACING.sm,
+  },
+  ingredientInfo: {
+    flex: 1,
+  },
+  ingredientItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    marginBottom: SPACING.sm,
+    borderWidth: 1,
   },
 });
 

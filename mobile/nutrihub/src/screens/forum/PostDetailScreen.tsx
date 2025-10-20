@@ -28,7 +28,7 @@ import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
 import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
-import { forumService } from '../../services/api/forum.service';
+import { forumService, RecipeDetail } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -53,6 +53,8 @@ const PostDetailScreen: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [submittingComment, setSubmittingComment] = useState(false);
+  const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
+  const [loadingRecipe, setLoadingRecipe] = useState(false);
   
   // Preserve like status when loading post data
   const preserveLikeStatus = useCallback(async (newPost: ForumTopic, existingPosts: ForumTopic[]): Promise<ForumTopic> => {
@@ -115,6 +117,25 @@ const PostDetailScreen: React.FC = () => {
       }
       
       setPost(postData);
+      
+      // Check if this is a recipe post
+      const isRecipePost = postData.tags.some(tag => 
+        tag.toLowerCase().includes('recipe')
+      );
+      
+      // Fetch recipe details if it's a recipe post
+      if (isRecipePost) {
+        setLoadingRecipe(true);
+        try {
+          const recipeData = await forumService.getRecipe(postId);
+          setRecipe(recipeData);
+        } catch (err) {
+          console.error('Error fetching recipe details:', err);
+          // Don't set an error - just show the post without recipe details
+        } finally {
+          setLoadingRecipe(false);
+        }
+      }
       
       // Fetch comments for the post
       try {
@@ -377,6 +398,81 @@ const PostDetailScreen: React.FC = () => {
             }}
           />
           
+          {/* Recipe Details Section */}
+          {loadingRecipe && (
+            <Card style={styles.recipeCard}>
+              <ActivityIndicator size="small" color={theme.primary} />
+              <Text style={[styles.loadingText, textStyles.body]}>Loading recipe details...</Text>
+            </Card>
+          )}
+          
+          {recipe && (
+            <Card style={styles.recipeCard}>
+              <Text style={[styles.recipeTitle, textStyles.heading3]}>Recipe Details</Text>
+              
+              {/* Nutritional Summary */}
+              {recipe.ingredients && recipe.ingredients.length > 0 && (
+                <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
+                  <View style={styles.nutritionGrid}>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="fire" size={20} color="#EF4444" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {Math.round(recipe.total_calories)}
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                    </View>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="weight-lifter" size={20} color="#3B82F6" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {Math.round(recipe.total_protein)}g
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                    </View>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="water" size={20} color="#F59E0B" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {Math.round(recipe.total_fat)}g
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                    </View>
+                    <View style={styles.nutritionItem}>
+                      <Icon name="grain" size={20} color="#10B981" />
+                      <Text style={[styles.nutritionValue, textStyles.body]}>
+                        {Math.round(recipe.total_carbohydrates)}g
+                      </Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+              
+              {/* Ingredients */}
+              {recipe.ingredients && recipe.ingredients.length > 0 && (
+                <>
+                  <Text style={[styles.sectionTitle, textStyles.heading4]}>Ingredients</Text>
+                  {recipe.ingredients.map((ingredient, index) => (
+                    <View key={index} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant }]}>
+                      <Text style={[styles.ingredientName, textStyles.body]}>
+                        {ingredient.food_name} - {ingredient.amount}g
+                      </Text>
+                      <Text style={[styles.ingredientNutrition, textStyles.caption]}>
+                        ({ingredient.protein?.toFixed(1)}g protein, {ingredient.fat?.toFixed(1)}g fat, {ingredient.carbs?.toFixed(1)}g carbs)
+                      </Text>
+                    </View>
+                  ))}
+                </>
+              )}
+              
+              {/* Instructions */}
+              {recipe.instructions && (
+                <>
+                  <Text style={[styles.sectionTitle, textStyles.heading4]}>Instructions</Text>
+                  <Text style={[styles.instructions, textStyles.body]}>{recipe.instructions}</Text>
+                </>
+              )}
+            </Card>
+          )}
+          
           {/* Comments Section */}
           <View style={styles.commentsSection}>
             <Text style={[styles.commentsTitle, textStyles.heading4]}>
@@ -521,6 +617,55 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: SPACING.md,
     marginBottom: 0,
+  },
+  recipeCard: {
+    margin: SPACING.md,
+    marginTop: 0,
+  },
+  recipeTitle: {
+    marginBottom: SPACING.md,
+  },
+  nutritionSummary: {
+    padding: SPACING.md,
+    borderRadius: 8,
+    borderWidth: 1,
+    marginBottom: SPACING.md,
+  },
+  nutritionGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  nutritionItem: {
+    alignItems: 'center',
+  },
+  nutritionValue: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginTop: SPACING.xs,
+  },
+  nutritionLabel: {
+    marginTop: 2,
+    opacity: 0.7,
+  },
+  sectionTitle: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  ingredientItem: {
+    padding: SPACING.sm,
+    borderRadius: 8,
+    marginBottom: SPACING.sm,
+  },
+  ingredientName: {
+    fontWeight: '500',
+    marginBottom: 2,
+  },
+  ingredientNutrition: {
+    opacity: 0.7,
+  },
+  instructions: {
+    lineHeight: 22,
+    marginBottom: SPACING.sm,
   },
 });
 
