@@ -416,18 +416,18 @@ const Profile = () => {
     showSuccess('Profession tag added (Unverified)')
   }
 
-  const uploadCertificate = async (tagName: string) => {
+  const uploadCertificate = async (tagId: number) => {
     if (!certificateFile) {
       showError('Please select a certificate file')
       return
     }
-    
+
     setIsLoading(true)
     try {
       const formData = new FormData()
       formData.append('certificate', certificateFile)
-      formData.append('tag_name', tagName)
-      
+      formData.append('tag_id', tagId.toString())
+
       await apiClient.uploadCertificate(formData)
       await fetchUserProfile()
       setCertificateFile(null)
@@ -1033,9 +1033,9 @@ const Profile = () => {
                             >
                               {certificateFile ? certificateFile.name : 'Choose Certificate'}
                             </label>
-                            {certificateFile && (
+                            {certificateFile && tag.id && (
                               <button
-                                onClick={() => uploadCertificate(tag.name)}
+                                onClick={() => uploadCertificate(tag.id!)}
                                 className="nh-button nh-button-primary text-sm"
                                 disabled={isLoading}
                               >
