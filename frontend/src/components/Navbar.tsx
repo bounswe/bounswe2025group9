@@ -67,6 +67,7 @@ const Navbar = () => {
                                             src={user.profile_image}
                                             alt="Profile"
                                             className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                                            style={{ aspectRatio: '1/1' }}
                                         />
                                     ) : (
                                         <div className="w-6 h-6 flex items-center justify-center">
@@ -147,6 +148,7 @@ const Navbar = () => {
                                             src={user.profile_image}
                                             alt="Profile"
                                             className="w-6 h-6 rounded-full object-cover border-2 border-primary-500"
+                                            style={{ aspectRatio: '1/1' }}
                                         />
                                     ) : (
                                         <div className="w-6 h-6 flex items-center justify-center">
