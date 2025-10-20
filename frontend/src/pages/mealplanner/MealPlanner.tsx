@@ -37,7 +37,7 @@ const MealPlanner = () => {
                 
                 // Fetch multiple pages to get more foods
                 let allFoods: Food[] = [];
-                for (let page = 1; page <= 10; page++) {
+                for (let page = 1; page <= 20; page++) {
                     const response = await apiClient.getFoods({ page });
                     if (response.status === 200 && response.results.length > 0) {
                         allFoods = [...allFoods, ...response.results];
@@ -48,42 +48,60 @@ const MealPlanner = () => {
                     }
                 }
                 
+                console.log('Total foods fetched:', allFoods.length);
+                console.log('Sample food names:', allFoods.slice(0, 5).map(f => f.name));
+                
                 if (allFoods.length > 0) {
                     setAvailableFoods(allFoods);
                     
-                    // Find real foods from backend by name
-                    const broccoli = allFoods.find(f => f.name === 'Broccoli') || Brocolli;
-                    const goatMeat = allFoods.find(f => f.name === 'Goat Meat (Cooked, Roasted)') || Goat;
-                    const porkChops = allFoods.find(f => f.name === 'Pork Chops (Top Loin, Boneless)') || Pork;
+                    // Find real foods from backend by name (case-insensitive search)
+                    const broccoli = allFoods.find(f => f.name.toLowerCase() === 'broccoli');
+                    const goatMeat = allFoods.find(f => f.name.toLowerCase() === 'goat meat (cooked, roasted)');
+                    const porkChops = allFoods.find(f => f.name.toLowerCase() === 'pork chops (top loin, boneless)');
+                    
+                    console.log('Found foods:', {
+                        totalFoods: allFoods.length,
+                        broccoli: broccoli?.name,
+                        broccoliImage: broccoli?.imageUrl?.substring(0, 50) + '...',
+                        goatMeat: goatMeat?.name,
+                        goatImage: goatMeat?.imageUrl?.substring(0, 50) + '...',
+                        porkChops: porkChops?.name,
+                        porkImage: porkChops?.imageUrl?.substring(0, 50) + '...'
+                    });
+                    
+                    // Use found foods or fallback to mock foods
+                    const broccoliFood = broccoli || Brocolli;
+                    const goatMeatFood = goatMeat || Goat;
+                    const porkChopsFood = porkChops || Pork;
                     
                     // Create meal plans with real foods that have images
                     const realMealPlans: { [key:string] : weeklyMealPlan} = {
                         'halal': {
-                            monday: [broccoli, goatMeat, broccoli],
-                            tuesday: [goatMeat, broccoli, goatMeat],
-                            wednesday: [broccoli, goatMeat, broccoli],
-                            thursday: [goatMeat, broccoli, goatMeat],
-                            friday: [broccoli, goatMeat, broccoli],
-                            saturday: [goatMeat, broccoli, goatMeat],
-                            sunday: [broccoli, goatMeat, broccoli]
+                            monday: [broccoliFood, goatMeatFood, broccoliFood],
+                            tuesday: [goatMeatFood, broccoliFood, goatMeatFood],
+                            wednesday: [broccoliFood, goatMeatFood, broccoliFood],
+                            thursday: [goatMeatFood, broccoliFood, goatMeatFood],
+                            friday: [broccoliFood, goatMeatFood, broccoliFood],
+                            saturday: [goatMeatFood, broccoliFood, goatMeatFood],
+                            sunday: [broccoliFood, goatMeatFood, broccoliFood]
                         },
                         'vegan': {
-                            monday: [broccoli, broccoli, broccoli],
-                            tuesday: [broccoli, broccoli, broccoli],
-                            wednesday: [broccoli, broccoli, broccoli],
-                            thursday: [broccoli, broccoli, broccoli],
-                            friday: [broccoli, broccoli, broccoli],
-                            saturday: [broccoli, broccoli, broccoli],
-                            sunday: [broccoli, broccoli, broccoli]
+                            monday: [broccoliFood, broccoliFood, broccoliFood],
+                            tuesday: [broccoliFood, broccoliFood, broccoliFood],
+                            wednesday: [broccoliFood, broccoliFood, broccoliFood],
+                            thursday: [broccoliFood, broccoliFood, broccoliFood],
+                            friday: [broccoliFood, broccoliFood, broccoliFood],
+                            saturday: [broccoliFood, broccoliFood, broccoliFood],
+                            sunday: [broccoliFood, broccoliFood, broccoliFood]
                         },
                         'high-protein': {
-                            monday: [goatMeat, porkChops, goatMeat],
-                            tuesday: [porkChops, goatMeat, porkChops],
-                            wednesday: [goatMeat, porkChops, goatMeat],
-                            thursday: [porkChops, goatMeat, porkChops],
-                            friday: [goatMeat, porkChops, goatMeat],
-                            saturday: [porkChops, goatMeat, porkChops],
-                            sunday: [goatMeat, porkChops, goatMeat]
+                            monday: [goatMeatFood, porkChopsFood, goatMeatFood],
+                            tuesday: [porkChopsFood, goatMeatFood, porkChopsFood],
+                            wednesday: [goatMeatFood, porkChopsFood, goatMeatFood],
+                            thursday: [porkChopsFood, goatMeatFood, porkChopsFood],
+                            friday: [goatMeatFood, porkChopsFood, goatMeatFood],
+                            saturday: [porkChopsFood, goatMeatFood, porkChopsFood],
+                            sunday: [goatMeatFood, porkChopsFood, goatMeatFood]
                         }
                     };
                     
