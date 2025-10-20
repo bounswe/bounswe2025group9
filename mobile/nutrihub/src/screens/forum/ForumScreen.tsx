@@ -247,7 +247,7 @@ const ForumScreen: React.FC = () => {
   };
 
   // Toggle tag filter - select only one tag or clear if already selected
-  const toggleTagFilter = (tagId: number) => {
+  const toggleTagFilter = async (tagId: number) => {
     // If loading, don't allow filtering
     if (loading) return;
     
@@ -257,13 +257,36 @@ const ForumScreen: React.FC = () => {
     // Update state
     setSelectedTagIds(newSelectedTags);
     
-    // If we're in search mode, clear search when applying filters
-    if (isSearching) {
-      clearSearch();
+    // If we're in search mode, re-apply search with new filter
+    if (isSearching && searchQuery.trim()) {
+      setLoading(true);
+      try {
+        const searchPosts = await forumService.searchPosts(searchQuery.trim());
+        
+        // Apply the new tag filter to search results
+        let filteredSearchPosts = searchPosts;
+        if (newSelectedTags.length > 0) {
+          filteredSearchPosts = searchPosts.filter(post => {
+            // Check if the post has any of the selected tags
+            const postTagIds = availableTags
+              .filter(tag => post.tags.includes(tag.name))
+              .map(tag => tag.id);
+            return newSelectedTags.some(tagId => postTagIds.includes(tagId));
+          });
+        }
+        
+        const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
+        setSearchResults(mergedSearchPosts);
+        setSearchResultsCount(mergedSearchPosts.length);
+      } catch (err) {
+        console.error('Error filtering search results:', err);
+      } finally {
+        setLoading(false);
+      }
+    } else {
+      // Normal filter behavior - fetch posts with the new filter
+      handleFilterChange(newSelectedTags);
     }
-    
-    // Fetch posts with the new filter
-    handleFilterChange(newSelectedTags);
   };
 
   // Find tag by name or ID
@@ -288,8 +311,21 @@ const ForumScreen: React.FC = () => {
     
     try {
       const searchPosts = await forumService.searchPosts(searchQuery.trim());
+      
+      // Apply tag filter to search results if a filter is active
+      let filteredSearchPosts = searchPosts;
+      if (selectedTagIds.length > 0) {
+        filteredSearchPosts = searchPosts.filter(post => {
+          // Check if the post has any of the selected tags
+          const postTagIds = availableTags
+            .filter(tag => post.tags.includes(tag.name))
+            .map(tag => tag.id);
+          return selectedTagIds.some(tagId => postTagIds.includes(tagId));
+        });
+      }
+      
       // Preserve like status for search results
-      const mergedSearchPosts = await preserveLikeStatus(searchPosts, posts);
+      const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
       setSearchResults(mergedSearchPosts);
       setSearchResultsCount(mergedSearchPosts.length);
     } catch (err) {
@@ -300,7 +336,7 @@ const ForumScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, posts, preserveLikeStatus]);
+  }, [searchQuery, posts, preserveLikeStatus, selectedTagIds, availableTags]);
 
   // Clear search results and return to normal view
   const clearSearch = useCallback(() => {
@@ -317,7 +353,20 @@ const ForumScreen: React.FC = () => {
       if (isSearching && searchQuery.trim()) {
         // If we're in search mode, refresh search results
         const searchPosts = await forumService.searchPosts(searchQuery.trim());
-        const mergedSearchPosts = await preserveLikeStatus(searchPosts, posts);
+        
+        // Apply tag filter to search results if a filter is active
+        let filteredSearchPosts = searchPosts;
+        if (selectedTagIds.length > 0) {
+          filteredSearchPosts = searchPosts.filter(post => {
+            // Check if the post has any of the selected tags
+            const postTagIds = availableTags
+              .filter(tag => post.tags.includes(tag.name))
+              .map(tag => tag.id);
+            return selectedTagIds.some(tagId => postTagIds.includes(tagId));
+          });
+        }
+        
+        const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
         setSearchResults(mergedSearchPosts);
         setSearchResultsCount(mergedSearchPosts.length);
       } else {
@@ -339,7 +388,7 @@ const ForumScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedTagIds, setPosts, posts, preserveLikeStatus, isSearching, searchQuery]);
+  }, [selectedTagIds, setPosts, posts, preserveLikeStatus, isSearching, searchQuery, availableTags]);
 
   // Get current posts to display (search results or regular posts)
   const getCurrentPosts = useCallback((): ForumTopic[] => {
@@ -449,8 +498,10 @@ const ForumScreen: React.FC = () => {
         <View style={[styles.searchStatus, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
           <Text style={[styles.searchStatusText, textStyles.body]}>
             {searchResultsCount > 0 
-              ? `Found ${searchResultsCount} results for "${searchQuery}"${selectedTagIds.length > 0 ? ' (filtered by tags)' : ''}` 
-              : `No results found for "${searchQuery}"`}
+              ? `Found ${searchResultsCount} result${searchResultsCount !== 1 ? 's' : ''} for "${searchQuery}"${selectedTagIds.length > 0 ? ' in selected category' : ''}` 
+              : selectedTagIds.length > 0 
+                ? `No results found for "${searchQuery}" in selected category`
+                : `No results found for "${searchQuery}"`}
           </Text>
           <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
             <Icon name="close" size={16} color={theme.primary} />
