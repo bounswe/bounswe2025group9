@@ -76,7 +76,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
     const [prevLikes, setPrevLikes] = useState(post.likes || 0)
     const [showAnimation, setShowAnimation] = useState(false)
     const [likeDiff, setLikeDiff] = useState(0)
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+    const timeoutRef = useRef<number | null>(null)
 
     // Format date for display
     const formatDate = (dateString: string) => {
@@ -166,8 +166,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                         size="sm"
                     />
                     <div className="flex items-center gap-1">
-                        <User size={16} className="flex-shrink-0" />
-                        Posted by: {post.author.username} • {formatDate(post.created_at)}
+                        {post.author.username} • {formatDate(post.created_at)}
                     </div>
                 </span>
                 <div className="flex items-center gap-4">
@@ -190,10 +189,39 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                         <div className="flex items-center justify-center">
                             <ThumbsUp size={16} weight={isLiked ? "fill" : "regular"} className="flex-shrink-0" />
                         </div>
-                        Likes: {post.likes || 0}
+                        Likes: <span 
+                            className={showAnimation && likeDiff > 0 ? 'like-count-pulse' : ''}
+                            style={showAnimation && likeDiff > 0 ? {
+                                animation: 'likeCountPulse 0.6s ease-out'
+                            } : {}}
+                        >
+                            {post.likes || 0}
+                        </span>
                     </button>
                 </div>
             </div>
+            
+            {/* Add animation keyframes */}
+            <style>{`
+                @keyframes likeCountPulse {
+                    0% {
+                        transform: scale(1);
+                    }
+                    25% {
+                        transform: scale(1.3);
+                        color: var(--color-primary);
+                    }
+                    50% {
+                        transform: scale(1.1);
+                    }
+                    75% {
+                        transform: scale(1.2);
+                    }
+                    100% {
+                        transform: scale(1);
+                    }
+                }
+            `}</style>
         </div>
     );
 };

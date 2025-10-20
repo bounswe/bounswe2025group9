@@ -89,18 +89,15 @@ const Profile = () => {
       // Refetch liked posts and recipes when a like event occurs
       if (event.type === 'post') {
         loadLikedPosts()
-      } else if (event.type === 'recipe') {
         loadLikedRecipes()
       }
     })
     
-    // Also poll every 5 seconds to sync changes from other devices
+    // Also poll every 5 seconds to sync changes from other devices and refresh like counts
     const intervalId = window.setInterval(() => {
-      // Refresh liked posts list and derived recipe list
+      // Refresh liked posts and recipes to get updated like counts
       loadLikedPosts()
-      if (activeTab === 'recipes') {
-        loadLikedRecipes()
-      }
+      loadLikedRecipes()
     }, 5000)
 
     return () => {
@@ -153,13 +150,40 @@ const Profile = () => {
 
   const loadLikedPosts = async () => {
     try {
-      const response = await apiClient.getLikedPosts()
-      const posts = response.results || []
-      setLikedPosts(posts)
+      // Get liked post IDs from the API
+      const likedResponse = await apiClient.getLikedPosts()
+      const likedPostIds = (likedResponse.results || []).map(post => post.id)
+      
+      console.log('[Profile] Liked post IDs:', likedPostIds)
+      
+      if (likedPostIds.length === 0) {
+        setLikedPosts([])
+        setLikedPostsMap({})
+        return
+      }
+      
+      // Fetch all posts to get complete data including like counts
+      const allPostsResponse = await apiClient.getForumPosts({
+        ordering: '-created_at',
+        page: 1,
+        page_size: 500
+      })
+      
+      console.log('[Profile] All posts fetched:', allPostsResponse.results.length)
+      
+      // Filter to only liked posts
+      const likedPostsWithData = allPostsResponse.results.filter(post => 
+        likedPostIds.includes(post.id)
+      )
+      
+      console.log('[Profile] Liked posts with data:', likedPostsWithData)
+      console.log('[Profile] First liked post like count:', likedPostsWithData[0]?.likes)
+      
+      setLikedPosts(likedPostsWithData)
       
       // Build a map of liked posts for easy lookup
       const likedMap: {[key: number]: boolean} = {}
-      posts.forEach(post => {
+      likedPostsWithData.forEach(post => {
         likedMap[post.id] = true
       })
       setLikedPostsMap(likedMap)
@@ -172,15 +196,32 @@ const Profile = () => {
 
   const loadLikedRecipes = async () => {
     try {
-      // Instead of fetching recipes separately, we'll filter liked posts for recipe posts
-      // This allows us to use the same ForumPostCard component
-      const response = await apiClient.getLikedPosts()
-      const posts = response.results || []
+      // Get liked post IDs from the API
+      const likedResponse = await apiClient.getLikedPosts()
+      const likedPostIds = (likedResponse.results || []).map(post => post.id)
       
-      // Filter for posts with Recipe tag (tag id 2)
-      const recipePosts = posts.filter(post => 
+      console.log('[Profile] Liked post IDs for recipes:', likedPostIds)
+      
+      if (likedPostIds.length === 0) {
+        setLikedRecipes([])
+        return
+      }
+      
+      // Fetch all posts to get complete data including like counts
+      const allPostsResponse = await apiClient.getForumPosts({
+        ordering: '-created_at',
+        page: 1,
+        page_size: 500
+      })
+      
+      // Filter to only liked posts with Recipe tag
+      const recipePosts = allPostsResponse.results.filter(post => 
+        likedPostIds.includes(post.id) && 
         post.tags.some(tag => tag.name === 'Recipe')
       )
+      
+      console.log('[Profile] Liked recipe posts with data:', recipePosts)
+      console.log('[Profile] First recipe like count:', recipePosts[0]?.likes)
       
       // Store as posts since we're using ForumPostCard to render them
       setLikedRecipes(recipePosts)
