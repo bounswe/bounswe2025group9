@@ -237,8 +237,24 @@ const ForumScreen: React.FC = () => {
   const handleAuthorPress = (post: ForumTopic) => {
     const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
     const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
-    const targetUsername = isSelf ? currentUser!.username : post.author;
-    navigation.navigate('UserProfile', { username: targetUsername, userId: post.authorId || undefined });
+    
+    console.log('ForumScreen handleAuthorPress:', {
+      postAuthor: post.author,
+      currentUsername: currentUser?.username,
+      displayName,
+      isSelf,
+      currentUser: currentUser
+    });
+    
+    if (isSelf) {
+      console.log('Navigating to MyProfile tab');
+      // Navigate to own profile tab instead of UserProfile screen
+      navigation.navigate('MyProfile' as any);
+    } else {
+      console.log('Navigating to UserProfile for:', post.author);
+      // Navigate to other user's profile
+      navigation.navigate('UserProfile', { username: post.author, userId: post.authorId || undefined });
+    }
   };
 
   // Handle new post creation

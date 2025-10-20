@@ -534,7 +534,15 @@ const UserProfileScreen: React.FC = () => {
             onPress={handleOpenPost}
             onLike={() => {}}
             onComment={handleOpenPost}
-            onAuthorPress={() => navigation.navigate('UserProfile', { username: item.author })}
+            onAuthorPress={() => {
+              if (isOwner) {
+                // Navigate to own profile tab instead of UserProfile screen
+                navigation.navigate('MyProfile' as any);
+              } else {
+                // Navigate to other user's profile
+                navigation.navigate('UserProfile', { username: item.author });
+              }
+            }}
           />
         )}
         ListEmptyComponent={renderEmptyComponent}
