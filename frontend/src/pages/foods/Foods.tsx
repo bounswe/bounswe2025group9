@@ -3,6 +3,7 @@ import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
+import AdaptiveImage from '../../components/AdaptiveImage';
 
 const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
@@ -12,12 +13,16 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
       onClick={onClick}
     >
       <div className="food-image-container h-60 w-full flex justify-center items-center mb-4 overflow-hidden">
-        {item.imageUrl ? (
-          <img
-            src={item.imageUrl}
+        {(item.imageUrl || item.imageUrlHigh || item.imageUrlMedium || item.imageUrlLow) ? (
+          <AdaptiveImage
+            images={{
+              imageUrlHigh: item.imageUrlHigh,
+              imageUrlMedium: item.imageUrlMedium,
+              imageUrlLow: item.imageUrlLow,
+              imageUrl: item.imageUrl,
+            }}
             alt={item.name}
             className="object-contain h-full w-full rounded"
-            onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
           />
         ) : (
           <div className="food-image-placeholder w-full h-full flex items-center justify-center">

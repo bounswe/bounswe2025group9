@@ -21,7 +21,10 @@ class FoodEntry(models.Model):
     )
     dietaryOptions = models.JSONField(default=list)
     nutritionScore = models.FloatField()
-    imageUrl = models.URLField(blank=True)
+    imageUrl = models.URLField(blank=True)  # Deprecated, keeping for backward compatibility
+    imageUrlHigh = models.CharField(max_length=500, blank=True, null=True)
+    imageUrlMedium = models.CharField(max_length=500, blank=True, null=True)
+    imageUrlLow = models.CharField(max_length=500, blank=True, null=True)
 
 
 class FoodProposal(models.Model):
@@ -37,7 +40,10 @@ class FoodProposal(models.Model):
     )
     dietaryOptions = models.JSONField(default=list)
     nutritionScore = models.FloatField()
-    imageUrl = models.URLField(blank=True)
+    imageUrl = models.URLField(blank=True)  # Deprecated, keeping for backward compatibility
+    imageUrlHigh = models.CharField(max_length=500, blank=True, null=True)
+    imageUrlMedium = models.CharField(max_length=500, blank=True, null=True)
+    imageUrlLow = models.CharField(max_length=500, blank=True, null=True)
     isApproved = models.BooleanField(default=False)
     createdAt = models.DateTimeField(default=django.utils.timezone.now)
     proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)

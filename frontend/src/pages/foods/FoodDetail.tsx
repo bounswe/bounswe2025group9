@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Hamburger, Tag, Fire, Scales } from '@phosphor-icons/react';
 import { Food } from '../../lib/apiClient';
+import AdaptiveImage from '../../components/AdaptiveImage';
 
 interface FoodDetailProps {
   food: Food | null;
@@ -33,15 +34,16 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
 
         {/* Food image section */}
         <div className="w-full h-48 md:h-64 relative overflow-hidden border-b border-[var(--color-border)]">
-          {food.imageUrl ? (
-            <img 
-              src={food.imageUrl} 
-              alt={food.name} 
-              className="w-full h-full object-cover"
-              onError={e => { 
-                (e.target as HTMLImageElement).style.display = 'none';
-                (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center', 'bg-[var(--color-bg-secondary)]');
+          {(food.imageUrl || food.imageUrlHigh || food.imageUrlMedium || food.imageUrlLow) ? (
+            <AdaptiveImage
+              images={{
+                imageUrlHigh: food.imageUrlHigh,
+                imageUrlMedium: food.imageUrlMedium,
+                imageUrlLow: food.imageUrlLow,
+                imageUrl: food.imageUrl,
               }}
+              alt={food.name}
+              className="w-full h-full object-cover"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-[var(--color-bg-secondary)]">

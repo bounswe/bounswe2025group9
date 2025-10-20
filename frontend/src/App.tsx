@@ -10,6 +10,7 @@ import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
 import Profile from './pages/Profile'
 import { AuthProvider } from './context/AuthContext'
+import { NetworkQualityProvider } from './context/NetworkQualityContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SwaggerPage from './components/SwaggerPage';
 import MealPlanner from './pages/mealplanner/MealPlanner'
@@ -18,7 +19,8 @@ import MealPlanner from './pages/mealplanner/MealPlanner'
 function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
+      <NetworkQualityProvider>
+        <BrowserRouter>
         <Routes>
           {/* Swagger documentation - completely standalone route */}
           <Route path="/docs" element={<SwaggerPage />} />
@@ -44,6 +46,7 @@ function App() {
           </Route>
         </Routes>
       </BrowserRouter>
+      </NetworkQualityProvider>
     </AuthProvider>
   )
 }

@@ -13,4 +13,4 @@ openai>=1.0.0
 Pillow>=10.0.0
 gunicorn
 whitenoise
-Pillow
+tqdm>=4.60.0

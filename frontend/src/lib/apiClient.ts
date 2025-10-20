@@ -20,7 +20,10 @@ export interface Food {
   allergens: string[];
   dietaryOptions: string[];
   nutritionScore: number;
-  imageUrl: string;
+  imageUrl?: string;
+  imageUrlHigh?: string;
+  imageUrlMedium?: string;
+  imageUrlLow?: string;
 }
 
 export interface FoodProposal {
