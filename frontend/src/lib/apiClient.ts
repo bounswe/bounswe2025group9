@@ -372,7 +372,18 @@ export const apiClient = {
     const url = "/users/profile/";
     console.log('Request URL:', BACKEND_API_URL + url);
     console.log('Auth headers:', getAuthHeader());
-    
+
+    return fetchJson<UserResponse>(url, {
+      method: "GET"
+    }, true);
+  },
+
+  // get other user's profile by username
+  getOtherUserProfile: (username: string) => {
+    console.log(`Getting user profile for username: ${username}`);
+    const url = `/users/@${username}/`;
+    console.log('Request URL:', BACKEND_API_URL + url);
+
     return fetchJson<UserResponse>(url, {
       method: "GET"
     }, true);

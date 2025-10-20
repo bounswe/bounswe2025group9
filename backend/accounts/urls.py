@@ -9,6 +9,7 @@ from .views import (
     ChangePasswordView,
     LogoutView,
     UserProfileView,
+    PublicUserProfileView,
     AllergenAddView,
     AllergenSetView,
     GetCommonAllergensView,
@@ -28,6 +29,9 @@ urlpatterns = [
     path("token/logout/", LogoutView.as_view(), name="token_logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
+    path(
+        "@<str:username>/", PublicUserProfileView.as_view(), name="public-user-profile"
+    ),
     path("profile/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),
     path("profile/liked-recipes/", LikedRecipesView.as_view(), name="liked-recipes"),
     path("allergen/set/", AllergenSetView.as_view(), name="set-allergens"),
