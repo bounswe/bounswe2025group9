@@ -66,6 +66,8 @@ export interface ForumTopic {
   content: string;
   author: string;
   authorId: number;
+  authorDisplayName?: string;
+  authorProfileImage?: string;
   commentsCount: number;
   likesCount: number;
   isLiked?: boolean;
@@ -83,6 +85,8 @@ export interface Comment {
   content: string;
   author: string;
   authorId: number;
+  authorDisplayName?: string;
+  authorProfileImage?: string;
   createdAt: Date;
   likesCount: number;
   isLiked?: boolean;
