@@ -1,4 +1,5 @@
-import { User, ThumbsUp, ChatDots, Tag } from '@phosphor-icons/react'
+import { useState, useEffect, useRef } from 'react'
+import { ThumbsUp, ChatDots, Tag } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { ForumPost } from '../lib/apiClient'
 import ProfileImage from './ProfileImage'
@@ -72,6 +73,11 @@ interface ForumPostCardProps {
 }
 
 const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
+    const [prevLikes, setPrevLikes] = useState(post.likes || 0)
+    const [showAnimation, setShowAnimation] = useState(false)
+    const [likeDiff, setLikeDiff] = useState(0)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
     // Format date for display
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
@@ -81,6 +87,36 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
             day: 'numeric'
         });
     };
+
+    // Track like count changes and trigger animation
+    useEffect(() => {
+        const currentLikes = post.likes || 0
+        
+        if (currentLikes > prevLikes) {
+            const diff = currentLikes - prevLikes
+            setLikeDiff(diff)
+            setShowAnimation(true)
+            
+            // Clear any existing timeout
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+            
+            // Hide animation after 1.5 seconds
+            timeoutRef.current = setTimeout(() => {
+                setShowAnimation(false)
+            }, 1500)
+        }
+        
+        setPrevLikes(currentLikes)
+        
+        // Cleanup timeout on unmount
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current)
+            }
+        }
+    }, [post.likes])
 
     return (
         <div key={post.id} className="nh-card relative">
