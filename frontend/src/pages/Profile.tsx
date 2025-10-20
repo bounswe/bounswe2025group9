@@ -459,7 +459,53 @@ const Profile = () => {
   }
 
   // Profile picture management
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const cropImageToSquare = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'))
+            return
+          }
+          
+          // Determine the size for the square (use the smaller dimension)
+          const size = Math.min(img.width, img.height)
+          canvas.width = size
+          canvas.height = size
+          
+          // Calculate the crop position (center crop)
+          const sx = (img.width - size) / 2
+          const sy = (img.height - size) / 2
+          
+          // Draw the cropped image on the canvas
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size)
+          
+          // Convert canvas to blob and create a new file
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'))
+              return
+            }
+            const croppedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            })
+            resolve(croppedFile)
+          }, file.type)
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     
@@ -473,13 +519,20 @@ const Profile = () => {
       return
     }
     
-    setProfilePictureFile(file)
-    
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setProfilePicture(reader.result as string)
+    try {
+      // Crop the image to square
+      const croppedFile = await cropImageToSquare(file)
+      setProfilePictureFile(croppedFile)
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicture(reader.result as string)
+      }
+      reader.readAsDataURL(croppedFile)
+    } catch (error) {
+      console.error('Error cropping image:', error)
+      showError('Failed to process image')
     }
-    reader.readAsDataURL(file)
   }
 
   const uploadProfilePicture = async () => {
