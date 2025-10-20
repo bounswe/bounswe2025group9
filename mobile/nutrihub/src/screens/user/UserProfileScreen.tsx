@@ -6,6 +6,7 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
@@ -206,22 +207,34 @@ const UserProfileScreen: React.FC = () => {
           <View>
             <View style={styles.profileHeader}>
               <ProfilePhotoPicker
-                uri={userProfile?.profilePhoto || null}
+                uri={userProfile?.profile_image || null}
                 editable={Boolean(currentUser && (currentUser.username === username || username === getCurrentUserDisplayName() || (userProfile && currentUser.id === userProfile.id)))}
                 onUploaded={async (localUri) => {
                   try {
                     const name = localUri.split('/').pop() || 'profile.jpg';
                     const res = await userService.uploadProfilePhoto(localUri, name);
-                    setUserProfile(prev => prev ? { ...prev, profilePhoto: res.profilePhoto } : prev);
-                  } catch (e) {}
+                    
+                    // Update local state immediately
+                    setUserProfile(prev => prev ? { ...prev, profile_image: res.profile_image } : prev);
+                    
+                    // Also refresh profile data from server to ensure consistency
+                    try {
+                      const refreshedProfile = await userService.getUserByUsername(username);
+                      setUserProfile(refreshedProfile);
+                    } catch (refreshError) {
+                      // Profile refresh failed, but local update should be sufficient
+                    }
+                  } catch (e) {
+                    Alert.alert('Upload Failed', `Failed to upload image: ${e.message || e}`);
+                  }
                 }}
                 onRemoved={async () => {
                   try {
                     await userService.removeProfilePhoto();
-                    setUserProfile(prev => prev ? { ...prev, profilePhoto: undefined } : prev);
+                    setUserProfile(prev => prev ? { ...prev, profile_image: undefined } : prev);
                   } catch (e) {}
                 }}
-                removable={!!userProfile?.profilePhoto}
+                removable={!!userProfile?.profile_image}
               />
               <View style={styles.profileInfo}>
                 <Text style={[styles.displayName, textStyles.heading4]}>

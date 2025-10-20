@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Alert } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
@@ -30,32 +30,54 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
     try {
       const info = await FileSystem.getInfoAsync(asset.uri);
       if (!info.exists) return 'File not found.';
-      if (info.size && info.size > MAX_SIZE_BYTES) return 'Image must be up to 5 MB.';
+      
+      // Check file size if available
+      if (info.size !== undefined) {
+        if (info.size > MAX_SIZE_BYTES) return 'Image must be up to 5 MB.';
+      }
     } catch (e) {
-      return 'Could not validate file size.';
+      // If file system access fails, let the backend handle validation
+      console.warn('File system validation failed, backend will validate:', e);
     }
     return null;
   };
 
   const pickImage = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.9 });
-    if (result.canceled || !result.assets || result.assets.length === 0) return;
-
-    const asset = result.assets[0];
-    const error = await validateFile(asset);
-    if (error) {
-      Alert.alert('Invalid image', error);
-      return;
-    }
-
     try {
-      setLocalUploading(true);
-      const name = asset.fileName || asset.uri.split('/').pop() || 'profile.jpg';
-      // Delegate the actual upload to parent to keep this component flexible
-      // Parent should call userService.uploadProfilePhoto and then onUploaded(remoteUrl)
-      onUploaded(asset.uri);
-    } finally {
-      setLocalUploading(false);
+      // Request permissions first
+      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      
+      if (permissionResult.status !== 'granted') {
+        Alert.alert('Permission required', 'Please grant media library access to upload photos.');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({ 
+        mediaTypes: 'Images',
+        quality: 0.9,
+        allowsEditing: true,
+        aspect: [1, 1]
+      });
+      
+      if (result.canceled || !result.assets || result.assets.length === 0) {
+        return;
+      }
+
+      const asset = result.assets[0];
+      const error = await validateFile(asset);
+      if (error) {
+        Alert.alert('Invalid image', error);
+        return;
+      }
+
+      try {
+        setLocalUploading(true);
+        onUploaded(asset.uri);
+      } finally {
+        setLocalUploading(false);
+      }
+    } catch (error) {
+      Alert.alert('Error', `Failed to open image picker: ${error.message}`);
     }
   };
 
