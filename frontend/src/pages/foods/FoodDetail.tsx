@@ -21,39 +21,46 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
       
       {/* Modal */}
       <div 
-        className={`max-w-3xl w-full mx-4 bg-[var(--color-bg-primary)] rounded-lg shadow-xl transform transition-all duration-300 max-h-[90vh] overflow-y-auto relative ${open ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
+        className={`max-w-3xl w-full mx-4 bg-[var(--color-bg-primary)] rounded-lg shadow-xl transform transition-all duration-300 max-h-[90vh] overflow-hidden flex flex-col relative ${open ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'}`}
       >
-        {/* Close button */}
-        <button 
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full bg-[var(--color-button-danger-bg)] hover:bg-[var(--color-button-danger-hover-bg)] z-10"
-        >
-          <X size={24} weight="bold" className="text-[var(--color-text-on-danger)]" />
-        </button>
+        {/* Top bar with image, title, and close button */}
+        <div className="flex items-center gap-4 p-4 border-b border-[var(--color-border)] bg-[var(--color-bg-secondary)]">
+          {/* Food image */}
+          <div className="flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
+            {food.imageUrl ? (
+              <img 
+                src={food.imageUrl} 
+                alt={food.name} 
+                className="w-full h-full object-cover"
+                onError={e => { 
+                  (e.target as HTMLImageElement).style.display = 'none';
+                  const parent = (e.target as HTMLImageElement).parentElement;
+                  if (parent) {
+                    parent.innerHTML = `<div class="w-full h-full flex items-center justify-center"><svg width="32" height="32" viewBox="0 0 256 256" fill="currentColor" class="text-[var(--color-text-tertiary)]"><path d="M216,40H40A16,16,0,0,0,24,56V200a16,16,0,0,0,16,16H216a16,16,0,0,0,16-16V56A16,16,0,0,0,216,40ZM40,56H216v94.06L168,102.06a16,16,0,0,0-22.63,0L44,203.37V56ZM216,200H59.31l107-107L216,142.69V200Zm-72-76a28,28,0,1,0-28-28A28,28,0,0,0,144,124Z"/></svg></div>`;
+                  }
+                }}
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Hamburger size={32} weight="fill" className="text-[var(--color-text-tertiary)]" />
+              </div>
+            )}
+          </div>
 
-        {/* Food image section */}
-        <div className="w-full h-48 md:h-64 relative overflow-hidden border-b border-[var(--color-border)]">
-          {food.imageUrl ? (
-            <img 
-              src={food.imageUrl} 
-              alt={food.name} 
-              className="w-full h-full object-cover"
-              onError={e => { 
-                (e.target as HTMLImageElement).style.display = 'none';
-                (e.target as HTMLImageElement).parentElement!.classList.add('flex', 'items-center', 'justify-center', 'bg-[var(--color-bg-secondary)]');
-              }}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[var(--color-bg-secondary)]">
-              <Hamburger size={72} weight="fill" className="text-[var(--color-text-tertiary)]" />
-            </div>
-          )}
+          {/* Food title */}
+          <h2 className="flex-1 text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{food.name}</h2>
+
+          {/* Close button */}
+          <button 
+            onClick={onClose}
+            className="flex-shrink-0 p-2 rounded-full bg-[var(--color-button-danger-bg)] hover:bg-[var(--color-button-danger-hover-bg)] transition-colors"
+          >
+            <X size={20} weight="bold" className="text-[var(--color-text-on-danger)]" />
+          </button>
         </div>
           
-        {/* Content section */}
-        <div className="p-6">
-          {/* Food title */}
-          <h2 className="nh-title text-3xl font-bold text-[var(--color-accent)] mb-6">{food.name}</h2>
+        {/* Content section - scrollable */}
+        <div className="p-6 overflow-y-auto flex-1">
             
           {/* Basic Information */}
           <div className="mb-8">

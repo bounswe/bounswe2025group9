@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger } from '@phosphor-icons/react'
 import { apiClient, ForumPost, MealPlan} from '../lib/apiClient'
 
 // Predefined allergen list
@@ -1077,7 +1077,7 @@ const Profile = () => {
             {/* Saved Meal Plans Tab */}
             {activeTab === 'mealPlans' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">
+                <h2 className="nh-title">
                   {currentMealPlan ? currentMealPlan.name : 'Saved Meal Plan'}
                 </h2>
                 {currentMealPlan ? (
@@ -1091,16 +1091,45 @@ const Profile = () => {
                         const dayMeals = details.slice(start, start + 3);
                         return (
                           <div key={day} className="nh-card">
-                            <h3 className="text-lg font-semibold mb-4">{day}</h3>
+                            <h3 className="nh-subtitle mb-4">{day}</h3>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                               {dayMeals.map((meal, i) => (
-                                <div key={`${day}-${i}`} className="bg-gray-50 rounded-md p-4 border border-gray-100">
-                                  <div className="text-sm font-medium text-gray-500 mb-2">
+                                <div 
+                                  key={`${day}-${i}`}
+                                  className="rounded-md p-3 border relative transition-all hover:shadow-sm"
+                                  style={{
+                                    backgroundColor: 'var(--dietary-option-bg)',
+                                    borderColor: 'var(--dietary-option-border)'
+                                  }}
+                                >
+                                  <div 
+                                    className="text-xs font-medium mb-2"
+                                    style={{ color: 'var(--color-light)' }}
+                                  >
                                     {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
                                   </div>
-                                  <div className="text-sm text-gray-900">{meal.food.name}</div>
-                                  <div className="text-xs text-gray-600 mt-1">
-                                    Calories: {meal.calculated_nutrition.calories}
+                                  
+                                  {/* Food Image */}
+                                  <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
+                                    {meal.food.imageUrl ? (
+                                      <img
+                                        src={meal.food.imageUrl}
+                                        alt={meal.food.name}
+                                        className="object-contain max-h-14 max-w-full rounded"
+                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                      />
+                                    ) : (
+                                      <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+                                        <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
+                                      </div>
+                                    )}
+                                  </div>
+                                  
+                                  <div className="text-sm font-medium nh-text mb-1">
+                                    {meal.food.name}
+                                  </div>
+                                  <div className="text-xs nh-text opacity-75">
+                                    {meal.calculated_nutrition.calories} kcal
                                   </div>
                                 </div>
                               ))}
