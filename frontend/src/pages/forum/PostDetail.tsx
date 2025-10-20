@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, CookingPot, Scales, Fire } from '@phosphor-icons/react'
 import { apiClient, Recipe } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+import ProfileImage from '../../components/ProfileImage'
 // import shared cache functions
 import { getPostFromCache, setPostInCache, updatePostLikeStatusInCache } from '../../lib/postCache';
 
@@ -17,7 +18,11 @@ import { ForumPost } from '../../lib/apiClient';
 interface Comment {
     id: number;
     post: number;
-    author: string;
+    author: {
+        id: number;
+        username: string;
+        profile_image?: string | null;
+    };
     body: string;
     created_at: string;
     updated_at?: string;
@@ -158,9 +163,7 @@ const PostDetail = () => {
                 const transformedComments = response.results.map(comment => ({
                     id: comment.id,
                     post: comment.post,
-                    author: typeof comment.author === 'string' 
-                        ? comment.author 
-                        : comment.author.username,
+                    author: comment.author,
                     body: comment.body,
                     created_at: comment.created_at,
                     updated_at: comment.updated_at
@@ -228,8 +231,8 @@ const PostDetail = () => {
                     ...postData,
                     // Ensure likes field exists, map from like_count if necessary (apiClient might already handle this)
                     likes: (postData as any).like_count ?? postData.likes ?? 0,
-                    // ensure author is object
-                    author: typeof postData.author === 'string' ? { id: 0, username: postData.author } : postData.author, // Handle potential string author if transformation failed earlier
+                    // author is now an object with id and username from the backend
+                    author: postData.author,
                 };
 
                 console.log('[PostDetail] Using ForumPost data structure:', fetchedPost);
@@ -286,7 +289,8 @@ const PostDetail = () => {
             
             // Optimistic update for better UX
             const newLikedState = !post.liked;
-            const newLikeCount = post.likes + (newLikedState ? 1 : -1);
+            const currentLikeCount = Math.max(0, post.likes || 0); // Ensure non-negative
+            const newLikeCount = Math.max(0, currentLikeCount + (newLikedState ? 1 : -1)); // Ensure non-negative
             
             // Update local storage first
             updateLikedPostsStorage(post.id, newLikedState);
@@ -371,9 +375,7 @@ const PostDetail = () => {
             const transformedComment = {
                 id: newComment.id,
                 post: newComment.post,
-                author: typeof newComment.author === 'string'
-                    ? newComment.author
-                    : newComment.author.username,
+                author: newComment.author,
                 body: newComment.body,
                 created_at: newComment.created_at,
                 updated_at: newComment.updated_at
@@ -570,11 +572,16 @@ const PostDetail = () => {
                             
                             {/* Footer of the card with author and likes - Ensure styling is relative to the card padding */}
                             <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4 pb-4 px-4"> {/* Added padding here */}
-                                <span className="flex items-center gap-1">
-                                    <div className="flex items-center justify-center">
+                                <span className="flex items-center gap-2">
+                                    <ProfileImage 
+                                        profileImage={post.author.profile_image}
+                                        username={post.author.username}
+                                        size="sm"
+                                    />
+                                    <div className="flex items-center gap-1">
                                         <User size={16} className="flex-shrink-0" />
+                                        Posted by: {post.author.username} • {formatDate(post.created_at)}
                                     </div>
-                                    Posted by: {post.author.username} • {formatDate(post.created_at)}
                                 </span>
                                 <button 
                                     onClick={handleLikeToggle}
@@ -624,14 +631,16 @@ const PostDetail = () => {
                                         <div key={comment.id} className="nh-card rounded-lg shadow-sm border border-gray-700">
                                             <div className="flex items-start">
                                                 <div className="flex-shrink-0 mr-3">
-                                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
-                                                        <User size={18} weight="fill" className="text-gray-500" />
-                                                    </div>
+                                                    <ProfileImage 
+                                                        profileImage={comment.author.profile_image}
+                                                        username={comment.author.username}
+                                                        size="md"
+                                                    />
                                                 </div>
                                                 <div className="flex-grow">
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <h4 className="font-semibold text-primary">
-                                                            {comment.author}
+                                                            {comment.author.username}
                                                         </h4>
                                                         <span className="text-gray-400">•</span>
                                                         <span className="text-xs text-gray-500">
