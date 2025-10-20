@@ -102,8 +102,8 @@ const Forum = () => {
     // State for active filter
     const [activeFilter, setActiveFilter] = useState<number | null>(null);
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
-    const [activeSubFilter, setActiveSubFilter] = useState<number | null>(null);
-    const [subFilterLabel, setSubFilterLabel] = useState<string | null>(null);
+    const [selectedSubTags, setSelectedSubTags] = useState<number[]>([]);
+    const [selectedSubTagLabels, setSelectedSubTagLabels] = useState<string[]>([]);
     
     // Search related state
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -198,7 +198,7 @@ const Forum = () => {
     
     // Apply pagination to filtered posts
     useEffect(() => {
-        if (isSearching && (activeFilter || activeSubFilter)) {
+        if (isSearching && (activeFilter || selectedSubTags.length > 0)) {
             // When both searching and filtering, show intersection
             let filteredSearchResults = searchResults;
             
@@ -209,11 +209,13 @@ const Forum = () => {
                 );
             }
             
-            // Apply sub-filter (requires both Recipe tag and sub-tag)
-            if (activeSubFilter) {
+            // Apply sub-filter (requires both Recipe tag and ALL selected sub-tags)
+            if (selectedSubTags.length > 0) {
                 filteredSearchResults = filteredSearchResults.filter(post => 
                     post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
-                    post.tags.some(tag => tag.id === activeSubFilter)
+                    selectedSubTags.every(subTagId => 
+                        post.tags.some(tag => tag.id === subTagId)
+                    )
                 );
             }
             
@@ -246,11 +248,13 @@ const Forum = () => {
                 );
             }
             
-            // Apply sub-filter (requires both Recipe tag and sub-tag)
-            if (activeSubFilter) {
+            // Apply sub-filter (requires both Recipe tag and ALL selected sub-tags)
+            if (selectedSubTags.length > 0) {
                 filteredPosts = filteredPosts.filter(post => 
                     post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
-                    post.tags.some(tag => tag.id === activeSubFilter)
+                    selectedSubTags.every(subTagId => 
+                        post.tags.some(tag => tag.id === subTagId)
+                    )
                 );
             }
                 
@@ -263,7 +267,7 @@ const Forum = () => {
             
             setPosts(currentPosts);
         }
-    }, [allPosts, currentPage, postsPerPage, activeFilter, activeSubFilter, isSearching, searchResults, searchResultsCount]);
+    }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, isSearching, searchResults, searchResultsCount]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
@@ -371,32 +375,43 @@ const Forum = () => {
             // If clicking the active filter, clear it
             setActiveFilter(null);
             setFilterLabel(null);
-            // Also clear sub-filter when main filter is cleared
-            setActiveSubFilter(null);
-            setSubFilterLabel(null);
+            // Also clear sub-tags when main filter is cleared
+            setSelectedSubTags([]);
+            setSelectedSubTagLabels([]);
         } else {
             // Apply the new filter
             setActiveFilter(tagId);
             setFilterLabel(tagName);
-            // Clear sub-filter when changing main filter
-            setActiveSubFilter(null);
-            setSubFilterLabel(null);
+            // Clear sub-tags when changing main filter
+            setSelectedSubTags([]);
+            setSelectedSubTagLabels([]);
         }
         // Reset to first page when changing filters
         setCurrentPage(1);
     };
 
-    // Apply a sub-tag filter (only for recipes)
-    const handleFilterBySubTag = (tagId: number, tagName: string) => {
-        if (activeSubFilter === tagId) {
-            // If clicking the active sub-filter, clear it
-            setActiveSubFilter(null);
-            setSubFilterLabel(null);
-        } else {
-            // Apply the new sub-filter
-            setActiveSubFilter(tagId);
-            setSubFilterLabel(tagName);
-        }
+    // Toggle a sub-tag filter - add/remove from selected sub-tags
+    const toggleSubTagFilter = (tagId: number, tagName: string) => {
+        setSelectedSubTags(prev => {
+            if (prev.includes(tagId)) {
+                // Remove tag if already selected
+                return prev.filter(id => id !== tagId);
+            } else {
+                // Add tag if not selected
+                return [...prev, tagId];
+            }
+        });
+        
+        setSelectedSubTagLabels(prev => {
+            if (prev.includes(tagName)) {
+                // Remove label if already selected
+                return prev.filter(label => label !== tagName);
+            } else {
+                // Add label if not selected
+                return [...prev, tagName];
+            }
+        });
+        
         // Reset to first page when changing filters
         setCurrentPage(1);
     };
@@ -405,8 +420,8 @@ const Forum = () => {
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
-        setActiveSubFilter(null);
-        setSubFilterLabel(null);
+        setSelectedSubTags([]);
+        setSelectedSubTagLabels([]);
         setCurrentPage(1); // Reset to first page
         
         // Clear search if active
@@ -676,13 +691,13 @@ const Forum = () => {
                                         <p className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">Recipe Filters:</p>
                                         
                                         <button 
-                                            onClick={() => handleFilterBySubTag(TAG_IDS["Vegan"], "Vegan")}
+                                            onClick={() => toggleSubTagFilter(TAG_IDS["Vegan"], "Vegan")}
                                             className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                             style={{
-                                                backgroundColor: activeSubFilter === TAG_IDS["Vegan"] 
+                                                backgroundColor: selectedSubTags.includes(TAG_IDS["Vegan"]) 
                                                     ? getTagStyle("Vegan").activeBg 
                                                     : getTagStyle("Vegan").bg,
-                                                color: activeSubFilter === TAG_IDS["Vegan"] 
+                                                color: selectedSubTags.includes(TAG_IDS["Vegan"]) 
                                                     ? getTagStyle("Vegan").activeText 
                                                     : getTagStyle("Vegan").text
                                             }}
@@ -692,13 +707,13 @@ const Forum = () => {
                                         </button>
                                         
                                         <button 
-                                            onClick={() => handleFilterBySubTag(TAG_IDS["Halal"], "Halal")}
+                                            onClick={() => toggleSubTagFilter(TAG_IDS["Halal"], "Halal")}
                                             className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                             style={{
-                                                backgroundColor: activeSubFilter === TAG_IDS["Halal"] 
+                                                backgroundColor: selectedSubTags.includes(TAG_IDS["Halal"]) 
                                                     ? getTagStyle("Halal").activeBg 
                                                     : getTagStyle("Halal").bg,
-                                                color: activeSubFilter === TAG_IDS["Halal"] 
+                                                color: selectedSubTags.includes(TAG_IDS["Halal"]) 
                                                     ? getTagStyle("Halal").activeText 
                                                     : getTagStyle("Halal").text
                                             }}
@@ -708,13 +723,13 @@ const Forum = () => {
                                         </button>
                                         
                                         <button 
-                                            onClick={() => handleFilterBySubTag(TAG_IDS["High-Protein"], "High-Protein")}
+                                            onClick={() => toggleSubTagFilter(TAG_IDS["High-Protein"], "High-Protein")}
                                             className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                                             style={{
-                                                backgroundColor: activeSubFilter === TAG_IDS["High-Protein"] 
+                                                backgroundColor: selectedSubTags.includes(TAG_IDS["High-Protein"]) 
                                                     ? getTagStyle("High-Protein").activeBg 
                                                     : getTagStyle("High-Protein").bg,
-                                                color: activeSubFilter === TAG_IDS["High-Protein"] 
+                                                color: selectedSubTags.includes(TAG_IDS["High-Protein"]) 
                                                     ? getTagStyle("High-Protein").activeText 
                                                     : getTagStyle("High-Protein").text
                                             }}
@@ -725,7 +740,7 @@ const Forum = () => {
                                     </>
                                 )}
                                 
-                                {(activeFilter !== null || activeSubFilter !== null) && !isSearching && (
+                                {(activeFilter !== null || selectedSubTags.length > 0) && !isSearching && (
                                     <button 
                                         onClick={clearFilter}
                                         className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
@@ -780,7 +795,7 @@ const Forum = () => {
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm nh-text">
                                         {searchResultsCount > 0 
-                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${activeFilter ? ' (filtered by tag)' : ''}` 
+                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${(activeFilter || selectedSubTags.length > 0) ? ' (filtered by tags)' : ''}` 
                                             : `No results found for "${searchQuery}"`}
                                     </p>
                                     <button
@@ -795,14 +810,14 @@ const Forum = () => {
                         )}
                         
                         {/* Active filter indicator */}
-                        {(filterLabel || subFilterLabel) && (
+                        {(filterLabel || selectedSubTagLabels.length > 0) && (
                             <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm nh-text">
                                         Filtered by: <span className="font-medium">
                                             {filterLabel}
-                                            {filterLabel && subFilterLabel && " + "}
-                                            {subFilterLabel}
+                                            {filterLabel && selectedSubTagLabels.length > 0 && " + "}
+                                            {selectedSubTagLabels.join(" + ")}
                                         </span>
                                     </p>
                                     <button
@@ -823,8 +838,8 @@ const Forum = () => {
                         ) : posts.length === 0 ? (
                             <div className="text-center my-12">
                                 <p className="text-lg">
-                                    {activeFilter !== null 
-                                        ? `No posts found with the selected tag. Try another filter or create a new post.` 
+                                    {activeFilter !== null || selectedSubTags.length > 0
+                                        ? `No posts found with the selected filter${selectedSubTags.length > 1 ? 's' : ''}. Try different combinations or create a new post.` 
                                         : `No posts found. Be the first to create a post!`
                                     }
                                 </p>
