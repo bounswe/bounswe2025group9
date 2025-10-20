@@ -66,14 +66,15 @@ const TextSizeSettings = () => {
       {isOpen && (
         <div
           id="text-size-settings-panel"
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm px-4"
           role="dialog"
           aria-modal="true"
           aria-labelledby="text-size-settings-title"
           onClick={handleClose}
         >
           <div
-            className="w-full max-w-sm rounded-lg bg-white p-6 shadow-xl outline-none dark:bg-gray-900"
+            className="w-full max-w-sm rounded-lg p-6 shadow-xl outline-none"
+            style={{ backgroundColor: 'var(--color-bg-secondary)' }}
             onClick={(event) => event.stopPropagation()}
             ref={panelRef}
             tabIndex={-1}
@@ -82,7 +83,8 @@ const TextSizeSettings = () => {
               <div>
                 <h2
                   id="text-size-settings-title"
-                  className="text-lg font-semibold text-gray-900 dark:text-gray-100"
+                  className="text-lg font-semibold"
+                  style={{ color: 'var(--color-light)' }}
                 >
                   Choose text size
                 </h2>
@@ -90,7 +92,19 @@ const TextSizeSettings = () => {
               <button
                 type="button"
                 onClick={handleClose}
-                className="rounded-full p-1 text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:hover:bg-gray-800"
+                className="rounded-full p-1 transition-colors focus:outline-none focus:ring-2"
+                style={{
+                  color: 'var(--color-gray-400)',
+                  backgroundColor: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'var(--color-gray-800)'
+                  e.currentTarget.style.color = 'var(--color-gray-200)'
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent'
+                  e.currentTarget.style.color = 'var(--color-gray-400)'
+                }}
                 aria-label="Close text size settings"
               >
                 <X size={18} weight="bold" />
@@ -109,13 +123,24 @@ const TextSizeSettings = () => {
                       setTextSize(id)
                       handleClose()
                     }}
-                    className={[
-                      'w-full rounded-md border px-4 py-3 text-left transition',
-                      'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500',
-                      isSelected
-                        ? 'border-blue-500 bg-blue-500/10 text-blue-600 dark:border-blue-400 dark:text-blue-300'
-                        : 'border-gray-300 text-gray-800 hover:border-blue-400 hover:bg-blue-500/5 dark:border-gray-700 dark:text-gray-100 dark:hover:border-blue-400',
-                    ].join(' ')}
+                    className="w-full rounded-md border px-4 py-3 text-left transition focus:outline-none focus-visible:ring-2"
+                    style={{
+                      borderColor: isSelected ? 'var(--color-primary)' : 'var(--color-gray-700)',
+                      backgroundColor: isSelected ? 'rgba(59, 130, 246, 0.1)' : 'transparent',
+                      color: isSelected ? 'var(--color-primary)' : 'var(--color-light)',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = 'var(--color-primary-hover)'
+                        e.currentTarget.style.backgroundColor = 'rgba(59, 130, 246, 0.05)'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.borderColor = 'var(--color-gray-700)'
+                        e.currentTarget.style.backgroundColor = 'transparent'
+                      }
+                    }}
                     aria-pressed={isSelected}
                   >
                     <span className="font-medium">{label}</span>
