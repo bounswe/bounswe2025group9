@@ -170,6 +170,40 @@ export const userService = {
     
     return response.data!;
   },
+
+  async removeCertificate(tagId: number): Promise<ProfessionTag> {
+    console.log('Removing certificate for tag:', tagId);
+    // Get auth token
+    const token = await AsyncStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    try {
+      console.log('Sending certificate removal request...');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/users/certificate/`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ tag_id: tagId }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Certificate removal failed:', response.status, errorText);
+        throw new Error(`Certificate removal failed: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Certificate removal successful:', data);
+      return data as ProfessionTag;
+    } catch (error) {
+      console.error('Certificate removal error:', error);
+      throw error;
+    }
+  },
 };
 
 

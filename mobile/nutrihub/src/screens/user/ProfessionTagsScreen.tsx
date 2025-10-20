@@ -108,6 +108,28 @@ const ProfessionTagsScreen: React.FC = () => {
     }
   };
 
+  const removeCertificate = async (tagId: number) => {
+    try {
+      console.log('Removing certificate for tag:', tagId);
+      // Update the tag to remove the certificate
+      const updatedTag = await userService.removeCertificate(tagId);
+      console.log('Certificate removal successful:', updatedTag);
+      
+      // Update the tag in the list
+      setProfessionTags(prev => 
+        prev.map(tag => tag.id === tagId ? updatedTag : tag)
+      );
+      
+      // Refresh the data to ensure consistency
+      setTimeout(() => {
+        loadProfessionTags();
+      }, 500);
+    } catch (error) {
+      console.error('Error removing certificate:', error);
+      Alert.alert('Error', `Failed to remove certificate: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
   const uploadCertificate = async (tagId: number) => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
@@ -175,20 +197,33 @@ const ProfessionTagsScreen: React.FC = () => {
         )}
 
         <View style={styles.tagActions}>
-          {!item.certificate_url && (
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: theme.primary }]}
+            onPress={() => uploadCertificate(item.id)}
+            disabled={uploading === item.id}
+          >
+            {uploading === item.id ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <Icon name={item.certificate_url ? "file-document-edit" : "upload"} size={16} color="#fff" />
+            )}
+            <Text style={[textStyles.caption, { color: '#fff' }]}>
+              {uploading === item.id 
+                ? 'Uploading...' 
+                : item.certificate_url 
+                  ? 'Change Document' 
+                  : 'Upload Document'
+              }
+            </Text>
+          </TouchableOpacity>
+          
+          {item.certificate_url && (
             <TouchableOpacity
-              style={[styles.actionButton, { backgroundColor: theme.primary }]}
-              onPress={() => uploadCertificate(item.id)}
-              disabled={uploading === item.id}
+              style={[styles.actionButton, styles.removeButton, { borderColor: theme.warning }]}
+              onPress={() => removeCertificate(item.id)}
             >
-              {uploading === item.id ? (
-                <ActivityIndicator size="small" color="#fff" />
-              ) : (
-                <Icon name="upload" size={16} color="#fff" />
-              )}
-              <Text style={[textStyles.caption, { color: '#fff' }]}>
-                {uploading === item.id ? 'Uploading...' : 'Upload Document'}
-              </Text>
+              <Icon name="file-document-remove" size={16} color={theme.warning} />
+              <Text style={[textStyles.caption, { color: theme.warning }]}>Remove Document</Text>
             </TouchableOpacity>
           )}
           
@@ -197,7 +232,7 @@ const ProfessionTagsScreen: React.FC = () => {
             onPress={() => removeProfessionTag(item.id)}
           >
             <Icon name="delete" size={16} color={theme.error} />
-            <Text style={[textStyles.caption, { color: theme.error }]}>Remove</Text>
+            <Text style={[textStyles.caption, { color: theme.error }]}>Remove Tag</Text>
           </TouchableOpacity>
         </View>
       </View>
