@@ -61,12 +61,13 @@ const UserProfileScreen: React.FC = () => {
     setError(null);
     
     try {
-      // Attempt to fetch profile (flexible endpoint)
+      // Attempt to fetch profile using the new method
       let fetchedProfile: User | null = null;
       try {
-        fetchedProfile = await userService.getUserByUsername(username);
+        fetchedProfile = await userService.getOtherUserProfile(username);
         setUserProfile(fetchedProfile);
       } catch (e) {
+        console.error('Error fetching user profile:', e);
         fetchedProfile = null;
         setUserProfile(null);
       }
@@ -146,6 +147,13 @@ const UserProfileScreen: React.FC = () => {
       userId: userProfile?.id || 0, 
       username: username 
     });
+  };
+
+  const handleViewDocument = (tag: any) => {
+    if (tag.certificate_url) {
+      // TODO: Open document in a modal or external viewer
+      Alert.alert('Document', `View document for ${tag.name}`);
+    }
   };
 
   if (loading) {
@@ -259,25 +267,36 @@ const UserProfileScreen: React.FC = () => {
                   <Text style={[styles.usernameText, textStyles.caption]}>@{username}</Text>
                 )}
                 {/* Profession Tags with Privacy Controls */}
-                {userProfile?.privacy_settings?.show_profession_tags && userProfile?.profession_tags && userProfile.profession_tags.length > 0 && (
+                {userProfile?.tags && userProfile.tags.length > 0 && (
                   <View style={styles.professionTagsContainer}>
                     <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
                       Profession
                     </Text>
                     <View style={styles.professionTagsRow}>
-                      {userProfile.profession_tags.map((tag) => (
-                        <View key={tag.id} style={[styles.professionTag, { backgroundColor: theme.primary }]}>
+                      {userProfile.tags.map((tag) => (
+                        <TouchableOpacity 
+                          key={tag.id} 
+                          style={[styles.professionTag, { backgroundColor: theme.primary }]}
+                          onPress={() => handleViewDocument(tag)}
+                        >
                           <Text style={[textStyles.caption, { color: '#fff' }]}>
                             {tag.name}
                           </Text>
                           {tag.is_verified ? (
-                            <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
+                            <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
+                              <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
+                              <Text style={[textStyles.small, { color: '#fff' }]}>Verified</Text>
+                            </View>
                           ) : (
-                            <View style={styles.unverifiedBadge}>
-                              <Text style={[textStyles.small, { color: theme.warning }]}>Unverified</Text>
+                            <View style={[styles.unverifiedBadge, { backgroundColor: theme.warning }]}>
+                              <Icon name="clock-outline" size={12} color="#fff" style={styles.tagIcon} />
+                              <Text style={[textStyles.small, { color: '#fff' }]}>Unverified</Text>
                             </View>
                           )}
-                        </View>
+                          {tag.certificate_url && (
+                            <Icon name="file-document" size={12} color="#fff" style={styles.tagIcon} />
+                          )}
+                        </TouchableOpacity>
                       ))}
                     </View>
                   </View>
@@ -572,7 +591,20 @@ const styles = StyleSheet.create({
     marginLeft: SPACING.xs,
   },
   unverifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
   },
   badgesContainer: {
     marginBottom: SPACING.sm,

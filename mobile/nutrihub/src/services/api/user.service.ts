@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import { User } from '../../types/types';
+import { User, ProfessionTag } from '../../types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { API_CONFIG } from '../../config';
 
@@ -83,6 +83,92 @@ export const userService = {
   async removeProfilePhoto(): Promise<void> {
     const response = await apiClient.delete('/users/image/');
     if (response.error) throw new Error(response.error);
+  },
+
+  // Profession Tags
+  async getProfessionTags(): Promise<ProfessionTag[]> {
+    console.log('Fetching profession tags from API...');
+    const response = await apiClient.get<User>('/users/profile/');
+    if (response.error) {
+      console.error('API error:', response.error);
+      throw new Error(response.error);
+    }
+    console.log('API response:', response.data);
+    // Extract profession tags from user profile - the API returns 'tags' not 'profession_tags'
+    const tags = response.data?.tags || [];
+    console.log('Extracted profession tags:', tags);
+    return tags;
+  },
+
+  async setProfessionTags(tags: { name: string; verified?: boolean }[]): Promise<ProfessionTag[]> {
+    console.log('Setting profession tags:', tags);
+    const response = await apiClient.post<ProfessionTag[]>('/users/tag/set/', tags);
+    if (response.error) {
+      console.error('API error setting tags:', response.error);
+      throw new Error(response.error);
+    }
+    console.log('API response for set tags:', response.data);
+    return response.data!;
+  },
+
+  async uploadCertificate(tagId: number, fileUri: string, fileName: string): Promise<ProfessionTag> {
+    console.log('Uploading certificate for tag:', tagId, 'File:', fileName);
+    // Get auth token
+    const token = await AsyncStorage.getItem('access_token');
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // Create FormData
+    const formData = new FormData();
+    const file = {
+      uri: fileUri,
+      name: fileName,
+      type: fileName.toLowerCase().endsWith('.pdf') ? 'application/pdf' : 
+            fileName.toLowerCase().endsWith('.png') ? 'image/png' : 
+            fileName.toLowerCase().endsWith('.jpg') || fileName.toLowerCase().endsWith('.jpeg') ? 'image/jpeg' : 'application/octet-stream',
+    };
+    
+    formData.append('certificate', file as any);
+    formData.append('tag_id', tagId.toString());
+
+    try {
+      console.log('Sending certificate upload request...');
+      const response = await fetch(`${API_CONFIG.BASE_URL}/users/certificate/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Certificate upload failed:', response.status, errorText);
+        throw new Error(`Certificate upload failed: ${response.status} - ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('Certificate upload successful:', data);
+      return data as ProfessionTag;
+    } catch (error) {
+      console.error('Certificate upload error:', error);
+      throw error;
+    }
+  },
+
+  // Get other user's profile with profession tags
+  async getOtherUserProfile(username: string): Promise<User> {
+    const response = await apiClient.get<User>(`/users/${encodeURIComponent(username)}/profile/`);
+    if (response.error) throw new Error(response.error);
+    
+    // Convert relative profile_image URL to full URL
+    if (response.data?.profile_image && !response.data.profile_image.startsWith('http')) {
+      const baseUrl = 'https://nutrihub.fit';
+      response.data.profile_image = `${baseUrl}${response.data.profile_image}`;
+    }
+    
+    return response.data!;
   },
 };
 

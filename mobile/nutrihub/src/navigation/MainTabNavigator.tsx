@@ -116,7 +116,7 @@ const ForumStackNavigator = () => {
 const ProfileStackNavigator = () => {
   return (
     <ProfileStack.Navigator screenOptions={{ headerShown: false }}>
-      <ProfileStack.Screen name="MyProfile" component={ProfileSettingsScreen} />
+      <ProfileStack.Screen name="ProfileOverview" component={ProfileSettingsScreen} />
       <ProfileStack.Screen name="MyPosts" component={MyPostsScreen} />
       <ProfileStack.Screen name="AllergenSelection" component={AllergenSelectionScreen} />
       <ProfileStack.Screen name="PersonalRecipes" component={PersonalRecipesScreen} />

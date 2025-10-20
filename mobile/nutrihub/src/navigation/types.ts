@@ -103,7 +103,7 @@ export type ProfileStackParamList = {
   /**
    * Main profile overview screen (profile info, stats, settings hub)
    */
-  MyProfile: undefined;
+  ProfileOverview: undefined;
   
   /**
    * My posts and content screen

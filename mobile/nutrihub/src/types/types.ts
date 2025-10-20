@@ -125,7 +125,7 @@ export interface User {
   name?: string;
   surname?: string;
   address?: string;
-  tags?: string[];
+  tags?: ProfessionTag[]; // Backend returns tags as ProfessionTag array
   allergens?: string[];
   createdAt?: Date;
   // Optional public profile fields
@@ -138,7 +138,7 @@ export interface User {
   location?: string;
   website?: string;
   social_links?: SocialLink[];
-  profession_tags?: ProfessionTag[];
+  profession_tags?: ProfessionTag[]; // Keep for compatibility
   custom_allergens?: string[];
   privacy_settings?: PrivacySettings;
   account_warnings?: AccountWarning[];

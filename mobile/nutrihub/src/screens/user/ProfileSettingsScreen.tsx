@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
@@ -17,6 +17,7 @@ import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { User } from '../../types/types';
 import ProfilePhotoPicker from '../../components/user/ProfilePhotoPicker';
 import { useAuth } from '../../context/AuthContext';
+import { userService } from '../../services/api/user.service';
 
 interface ProfileSection {
   id: string;
@@ -41,17 +42,30 @@ const ProfileSettingsScreen: React.FC = () => {
     loadUserProfile();
   }, []);
 
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    React.useCallback(() => {
+      loadUserProfile();
+    }, [])
+  );
+
   const loadUserProfile = async () => {
     setLoading(true);
     try {
       // Use current user from auth context as base
       if (currentUser) {
-        // TODO: Fetch additional profile data from API
-        // const additionalData = await userService.getMyProfile();
-        // setUser({ ...currentUser, ...additionalData });
-        
-        // For now, use current user data
-        setUser(currentUser);
+        try {
+          // Fetch additional profile data from API
+          console.log('ProfileSettingsScreen: Loading user profile...');
+          const additionalData = await userService.getMyProfile();
+          console.log('ProfileSettingsScreen: Loaded profile data:', additionalData);
+          console.log('ProfileSettingsScreen: Tags count:', additionalData?.tags?.length || 0);
+          setUser(additionalData);
+        } catch (error) {
+          // Fallback to current user data if API fails
+          console.warn('Failed to fetch profile data, using auth context data:', error);
+          setUser(currentUser);
+        }
       }
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -165,13 +179,40 @@ const ProfileSettingsScreen: React.FC = () => {
             {user.bio}
           </Text>
         )}
+
+        {/* Profession Tags */}
+        {user?.tags && user.tags.length > 0 && (
+          <View style={styles.professionTagsContainer}>
+            <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.sm, marginBottom: SPACING.xs }]}>
+              Profession Tags
+            </Text>
+            <View style={styles.professionTagsRow}>
+              {user.tags.map((tag) => (
+                <View key={tag.id} style={[styles.professionTag, { backgroundColor: theme.primary }]}>
+                  <Text style={[textStyles.caption, { color: '#fff' }]}>
+                    {tag.name}
+                  </Text>
+                  {tag.is_verified ? (
+                    <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
+                      <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
+                    </View>
+                  ) : (
+                    <View style={[styles.unverifiedBadge, { backgroundColor: theme.warning }]}>
+                      <Icon name="clock-outline" size={12} color="#fff" style={styles.tagIcon} />
+                    </View>
+                  )}
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Quick Stats */}
       <View style={styles.quickStats}>
         <View style={styles.statItem}>
           <Text style={[textStyles.heading4, { color: theme.primary }]}>
-            {user?.profession_tags?.length || 0}
+            {user?.tags?.length || 0}
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
             Profession Tags
@@ -341,6 +382,42 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  professionTagsContainer: {
+    marginTop: SPACING.sm,
+  },
+  professionTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  professionTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  tagIcon: {
+    marginLeft: SPACING.xs,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+  },
+  unverifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
   },
 });
 
