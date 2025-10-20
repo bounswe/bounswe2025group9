@@ -224,9 +224,20 @@ const Forum = () => {
             // Get current page posts from filtered search results
             const indexOfLastPost = currentPage * postsPerPage;
             const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = filteredSearchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredSearchResults.length));
             
-            setPosts(currentPosts);
+            // Ensure we don't go beyond available data
+            if (indexOfFirstPost >= filteredSearchResults.length) {
+                // If current page is beyond available data, reset to last valid page
+                const lastValidPage = Math.ceil(filteredSearchResults.length / postsPerPage) || 1;
+                setCurrentPage(lastValidPage);
+                const lastPageIndexOfLastPost = lastValidPage * postsPerPage;
+                const lastPageIndexOfFirstPost = lastPageIndexOfLastPost - postsPerPage;
+                const currentPosts = filteredSearchResults.slice(lastPageIndexOfFirstPost, Math.min(lastPageIndexOfLastPost, filteredSearchResults.length));
+                setPosts(currentPosts);
+            } else {
+                const currentPosts = filteredSearchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredSearchResults.length));
+                setPosts(currentPosts);
+            }
         } else if (isSearching) {
             // When only searching, use search results
             setTotalCount(searchResultsCount);
@@ -234,9 +245,20 @@ const Forum = () => {
             // Get current page posts from search results
             const indexOfLastPost = currentPage * postsPerPage;
             const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = searchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, searchResults.length));
             
-            setPosts(currentPosts);
+            // Ensure we don't go beyond available data
+            if (indexOfFirstPost >= searchResults.length) {
+                // If current page is beyond available data, reset to last valid page
+                const lastValidPage = Math.ceil(searchResults.length / postsPerPage) || 1;
+                setCurrentPage(lastValidPage);
+                const lastPageIndexOfLastPost = lastValidPage * postsPerPage;
+                const lastPageIndexOfFirstPost = lastPageIndexOfLastPost - postsPerPage;
+                const currentPosts = searchResults.slice(lastPageIndexOfFirstPost, Math.min(lastPageIndexOfLastPost, searchResults.length));
+                setPosts(currentPosts);
+            } else {
+                const currentPosts = searchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, searchResults.length));
+                setPosts(currentPosts);
+            }
         } else if (allPosts.length > 0) {
             // When only filtering or no filters, use allPosts
             let filteredPosts = allPosts;
@@ -263,9 +285,20 @@ const Forum = () => {
             // Get current page posts
             const indexOfLastPost = currentPage * postsPerPage;
             const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredPosts.length));
             
-            setPosts(currentPosts);
+            // Ensure we don't go beyond available data
+            if (indexOfFirstPost >= filteredPosts.length) {
+                // If current page is beyond available data, reset to last valid page
+                const lastValidPage = Math.ceil(filteredPosts.length / postsPerPage) || 1;
+                setCurrentPage(lastValidPage);
+                const lastPageIndexOfLastPost = lastValidPage * postsPerPage;
+                const lastPageIndexOfFirstPost = lastPageIndexOfLastPost - postsPerPage;
+                const currentPosts = filteredPosts.slice(lastPageIndexOfFirstPost, Math.min(lastPageIndexOfLastPost, filteredPosts.length));
+                setPosts(currentPosts);
+            } else {
+                const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredPosts.length));
+                setPosts(currentPosts);
+            }
         }
     }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, isSearching, searchResults, searchResultsCount]);
     
