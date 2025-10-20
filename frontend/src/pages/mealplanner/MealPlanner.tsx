@@ -1,32 +1,121 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Food } from '../../lib/apiClient';
 import FoodDetail from '../foods/FoodDetail';
 import FoodSelector from '../../components/FoodSelector';
-import { PencilSimple } from '@phosphor-icons/react';
-import { MockFoods, Goat, Brocolli, Pork } from './MockFoods';
+import { PencilSimple, Funnel, CalendarBlank, Hamburger } from '@phosphor-icons/react';
 import {apiClient} from '../../lib/apiClient';
+import { Brocolli, Goat, Pork } from './MockFoods';
 
 interface weeklyMealPlan {
     [key: string]: [Food, Food, Food];
 }
 
+// Predefined meal plans using mock foods
 let MealPlans : { [key:string] : weeklyMealPlan} = {
     'halal' : {monday: [Brocolli, Goat, Brocolli], tuesday: [Goat, Brocolli, Goat], wednesday: [Brocolli, Goat, Brocolli], thursday: [Goat, Brocolli, Goat], friday: [Brocolli, Goat, Brocolli], saturday: [Goat, Brocolli, Goat], sunday: [Brocolli, Goat, Brocolli]},
     'vegan' : {monday: [Brocolli, Brocolli, Brocolli], tuesday: [Brocolli, Brocolli, Brocolli], wednesday: [Brocolli, Brocolli, Brocolli], thursday: [Brocolli, Brocolli, Brocolli], friday: [Brocolli, Brocolli, Brocolli], saturday: [Brocolli, Brocolli, Brocolli], sunday: [Brocolli, Brocolli, Brocolli]},
     'high-protein' : {monday: [Goat, Pork, Goat], tuesday: [Pork, Goat, Pork], wednesday: [Goat, Pork, Goat], thursday: [Pork, Goat, Pork], friday: [Goat, Pork, Goat], saturday: [Pork, Goat, Pork], sunday: [Goat, Pork, Goat]},
-}
-
+};
 
 const MealPlanner = () => {
     const [dietaryPreference, setDietaryPreference] = useState('high-protein');
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [editingMeal, setEditingMeal] = useState<{day: string, index: number} | null>(null);
-    const [localMealPlans, setLocalMealPlans] = useState(MealPlans);
     const [successMessage, setSuccessMessage] = useState('');
+    const [availableFoods, setAvailableFoods] = useState<Food[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [planDuration, setPlanDuration] = useState<'weekly' | 'daily'>('weekly');
+    
+    // Initialize with predefined meal plans
+    const [localMealPlans, setLocalMealPlans] = useState<{ [key:string] : weeklyMealPlan}>(MealPlans);
 
-    const handleDietaryPreferenceChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
-        setDietaryPreference(event.target.value);
-    };
+    // Fetch foods from backend and create meal plans with real food images
+    useEffect(() => {
+        const fetchFoods = async () => {
+            try {
+                setLoading(true);
+                
+                // Fetch multiple pages to get more foods
+                let allFoods: Food[] = [];
+                for (let page = 1; page <= 20; page++) {
+                    const response = await apiClient.getFoods({ page });
+                    if (response.status === 200 && response.results.length > 0) {
+                        allFoods = [...allFoods, ...response.results];
+                        // Stop if we've fetched all available foods
+                        if (!response.next) break;
+                    } else {
+                        break;
+                    }
+                }
+                
+                console.log('Total foods fetched:', allFoods.length);
+                console.log('Sample food names:', allFoods.slice(0, 5).map(f => f.name));
+                
+                if (allFoods.length > 0) {
+                    setAvailableFoods(allFoods);
+                    
+                    // Find real foods from backend by name (case-insensitive search)
+                    const broccoli = allFoods.find(f => f.name.toLowerCase() === 'broccoli');
+                    const goatMeat = allFoods.find(f => f.name.toLowerCase() === 'goat meat (cooked, roasted)');
+                    const porkChops = allFoods.find(f => f.name.toLowerCase() === 'pork chops (top loin, boneless)');
+                    
+                    console.log('Found foods:', {
+                        totalFoods: allFoods.length,
+                        broccoli: broccoli?.name,
+                        broccoliImage: broccoli?.imageUrl?.substring(0, 50) + '...',
+                        goatMeat: goatMeat?.name,
+                        goatImage: goatMeat?.imageUrl?.substring(0, 50) + '...',
+                        porkChops: porkChops?.name,
+                        porkImage: porkChops?.imageUrl?.substring(0, 50) + '...'
+                    });
+                    
+                    // Use found foods or fallback to mock foods
+                    const broccoliFood = broccoli || Brocolli;
+                    const goatMeatFood = goatMeat || Goat;
+                    const porkChopsFood = porkChops || Pork;
+                    
+                    // Create meal plans with real foods that have images
+                    const realMealPlans: { [key:string] : weeklyMealPlan} = {
+                        'halal': {
+                            monday: [broccoliFood, goatMeatFood, broccoliFood],
+                            tuesday: [goatMeatFood, broccoliFood, goatMeatFood],
+                            wednesday: [broccoliFood, goatMeatFood, broccoliFood],
+                            thursday: [goatMeatFood, broccoliFood, goatMeatFood],
+                            friday: [broccoliFood, goatMeatFood, broccoliFood],
+                            saturday: [goatMeatFood, broccoliFood, goatMeatFood],
+                            sunday: [broccoliFood, goatMeatFood, broccoliFood]
+                        },
+                        'vegan': {
+                            monday: [broccoliFood, broccoliFood, broccoliFood],
+                            tuesday: [broccoliFood, broccoliFood, broccoliFood],
+                            wednesday: [broccoliFood, broccoliFood, broccoliFood],
+                            thursday: [broccoliFood, broccoliFood, broccoliFood],
+                            friday: [broccoliFood, broccoliFood, broccoliFood],
+                            saturday: [broccoliFood, broccoliFood, broccoliFood],
+                            sunday: [broccoliFood, broccoliFood, broccoliFood]
+                        },
+                        'high-protein': {
+                            monday: [goatMeatFood, porkChopsFood, goatMeatFood],
+                            tuesday: [porkChopsFood, goatMeatFood, porkChopsFood],
+                            wednesday: [goatMeatFood, porkChopsFood, goatMeatFood],
+                            thursday: [porkChopsFood, goatMeatFood, porkChopsFood],
+                            friday: [goatMeatFood, porkChopsFood, goatMeatFood],
+                            saturday: [porkChopsFood, goatMeatFood, porkChopsFood],
+                            sunday: [goatMeatFood, porkChopsFood, goatMeatFood]
+                        }
+                    };
+                    
+                    setLocalMealPlans(realMealPlans);
+                }
+            } catch (error) {
+                console.error('Error fetching foods:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        
+        fetchFoods();
+    }, []);
 
     const handleFoodSelect = (food: Food) => {
         if (editingMeal) {
@@ -81,116 +170,266 @@ const MealPlanner = () => {
             });
     };
 
-    const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+    const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const meals = ['Breakfast', 'Lunch', 'Dinner'];
+    
+    // Get today's day name
+    const getTodayDayName = () => {
+        const today = new Date().getDay(); // 0 = Sunday, 1 = Monday, etc.
+        const dayIndex = today === 0 ? 6 : today - 1; // Convert to 0 = Monday, 6 = Sunday
+        return allDays[dayIndex];
+    };
+    
+    // Determine which days to show based on plan duration
+    const days = planDuration === 'daily' ? [getTodayDayName()] : allDays;
+    const planTitle = planDuration === 'daily' ? 'Daily Meal Plan' : 'Weekly Meal Plan';
+
+    // Helper to get tag styles based on dietary preference
+    const getTagStyle = (preference: string) => {
+        switch (preference) {
+            case 'vegan':
+                return {
+                    bg: 'var(--forum-vegan-bg)',
+                    text: 'var(--forum-vegan-text)',
+                    activeBg: 'var(--forum-vegan-active-bg)',
+                    activeText: 'var(--forum-vegan-active-text)',
+                    hoverBg: 'var(--forum-vegan-hover-bg)'
+                };
+            case 'halal':
+                return {
+                    bg: 'var(--forum-halal-bg)',
+                    text: 'var(--forum-halal-text)',
+                    activeBg: 'var(--forum-halal-active-bg)',
+                    activeText: 'var(--forum-halal-active-text)',
+                    hoverBg: 'var(--forum-halal-hover-bg)'
+                };
+            case 'high-protein':
+                return {
+                    bg: 'var(--forum-high-protein-bg)',
+                    text: 'var(--forum-high-protein-text)',
+                    activeBg: 'var(--forum-high-protein-active-bg)',
+                    activeText: 'var(--forum-high-protein-active-text)',
+                    hoverBg: 'var(--forum-high-protein-hover-bg)'
+                };
+            default:
+                return {
+                    bg: 'var(--forum-default-bg)',
+                    text: 'var(--forum-default-text)',
+                    activeBg: 'var(--forum-default-active-bg)',
+                    activeText: 'var(--forum-default-active-text)',
+                    hoverBg: 'var(--forum-default-hover-bg)'
+                };
+        }
+    };
 
     return (
         <div className="w-full py-12">
             <div className="nh-container">
-                <div className="mb-8 flex flex-col items-center">
-                    <h1 className="nh-title text-center">Create Your Meal Plan</h1>
-                    <p className="nh-text text-lg max-w-2xl text-center">
-                        Choose your time period and dietary preferences to start your nutritious journey.
-                    </p>
-                </div>
-
-                {/* Display success message if present */}
+                {/* Success message */}
                 {successMessage && (
                     <div 
-                        className="px-4 py-3 rounded-md mb-6 flex items-start gap-2 border"
+                        className="mb-4 px-4 py-3 rounded"
                         style={{
-                            backgroundColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.1)', /* fallback to green-500 rgb */
-                            borderColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.3)',
-                            color: 'var(--color-success)'
+                            backgroundColor: 'var(--color-success)',
+                            color: 'white',
+                            border: '1px solid var(--color-success)'
                         }}
                     >
-                        <span>{successMessage}</span>
+                        {successMessage}
                     </div>
                 )}
 
-                <div className="flex flex-col md:flex-row gap-8">
-                    <div className="w-full md:w-2/3">
+                <div className="flex flex-col md:flex-row gap-6">
+                    {/* Left column - Filters */}
+                    <div className="w-full md:w-1/5">
+                        <div className="sticky top-20">
+                            <h3 className="nh-subtitle mb-4 flex items-center gap-2">
+                                <Funnel size={20} weight="fill" className="text-primary" />
+                                Dietary Preferences
+                            </h3>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => setDietaryPreference('high-protein')}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: dietaryPreference === 'high-protein'
+                                            ? getTagStyle('high-protein').activeBg
+                                            : getTagStyle('high-protein').bg,
+                                        color: dietaryPreference === 'high-protein'
+                                            ? getTagStyle('high-protein').activeText
+                                            : getTagStyle('high-protein').text
+                                    }}
+                                >
+                                    <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">High-Protein</span>
+                                </button>
+
+                                <button
+                                    onClick={() => setDietaryPreference('halal')}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: dietaryPreference === 'halal'
+                                            ? getTagStyle('halal').activeBg
+                                            : getTagStyle('halal').bg,
+                                        color: dietaryPreference === 'halal'
+                                            ? getTagStyle('halal').activeText
+                                            : getTagStyle('halal').text
+                                    }}
+                                >
+                                    <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Halal</span>
+                                </button>
+
+                                <button
+                                    onClick={() => setDietaryPreference('vegan')}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                    style={{
+                                        backgroundColor: dietaryPreference === 'vegan'
+                                            ? getTagStyle('vegan').activeBg
+                                            : getTagStyle('vegan').bg,
+                                        color: dietaryPreference === 'vegan'
+                                            ? getTagStyle('vegan').activeText
+                                            : getTagStyle('vegan').text
+                                    }}
+                                >
+                                    <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Vegan</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Middle column - Meal Plan */}
+                    <div className="w-full md:w-3/5">
+                        <div className="mb-6">
+                            <h2 className="nh-title">{planTitle}</h2>
+                            <p className="nh-text mt-2">
+                                {planDuration === 'daily' 
+                                    ? `Today's meals: Click on any meal to view details, or click the edit icon to change it.`
+                                    : 'Click on any meal to view details, or click the edit icon to change it.'}
+                            </p>
+                        </div>
+
+                        {loading ? (
+                            <div className="text-center my-12">
+                                <p className="nh-text text-lg">Loading meal plan...</p>
+                            </div>
+                        ) : (
                         <div className="space-y-4">
                             {days.map(day => (
                                 <div key={day} className="nh-card">
-                                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{day}</h3>
+                                    <h3 className="nh-subtitle mb-4">{day}</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {meals.map((meal, i) => (
-                                            <div 
-                                                key={`${day}-${meal}`} 
-                                                className="bg-gray-50 rounded-md p-4 border border-gray-100 relative"
-                                            >
-                                                <div className="text-sm font-medium text-gray-500 mb-2">{meal}</div>
+                                        {meals.map((meal, i) => {
+                                            const currentFood = localMealPlans[dietaryPreference][day.toLowerCase() as keyof weeklyMealPlan][i];
+                                            return (
                                                 <div 
-                                                    className="text-sm text-gray-900 cursor-pointer"
-                                                    onClick={() => setSelectedFood(localMealPlans[dietaryPreference][day.toLowerCase() as keyof weeklyMealPlan][i])}
+                                                    key={`${day}-${meal}`}
+                                                    className="rounded-md p-3 border relative transition-all hover:shadow-md cursor-pointer"
+                                                    style={{
+                                                        backgroundColor: 'var(--dietary-option-bg)',
+                                                        borderColor: 'var(--dietary-option-border)'
+                                                    }}
+                                                    onClick={() => setSelectedFood(currentFood)}
                                                 >
-                                                    {localMealPlans[dietaryPreference][day.toLowerCase() as keyof weeklyMealPlan][i].name}
+                                                    <div 
+                                                        className="text-xs font-medium mb-2"
+                                                        style={{ color: 'var(--color-light)' }}
+                                                    >
+                                                        {meal}
+                                                    </div>
+                                                    
+                                                    {/* Food Image */}
+                                                    <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
+                                                        {currentFood.imageUrl ? (
+                                                            <img
+                                                                src={currentFood.imageUrl}
+                                                                alt={currentFood.name}
+                                                                className="object-contain max-h-14 max-w-full rounded"
+                                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                            />
+                                                        ) : (
+                                                            <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+                                                                <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    <div className="text-sm font-medium nh-text mb-1">
+                                                        {currentFood.name}
+                                                    </div>
+                                                    <div className="text-xs nh-text opacity-75">
+                                                        {currentFood.caloriesPerServing} kcal
                                                 </div>
+                                                    
                                                 <button
-                                                    className="absolute top-2 right-2 p-1 hover:bg-gray-200 rounded-full"
+                                                        className="absolute top-2 right-2 p-1 rounded-full transition-all"
+                                                        style={{
+                                                            backgroundColor: 'var(--color-bg-secondary)',
+                                                            boxShadow: 'var(--shadow-sm)'
+                                                        }}
+                                                        onMouseEnter={(e) => {
+                                                            e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)';
+                                                        }}
+                                                        onMouseLeave={(e) => {
+                                                            e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+                                                        }}
                                                     onClick={(e) => {
                                                         e.stopPropagation();
                                                         setEditingMeal({ day, index: i });
                                                     }}
                                                 >
-                                                    <PencilSimple size={16} />
+                                                        <PencilSimple size={14} style={{ color: 'var(--color-primary)' }} />
                                                 </button>
                                             </div>
-                                        ))}
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             ))}
                         </div>
+                        )}
                     </div>
 
-                    <div className="w-full md:w-1/3">
-                        <div className="sticky top-20">
-                            <img 
-                                src="/assets/gpt_food_calendar.png" 
-                                alt="Meal Planning" 
-                                className="w-full max-w-xs mx-auto rounded-lg shadow-sm" 
-                            />
-                            <div className="nh-card mb-6">
-                                <div className="space-y-6">
+                    {/* Right column - Actions */}
+                    <div className="w-full md:w-1/5">
+                        <div className="sticky top-20 flex flex-col gap-4">
+                            <div className="nh-card">
+                                <h3 className="nh-subtitle mb-4 text-sm">Plan Settings</h3>
+                                <div className="flex flex-col space-y-3">
                                     <div className="flex flex-col space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Plan Duration</label>
-                                        <select className="form-select block w-full px-4 py-2 text-sm border-gray-300 rounded-md bg-gray-50 focus:ring-primary focus:border-primary">
-                                            <option>Weekly</option>
-                                            <option>Daily</option>
-                                        </select>
-                                    </div>
-                                    
-                                    <div className="flex flex-col space-y-2">
-                                        <label className="text-sm font-medium text-gray-700">Dietary Preference</label>
+                                        <label className="text-xs font-medium nh-text">Plan Duration</label>
                                         <select 
-                                            value={dietaryPreference}
-                                            onChange={handleDietaryPreferenceChange}
-                                            className="form-select block w-full px-4 py-2 text-sm border-gray-300 rounded-md bg-gray-50 focus:ring-primary focus:border-primary"
+                                            value={planDuration}
+                                            onChange={(e) => setPlanDuration(e.target.value as 'weekly' | 'daily')}
+                                            className="w-full px-3 py-2 text-sm rounded-md border focus:ring-primary focus:border-primary nh-text"
+                                            style={{
+                                                backgroundColor: 'var(--dietary-option-bg)',
+                                                borderColor: 'var(--dietary-option-border)'
+                                            }}
                                         >
-                                            <option value="high-protein">High-protein</option>
-                                            <option value="halal">Halal</option>
-                                            <option value="vegan">Vegan</option>
+                                            <option value="weekly">Weekly</option>
+                                            <option value="daily">Daily</option>
                                         </select>
                                     </div>
                                 </div>
                             </div>
                             
-                            <div className="nh-card">
+                            <div className="nh-card rounded-lg shadow-md">
                                 <h3 className="nh-subtitle mb-3 text-sm">Planning Tips</h3>
                                 <ul className="nh-text text-xs space-y-2">
                                     <li>• Consider your daily calorie needs</li>
                                     <li>• Include a variety of food groups</li>
-                                    <li>• Plan for leftovers</li>
+                                    <li>• Plan for leftovers to save time</li>
                                     <li>• Check your available cooking time</li>
                                 </ul>
                             </div>
 
                             <button
                                 onClick={handleSaveMealPlan}
-                                className="nh-button nh-button-primary w-full mt-4 py-3 rounded-lg flex items-center justify-center gap-2"
+                                className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium"
                             >
-                                Save this meal plan
+                                Save Meal Plan
                             </button>
                         </div>
                     </div>
@@ -206,7 +445,7 @@ const MealPlanner = () => {
                     open={!!editingMeal}
                     onClose={() => setEditingMeal(null)}
                     onSelect={handleFoodSelect}
-                    foods={MockFoods} // Pass all available foods here
+                    foods={availableFoods}
                 />
             </div>
         </div>
