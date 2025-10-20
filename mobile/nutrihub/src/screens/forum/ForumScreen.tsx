@@ -12,7 +12,8 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  Alert
+  Alert,
+  TextInput
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -45,6 +46,12 @@ const ForumScreen: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [selectedTagIds, setSelectedTagIds] = useState<number[]>([]);
   const [availableTags, setAvailableTags] = useState<ApiTag[]>([]);
+  
+  // Search related state
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [searchResults, setSearchResults] = useState<ForumTopic[]>([]);
+  const [searchResultsCount, setSearchResultsCount] = useState<number>(0);
   
   // Use the global posts context
   const { posts, setPosts, updatePost } = usePosts();
@@ -250,6 +257,11 @@ const ForumScreen: React.FC = () => {
     // Update state
     setSelectedTagIds(newSelectedTags);
     
+    // If we're in search mode, clear search when applying filters
+    if (isSearching) {
+      clearSearch();
+    }
+    
     // Fetch posts with the new filter
     handleFilterChange(newSelectedTags);
   };
@@ -263,27 +275,79 @@ const ForumScreen: React.FC = () => {
     return availableTags.find(tag => tag && tag.name && tag.name.toLowerCase() === name.toLowerCase());
   };
   
+  // Handle search for posts
+  const handleSearch = useCallback(async () => {
+    if (!searchQuery.trim()) {
+      // If search query is empty, clear search
+      clearSearch();
+      return;
+    }
+    
+    setLoading(true);
+    setIsSearching(true);
+    
+    try {
+      const searchPosts = await forumService.searchPosts(searchQuery.trim());
+      // Preserve like status for search results
+      const mergedSearchPosts = await preserveLikeStatus(searchPosts, posts);
+      setSearchResults(mergedSearchPosts);
+      setSearchResultsCount(mergedSearchPosts.length);
+    } catch (err) {
+      console.error('Error searching for posts:', err);
+      Alert.alert('Error', 'Failed to search posts. Please try again.');
+      setSearchResults([]);
+      setSearchResultsCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [searchQuery, posts, preserveLikeStatus]);
+
+  // Clear search results and return to normal view
+  const clearSearch = useCallback(() => {
+    setSearchQuery('');
+    setIsSearching(false);
+    setSearchResults([]);
+    setSearchResultsCount(0);
+  }, []);
+
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setLoading(true);
     try {
-      let fetchedPosts;
-      if (selectedTagIds.length > 0) {
-        fetchedPosts = await forumService.getPosts(selectedTagIds);
+      if (isSearching && searchQuery.trim()) {
+        // If we're in search mode, refresh search results
+        const searchPosts = await forumService.searchPosts(searchQuery.trim());
+        const mergedSearchPosts = await preserveLikeStatus(searchPosts, posts);
+        setSearchResults(mergedSearchPosts);
+        setSearchResultsCount(mergedSearchPosts.length);
       } else {
-        fetchedPosts = await forumService.getPosts();
+        // Normal refresh
+        let fetchedPosts;
+        if (selectedTagIds.length > 0) {
+          fetchedPosts = await forumService.getPosts(selectedTagIds);
+        } else {
+          fetchedPosts = await forumService.getPosts();
+        }
+        
+        // Preserve like status during refresh
+        const mergedPosts = await preserveLikeStatus(fetchedPosts, posts);
+        setPosts(mergedPosts);
       }
-      
-      // Preserve like status during refresh
-      const mergedPosts = await preserveLikeStatus(fetchedPosts, posts);
-      setPosts(mergedPosts);
     } catch (err) {
       console.error('Error refreshing posts:', err);
       Alert.alert('Error', 'Failed to refresh posts. Please try again.');
     } finally {
       setLoading(false);
     }
-  }, [selectedTagIds, setPosts, posts, preserveLikeStatus]);
+  }, [selectedTagIds, setPosts, posts, preserveLikeStatus, isSearching, searchQuery]);
+
+  // Get current posts to display (search results or regular posts)
+  const getCurrentPosts = useCallback((): ForumTopic[] => {
+    if (isSearching) {
+      return searchResults;
+    }
+    return posts;
+  }, [isSearching, searchResults, posts]);
 
   // Render forum post
   const renderItem = ({ item }: { item: ForumTopic }) => (
@@ -347,6 +411,53 @@ const ForumScreen: React.FC = () => {
           Connect with others, share recipes, and get nutrition advice from our community.
         </Text>
       </View>
+      
+      {/* Search Bar */}
+      <View style={styles.searchContainer}>
+        <View style={[styles.searchInputContainer, { borderColor: theme.border, backgroundColor: theme.surface }]}>
+          <Icon 
+            name="magnify" 
+            size={20} 
+            color={theme.textSecondary} 
+            style={styles.searchIcon} 
+          />
+          <TextInput
+            style={[styles.searchInput, { color: theme.text }]}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholder="Search posts by title..."
+            placeholderTextColor={theme.textSecondary}
+            onSubmitEditing={handleSearch}
+            returnKeyType="search"
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
+              <Icon name="close" size={20} color={theme.textSecondary} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <TouchableOpacity
+          style={[styles.searchButton, { backgroundColor: theme.primary }]}
+          onPress={handleSearch}
+        >
+          <Text style={[styles.searchButtonText, { color: '#FFFFFF' }]}>Search</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Search Status */}
+      {isSearching && (
+        <View style={[styles.searchStatus, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
+          <Text style={[styles.searchStatusText, textStyles.body]}>
+            {searchResultsCount > 0 
+              ? `Found ${searchResultsCount} results for "${searchQuery}"${selectedTagIds.length > 0 ? ' (filtered by tags)' : ''}` 
+              : `No results found for "${searchQuery}"`}
+          </Text>
+          <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
+            <Icon name="close" size={16} color={theme.primary} />
+            <Text style={[styles.clearSearchText, { color: theme.primary }]}>Clear search</Text>
+          </TouchableOpacity>
+        </View>
+      )}
       
       {/* Filter Posts Section */}
       <View style={styles.filtersContainer}>
@@ -452,7 +563,7 @@ const ForumScreen: React.FC = () => {
       </View>
       
       <FlatList
-        data={posts}
+        data={getCurrentPosts()}
         renderItem={renderItem}
         keyExtractor={item => item.id.toString()}
         contentContainerStyle={styles.listContent}
@@ -464,7 +575,9 @@ const ForumScreen: React.FC = () => {
             <Icon name="forum-outline" size={64} color={theme.textSecondary} />
             <Text style={[styles.emptyTitle, textStyles.heading4]}>No posts found</Text>
             <Text style={[styles.emptyText, textStyles.body]}>
-              {selectedTagIds.length > 0
+              {isSearching
+                ? `No posts match your search for "${searchQuery}". Try different keywords or clear your search.`
+                : selectedTagIds.length > 0
                 ? 'Try adjusting your filters or be the first to post in this category!'
                 : 'Be the first to start a discussion!'}
             </Text>
@@ -594,6 +707,66 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: SPACING.xs,
     fontSize: 16,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
+  },
+  searchInputContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 8,
+    paddingHorizontal: SPACING.sm,
+  },
+  searchIcon: {
+    marginRight: SPACING.xs,
+  },
+  searchInput: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    fontSize: 16,
+  },
+  clearButton: {
+    padding: SPACING.xs,
+  },
+  searchButton: {
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  searchButtonText: {
+    fontWeight: '600',
+    fontSize: 16,
+  },
+  searchStatus: {
+    marginHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
+    padding: SPACING.sm,
+    borderRadius: 8,
+    borderWidth: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  searchStatusText: {
+    flex: 1,
+    fontSize: 14,
+  },
+  clearSearchButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.sm,
+  },
+  clearSearchText: {
+    marginLeft: 4,
+    fontSize: 14,
+    fontWeight: '500',
   },
 });
 
