@@ -96,17 +96,9 @@ const Profile = () => {
         loadLikedRecipes()
       }
     })
-    
-    // Also poll every 5 seconds to sync changes from other devices and refresh like counts
-    const intervalId = window.setInterval(() => {
-      // Refresh liked posts and recipes to get updated like counts
-      loadLikedPosts()
-      loadLikedRecipes()
-    }, 5000)
 
     return () => {
       unsubscribe()
-      clearInterval(intervalId)
     }
   }, [])
 
