@@ -10,14 +10,16 @@ import {
   ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
+import * as WebBrowser from 'expo-web-browser';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { ProfessionTag, PROFESSION_TAGS } from '../../types/types';
 import { userService } from '../../services/api/user.service';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const ProfessionTagsScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
@@ -28,27 +30,70 @@ const ProfessionTagsScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState<number | null>(null);
 
+  // Save profession tags to AsyncStorage
+  const saveProfessionTagsToStorage = async (tags: ProfessionTag[]) => {
+    try {
+      await AsyncStorage.setItem('profession_tags_cache', JSON.stringify(tags));
+    } catch (error) {
+      console.error('Error saving profession tags to storage:', error);
+    }
+  };
+
+  // Load profession tags from AsyncStorage
+  const loadProfessionTagsFromStorage = async (): Promise<ProfessionTag[]> => {
+    try {
+      const cached = await AsyncStorage.getItem('profession_tags_cache');
+      return cached ? JSON.parse(cached) : [];
+    } catch (error) {
+      console.error('Error loading profession tags from storage:', error);
+      return [];
+    }
+  };
+
   useEffect(() => {
     loadProfessionTags();
   }, []);
 
-  // Refresh data when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      loadProfessionTags();
-    }, [])
-  );
+  // Note: Removed useFocusEffect to prevent data loss when navigating back to screen
+  // The data is already loaded in useEffect and maintained in local state
 
   const loadProfessionTags = async () => {
     setLoading(true);
     try {
       console.log('Loading profession tags...');
-      const tags = await userService.getProfessionTags();
-      console.log('Loaded profession tags:', tags);
-      setProfessionTags(tags);
+      
+      // Load from server
+      const serverTags = await userService.getProfessionTags();
+      console.log('🔍 Server profession tags:', JSON.stringify(serverTags, null, 2));
+      
+      // Load from cache
+      const cachedTags = await loadProfessionTagsFromStorage();
+      console.log('💾 Cached profession tags:', JSON.stringify(cachedTags, null, 2));
+      
+      // Merge server data with cached certificate data
+      const mergedTags = serverTags.map(serverTag => {
+        const cachedTag = cachedTags.find(cached => cached.id === serverTag.id);
+        const mergedTag = {
+          ...serverTag,
+          // Prioritize cached certificate data over server data
+          certificate: cachedTag?.certificate || serverTag.certificate
+        };
+        console.log(`Tag ${serverTag.id} (${serverTag.name}):`, {
+          serverCertificate: serverTag.certificate,
+          cachedCertificate: cachedTag?.certificate,
+          finalCertificate: mergedTag.certificate
+        });
+        return mergedTag;
+      });
+      
+      console.log('🔄 Merged profession tags:', JSON.stringify(mergedTags, null, 2));
+      setProfessionTags(mergedTags);
+      
+      // Save merged data to cache
+      await saveProfessionTagsToStorage(mergedTags);
       
       // Get available tags that user doesn't have
-      const userTagNames = tags.map(tag => tag.name);
+      const userTagNames = mergedTags.map(tag => tag.name);
       const available = PROFESSION_TAGS.filter(tag => !userTagNames.includes(tag));
       setAvailableTags(available);
     } catch (error) {
@@ -69,15 +114,13 @@ const ProfessionTagsScreen: React.FC = () => {
       console.log('API returned tags:', newTags);
       setProfessionTags(newTags);
       
+      // Save to cache
+      await saveProfessionTagsToStorage(newTags);
+      
       // Update available tags
       const userTagNames = newTags.map(tag => tag.name);
       const available = PROFESSION_TAGS.filter(tag => !userTagNames.includes(tag));
       setAvailableTags(available);
-      
-      // Refresh the data to ensure consistency
-      setTimeout(() => {
-        loadProfessionTags();
-      }, 500);
     } catch (error) {
       console.error('Error adding profession tag:', error);
       Alert.alert('Error', `Failed to add profession tag: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -93,15 +136,13 @@ const ProfessionTagsScreen: React.FC = () => {
       );
       setProfessionTags(updatedTags);
       
+      // Save to cache
+      await saveProfessionTagsToStorage(updatedTags);
+      
       // Update available tags
       const userTagNames = updatedTags.map(tag => tag.name);
       const available = PROFESSION_TAGS.filter(tag => !userTagNames.includes(tag));
       setAvailableTags(available);
-      
-      // Refresh the data to ensure consistency
-      setTimeout(() => {
-        loadProfessionTags();
-      }, 500);
     } catch (error) {
       console.error('Error removing profession tag:', error);
       Alert.alert('Error', 'Failed to remove profession tag');
@@ -116,14 +157,16 @@ const ProfessionTagsScreen: React.FC = () => {
       console.log('Certificate removal successful:', updatedTag);
       
       // Update the tag in the list
-      setProfessionTags(prev => 
-        prev.map(tag => tag.id === tagId ? updatedTag : tag)
-      );
+      const newTags = professionTags.map(tag => tag.id === tagId ? updatedTag : tag);
+      setProfessionTags(newTags);
       
-      // Refresh the data to ensure consistency
-      setTimeout(() => {
-        loadProfessionTags();
-      }, 500);
+      // Save to cache
+      await saveProfessionTagsToStorage(newTags);
+      
+      // Clear cache if certificate was removed
+      if (!updatedTag.certificate) {
+        console.log('Certificate removed, clearing cache for tag:', tagId);
+      }
     } catch (error) {
       console.error('Error removing certificate:', error);
       Alert.alert('Error', `Failed to remove certificate: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -149,21 +192,33 @@ const ProfessionTagsScreen: React.FC = () => {
         file.name
       );
 
-      console.log('Certificate upload successful:', updatedTag);
+      console.log('✅ Certificate upload successful:', updatedTag);
       // Update the tag in the list
-      setProfessionTags(prev => 
-        prev.map(tag => tag.id === tagId ? updatedTag : tag)
-      );
+      const newTags = professionTags.map(tag => tag.id === tagId ? updatedTag : tag);
+      setProfessionTags(newTags);
       
-      // Refresh the data to ensure consistency
-      setTimeout(() => {
-        loadProfessionTags();
-      }, 500);
+      // Save to cache
+      console.log('💾 Saving to cache:', JSON.stringify(newTags, null, 2));
+      await saveProfessionTagsToStorage(newTags);
+      console.log('✅ Cache saved successfully');
     } catch (error) {
       console.error('Error uploading certificate:', error);
       Alert.alert('Error', `Failed to upload certificate: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setUploading(null);
+    }
+  };
+
+  const viewDocument = async (certificateUrl: string) => {
+    try {
+      console.log('Opening document:', certificateUrl);
+      await WebBrowser.openBrowserAsync(certificateUrl, {
+        presentationStyle: WebBrowser.WebBrowserPresentationStyle.FORM_SHEET,
+        controlsColor: theme.primary,
+      });
+    } catch (error) {
+      console.error('Error opening document:', error);
+      Alert.alert('Error', 'Failed to open document. Please try again.');
     }
   };
 
@@ -190,9 +245,18 @@ const ProfessionTagsScreen: React.FC = () => {
         {item.certificate && (
           <View style={styles.certificateInfo}>
             <Icon name="certificate" size={16} color={theme.primary} />
-              <Text style={[textStyles.caption, { color: theme.primary }]}>
-                Document uploaded
+            <Text style={[textStyles.caption, { color: theme.primary }]}>
+              Document uploaded
+            </Text>
+            <TouchableOpacity
+              style={[styles.viewDocumentButton, { borderColor: theme.primary }]}
+              onPress={() => viewDocument(item.certificate!)}
+            >
+              <Icon name="eye" size={14} color={theme.primary} />
+              <Text style={[textStyles.small, { color: theme.primary }]}>
+                View Document
               </Text>
+            </TouchableOpacity>
           </View>
         )}
 
@@ -211,7 +275,7 @@ const ProfessionTagsScreen: React.FC = () => {
               {uploading === item.id 
                 ? 'Uploading...' 
                 : item.certificate 
-                  ? 'Change Document' 
+                  ? 'Replace Document' 
                   : 'Upload Document'
               }
             </Text>
@@ -401,6 +465,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: SPACING.sm,
+    gap: SPACING.sm,
+  },
+  viewDocumentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    gap: SPACING.xs,
   },
   tagActions: {
     flexDirection: 'row',

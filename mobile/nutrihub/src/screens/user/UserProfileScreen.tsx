@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
@@ -193,10 +194,19 @@ const UserProfileScreen: React.FC = () => {
     });
   };
 
-  const handleViewDocument = (tag: ProfessionTag) => {
+  const handleViewDocument = async (tag: ProfessionTag) => {
     if (tag.certificate) {
-      // TODO: Open document in a modal or external viewer
-      Alert.alert('Document', `View document for ${tag.name}`);
+      try {
+        await WebBrowser.openBrowserAsync(tag.certificate, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FORM_SHEET,
+          controlsColor: theme.primary,
+        });
+      } catch (error) {
+        console.error('Error opening document:', error);
+        Alert.alert('Error', 'Failed to open document. Please try again.');
+      }
+    } else {
+      Alert.alert('No Certificate', `No certificate document is available for ${tag.name}.`);
     }
   };
 
@@ -364,8 +374,17 @@ const UserProfileScreen: React.FC = () => {
                   {professionTags.map((tag) => (
                     <TouchableOpacity
                       key={tag.id || tag.name}
-                      style={[styles.professionTag, { backgroundColor: `${theme.primary}20`, borderColor: theme.primary }]}
+                      style={[
+                        styles.professionTag, 
+                        { 
+                          backgroundColor: `${theme.primary}20`, 
+                          borderColor: theme.primary,
+                          minHeight: 40,
+                        }
+                      ]}
                       onPress={() => handleViewDocument(tag)}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     >
                       <Text style={[textStyles.caption, { color: theme.primary }]}>
                         {tag.name}
