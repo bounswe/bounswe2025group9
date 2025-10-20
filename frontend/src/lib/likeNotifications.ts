@@ -6,6 +6,7 @@ const LIKE_EVENT_KEY = 'nutriHub_likeEvent';
 export interface LikeEvent {
     postId: number;
     isLiked: boolean;
+    likeCount: number;
     timestamp: number;
     type: 'post' | 'recipe';
 }
@@ -13,10 +14,11 @@ export interface LikeEvent {
 /**
  * Notify other tabs that a like event occurred
  */
-export const notifyLikeChange = (postId: number, isLiked: boolean, type: 'post' | 'recipe' = 'post') => {
+export const notifyLikeChange = (postId: number, isLiked: boolean, likeCount: number, type: 'post' | 'recipe' = 'post') => {
     const event: LikeEvent = {
         postId,
         isLiked,
+        likeCount,
         timestamp: Date.now(),
         type
     };

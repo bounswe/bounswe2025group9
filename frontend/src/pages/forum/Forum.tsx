@@ -5,8 +5,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import ForumPostCard from '../../components/ForumPostCard'
-// import shared cache functions
-import { getPostFromCache, setMultiplePostsInCache, updatePostLikeStatusInCache, getAllPostsFromCache, clearPostCache } from '../../lib/postCache'
 // import cross-tab notification system
 import { notifyLikeChange, subscribeLikeChanges } from '../../lib/likeNotifications';
 
@@ -91,11 +89,11 @@ const Forum = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const username = user?.username || 'anonymous';
-    // initialize allPosts from the shared cache if available
-    const [allPosts, setAllPosts] = useState<ForumPost[]>(getAllPostsFromCache());
+    // initialize allPosts as empty array
+    const [allPosts, setAllPosts] = useState<ForumPost[]>([]);
     const [posts, setPosts] = useState<ForumPost[]>([]); // store current page posts
-    // show loading only if cache is empty initially
-    const [loading, setLoading] = useState(allPosts.length === 0);
+    // show loading initially
+    const [loading, setLoading] = useState(true);
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [postsPerPage, ] = useState(5);
@@ -141,10 +139,9 @@ const Forum = () => {
                 setLikedPosts(getUserLikedPostsFromStorage());
             }
 
-            // 2) Fetch posts (use cache when possible)
+            // 2) Fetch posts
             if (location.state?.refreshPosts) {
                 console.log('[Forum] Forcing refresh due to new post creation or external update.');
-                clearPostCache();
                 await fetchAllPosts(true);
                 navigate(location.pathname, { replace: true, state: {} });
             } else {
@@ -156,9 +153,9 @@ const Forum = () => {
         // Subscribe to cross-tab like changes
         const unsubscribe = subscribeLikeChanges((event) => {
             if (event.type !== 'post') return;
-            // Update local liked map and allPosts in-place
+            // Update local liked map and allPosts in-place with both liked status and like count
             setLikedPosts(prev => ({ ...prev, [event.postId]: event.isLiked }));
-            setAllPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked } : p));
+            setAllPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked, likes: event.likeCount } : p));
         });
 
         // Poll server every 5 seconds to refresh posts and keep everything in sync
@@ -185,9 +182,6 @@ const Forum = () => {
                 // Update state
                 setAllPosts(updatedPosts);
                 setLikedPosts(likedMapFromServer);
-                
-                // Update cache
-                setMultiplePostsInCache(updatedPosts, username);
             } catch {
                 // ignore polling errors silently
             }
@@ -276,25 +270,8 @@ const Forum = () => {
         fetchAllPosts();
     }, []);
 
-    // Get all posts from API or cache
-    const fetchAllPosts = async (forceRefresh = false) => {
-        const cachedPosts = getAllPostsFromCache(); // check shared cache
-
-        // basic cache check (consider adding timestamp check later if needed)
-        if (!forceRefresh && cachedPosts.length > 0) {
-            console.log('Using cached forum posts data from shared cache');
-            // ensure the local state reflects the cache
-            const userLikedPosts = getUserLikedPostsFromStorage();
-            const syncedPosts = cachedPosts.map(p => ({
-                ...p,
-                liked: userLikedPosts[p.id] !== undefined ? userLikedPosts[p.id] : p.liked,
-            }));
-            setAllPosts(syncedPosts);
-            setLikedPosts(userLikedPosts); // sync liked state too
-            setLoading(false); // stop loading if using cache
-            return;
-        }
-
+    // Get all posts from API
+    const fetchAllPosts = async (_forceRefresh = false) => {
         if (!loading) {
             setLoading(true);
         }
@@ -348,23 +325,13 @@ const Forum = () => {
 
             console.log(`Fetched a total of ${allResults.length} posts after pagination.`);
 
-            // Update the shared cache
-            setMultiplePostsInCache(allResults, username);
             // Update local state
             setAllPosts(allResults);
             setLikedPosts(userLikedPosts); // ensure liked state is current
 
         } catch (error) {
             console.error('Error fetching posts:', error);
-            // if error, try to use cache if available
-            const currentCache = getAllPostsFromCache();
-            if (currentCache.length > 0) {
-                console.log('Using cached data due to fetch error');
-                setAllPosts(currentCache);
-                setLikedPosts(getUserLikedPostsFromStorage()); // sync liked state
-            } else {
-                setAllPosts([]); // prevent infinite loading
-            }
+            setAllPosts([]); // prevent infinite loading
         } finally {
             setLoading(false);
         }
@@ -570,48 +537,36 @@ const Forum = () => {
             });
             setAllPosts(updatedAllPosts);
 
-            // 3. Update the shared cache (optimistically)
-            updatePostLikeStatusInCache(postId, newLiked, optimisticLikeCount, username);
-
-            // 4. Call the API to persist the change
+            // 3. Call the API to persist the change
             const response = await apiClient.toggleLikePost(postId);
             console.log(`[Forum] Toggle like API response:`, response);
-            
-            // 5. Notify other tabs about the like change
-            notifyLikeChange(postId, newLiked, 'post');
 
-            // 6. Verify API response and correct cache/state if needed
-            const responseObj = response as any; // cast to access properties
+            // 5. Get actual values from server response
+            const responseObj = response as any;
             const serverLiked = responseObj.liked;
             const serverLikeCount = responseObj.like_count;
 
-            let finalLiked = newLiked;
-            let finalLikeCount = optimisticLikeCount;
+            // ALWAYS use server values as the source of truth
+            const finalLiked = serverLiked !== undefined ? serverLiked : newLiked;
+            const finalLikeCount = serverLikeCount !== undefined ? serverLikeCount : optimisticLikeCount;
 
-            if (serverLiked !== undefined && serverLiked !== newLiked) {
-                console.warn(`[Forum] Server liked state (${serverLiked}) mismatch. Reverting to server state.`);
-                finalLiked = serverLiked;
-                // Re-update local storage if server differs
-                updateSinglePostLikeInStorage(postId, finalLiked);
-                setLikedPosts(prevState => ({ ...prevState, [postId]: finalLiked }));
-            }
+            console.log(`[Forum] Server response - liked: ${finalLiked}, count: ${finalLikeCount}`);
 
-            if (serverLikeCount !== undefined && serverLikeCount !== optimisticLikeCount) {
-                console.warn(`[Forum] Server like count (${serverLikeCount}) mismatch. Using server count.`);
-                finalLikeCount = serverLikeCount;
-            }
+            // 5. Update local storage with server values
+            updateSinglePostLikeInStorage(postId, finalLiked);
+            setLikedPosts(prevState => ({ ...prevState, [postId]: finalLiked }));
 
-            // Correct the state and cache if there was a mismatch
-            if (finalLiked !== newLiked || finalLikeCount !== optimisticLikeCount) {
-                const correctedAllPosts = allPosts.map(post => {
-                    if (post.id === postId) {
-                        return { ...post, liked: finalLiked, likes: finalLikeCount };
-                    }
-                    return post;
-                });
-                setAllPosts(correctedAllPosts);
-                updatePostLikeStatusInCache(postId, finalLiked, finalLikeCount, username);
-            }
+            // 6. Update state with server values
+            const correctedAllPosts = allPosts.map(post => {
+                if (post.id === postId) {
+                    return { ...post, liked: finalLiked, likes: finalLikeCount };
+                }
+                return post;
+            });
+            setAllPosts(correctedAllPosts);
+            
+            // 7. Notify other tabs with ACTUAL server values
+            notifyLikeChange(postId, finalLiked, finalLikeCount, 'post');
 
         } catch (error) {
             console.error('[Forum] Error toggling post like:', error);
@@ -636,12 +591,6 @@ const Forum = () => {
                     return post;
                 });
                 setAllPosts(revertedAllPosts);
-
-                // Revert cache
-                const originalPostFromCache = getPostFromCache(postId, username);
-                if (originalPostFromCache) {
-                    updatePostLikeStatusInCache(postId, revertedLikedStatus, originalPostFromCache.likes, username);
-                }
             }
         }
     };

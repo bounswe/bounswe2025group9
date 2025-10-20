@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import Forum from '../../../pages/forum/Forum'
 import { apiClient, ForumPost } from '../../../lib/apiClient'
 import { useAuth } from '../../../context/AuthContext'
-import * as postCache from '../../../lib/postCache'
 
 // Define a proper user type to match UserResponse
 interface UserResponse {
@@ -32,15 +31,6 @@ vi.mock('../../../lib/apiClient', () => ({
 // Mock the useAuth hook
 vi.mock('../../../context/AuthContext', () => ({
   useAuth: vi.fn()
-}))
-
-// Mock the post cache
-vi.mock('../../../lib/postCache', () => ({
-  getPostFromCache: vi.fn(),
-  setMultiplePostsInCache: vi.fn(),
-  updatePostLikeStatusInCache: vi.fn(),
-  getAllPostsFromCache: vi.fn().mockReturnValue([]),
-  clearPostCache: vi.fn()
 }))
 
 // Mock useNavigate and useLocation
@@ -126,9 +116,6 @@ describe('Forum Component', () => {
       getAccessToken: vi.fn(),
       fetchUserProfile: vi.fn()
     })
-    
-    // Default mock implementation for getAllPostsFromCache
-    vi.mocked(postCache.getAllPostsFromCache).mockReturnValue([])
     
     // Default mock implementation for getForumPosts
     vi.mocked(apiClient.getForumPosts).mockResolvedValue({
