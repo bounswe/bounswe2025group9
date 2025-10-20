@@ -1,12 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X } from '@phosphor-icons/react'
-import { apiClient, ForumPost } from '../lib/apiClient'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { useNavigate } from 'react-router-dom'
 import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
-import { apiClient, ForumPost, MealPlan, Recipe } from '../lib/apiClient'
+import { apiClient, ForumPost, MealPlan} from '../lib/apiClient'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
