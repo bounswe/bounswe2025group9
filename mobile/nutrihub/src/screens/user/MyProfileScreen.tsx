@@ -46,6 +46,7 @@ const MyProfileScreen: React.FC = () => {
   const [viewMode, setViewMode] = useState<'shared' | 'liked'>('shared');
   const [likedFilter, setLikedFilter] = useState<'all' | 'recipes'>('all');
   const [loading, setLoading] = useState(true);
+  const [photoUpdating, setPhotoUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Fetch ALL posts and filter by username to avoid filter dependency
@@ -55,7 +56,7 @@ const MyProfileScreen: React.FC = () => {
     setLoading(true);
     try {
       // Fetch user profile
-      const profile = await userService.getMyProfile();
+      const profile = await userService.getMyProfile(true);
       setUserProfile(profile);
 
       // Fetch all posts and filter by current user
@@ -198,30 +199,49 @@ const MyProfileScreen: React.FC = () => {
           if (item.key === 'profile') {
             return (
               <View style={[styles.profileSection, { backgroundColor: theme.surface }]}>
-                <ProfilePhotoPicker
-                  uri={userProfile.profile_image}
-                  onUploaded={async (localUri: string) => {
+              <ProfilePhotoPicker
+                uri={userProfile.profile_image}
+                uploading={photoUpdating}
+                onUploaded={async (localUri: string) => {
+                  try {
+                    setPhotoUpdating(true);
+                    const name = localUri.split('/').pop() || 'profile.jpg';
+                    const res = await userService.uploadProfilePhoto(localUri, name);
+
+                    setUserProfile(prev => prev ? { ...prev, profile_image: res.profile_image } : prev);
+                    
                     try {
-                      console.log('Starting upload process for:', localUri);
-                      const name = localUri.split('/').pop() || 'profile.jpg';
-                      console.log('Uploading with filename:', name);
-                      const res = await userService.uploadProfilePhoto(localUri, name);
-                      console.log('Upload response:', res);
-                      // Refresh profile data to get updated photo
-                      fetchUserData();
-                      console.log('Profile updated successfully');
-                    } catch (error) {
-                      console.error('Upload failed:', error);
-                      Alert.alert('Upload Failed', `Failed to upload image: ${error.message || error}`);
+                      const refreshed = await userService.getMyProfile(true);
+                      setUserProfile(refreshed);
+                    } catch (refreshError) {
+                      console.warn('Failed to refresh profile after upload', refreshError);
+                    }
+                  } catch (error) {
+                    console.error('Upload failed:', error);
+                    const message = error instanceof Error ? error.message : String(error);
+                    Alert.alert('Upload Failed', `Failed to upload image: ${message}`);
+                  } finally {
+                      setPhotoUpdating(false);
                     }
                   }}
                   onRemoved={async () => {
                     try {
+                      setPhotoUpdating(true);
                       await userService.removeProfilePhoto();
-                      // Refresh profile data
-                      fetchUserData();
+                      setUserProfile(prev => prev ? { ...prev, profile_image: null } : prev);
+                      
+                      try {
+                        const refreshed = await userService.getMyProfile(true);
+                        setUserProfile(refreshed);
+                      } catch (refreshError) {
+                        console.warn('Failed to refresh profile after removal', refreshError);
+                      }
                     } catch (error) {
                       console.error('Error removing photo:', error);
+                      const message = error instanceof Error ? error.message : String(error);
+                      Alert.alert('Remove Failed', `Failed to remove image: ${message}`);
+                    } finally {
+                      setPhotoUpdating(false);
                     }
                   }}
                 />

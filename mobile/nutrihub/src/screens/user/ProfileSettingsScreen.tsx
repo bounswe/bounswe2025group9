@@ -192,7 +192,7 @@ const ProfileSettingsScreen: React.FC = () => {
                   <Text style={[textStyles.caption, { color: '#fff' }]}>
                     {tag.name}
                   </Text>
-                  {tag.is_verified ? (
+                  {tag.verified ? (
                     <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
                       <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
                     </View>
