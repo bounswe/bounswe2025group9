@@ -387,9 +387,9 @@ export const apiClient = {
 
   // update profession tags
   updateProfessionTags: (tags: any[]) =>
-    fetchJson<UserResponse>("/users/profile/tags/", {
+    fetchJson<UserResponse>("/users/tag/set/", {
       method: "POST",
-      body: JSON.stringify({ tags }),
+      body: JSON.stringify(tags),
     }, true),
 
   // upload certificate
@@ -398,11 +398,33 @@ export const apiClient = {
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
-    
-    return fetch(`${BACKEND_API_URL}/users/profile/certificate/`, {
+
+    return fetch(`${BACKEND_API_URL}/users/certificate/`, {
       method: "POST",
       headers,
       body: formData,
+      credentials: 'include' as RequestCredentials,
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    });
+  },
+
+  // remove certificate
+  removeCertificate: (tagId: number) => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    return fetch(`${BACKEND_API_URL}/users/certificate/`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ tag_id: tagId }),
       credentials: 'include' as RequestCredentials,
     }).then(response => {
       if (!response.ok) {
