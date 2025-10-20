@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
@@ -193,10 +194,18 @@ const UserProfileScreen: React.FC = () => {
     });
   };
 
-  const handleViewDocument = (tag: ProfessionTag) => {
+  const handleViewDocument = async (tag: ProfessionTag) => {
     if (tag.certificate) {
-      // TODO: Open document in a modal or external viewer
-      Alert.alert('Document', `View document for ${tag.name}`);
+      try {
+        console.log('Opening document:', tag.certificate);
+        await WebBrowser.openBrowserAsync(tag.certificate, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FORM_SHEET,
+          controlsColor: theme.primary,
+        });
+      } catch (error) {
+        console.error('Error opening document:', error);
+        Alert.alert('Error', 'Failed to open document. Please try again.');
+      }
     }
   };
 
