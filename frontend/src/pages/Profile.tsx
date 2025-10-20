@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
 import { User, Heart, BookOpen, Certificate, Warning, Plus, X } from '@phosphor-icons/react'
 import { apiClient, ForumPost, Recipe } from '../lib/apiClient'
 import ForumPostCard from '../components/ForumPostCard'
@@ -55,9 +54,7 @@ const REPORT_OPTIONS: ReportOption[] = [
 ]
 
 const Profile = () => {
-  const { user, fetchUserProfile } = useAuth()
-  const navigate = useNavigate()
-  
+  const { user, fetchUserProfile } = useAuth()  
   // State management
   const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report'>('overview')
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
@@ -97,7 +94,19 @@ const Profile = () => {
       }
     })
     
-    return unsubscribe
+    // Also poll every 5 seconds to sync changes from other devices
+    const intervalId = window.setInterval(() => {
+      // Refresh liked posts list and derived recipe list
+      loadLikedPosts()
+      if (activeTab === 'recipes') {
+        loadLikedRecipes()
+      }
+    }, 5000)
+
+    return () => {
+      unsubscribe()
+      clearInterval(intervalId)
+    }
   }, [])
 
   const loadUserData = async () => {

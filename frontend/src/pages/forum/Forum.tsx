@@ -8,7 +8,7 @@ import ForumPostCard from '../../components/ForumPostCard'
 // import shared cache functions
 import { getPostFromCache, setMultiplePostsInCache, updatePostLikeStatusInCache, getAllPostsFromCache, clearPostCache } from '../../lib/postCache'
 // import cross-tab notification system
-import { notifyLikeChange } from '../../lib/likeNotifications';
+import { notifyLikeChange, subscribeLikeChanges } from '../../lib/likeNotifications';
 
 // local storage key for liked posts (keep for direct localStorage access)
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -129,22 +129,53 @@ const Forum = () => {
         return {};
     };
 
-    // Track previous location to detect navigation from PostDetail
+    // Track previous location to detect navigation from PostDetail and sync liked posts from server
     useEffect(() => {
-        if (location.state?.refreshPosts) {
-            console.log('[Forum] Forcing refresh due to new post creation or external update.');
-            clearPostCache(); // Clear the cache to ensure fresh data
-            fetchAllPosts(true); // Force refresh
-            // Reset location state to prevent re-triggering
-            navigate(location.pathname, { replace: true, state: {} });
-        } else {
-            // Normal fetch or cache check
-            fetchAllPosts();
-        }
-        // Initial load of liked posts state
-        setLikedPosts(getUserLikedPostsFromStorage());
+        const init = async () => {
+            try {
+                // 1) Fetch liked posts from server and sync localStorage/state
+                const likedMapFromServer = await fetchAndSyncLikedPostsFromServer();
+                setLikedPosts(likedMapFromServer);
+            } catch (e) {
+                // fallback to local storage on error
+                setLikedPosts(getUserLikedPostsFromStorage());
+            }
 
-    }, [location, username, navigate]); // Add navigate dependency
+            // 2) Fetch posts (use cache when possible)
+            if (location.state?.refreshPosts) {
+                console.log('[Forum] Forcing refresh due to new post creation or external update.');
+                clearPostCache();
+                await fetchAllPosts(true);
+                navigate(location.pathname, { replace: true, state: {} });
+            } else {
+                await fetchAllPosts();
+            }
+        };
+        init();
+
+        // Subscribe to cross-tab like changes
+        const unsubscribe = subscribeLikeChanges((event) => {
+            if (event.type !== 'post') return;
+            // Update local liked map and allPosts in-place
+            setLikedPosts(prev => ({ ...prev, [event.postId]: event.isLiked }));
+            setAllPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked } : p));
+        });
+
+        // Poll server every 5 seconds to keep liked state in sync across devices
+        const intervalId = window.setInterval(async () => {
+            try {
+                const likedMapFromServer = await fetchAndSyncLikedPostsFromServer();
+                setLikedPosts(prev => ({ ...prev, ...likedMapFromServer }));
+            } catch {
+                // ignore polling errors silently
+            }
+        }, 5000);
+
+        return () => {
+            unsubscribe();
+            clearInterval(intervalId);
+        };
+    }, [location, username, navigate]);
     
     // Calculate total pages based on filtered posts count
     const totalPages = Math.ceil(totalCount / postsPerPage);
@@ -314,6 +345,34 @@ const Forum = () => {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Fetch liked posts from server and sync localStorage for current user
+    const fetchAndSyncLikedPostsFromServer = async (): Promise<{[key: number]: boolean}> => {
+        try {
+            const response = await apiClient.getLikedPosts();
+            const likedMap: { [key: number]: boolean } = {};
+            (response.results || []).forEach(post => {
+                likedMap[post.id] = true;
+            });
+
+            // Merge into per-user structure in localStorage
+            const stored = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+            let allUsers: { [uname: string]: { [pid: number]: boolean } } = {};
+            if (stored) {
+                try { allUsers = JSON.parse(stored); } catch { allUsers = {}; }
+            }
+            const updatedAllUsers = { ...allUsers, [username]: likedMap };
+            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(updatedAllUsers));
+
+            // Also update existing posts liked flag locally to reflect server truth
+            setAllPosts(prev => prev.map(p => ({ ...p, liked: likedMap[p.id] !== undefined ? likedMap[p.id] : p.liked })));
+
+            return likedMap;
+        } catch (error) {
+            console.error('[Forum] Failed to fetch liked posts from server:', error);
+            return getUserLikedPostsFromStorage();
         }
     };
 
@@ -576,15 +635,7 @@ const Forum = () => {
         window.scrollTo(0, 0);
     };
 
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
+ 
 
     return (
         <div className="w-full py-12">
