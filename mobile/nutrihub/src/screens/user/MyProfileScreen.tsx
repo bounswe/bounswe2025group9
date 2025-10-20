@@ -108,7 +108,7 @@ const MyProfileScreen: React.FC = () => {
   );
 
   const handleBack = () => {
-    navigation.navigate('Home');
+    navigation.goBack();
   };
 
   const handleOpenPost = (post: ForumTopic) => {

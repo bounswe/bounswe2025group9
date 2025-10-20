@@ -283,8 +283,14 @@ const PostDetailScreen: React.FC = () => {
           onPress={() => {
             const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
             const isSelf = !!currentUser && (comment.author === currentUser.username || (displayName && comment.author === displayName));
-            const targetUsername = isSelf ? currentUser!.username : comment.author;
-            navigation.navigate('UserProfile', { username: targetUsername, userId: (comment as any).authorId || undefined });
+            
+            if (isSelf) {
+              // Navigate to own profile tab instead of UserProfile screen
+              navigation.navigate('MyProfile' as any);
+            } else {
+              // Navigate to other user's profile
+              navigation.navigate('UserProfile', { username: comment.author, userId: (comment as any).authorId || undefined });
+            }
           }}
           accessibilityRole="button"
           accessibilityLabel={`View ${comment.author}'s profile`}
@@ -393,8 +399,14 @@ const PostDetailScreen: React.FC = () => {
             onAuthorPress={() => {
               const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
               const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
-              const targetUsername = isSelf ? currentUser!.username : post.author;
-              navigation.navigate('UserProfile', { username: targetUsername, userId: post.authorId || undefined });
+              
+              if (isSelf) {
+                // Navigate to own profile tab instead of UserProfile screen
+                navigation.navigate('MyProfile' as any);
+              } else {
+                // Navigate to other user's profile
+                navigation.navigate('UserProfile', { username: post.author, userId: post.authorId || undefined });
+              }
             }}
           />
           
