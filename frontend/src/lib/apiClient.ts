@@ -389,11 +389,17 @@ export const apiClient = {
     }, true);
   },
 
-  // update allergens
-  updateAllergens: (allergens: string[]) =>
-    fetchJson<UserResponse>("/users/profile/allergens/", {
+  // get common allergens
+  getCommonAllergens: () =>
+    fetchJson<Array<{ id: number; name: string; common: boolean }>>("/users/allergen/common-list/", {
+      method: "GET",
+    }, true),
+
+  // update allergens - expects array of allergen objects with optional id or name
+  updateAllergens: (allergens: Array<{ id?: number; name?: string; common?: boolean }>) =>
+    fetchJson<Array<{ id: number; name: string; common: boolean }>>("/users/allergen/set/", {
       method: "POST",
-      body: JSON.stringify({ allergens }),
+      body: JSON.stringify(allergens),
     }, true),
 
   // update profession tags
