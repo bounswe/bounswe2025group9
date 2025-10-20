@@ -387,7 +387,18 @@ const Profile = () => {
   const saveAllergens = async () => {
     setIsLoading(true)
     try {
-      await apiClient.updateAllergens(selectedAllergens.map(a => a.name))
+      // Format allergens as expected by backend API
+      const allergensPayload = selectedAllergens.map(allergen => {
+        if (allergen.id) {
+          // Existing allergen - send ID
+          return { id: allergen.id }
+        } else {
+          // New custom allergen - send name
+          return { name: allergen.name, common: false }
+        }
+      })
+
+      await apiClient.updateAllergens(allergensPayload)
       await fetchUserProfile()
       showSuccess('Allergens saved successfully')
     } catch (error) {
@@ -645,11 +656,15 @@ const Profile = () => {
                 </button>
                 
                 <button
-                  disabled
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  onClick={() => setActiveTab('allergens')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
-                    backgroundColor: 'var(--forum-default-bg)',
-                    color: 'var(--forum-default-text)',
+                    backgroundColor: activeTab === 'allergens'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'allergens'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
                   }}
                 >
                   <Warning size={18} weight="fill" />
