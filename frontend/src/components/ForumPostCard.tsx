@@ -92,7 +92,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
     useEffect(() => {
         const currentLikes = post.likes || 0
         
-        if (currentLikes > prevLikes) {
+        if (currentLikes !== prevLikes) {
             const diff = currentLikes - prevLikes
             setLikeDiff(diff)
             setShowAnimation(true)
@@ -190,9 +190,9 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                             <ThumbsUp size={16} weight={isLiked ? "fill" : "regular"} className="flex-shrink-0" />
                         </div>
                         Likes: <span 
-                            className={showAnimation && likeDiff > 0 ? 'like-count-pulse' : ''}
-                            style={showAnimation && likeDiff > 0 ? {
-                                animation: 'likeCountPulse 0.6s ease-out'
+                            className={showAnimation ? (likeDiff > 0 ? 'like-count-pulse' : 'like-count-decrease') : ''}
+                            style={showAnimation ? {
+                                animation: likeDiff > 0 ? 'likeCountPulse 0.6s ease-out' : 'likeCountDecrease 0.6s ease-out'
                             } : {}}
                         >
                             {post.likes || 0}
@@ -216,6 +216,24 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                     }
                     75% {
                         transform: scale(1.2);
+                    }
+                    100% {
+                        transform: scale(1);
+                    }
+                }
+                @keyframes likeCountDecrease {
+                    0% {
+                        transform: scale(1);
+                    }
+                    25% {
+                        transform: scale(0.7);
+                        color: var(--color-error, #ef4444);
+                    }
+                    50% {
+                        transform: scale(0.9);
+                    }
+                    75% {
+                        transform: scale(0.8);
                     }
                     100% {
                         transform: scale(1);

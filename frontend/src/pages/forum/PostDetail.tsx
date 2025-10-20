@@ -4,8 +4,8 @@ import { User, ThumbsUp, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, Cookin
 import { apiClient, Recipe } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import ProfileImage from '../../components/ProfileImage'
-// import shared cache functions
-import { getPostFromCache, setPostInCache, updatePostLikeStatusInCache } from '../../lib/postCache';
+// import cross-tab notification system
+import { notifyLikeChange } from '../../lib/likeNotifications';
 
 // local storage key for liked posts - reuse same key
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -208,15 +208,6 @@ const PostDetail = () => {
             return;
         }
 
-        // 1. Try fetching from cache first
-        const cachedPost = getPostFromCache(postIdNum, username);
-        if (cachedPost) {
-            console.log(`[PostDetail] Cache hit for post ID: ${postIdNum}`);
-            setPost(cachedPost);
-            setLoading(false);
-            return; // exit if cache hit is successful
-        }
-
         console.log(`[PostDetail] Fetching post with ID: ${postIdNum}`);
         setLoading(true);
         try {
@@ -263,8 +254,6 @@ const PostDetail = () => {
                 
                 // Set the post state
                 setPost(fetchedPost);
-                // Add/update the post in the shared cache
-                setPostInCache(fetchedPost, username);
             } else {
                 console.log('[PostDetail] Post not found, redirecting to forum');
                 // Post not found, redirect to forum
@@ -302,38 +291,29 @@ const PostDetail = () => {
                 likes: newLikeCount
             });
             
-            // Update the shared cache
-            updatePostLikeStatusInCache(post.id, newLikedState, newLikeCount, username);
-            
             // Call API to toggle like status
             const response = await apiClient.toggleLikePost(post.id);
             console.log(`[PostDetail] Toggle like response:`, response);
 
-            // If the server response doesn't match our optimistic update, correct it
+            // Get actual values from server response
             const responseObj = response as any;
             const serverLiked = responseObj.liked;
             const serverLikeCount = responseObj.like_count;
 
-            let finalLiked = newLikedState;
-            let finalLikeCount = newLikeCount;
+            // ALWAYS use server values as the source of truth
+            const finalLiked = serverLiked !== undefined ? serverLiked : newLikedState;
+            const finalLikeCount = serverLikeCount !== undefined ? serverLikeCount : newLikeCount;
 
-            if (serverLiked !== undefined && serverLiked !== newLikedState) {
-                console.warn(`[PostDetail] Server liked state (${serverLiked}) differs from local state (${newLikedState})`);
-                finalLiked = serverLiked;
-                // Re-update local storage if server differs
-                updateLikedPostsStorage(post.id, finalLiked);
-            }
+            console.log(`[PostDetail] Server response - liked: ${finalLiked}, count: ${finalLikeCount}`);
+
+            // Update local storage with server values
+            updateLikedPostsStorage(post.id, finalLiked);
             
-            if (serverLikeCount !== undefined && serverLikeCount !== newLikeCount) {
-                console.warn(`[PostDetail] Server like count (${serverLikeCount}) differs from optimistic count (${newLikeCount})`);
-                finalLikeCount = serverLikeCount;
-            }
+            // Update state with server values
+            setPost(prevPost => prevPost ? { ...prevPost, liked: finalLiked, likes: finalLikeCount } : null);
             
-            // Correct the state and cache if there was a mismatch
-            if (finalLiked !== newLikedState || finalLikeCount !== newLikeCount) {
-                setPost(prevPost => prevPost ? { ...prevPost, liked: finalLiked, likes: finalLikeCount } : null);
-                updatePostLikeStatusInCache(post.id, finalLiked, finalLikeCount, username);
-            }
+            // Notify other tabs with ACTUAL server values
+            notifyLikeChange(post.id, finalLiked, finalLikeCount, 'post');
             
         } catch (error) {
             console.error('[PostDetail] Error toggling post like:', error);
@@ -352,8 +332,6 @@ const PostDetail = () => {
                 
                 // Revert local storage too
                 updateLikedPostsStorage(post.id, revertedLikedState);
-                // Revert cache
-                updatePostLikeStatusInCache(post.id, revertedLikedState, revertLikeCount, username);
             }
         }
     };

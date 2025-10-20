@@ -275,26 +275,19 @@ const Profile = () => {
       const response = await apiClient.toggleLikePost(postId)
       console.log(`[Profile] Toggle like API response:`, response)
       
-      // Notify other tabs
-      notifyLikeChange(postId, newLiked, 'post')
-      
       // Get actual like count from server response
       const responseObj = response as any
       const serverLiked = responseObj.liked
       const serverLikeCount = responseObj.like_count
       
-      let finalLiked = newLiked
-      let finalLikeCount = optimisticLikeCount
+      // ALWAYS use server values as the source of truth
+      const finalLiked = serverLiked !== undefined ? serverLiked : newLiked
+      const finalLikeCount = serverLikeCount !== undefined ? serverLikeCount : optimisticLikeCount
       
-      if (serverLiked !== undefined && serverLiked !== newLiked) {
-        console.warn(`[Profile] Server liked state (${serverLiked}) mismatch. Using server state.`)
-        finalLiked = serverLiked
-      }
+      console.log(`[Profile] Server response - liked: ${finalLiked}, count: ${finalLikeCount}`)
       
-      if (serverLikeCount !== undefined && serverLikeCount !== optimisticLikeCount) {
-        console.warn(`[Profile] Server like count (${serverLikeCount}) mismatch. Using server count.`)
-        finalLikeCount = serverLikeCount
-      }
+      // Notify other tabs with ACTUAL server values
+      notifyLikeChange(postId, finalLiked, finalLikeCount, 'post')
       
       // Update with final values from server
       setLikedPostsMap(prev => ({ ...prev, [postId]: finalLiked }))
@@ -466,7 +459,53 @@ const Profile = () => {
   }
 
   // Profile picture management
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const cropImageToSquare = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'))
+            return
+          }
+          
+          // Determine the size for the square (use the smaller dimension)
+          const size = Math.min(img.width, img.height)
+          canvas.width = size
+          canvas.height = size
+          
+          // Calculate the crop position (center crop)
+          const sx = (img.width - size) / 2
+          const sy = (img.height - size) / 2
+          
+          // Draw the cropped image on the canvas
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size)
+          
+          // Convert canvas to blob and create a new file
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'))
+              return
+            }
+            const croppedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            })
+            resolve(croppedFile)
+          }, file.type)
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     
@@ -480,13 +519,20 @@ const Profile = () => {
       return
     }
     
-    setProfilePictureFile(file)
-    
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setProfilePicture(reader.result as string)
+    try {
+      // Crop the image to square
+      const croppedFile = await cropImageToSquare(file)
+      setProfilePictureFile(croppedFile)
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicture(reader.result as string)
+      }
+      reader.readAsDataURL(croppedFile)
+    } catch (error) {
+      console.error('Error cropping image:', error)
+      showError('Failed to process image')
     }
-    reader.readAsDataURL(file)
   }
 
   const uploadProfilePicture = async () => {
@@ -702,6 +748,7 @@ const Profile = () => {
                         src={profilePicture} 
                         alt="Profile" 
                         className="w-24 h-24 rounded-full object-cover border-4 border-primary-500"
+                        style={{ aspectRatio: '1/1' }}
                       />
                     ) : (
                       <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{

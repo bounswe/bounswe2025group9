@@ -26,6 +26,7 @@ const ProfileImage = ({ profileImage, username, size = 'md' }: ProfileImageProps
                 src={profileImage}
                 alt={`${username}'s profile`}
                 className={`${sizeClasses[size]} rounded-full object-cover`}
+                style={{ aspectRatio: '1/1' }}
             />
         );
     }
