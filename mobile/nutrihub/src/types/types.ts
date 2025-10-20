@@ -111,6 +111,15 @@ export interface Recipe {
 }
 
 /**
+ * Lightweight recipe data returned on user profiles
+ */
+export interface UserRecipeSummary {
+  id: number;
+  name: string;
+  ingredients?: RecipeIngredient[];
+}
+
+/**
  * Recipe ingredient model
  */
 export interface RecipeIngredient {
@@ -129,20 +138,19 @@ export interface User {
   name?: string;
   surname?: string;
   address?: string;
-  tags?: ProfessionTag[]; // Backend returns tags as ProfessionTag array
-  allergens?: string[];
+  tags?: ProfessionTag[];
+  allergens?: Allergen[];
+  recipes?: UserRecipeSummary[];
   createdAt?: Date;
-  // Optional public profile fields
-  profile_image?: string; // URL - matches backend field name
+  profile_image?: string | null;
   profession?: string;
   bio?: string;
   badges?: string[];
-  // Enhanced profile fields
   phone?: string;
   location?: string;
   website?: string;
   social_links?: SocialLink[];
-  profession_tags?: ProfessionTag[]; // Keep for compatibility
+  profession_tags?: ProfessionTag[];
   custom_allergens?: string[];
   privacy_settings?: PrivacySettings;
   account_warnings?: AccountWarning[];
@@ -162,12 +170,8 @@ export interface SocialLink {
 export interface ProfessionTag {
   id: number;
   name: string;
-  is_verified: boolean;
-  certificate_url?: string;
-  certificate_name?: string;
-  created_at: Date;
-  verified_at?: Date;
-  verified_by?: string;
+  verified: boolean;
+  certificate?: string | null;
 }
 
 /**

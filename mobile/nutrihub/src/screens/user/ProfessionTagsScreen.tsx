@@ -63,7 +63,7 @@ const ProfessionTagsScreen: React.FC = () => {
     try {
       console.log('Adding profession tag:', tagName);
       const newTags = await userService.setProfessionTags([
-        ...professionTags.map(tag => ({ name: tag.name, verified: tag.is_verified })),
+        ...professionTags.map(tag => ({ name: tag.name, verified: tag.verified })),
         { name: tagName, verified: false }
       ]);
       console.log('API returned tags:', newTags);
@@ -89,7 +89,7 @@ const ProfessionTagsScreen: React.FC = () => {
       console.log('Removing profession tag:', tagId);
       const updatedTags = professionTags.filter(tag => tag.id !== tagId);
       await userService.setProfessionTags(
-        updatedTags.map(tag => ({ name: tag.name, verified: tag.is_verified }))
+        updatedTags.map(tag => ({ name: tag.name, verified: tag.verified }))
       );
       setProfessionTags(updatedTags);
       
@@ -173,7 +173,7 @@ const ProfessionTagsScreen: React.FC = () => {
         <View style={styles.tagHeader}>
           <Text style={[textStyles.heading4, { color: theme.text }]}>{item.name}</Text>
           <View style={styles.tagStatus}>
-            {item.is_verified ? (
+            {item.verified ? (
               <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
                 <Icon name="check-circle" size={16} color="#fff" />
                 <Text style={[textStyles.small, { color: '#fff' }]}>Verified</Text>
@@ -187,7 +187,7 @@ const ProfessionTagsScreen: React.FC = () => {
           </View>
         </View>
         
-        {item.certificate_url && (
+        {item.certificate && (
           <View style={styles.certificateInfo}>
             <Icon name="certificate" size={16} color={theme.primary} />
               <Text style={[textStyles.caption, { color: theme.primary }]}>
@@ -205,19 +205,19 @@ const ProfessionTagsScreen: React.FC = () => {
             {uploading === item.id ? (
               <ActivityIndicator size="small" color="#fff" />
             ) : (
-              <Icon name={item.certificate_url ? "file-document-edit" : "upload"} size={16} color="#fff" />
+              <Icon name={item.certificate ? "file-document-edit" : "upload"} size={16} color="#fff" />
             )}
             <Text style={[textStyles.caption, { color: '#fff' }]}>
               {uploading === item.id 
                 ? 'Uploading...' 
-                : item.certificate_url 
+                : item.certificate 
                   ? 'Change Document' 
                   : 'Upload Document'
               }
             </Text>
           </TouchableOpacity>
           
-          {item.certificate_url && (
+          {item.certificate && (
             <TouchableOpacity
               style={[styles.actionButton, styles.removeButton, { borderColor: theme.warning }]}
               onPress={() => removeCertificate(item.id)}

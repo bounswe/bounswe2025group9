@@ -30,7 +30,7 @@ interface ProfileSection {
 
 const MyPostsScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
@@ -57,10 +57,10 @@ const MyPostsScreen: React.FC = () => {
         bio: 'Passionate about healthy cooking and nutrition',
         profile_image: null,
         profession_tags: [
-          { id: 1, name: 'Dietitian', is_verified: true, created_at: new Date() },
-          { id: 2, name: 'Chef', is_verified: false, created_at: new Date() }
+          { id: 1, name: 'Dietitian', verified: true, certificate: null },
+          { id: 2, name: 'Chef', verified: false, certificate: null }
         ],
-        allergens: ['gluten', 'lactose'],
+        allergens: [],
         custom_allergens: ['sesame'],
         badges: ['Top Contributor', 'Recipe Master'],
         account_warnings: [
