@@ -2,6 +2,7 @@
 __pycache__
 venv
 db.sqlite3
+backend/media
 
 ##### React
 # Logs

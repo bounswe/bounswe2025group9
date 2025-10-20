@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X } from '@phosphor-icons/react'
-import { apiClient, ForumPost, Recipe } from '../lib/apiClient'
+import ForumPostCard from '../components/ForumPostCard'
+import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
+import { apiClient, ForumPost, MealPlan} from '../lib/apiClient'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -53,15 +54,14 @@ const REPORT_OPTIONS: ReportOption[] = [
 ]
 
 const Profile = () => {
-  const { user, fetchUserProfile } = useAuth()
-  const navigate = useNavigate()
-  
+  const { user, fetchUserProfile } = useAuth()  
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans'>('overview')
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
-  const [likedRecipes, setLikedRecipes] = useState<Recipe[]>([])
+  const [likedRecipes, setLikedRecipes] = useState<ForumPost[]>([])
+  const [likedPostsMap, setLikedPostsMap] = useState<{[key: number]: boolean}>({})
   const [professionTags, setProfessionTags] = useState<ProfessionTag[]>([])
   const [selectedProfession, setSelectedProfession] = useState('')
   const [certificateFile, setCertificateFile] = useState<File | null>(null)
@@ -76,10 +76,39 @@ const Profile = () => {
   const [reportReason, setReportReason] = useState('')
   const [reportDescription, setReportDescription] = useState('')
 
+  // States for saved meal plans
+  // const [savedMealPlans, setSavedMealPlans] = useState<MealPlan[]>([])
+  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan|null>()
+
   // Load user data on mount
   useEffect(() => {
     loadUserData()
   }, [user])
+  
+  // Set up cross-tab like listener
+  useEffect(() => {
+    const unsubscribe = subscribeLikeChanges((event) => {
+      console.log('[Profile] Received like change notification from another tab:', event)
+      
+      // Refetch liked posts and recipes when a like event occurs
+      if (event.type === 'post') {
+        loadLikedPosts()
+        loadLikedRecipes()
+      }
+    })
+    
+    // Also poll every 5 seconds to sync changes from other devices and refresh like counts
+    const intervalId = window.setInterval(() => {
+      // Refresh liked posts and recipes to get updated like counts
+      loadLikedPosts()
+      loadLikedRecipes()
+    }, 5000)
+
+    return () => {
+      unsubscribe()
+      clearInterval(intervalId)
+    }
+  }, [])
 
   const loadUserData = async () => {
     if (!user) return
@@ -125,23 +154,193 @@ const Profile = () => {
 
   const loadLikedPosts = async () => {
     try {
-      const response = await apiClient.getLikedPosts()
-      setLikedPosts(response.results || [])
+      // Get liked post IDs from the API
+      const likedResponse = await apiClient.getLikedPosts()
+      const likedPostIds = (likedResponse.results || []).map(post => post.id)
+      
+      console.log('[Profile] Liked post IDs:', likedPostIds)
+      
+      if (likedPostIds.length === 0) {
+        setLikedPosts([])
+        setLikedPostsMap({})
+        return
+      }
+      
+      // Fetch all posts to get complete data including like counts
+      const allPostsResponse = await apiClient.getForumPosts({
+        ordering: '-created_at',
+        page: 1,
+        page_size: 500
+      })
+      
+      console.log('[Profile] All posts fetched:', allPostsResponse.results.length)
+      
+      // Filter to only liked posts
+      const likedPostsWithData = allPostsResponse.results.filter(post => 
+        likedPostIds.includes(post.id)
+      )
+      
+      console.log('[Profile] Liked posts with data:', likedPostsWithData)
+      console.log('[Profile] First liked post like count:', likedPostsWithData[0]?.likes)
+      
+      setLikedPosts(likedPostsWithData)
+      
+      // Build a map of liked posts for easy lookup
+      const likedMap: {[key: number]: boolean} = {}
+      likedPostsWithData.forEach(post => {
+        likedMap[post.id] = true
+      })
+      setLikedPostsMap(likedMap)
     } catch (error) {
       console.error('Error loading liked posts:', error)
       setLikedPosts([])
+      setLikedPostsMap({})
     }
   }
 
   const loadLikedRecipes = async () => {
     try {
-      const response = await apiClient.getLikedRecipes()
-      setLikedRecipes(response.results || [])
+      // Get liked post IDs from the API
+      const likedResponse = await apiClient.getLikedPosts()
+      const likedPostIds = (likedResponse.results || []).map(post => post.id)
+      
+      console.log('[Profile] Liked post IDs for recipes:', likedPostIds)
+      
+      if (likedPostIds.length === 0) {
+        setLikedRecipes([])
+        return
+      }
+      
+      // Fetch all posts to get complete data including like counts
+      const allPostsResponse = await apiClient.getForumPosts({
+        ordering: '-created_at',
+        page: 1,
+        page_size: 500
+      })
+      
+      // Filter to only liked posts with Recipe tag
+      const recipePosts = allPostsResponse.results.filter(post => 
+        likedPostIds.includes(post.id) && 
+        post.tags.some(tag => tag.name === 'Recipe')
+      )
+      
+      console.log('[Profile] Liked recipe posts with data:', recipePosts)
+      console.log('[Profile] First recipe like count:', recipePosts[0]?.likes)
+      
+      // Store as posts since we're using ForumPostCard to render them
+      setLikedRecipes(recipePosts)
     } catch (error) {
       console.error('Error loading liked recipes:', error)
       setLikedRecipes([])
     }
   }
+  
+  // Handle like toggle for posts
+  const handleLikeToggle = async (postId: number) => {
+    try {
+      console.log(`[Profile] Toggling like for post ID: ${postId}`)
+      
+      const currentLiked = likedPostsMap[postId] || false
+      const newLiked = !currentLiked
+      const likeDelta = newLiked ? 1 : -1
+      
+      // Find the post in either likedPosts or likedRecipes
+      const currentPost = likedPosts.find(p => p.id === postId) || likedRecipes.find(r => r.id === postId)
+      
+      if (!currentPost) {
+        console.error('[Profile] Post not found in liked posts or recipes')
+        return
+      }
+      
+      const currentLikeCount = Math.max(0, currentPost.likes || 0)
+      const optimisticLikeCount = Math.max(0, currentLikeCount + likeDelta)
+      
+      // Optimistically update the UI
+      setLikedPostsMap(prev => ({ ...prev, [postId]: newLiked }))
+      
+      // Update the like count in both likedPosts and likedRecipes
+      setLikedPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, liked: newLiked, likes: optimisticLikeCount }
+          : post
+      ))
+      
+      setLikedRecipes(prev => prev.map(recipe => 
+        recipe.id === postId 
+          ? { ...recipe, liked: newLiked, likes: optimisticLikeCount }
+          : recipe
+      ))
+      
+      // Call the API
+      const response = await apiClient.toggleLikePost(postId)
+      console.log(`[Profile] Toggle like API response:`, response)
+      
+      // Get actual like count from server response
+      const responseObj = response as any
+      const serverLiked = responseObj.liked
+      const serverLikeCount = responseObj.like_count
+      
+      // ALWAYS use server values as the source of truth
+      const finalLiked = serverLiked !== undefined ? serverLiked : newLiked
+      const finalLikeCount = serverLikeCount !== undefined ? serverLikeCount : optimisticLikeCount
+      
+      console.log(`[Profile] Server response - liked: ${finalLiked}, count: ${finalLikeCount}`)
+      
+      // Notify other tabs with ACTUAL server values
+      notifyLikeChange(postId, finalLiked, finalLikeCount, 'post')
+      
+      // Update with final values from server
+      setLikedPostsMap(prev => ({ ...prev, [postId]: finalLiked }))
+      
+      setLikedPosts(prev => {
+        if (!finalLiked) {
+          // Remove from liked posts if unliked
+          return prev.filter(post => post.id !== postId)
+        }
+        return prev.map(post => 
+          post.id === postId 
+            ? { ...post, liked: finalLiked, likes: finalLikeCount }
+            : post
+        )
+      })
+      
+      setLikedRecipes(prev => {
+        if (!finalLiked) {
+          // Remove from liked recipes if unliked
+          return prev.filter(recipe => recipe.id !== postId)
+        }
+        return prev.map(recipe => 
+          recipe.id === postId 
+            ? { ...recipe, liked: finalLiked, likes: finalLikeCount }
+            : recipe
+        )
+      })
+      
+    } catch (error) {
+      console.error('[Profile] Error toggling post like:', error)
+      // Revert on error by refetching
+      await loadLikedPosts()
+      await loadLikedRecipes()
+    }
+  }
+
+  // New function: load saved meal plans
+  const loadCurrentMealPlan = async () => {
+    try {
+      const response = await apiClient.getCurrentMealPlan()
+      setCurrentMealPlan(response || [])
+    } catch (error) {
+      console.error('Error loading saved meal plans:', error)
+      setCurrentMealPlan(null)
+    }
+  }
+  
+  // Fetch saved meal plans when 'mealPlans' tab is activated
+  useEffect(() => {
+    if (activeTab === 'mealPlans') {
+      loadCurrentMealPlan()
+    }
+  }, [activeTab])
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message)
@@ -260,7 +459,53 @@ const Profile = () => {
   }
 
   // Profile picture management
-  const handleProfilePictureChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const cropImageToSquare = (file: File): Promise<File> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        const img = new Image()
+        img.onload = () => {
+          const canvas = document.createElement('canvas')
+          const ctx = canvas.getContext('2d')
+          if (!ctx) {
+            reject(new Error('Failed to get canvas context'))
+            return
+          }
+          
+          // Determine the size for the square (use the smaller dimension)
+          const size = Math.min(img.width, img.height)
+          canvas.width = size
+          canvas.height = size
+          
+          // Calculate the crop position (center crop)
+          const sx = (img.width - size) / 2
+          const sy = (img.height - size) / 2
+          
+          // Draw the cropped image on the canvas
+          ctx.drawImage(img, sx, sy, size, size, 0, 0, size, size)
+          
+          // Convert canvas to blob and create a new file
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              reject(new Error('Failed to create blob'))
+              return
+            }
+            const croppedFile = new File([blob], file.name, {
+              type: file.type,
+              lastModified: Date.now()
+            })
+            resolve(croppedFile)
+          }, file.type)
+        }
+        img.onerror = () => reject(new Error('Failed to load image'))
+        img.src = e.target?.result as string
+      }
+      reader.onerror = () => reject(new Error('Failed to read file'))
+      reader.readAsDataURL(file)
+    })
+  }
+
+  const handleProfilePictureChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     
@@ -274,13 +519,20 @@ const Profile = () => {
       return
     }
     
-    setProfilePictureFile(file)
-    
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setProfilePicture(reader.result as string)
+    try {
+      // Crop the image to square
+      const croppedFile = await cropImageToSquare(file)
+      setProfilePictureFile(croppedFile)
+      
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setProfilePicture(reader.result as string)
+      }
+      reader.readAsDataURL(croppedFile)
+    } catch (error) {
+      console.error('Error cropping image:', error)
+      showError('Failed to process image')
     }
-    reader.readAsDataURL(file)
   }
 
   const uploadProfilePicture = async () => {
@@ -405,23 +657,31 @@ const Profile = () => {
                 </button>
                 
                 <button
-                  disabled
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  onClick={() => setActiveTab('posts')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
-                    backgroundColor: 'var(--forum-default-bg)',
-                    color: 'var(--forum-default-text)',
+                    backgroundColor: activeTab === 'posts'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'posts'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
                   }}
                 >
                   <Heart size={18} weight="fill" />
                   <span className="flex-grow text-center">Liked Posts</span>
                 </button>
-                
+
                 <button
-                  disabled
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium shadow-sm cursor-not-allowed opacity-50"
+                  onClick={() => setActiveTab('recipes')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
-                    backgroundColor: 'var(--forum-default-bg)',
-                    color: 'var(--forum-default-text)',
+                    backgroundColor: activeTab === 'recipes'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'recipes'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
                   }}
                 >
                   <BookOpen size={18} weight="fill" />
@@ -451,6 +711,23 @@ const Profile = () => {
                   <Warning size={18} weight="fill" />
                   <span className="flex-grow text-center">Report User</span>
                 </button>
+
+                {/* New button for Saved Meal Plans */}
+                <button
+                  onClick={() => setActiveTab('mealPlans')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'mealPlans' 
+                      ? 'var(--forum-default-active-bg)' 
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'mealPlans' 
+                      ? 'var(--forum-default-active-text)' 
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <BookmarkSimple size={18} weight="fill" />
+                  <span className="flex-grow text-center">Saved Meal Plans</span>
+                </button>
               </div>
             </div>
           </div>
@@ -471,6 +748,7 @@ const Profile = () => {
                         src={profilePicture} 
                         alt="Profile" 
                         className="w-24 h-24 rounded-full object-cover border-4 border-primary-500"
+                        style={{ aspectRatio: '1/1' }}
                       />
                     ) : (
                       <div className="w-24 h-24 rounded-full flex items-center justify-center" style={{
@@ -645,24 +923,12 @@ const Profile = () => {
                 ) : (
                   <div className="space-y-4">
                     {likedPosts.map(post => (
-                      <div
+                      <ForumPostCard
                         key={post.id}
-                        className="nh-card cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => navigate(`/forum/post/${post.id}`)}
-                      >
-                        <h3 className="nh-subtitle">{post.title}</h3>
-                        <p className="nh-text mb-3 line-clamp-2">{post.body}</p>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>by {post.author.username}</span>
-                          <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1">
-                              <Heart size={16} weight="fill" className="text-red-500" />
-                              {post.likes}
-                            </span>
-                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
+                        post={post}
+                        isLiked={likedPostsMap[post.id] || false}
+                        onLikeToggle={handleLikeToggle}
+                      />
                     ))}
                   </div>
                 )}
@@ -681,31 +947,13 @@ const Profile = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {likedRecipes.map(recipe => (
-                      <div key={recipe.id} className="nh-card">
-                        <h3 className="nh-subtitle mb-3">
-                          {recipe.post_title || `Recipe #${recipe.id}`}
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Calories</div>
-                            <div className="font-semibold">{recipe.total_calories.toFixed(0)}</div>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Protein</div>
-                            <div className="font-semibold">{recipe.total_protein.toFixed(1)}g</div>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Carbs</div>
-                            <div className="font-semibold">{recipe.total_carbohydrates.toFixed(1)}g</div>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Fat</div>
-                            <div className="font-semibold">{recipe.total_fat.toFixed(1)}g</div>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-500">{recipe.ingredients.length} ingredients</p>
-                      </div>
+                    {likedRecipes.map((recipe) => (
+                      <ForumPostCard
+                        key={recipe.id}
+                        post={recipe}
+                        isLiked={likedPostsMap[recipe.id] || false}
+                        onLikeToggle={handleLikeToggle}
+                      />
                     ))}
                   </div>
                 )}
@@ -872,8 +1120,52 @@ const Profile = () => {
                 </div>
               </div>
             )}
-          </div>
 
+            {/* Saved Meal Plans Tab */}
+            {activeTab === 'mealPlans' && (
+              <div className="space-y-6">
+                <h2 className="nh-subtitle">
+                  {currentMealPlan ? currentMealPlan.name : 'Saved Meal Plan'}
+                </h2>
+                {currentMealPlan ? (
+                  <div className="space-y-4">
+                    {(() => {
+                      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                      // Assume that currentMealPlan.meals_details has 21 items ordered as Monday-Breakfast, Monday-Lunch, Monday-Dinner, Tuesday-Breakfast, etc.
+                      const details = currentMealPlan.meals_details || [];
+                      return days.map((day, index) => {
+                        const start = index * 3;
+                        const dayMeals = details.slice(start, start + 3);
+                        return (
+                          <div key={day} className="nh-card">
+                            <h3 className="text-lg font-semibold mb-4">{day}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {dayMeals.map((meal, i) => (
+                                <div key={`${day}-${i}`} className="bg-gray-50 rounded-md p-4 border border-gray-100">
+                                  <div className="text-sm font-medium text-gray-500 mb-2">
+                                    {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
+                                  </div>
+                                  <div className="text-sm text-gray-900">{meal.food.name}</div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    Calories: {meal.calculated_nutrition.calories}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                ) : (
+                  <div className="nh-card text-center py-12">
+                    <BookmarkSimple size={48} className="mx-auto mb-4 opacity-50" />
+                    <p className="nh-text">You haven't saved any meal plan yet</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {/* Right column - Stats & Info */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">

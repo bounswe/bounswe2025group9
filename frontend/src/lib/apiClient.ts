@@ -95,6 +95,7 @@ export interface ForumPost {
   author: {
     id: number;
     username: string;
+    profile_image?: string | null;
   };
   created_at: string;
   updated_at: string;
@@ -115,6 +116,7 @@ export interface ForumComment {
   author: {
     id: number;
     username: string;
+    profile_image?: string | null;
   };
   body: string;
   created_at: string;
@@ -167,6 +169,37 @@ export interface CreateRecipeRequest {
     amount: number;
   }[];
 }
+
+// Meal Planner types
+export interface MealPlan {
+  id: number;
+  name: string;
+  total_calories: number;
+  total_protein: number;
+  total_fat: number;
+  total_carbohydrates: number;
+  meals: {
+    food_id: number;
+    meal_type: string;
+    serving_size: number;
+  }[];
+  meals_details: {
+    food: Food;
+    serving_size: number;
+    meal_type: string;
+    calculated_nutrition: {
+      calories: number;
+      protein: number;
+      fat: number;
+      carbohydrates: number;
+    };
+  }[];
+  created_at: string;
+  updated_at: string;
+  is_active: boolean;
+};
+
+
 
 // api base urls
 const BACKEND_API_URL = import.meta.env.VITE_API_BASE_URL;
@@ -494,6 +527,11 @@ export const apiClient = {
             console.log('[API] Mapping like_count to likes for post', postObj.id);
             postObj.likes = postObj.like_count;
           }
+          // Ensure likes is always a non-negative number
+          if (typeof postObj.likes !== 'number' || postObj.likes < 0) {
+            console.log('[API] Ensuring non-negative like count for post', postObj.id, 'current:', postObj.likes);
+            postObj.likes = Math.max(0, postObj.likes || 0);
+          }
           return post;
         });
       }
@@ -520,6 +558,11 @@ export const apiClient = {
       if ('like_count' in responseObj && !('likes' in responseObj)) {
         console.log('[API] Mapping like_count to likes for consistency');
         responseObj.likes = responseObj.like_count;
+      }
+      // Ensure likes is always a non-negative number
+      if (typeof responseObj.likes !== 'number' || responseObj.likes < 0) {
+        console.log('[API] Ensuring non-negative like count for post detail', postId, 'current:', responseObj.likes);
+        responseObj.likes = Math.max(0, responseObj.likes || 0);
       }
       
       return response;
@@ -702,4 +745,75 @@ export const apiClient = {
       method: "PATCH",
       body: JSON.stringify(updateData)
     }, true),
+
+  // Meal planner endpoints
+  createMealPlan: (mealPlanData: {
+    name: string;
+    meals: {
+      food_id: number;
+      serving_size: number;
+      meal_type: string;
+    }[];
+  }) => {
+    console.log(`[API] Creating meal plan with name: ${mealPlanData.name}`);
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    return fetchJson<MealPlan>(`/meal-planner/`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(mealPlanData)
+    }, true).then(response => {
+      console.log(`[API] Meal plan created:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error creating meal plan:`, error);
+      throw error;
+    });
+  },
+
+  getMealPlans: () => {
+    console.log(`[API] Fetching meal plans`);
+    return fetchJson<PaginatedResponse<MealPlan>>(`/meal-planner/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received meal plans:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error fetching meal plans:`, error);
+      throw error;
+    });
+  },
+
+  setCurrentMealPlan: (mealPlanId: number) => {
+    console.log(`[API] Setting current meal plan: ${mealPlanId}`);
+    const headers: HeadersInit = {};
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+    return fetchJson<any>(`/meal-planner/${mealPlanId}/set-current/`, {
+      method: "POST",
+      headers,
+    }, true).then(response => {
+      console.log(`[API] Meal plan set as current:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error setting current meal plan:`, error);
+      throw error;
+    });
+  },
+
+  getCurrentMealPlan: () => {
+    console.log(`[API] Fetching current meal plan`);
+    return fetchJson<MealPlan>(`/meal-planner/current/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received current meal plan:`, response);
+      return response;
+    }).catch(error => {
+      console.error(`[API] Error fetching current meal plan:`, error);
+      throw error;
+    });
+  },
 };

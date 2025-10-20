@@ -4,7 +4,6 @@ import { BrowserRouter } from 'react-router-dom'
 import Forum from '../../../pages/forum/Forum'
 import { apiClient, ForumPost } from '../../../lib/apiClient'
 import { useAuth } from '../../../context/AuthContext'
-import * as postCache from '../../../lib/postCache'
 
 // Define a proper user type to match UserResponse
 interface UserResponse {
@@ -34,15 +33,6 @@ vi.mock('../../../context/AuthContext', () => ({
   useAuth: vi.fn()
 }))
 
-// Mock the post cache
-vi.mock('../../../lib/postCache', () => ({
-  getPostFromCache: vi.fn(),
-  setMultiplePostsInCache: vi.fn(),
-  updatePostLikeStatusInCache: vi.fn(),
-  getAllPostsFromCache: vi.fn().mockReturnValue([]),
-  clearPostCache: vi.fn()
-}))
-
 // Mock useNavigate and useLocation
 vi.mock('react-router-dom', async () => {
   const actual = await vi.importActual('react-router-dom')
@@ -63,7 +53,8 @@ const mockPosts: ForumPost[] = [
     body: 'This is the content of test post 1',
     author: {
       id: 1,
-      username: 'testuser1'
+      username: 'testuser1',
+      profile_image: null
     },
     created_at: '2023-01-01T12:00:00Z',
     updated_at: '2023-01-01T12:00:00Z',
@@ -79,7 +70,8 @@ const mockPosts: ForumPost[] = [
     body: 'This is the content of test post 2',
     author: {
       id: 2,
-      username: 'testuser2'
+      username: 'testuser2',
+      profile_image: null
     },
     created_at: '2023-01-02T12:00:00Z',
     updated_at: '2023-01-02T12:00:00Z',
@@ -124,9 +116,6 @@ describe('Forum Component', () => {
       getAccessToken: vi.fn(),
       fetchUserProfile: vi.fn()
     })
-    
-    // Default mock implementation for getAllPostsFromCache
-    vi.mocked(postCache.getAllPostsFromCache).mockReturnValue([])
     
     // Default mock implementation for getForumPosts
     vi.mocked(apiClient.getForumPosts).mockResolvedValue({

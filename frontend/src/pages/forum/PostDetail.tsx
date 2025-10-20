@@ -3,8 +3,9 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, CookingPot, Scales, Fire } from '@phosphor-icons/react'
 import { apiClient, Recipe } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
-// import shared cache functions
-import { getPostFromCache, setPostInCache, updatePostLikeStatusInCache } from '../../lib/postCache';
+import ProfileImage from '../../components/ProfileImage'
+// import cross-tab notification system
+import { notifyLikeChange } from '../../lib/likeNotifications';
 
 // local storage key for liked posts - reuse same key
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -17,7 +18,11 @@ import { ForumPost } from '../../lib/apiClient';
 interface Comment {
     id: number;
     post: number;
-    author: string;
+    author: {
+        id: number;
+        username: string;
+        profile_image?: string | null;
+    };
     body: string;
     created_at: string;
     updated_at?: string;
@@ -158,9 +163,7 @@ const PostDetail = () => {
                 const transformedComments = response.results.map(comment => ({
                     id: comment.id,
                     post: comment.post,
-                    author: typeof comment.author === 'string' 
-                        ? comment.author 
-                        : comment.author.username,
+                    author: comment.author,
                     body: comment.body,
                     created_at: comment.created_at,
                     updated_at: comment.updated_at
@@ -205,15 +208,6 @@ const PostDetail = () => {
             return;
         }
 
-        // 1. Try fetching from cache first
-        const cachedPost = getPostFromCache(postIdNum, username);
-        if (cachedPost) {
-            console.log(`[PostDetail] Cache hit for post ID: ${postIdNum}`);
-            setPost(cachedPost);
-            setLoading(false);
-            return; // exit if cache hit is successful
-        }
-
         console.log(`[PostDetail] Fetching post with ID: ${postIdNum}`);
         setLoading(true);
         try {
@@ -228,8 +222,8 @@ const PostDetail = () => {
                     ...postData,
                     // Ensure likes field exists, map from like_count if necessary (apiClient might already handle this)
                     likes: (postData as any).like_count ?? postData.likes ?? 0,
-                    // ensure author is object
-                    author: typeof postData.author === 'string' ? { id: 0, username: postData.author } : postData.author, // Handle potential string author if transformation failed earlier
+                    // author is now an object with id and username from the backend
+                    author: postData.author,
                 };
 
                 console.log('[PostDetail] Using ForumPost data structure:', fetchedPost);
@@ -260,8 +254,6 @@ const PostDetail = () => {
                 
                 // Set the post state
                 setPost(fetchedPost);
-                // Add/update the post in the shared cache
-                setPostInCache(fetchedPost, username);
             } else {
                 console.log('[PostDetail] Post not found, redirecting to forum');
                 // Post not found, redirect to forum
@@ -286,7 +278,8 @@ const PostDetail = () => {
             
             // Optimistic update for better UX
             const newLikedState = !post.liked;
-            const newLikeCount = post.likes + (newLikedState ? 1 : -1);
+            const currentLikeCount = Math.max(0, post.likes || 0); // Ensure non-negative
+            const newLikeCount = Math.max(0, currentLikeCount + (newLikedState ? 1 : -1)); // Ensure non-negative
             
             // Update local storage first
             updateLikedPostsStorage(post.id, newLikedState);
@@ -298,38 +291,29 @@ const PostDetail = () => {
                 likes: newLikeCount
             });
             
-            // Update the shared cache
-            updatePostLikeStatusInCache(post.id, newLikedState, newLikeCount, username);
-            
             // Call API to toggle like status
             const response = await apiClient.toggleLikePost(post.id);
             console.log(`[PostDetail] Toggle like response:`, response);
 
-            // If the server response doesn't match our optimistic update, correct it
+            // Get actual values from server response
             const responseObj = response as any;
             const serverLiked = responseObj.liked;
             const serverLikeCount = responseObj.like_count;
 
-            let finalLiked = newLikedState;
-            let finalLikeCount = newLikeCount;
+            // ALWAYS use server values as the source of truth
+            const finalLiked = serverLiked !== undefined ? serverLiked : newLikedState;
+            const finalLikeCount = serverLikeCount !== undefined ? serverLikeCount : newLikeCount;
 
-            if (serverLiked !== undefined && serverLiked !== newLikedState) {
-                console.warn(`[PostDetail] Server liked state (${serverLiked}) differs from local state (${newLikedState})`);
-                finalLiked = serverLiked;
-                // Re-update local storage if server differs
-                updateLikedPostsStorage(post.id, finalLiked);
-            }
+            console.log(`[PostDetail] Server response - liked: ${finalLiked}, count: ${finalLikeCount}`);
+
+            // Update local storage with server values
+            updateLikedPostsStorage(post.id, finalLiked);
             
-            if (serverLikeCount !== undefined && serverLikeCount !== newLikeCount) {
-                console.warn(`[PostDetail] Server like count (${serverLikeCount}) differs from optimistic count (${newLikeCount})`);
-                finalLikeCount = serverLikeCount;
-            }
+            // Update state with server values
+            setPost(prevPost => prevPost ? { ...prevPost, liked: finalLiked, likes: finalLikeCount } : null);
             
-            // Correct the state and cache if there was a mismatch
-            if (finalLiked !== newLikedState || finalLikeCount !== newLikeCount) {
-                setPost(prevPost => prevPost ? { ...prevPost, liked: finalLiked, likes: finalLikeCount } : null);
-                updatePostLikeStatusInCache(post.id, finalLiked, finalLikeCount, username);
-            }
+            // Notify other tabs with ACTUAL server values
+            notifyLikeChange(post.id, finalLiked, finalLikeCount, 'post');
             
         } catch (error) {
             console.error('[PostDetail] Error toggling post like:', error);
@@ -348,8 +332,6 @@ const PostDetail = () => {
                 
                 // Revert local storage too
                 updateLikedPostsStorage(post.id, revertedLikedState);
-                // Revert cache
-                updatePostLikeStatusInCache(post.id, revertedLikedState, revertLikeCount, username);
             }
         }
     };
@@ -371,9 +353,7 @@ const PostDetail = () => {
             const transformedComment = {
                 id: newComment.id,
                 post: newComment.post,
-                author: typeof newComment.author === 'string'
-                    ? newComment.author
-                    : newComment.author.username,
+                author: newComment.author,
                 body: newComment.body,
                 created_at: newComment.created_at,
                 updated_at: newComment.updated_at
@@ -570,11 +550,16 @@ const PostDetail = () => {
                             
                             {/* Footer of the card with author and likes - Ensure styling is relative to the card padding */}
                             <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4 pb-4 px-4"> {/* Added padding here */}
-                                <span className="flex items-center gap-1">
-                                    <div className="flex items-center justify-center">
+                                <span className="flex items-center gap-2">
+                                    <ProfileImage 
+                                        profileImage={post.author.profile_image}
+                                        username={post.author.username}
+                                        size="sm"
+                                    />
+                                    <div className="flex items-center gap-1">
                                         <User size={16} className="flex-shrink-0" />
+                                        Posted by: {post.author.username} • {formatDate(post.created_at)}
                                     </div>
-                                    Posted by: {post.author.username} • {formatDate(post.created_at)}
                                 </span>
                                 <button 
                                     onClick={handleLikeToggle}
@@ -624,14 +609,16 @@ const PostDetail = () => {
                                         <div key={comment.id} className="nh-card rounded-lg shadow-sm border border-gray-700">
                                             <div className="flex items-start">
                                                 <div className="flex-shrink-0 mr-3">
-                                                    <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
-                                                        <User size={18} weight="fill" className="text-gray-500" />
-                                                    </div>
+                                                    <ProfileImage 
+                                                        profileImage={comment.author.profile_image}
+                                                        username={comment.author.username}
+                                                        size="md"
+                                                    />
                                                 </div>
                                                 <div className="flex-grow">
                                                     <div className="flex items-center gap-2 mb-2">
                                                         <h4 className="font-semibold text-primary">
-                                                            {comment.author}
+                                                            {comment.author.username}
                                                         </h4>
                                                         <span className="text-gray-400">•</span>
                                                         <span className="text-xs text-gray-500">
@@ -758,12 +745,14 @@ const PostDetail = () => {
                                 <form onSubmit={handleCommentSubmit}>
                                     <div className="flex items-start gap-3 mb-4">
                                         <div className="flex-shrink-0">
-                                            <div className="w-10 h-10 rounded-full bg-primary bg-opacity-10 flex items-center justify-center">
-                                                <User size={18} weight="fill" className="text-primary" />
-                                            </div>
+                                            <ProfileImage 
+                                                profileImage={user?.profile_image}
+                                                username={username}
+                                                size="md"
+                                            />
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-primary mb-2">You</p>
+                                            <p className="font-semibold text-primary mb-2">{username || 'You'}</p>
                                             <textarea 
                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)] transition-all"
                                                 rows={3}

@@ -58,15 +58,16 @@ const Navbar = () => {
                             <>
                                 <Link
                                     to="/profile"
-                                    className="nh-button nh-button-primary flex items-center justify-center"
-                                    style={{ padding: '8px 12px' }}
+                                    className={user?.profile_image ? "rounded-full overflow-hidden" : "nh-button nh-button-primary flex items-center justify-center"}
+                                    style={user?.profile_image ? {} : { padding: '8px 12px' }}
                                     title="View Profile"
                                 >
                                     {user?.profile_image ? (
                                         <img
                                             src={user.profile_image}
                                             alt="Profile"
-                                            className="w-6 h-6 rounded-full object-cover border-2 border-white"
+                                            className="w-10 h-10 rounded-full object-cover"
+                                            style={{ aspectRatio: '1/1' }}
                                         />
                                     ) : (
                                         <div className="w-6 h-6 flex items-center justify-center">
@@ -146,7 +147,8 @@ const Navbar = () => {
                                         <img
                                             src={user.profile_image}
                                             alt="Profile"
-                                            className="w-6 h-6 rounded-full object-cover border-2 border-primary-500"
+                                            className="w-6 h-6 rounded-full object-cover"
+                                            style={{ aspectRatio: '1/1' }}
                                         />
                                     ) : (
                                         <div className="w-6 h-6 flex items-center justify-center">
