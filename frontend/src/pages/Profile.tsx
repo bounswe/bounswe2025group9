@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import ForumPostCard from '../components/ForumPostCard'
+import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
 import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
-import { apiClient, ForumPost, MealPlan, Recipe } from '../lib/apiClient'
+import { apiClient, ForumPost, MealPlan} from '../lib/apiClient'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -53,15 +54,14 @@ const REPORT_OPTIONS: ReportOption[] = [
 ]
 
 const Profile = () => {
-  const { user, fetchUserProfile } = useAuth()
-  const navigate = useNavigate()
-  
+  const { user, fetchUserProfile } = useAuth()  
   // State management
   const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans'>('overview')
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
-  const [likedRecipes, setLikedRecipes] = useState<Recipe[]>([])
+  const [likedRecipes, setLikedRecipes] = useState<ForumPost[]>([])
+  const [likedPostsMap, setLikedPostsMap] = useState<{[key: number]: boolean}>({})
   const [professionTags, setProfessionTags] = useState<ProfessionTag[]>([])
   const [selectedProfession, setSelectedProfession] = useState('')
   const [certificateFile, setCertificateFile] = useState<File | null>(null)
@@ -84,6 +84,31 @@ const Profile = () => {
   useEffect(() => {
     loadUserData()
   }, [user])
+  
+  // Set up cross-tab like listener
+  useEffect(() => {
+    const unsubscribe = subscribeLikeChanges((event) => {
+      console.log('[Profile] Received like change notification from another tab:', event)
+      
+      // Refetch liked posts and recipes when a like event occurs
+      if (event.type === 'post') {
+        loadLikedPosts()
+        loadLikedRecipes()
+      }
+    })
+    
+    // Also poll every 5 seconds to sync changes from other devices and refresh like counts
+    const intervalId = window.setInterval(() => {
+      // Refresh liked posts and recipes to get updated like counts
+      loadLikedPosts()
+      loadLikedRecipes()
+    }, 5000)
+
+    return () => {
+      unsubscribe()
+      clearInterval(intervalId)
+    }
+  }, [])
 
   const loadUserData = async () => {
     if (!user) return
@@ -129,21 +154,180 @@ const Profile = () => {
 
   const loadLikedPosts = async () => {
     try {
-      const response = await apiClient.getLikedPosts()
-      setLikedPosts(response.results || [])
+      // Get liked post IDs from the API
+      const likedResponse = await apiClient.getLikedPosts()
+      const likedPostIds = (likedResponse.results || []).map(post => post.id)
+      
+      console.log('[Profile] Liked post IDs:', likedPostIds)
+      
+      if (likedPostIds.length === 0) {
+        setLikedPosts([])
+        setLikedPostsMap({})
+        return
+      }
+      
+      // Fetch all posts to get complete data including like counts
+      const allPostsResponse = await apiClient.getForumPosts({
+        ordering: '-created_at',
+        page: 1,
+        page_size: 500
+      })
+      
+      console.log('[Profile] All posts fetched:', allPostsResponse.results.length)
+      
+      // Filter to only liked posts
+      const likedPostsWithData = allPostsResponse.results.filter(post => 
+        likedPostIds.includes(post.id)
+      )
+      
+      console.log('[Profile] Liked posts with data:', likedPostsWithData)
+      console.log('[Profile] First liked post like count:', likedPostsWithData[0]?.likes)
+      
+      setLikedPosts(likedPostsWithData)
+      
+      // Build a map of liked posts for easy lookup
+      const likedMap: {[key: number]: boolean} = {}
+      likedPostsWithData.forEach(post => {
+        likedMap[post.id] = true
+      })
+      setLikedPostsMap(likedMap)
     } catch (error) {
       console.error('Error loading liked posts:', error)
       setLikedPosts([])
+      setLikedPostsMap({})
     }
   }
 
   const loadLikedRecipes = async () => {
     try {
-      const response = await apiClient.getLikedRecipes()
-      setLikedRecipes(response.results || [])
+      // Get liked post IDs from the API
+      const likedResponse = await apiClient.getLikedPosts()
+      const likedPostIds = (likedResponse.results || []).map(post => post.id)
+      
+      console.log('[Profile] Liked post IDs for recipes:', likedPostIds)
+      
+      if (likedPostIds.length === 0) {
+        setLikedRecipes([])
+        return
+      }
+      
+      // Fetch all posts to get complete data including like counts
+      const allPostsResponse = await apiClient.getForumPosts({
+        ordering: '-created_at',
+        page: 1,
+        page_size: 500
+      })
+      
+      // Filter to only liked posts with Recipe tag
+      const recipePosts = allPostsResponse.results.filter(post => 
+        likedPostIds.includes(post.id) && 
+        post.tags.some(tag => tag.name === 'Recipe')
+      )
+      
+      console.log('[Profile] Liked recipe posts with data:', recipePosts)
+      console.log('[Profile] First recipe like count:', recipePosts[0]?.likes)
+      
+      // Store as posts since we're using ForumPostCard to render them
+      setLikedRecipes(recipePosts)
     } catch (error) {
       console.error('Error loading liked recipes:', error)
       setLikedRecipes([])
+    }
+  }
+  
+  // Handle like toggle for posts
+  const handleLikeToggle = async (postId: number) => {
+    try {
+      console.log(`[Profile] Toggling like for post ID: ${postId}`)
+      
+      const currentLiked = likedPostsMap[postId] || false
+      const newLiked = !currentLiked
+      const likeDelta = newLiked ? 1 : -1
+      
+      // Find the post in either likedPosts or likedRecipes
+      const currentPost = likedPosts.find(p => p.id === postId) || likedRecipes.find(r => r.id === postId)
+      
+      if (!currentPost) {
+        console.error('[Profile] Post not found in liked posts or recipes')
+        return
+      }
+      
+      const currentLikeCount = Math.max(0, currentPost.likes || 0)
+      const optimisticLikeCount = Math.max(0, currentLikeCount + likeDelta)
+      
+      // Optimistically update the UI
+      setLikedPostsMap(prev => ({ ...prev, [postId]: newLiked }))
+      
+      // Update the like count in both likedPosts and likedRecipes
+      setLikedPosts(prev => prev.map(post => 
+        post.id === postId 
+          ? { ...post, liked: newLiked, likes: optimisticLikeCount }
+          : post
+      ))
+      
+      setLikedRecipes(prev => prev.map(recipe => 
+        recipe.id === postId 
+          ? { ...recipe, liked: newLiked, likes: optimisticLikeCount }
+          : recipe
+      ))
+      
+      // Call the API
+      const response = await apiClient.toggleLikePost(postId)
+      console.log(`[Profile] Toggle like API response:`, response)
+      
+      // Notify other tabs
+      notifyLikeChange(postId, newLiked, 'post')
+      
+      // Get actual like count from server response
+      const responseObj = response as any
+      const serverLiked = responseObj.liked
+      const serverLikeCount = responseObj.like_count
+      
+      let finalLiked = newLiked
+      let finalLikeCount = optimisticLikeCount
+      
+      if (serverLiked !== undefined && serverLiked !== newLiked) {
+        console.warn(`[Profile] Server liked state (${serverLiked}) mismatch. Using server state.`)
+        finalLiked = serverLiked
+      }
+      
+      if (serverLikeCount !== undefined && serverLikeCount !== optimisticLikeCount) {
+        console.warn(`[Profile] Server like count (${serverLikeCount}) mismatch. Using server count.`)
+        finalLikeCount = serverLikeCount
+      }
+      
+      // Update with final values from server
+      setLikedPostsMap(prev => ({ ...prev, [postId]: finalLiked }))
+      
+      setLikedPosts(prev => {
+        if (!finalLiked) {
+          // Remove from liked posts if unliked
+          return prev.filter(post => post.id !== postId)
+        }
+        return prev.map(post => 
+          post.id === postId 
+            ? { ...post, liked: finalLiked, likes: finalLikeCount }
+            : post
+        )
+      })
+      
+      setLikedRecipes(prev => {
+        if (!finalLiked) {
+          // Remove from liked recipes if unliked
+          return prev.filter(recipe => recipe.id !== postId)
+        }
+        return prev.map(recipe => 
+          recipe.id === postId 
+            ? { ...recipe, liked: finalLiked, likes: finalLikeCount }
+            : recipe
+        )
+      })
+      
+    } catch (error) {
+      console.error('[Profile] Error toggling post like:', error)
+      // Revert on error by refetching
+      await loadLikedPosts()
+      await loadLikedRecipes()
     }
   }
 
@@ -692,24 +876,12 @@ const Profile = () => {
                 ) : (
                   <div className="space-y-4">
                     {likedPosts.map(post => (
-                      <div
+                      <ForumPostCard
                         key={post.id}
-                        className="nh-card cursor-pointer hover:shadow-lg transition-shadow"
-                        onClick={() => navigate(`/forum/post/${post.id}`)}
-                      >
-                        <h3 className="nh-subtitle">{post.title}</h3>
-                        <p className="nh-text mb-3 line-clamp-2">{post.body}</p>
-                        <div className="flex items-center justify-between text-sm text-gray-500">
-                          <span>by {post.author.username}</span>
-                          <div className="flex items-center gap-4">
-                            <span className="flex items-center gap-1">
-                              <Heart size={16} weight="fill" className="text-red-500" />
-                              {post.likes}
-                            </span>
-                            <span>{new Date(post.created_at).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      </div>
+                        post={post}
+                        isLiked={likedPostsMap[post.id] || false}
+                        onLikeToggle={handleLikeToggle}
+                      />
                     ))}
                   </div>
                 )}
@@ -728,31 +900,13 @@ const Profile = () => {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {likedRecipes.map(recipe => (
-                      <div key={recipe.id} className="nh-card">
-                        <h3 className="nh-subtitle mb-3">
-                          {recipe.post_title || `Recipe #${recipe.id}`}
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Calories</div>
-                            <div className="font-semibold">{recipe.total_calories.toFixed(0)}</div>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Protein</div>
-                            <div className="font-semibold">{recipe.total_protein.toFixed(1)}g</div>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Carbs</div>
-                            <div className="font-semibold">{recipe.total_carbohydrates.toFixed(1)}g</div>
-                          </div>
-                          <div className="bg-gray-50 dark:bg-gray-700 p-2 rounded">
-                            <div className="text-sm text-gray-500 dark:text-gray-400">Fat</div>
-                            <div className="font-semibold">{recipe.total_fat.toFixed(1)}g</div>
-                          </div>
-                        </div>
-                        <p className="text-sm text-gray-500">{recipe.ingredients.length} ingredients</p>
-                      </div>
+                    {likedRecipes.map((recipe) => (
+                      <ForumPostCard
+                        key={recipe.id}
+                        post={recipe}
+                        isLiked={likedPostsMap[recipe.id] || false}
+                        onLikeToggle={handleLikeToggle}
+                      />
                     ))}
                   </div>
                 )}

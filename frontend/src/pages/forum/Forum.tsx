@@ -1,12 +1,14 @@
 // forum page component
 import { useState, useEffect } from 'react'
-import { User, ThumbsUp, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Funnel, MagnifyingGlass } from '@phosphor-icons/react'
+import { PlusCircle, CaretLeft, CaretRight, Tag, X, Funnel, MagnifyingGlass } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
-import ProfileImage from '../../components/ProfileImage'
+import ForumPostCard from '../../components/ForumPostCard'
 // import shared cache functions
-import { getPostFromCache, setMultiplePostsInCache, updatePostLikeStatusInCache, getAllPostsFromCache, clearPostCache } from '../../lib/postCache';
+import { getPostFromCache, setMultiplePostsInCache, updatePostLikeStatusInCache, getAllPostsFromCache, clearPostCache } from '../../lib/postCache'
+// import cross-tab notification system
+import { notifyLikeChange, subscribeLikeChanges } from '../../lib/likeNotifications';
 
 // local storage key for liked posts (keep for direct localStorage access)
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -127,22 +129,75 @@ const Forum = () => {
         return {};
     };
 
-    // Track previous location to detect navigation from PostDetail
+    // Track previous location to detect navigation from PostDetail and sync liked posts from server
     useEffect(() => {
-        if (location.state?.refreshPosts) {
-            console.log('[Forum] Forcing refresh due to new post creation or external update.');
-            clearPostCache(); // Clear the cache to ensure fresh data
-            fetchAllPosts(true); // Force refresh
-            // Reset location state to prevent re-triggering
-            navigate(location.pathname, { replace: true, state: {} });
-        } else {
-            // Normal fetch or cache check
-            fetchAllPosts();
-        }
-        // Initial load of liked posts state
-        setLikedPosts(getUserLikedPostsFromStorage());
+        const init = async () => {
+            try {
+                // 1) Fetch liked posts from server and sync localStorage/state
+                const likedMapFromServer = await fetchAndSyncLikedPostsFromServer();
+                setLikedPosts(likedMapFromServer);
+            } catch (e) {
+                // fallback to local storage on error
+                setLikedPosts(getUserLikedPostsFromStorage());
+            }
 
-    }, [location, username, navigate]); // Add navigate dependency
+            // 2) Fetch posts (use cache when possible)
+            if (location.state?.refreshPosts) {
+                console.log('[Forum] Forcing refresh due to new post creation or external update.');
+                clearPostCache();
+                await fetchAllPosts(true);
+                navigate(location.pathname, { replace: true, state: {} });
+            } else {
+                await fetchAllPosts();
+            }
+        };
+        init();
+
+        // Subscribe to cross-tab like changes
+        const unsubscribe = subscribeLikeChanges((event) => {
+            if (event.type !== 'post') return;
+            // Update local liked map and allPosts in-place
+            setLikedPosts(prev => ({ ...prev, [event.postId]: event.isLiked }));
+            setAllPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked } : p));
+        });
+
+        // Poll server every 5 seconds to refresh posts and keep everything in sync
+        const intervalId = window.setInterval(async () => {
+            try {
+                // Fetch the latest posts from server
+                const params = {
+                    ordering: '-created_at',
+                    page: 1,
+                    page_size: 500
+                };
+                const response = await apiClient.getForumPosts(params);
+                
+                // Get current liked posts from server
+                const likedMapFromServer = await fetchAndSyncLikedPostsFromServer();
+                
+                // Merge server data with liked status
+                const updatedPosts = response.results.map(post => ({
+                    ...post,
+                    author: post.author || { id: 0, username: 'Anonymous' },
+                    liked: likedMapFromServer[post.id] !== undefined ? likedMapFromServer[post.id] : (post.liked || false),
+                }));
+                
+                // Update state
+                setAllPosts(updatedPosts);
+                setLikedPosts(likedMapFromServer);
+                
+                // Update cache
+                setMultiplePostsInCache(updatedPosts, username);
+            } catch {
+                // ignore polling errors silently
+            }
+        }, 5000);
+
+        return () => {
+            unsubscribe();
+            clearInterval(intervalId);
+        };
+    }, [location, username, navigate]);
     
     // Calculate total pages based on filtered posts count
     const totalPages = Math.ceil(totalCount / postsPerPage);
@@ -312,6 +367,34 @@ const Forum = () => {
             }
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Fetch liked posts from server and sync localStorage for current user
+    const fetchAndSyncLikedPostsFromServer = async (): Promise<{[key: number]: boolean}> => {
+        try {
+            const response = await apiClient.getLikedPosts();
+            const likedMap: { [key: number]: boolean } = {};
+            (response.results || []).forEach(post => {
+                likedMap[post.id] = true;
+            });
+
+            // Merge into per-user structure in localStorage
+            const stored = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
+            let allUsers: { [uname: string]: { [pid: number]: boolean } } = {};
+            if (stored) {
+                try { allUsers = JSON.parse(stored); } catch { allUsers = {}; }
+            }
+            const updatedAllUsers = { ...allUsers, [username]: likedMap };
+            localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(updatedAllUsers));
+
+            // Also update existing posts liked flag locally to reflect server truth
+            setAllPosts(prev => prev.map(p => ({ ...p, liked: likedMap[p.id] !== undefined ? likedMap[p.id] : p.liked })));
+
+            return likedMap;
+        } catch (error) {
+            console.error('[Forum] Failed to fetch liked posts from server:', error);
+            return getUserLikedPostsFromStorage();
         }
     };
 
@@ -493,8 +576,11 @@ const Forum = () => {
             // 4. Call the API to persist the change
             const response = await apiClient.toggleLikePost(postId);
             console.log(`[Forum] Toggle like API response:`, response);
+            
+            // 5. Notify other tabs about the like change
+            notifyLikeChange(postId, newLiked, 'post');
 
-            // 5. Verify API response and correct cache/state if needed
+            // 6. Verify API response and correct cache/state if needed
             const responseObj = response as any; // cast to access properties
             const serverLiked = responseObj.liked;
             const serverLikeCount = responseObj.like_count;
@@ -571,15 +657,7 @@ const Forum = () => {
         window.scrollTo(0, 0);
     };
 
-    // Format date for display
-    const formatDate = (dateString: string) => {
-        const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
-    };
+ 
 
     return (
         <div className="w-full py-12">
@@ -805,82 +883,12 @@ const Forum = () => {
                         ) : (
                             <div className="space-y-6">
                                 {getCurrentPosts().map((post) => (
-                                    <div key={post.id} className="nh-card relative">
-                                        {/* Add clickable overlay that links to post detail */}
-                                        <Link 
-                                            to={`/forum/post/${post.id}`}
-                                            className="absolute inset-0 z-10"
-                                            aria-label={`View post: ${post.title}`}
-                                        />
-                                        
-                                        <div className="flex items-center mb-2">
-                                            <h3 className="nh-subtitle">{post.title}</h3>
-                                        </div>
-                                        
-                                        {/* Tags */}
-                                        {post.tags && post.tags.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mb-3">
-                                                {post.tags.map((tag) => {
-                                                    const tagStyle = getTagStyle(tag.name);
-                                                    return (
-                                                        <div 
-                                                            key={tag.id} 
-                                                            className="flex items-center px-2 py-1 rounded-md text-xs font-medium z-20 relative" 
-                                                            style={{ 
-                                                                backgroundColor: tagStyle.bg, 
-                                                                color: tagStyle.text 
-                                                            }}
-                                                        >
-                                                            <Tag size={12} className="mr-1" />
-                                                            {tag.name}
-                                                        </div>
-                                                    );
-                                                })}
-                                            </div>
-                                        )}
-                                        
-                                        <p className="nh-text mb-4">
-                                            {post.body.length > 150 
-                                                ? post.body.substring(0, 150) + '...' 
-                                                : post.body}
-                                        </p>
-                                        <div className="flex justify-between items-center text-sm text-gray-500">
-                                            <span className="flex items-center gap-2">
-                                                <ProfileImage 
-                                                    profileImage={post.author.profile_image}
-                                                    username={post.author.username}
-                                                    size="sm"
-                                                />
-                                                <div className="flex items-center gap-1">
-                                                    <User size={16} className="flex-shrink-0" />
-                                                    Posted by: {post.author.username} • {formatDate(post.created_at)}
-                                                </div>
-                                            </span>
-                                            <div className="flex items-center gap-4">
-                                                <Link 
-                                                    to={`/forum/post/${post.id}`}
-                                                    className="flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 relative z-20"
-                                                >
-                                                    <div className="flex items-center justify-center">
-                                                        <ChatDots size={16} weight="fill" className="flex-shrink-0" />
-                                                    </div>
-                                                    Comments
-                                                </Link>
-                                                <button 
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleLikeToggle(post.id);
-                                                    }}
-                                                    className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-700 ${likedPosts[post.id] ? 'text-primary' : ''} relative z-20`}
-                                                >
-                                                    <div className="flex items-center justify-center">
-                                                        <ThumbsUp size={16} weight={likedPosts[post.id] ? "fill" : "regular"} className="flex-shrink-0" />
-                                                    </div>
-                                                    Likes: {post.likes || 0}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                    <ForumPostCard
+                                        key={post.id}
+                                        post={post}
+                                        isLiked={likedPosts[post.id] || false}
+                                        onLikeToggle={handleLikeToggle}
+                                    />
                                 ))}
                             </div>
                         )}
