@@ -63,7 +63,8 @@ const mockPosts: ForumPost[] = [
     body: 'This is the content of test post 1',
     author: {
       id: 1,
-      username: 'testuser1'
+      username: 'testuser1',
+      profile_image: null
     },
     created_at: '2023-01-01T12:00:00Z',
     updated_at: '2023-01-01T12:00:00Z',
@@ -79,7 +80,8 @@ const mockPosts: ForumPost[] = [
     body: 'This is the content of test post 2',
     author: {
       id: 2,
-      username: 'testuser2'
+      username: 'testuser2',
+      profile_image: null
     },
     created_at: '2023-01-02T12:00:00Z',
     updated_at: '2023-01-02T12:00:00Z',

@@ -4,6 +4,7 @@ import { User, ThumbsUp, PlusCircle, CaretLeft, CaretRight, ChatDots, Tag, X, Fu
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+import ProfileImage from '../../components/ProfileImage'
 // import shared cache functions
 import { getPostFromCache, setMultiplePostsInCache, updatePostLikeStatusInCache, getAllPostsFromCache, clearPostCache } from '../../lib/postCache';
 
@@ -257,17 +258,10 @@ const Forum = () => {
             const userLikedPosts = getUserLikedPostsFromStorage();
 
             const fetchedPosts = response.results.map(post => {
-                // Normalize the author field to ensure it's an object with an id and username
-                let normalizedAuthor = post.author;
-                if (typeof post.author === 'string') {
-                    normalizedAuthor = { id: 0, username: post.author };
-                } else if (!post.author || !post.author.username) {
-                    normalizedAuthor = { id: 0, username: 'Anonymous' };
-                }
-                
                 return {
                     ...post,
-                    author: normalizedAuthor,
+                    // author is now an object with id and username from the backend
+                    author: post.author || { id: 0, username: 'Anonymous' },
                     liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
                 };
             });
@@ -282,17 +276,10 @@ const Forum = () => {
                 try {
                     const nextPageResponse = await apiClient.getForumPosts({ ...params, page: currentPageNum });
                     const nextPagePosts = nextPageResponse.results.map(post => {
-                        // Normalize the author field to ensure it's an object with an id and username
-                        let normalizedAuthor = post.author;
-                        if (typeof post.author === 'string') {
-                            normalizedAuthor = { id: 0, username: post.author };
-                        } else if (!post.author || !post.author.username) {
-                            normalizedAuthor = { id: 0, username: 'Anonymous' };
-                        }
-                        
                         return {
                             ...post,
-                            author: normalizedAuthor,
+                            // author is now an object with id and username from the backend
+                            author: post.author || { id: 0, username: 'Anonymous' },
                             liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
                         };
                     });
@@ -400,17 +387,10 @@ const Forum = () => {
             const userLikedPosts = getUserLikedPostsFromStorage();
             
             const searchPosts = response.results.map(post => {
-                // Normalize the author field to ensure it's an object with an id and username
-                let normalizedAuthor = post.author;
-                if (typeof post.author === 'string') {
-                    normalizedAuthor = { id: 0, username: post.author };
-                } else if (!post.author || !post.author.username) {
-                    normalizedAuthor = { id: 0, username: 'Anonymous' };
-                }
-                
                 return {
                     ...post,
-                    author: normalizedAuthor,
+                    // author is now an object with id and username from the backend
+                    author: post.author || { id: 0, username: 'Anonymous' },
                     liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
                 };
             });
@@ -487,7 +467,8 @@ const Forum = () => {
             const currentLiked = likedPosts[postId] || false;
             const newLiked = !currentLiked;
             const likeDelta = newLiked ? 1 : -1;
-            const optimisticLikeCount = (currentPost.likes || 0) + likeDelta;
+            const currentLikeCount = Math.max(0, currentPost.likes || 0); // Ensure non-negative
+            const optimisticLikeCount = Math.max(0, currentLikeCount + likeDelta); // Ensure non-negative
 
             // 1. Update local storage first (our source of truth for liked status)
             const updatedUserLikedPosts = updateSinglePostLikeInStorage(postId, newLiked);
@@ -563,7 +544,7 @@ const Forum = () => {
                 const revertedAllPosts = allPosts.map(post => {
                     if (post.id === postId) {
                         // find the original likes count before the optimistic update attempt
-                        const originalLikes = (post.likes || 0) + (originalLiked ? 1 : -1);
+                        const originalLikes = Math.max(0, (post.likes || 0) + (originalLiked ? 1 : -1));
                         return { ...post, liked: revertedLikedStatus, likes: originalLikes };
                     }
                     return post;
@@ -864,13 +845,16 @@ const Forum = () => {
                                                 : post.body}
                                         </p>
                                         <div className="flex justify-between items-center text-sm text-gray-500">
-                                            <span className="flex items-center gap-1">
-                                                <div className="flex items-center justify-center">
+                                            <span className="flex items-center gap-2">
+                                                <ProfileImage 
+                                                    profileImage={post.author.profile_image}
+                                                    username={post.author.username}
+                                                    size="sm"
+                                                />
+                                                <div className="flex items-center gap-1">
                                                     <User size={16} className="flex-shrink-0" />
+                                                    Posted by: {post.author.username} • {formatDate(post.created_at)}
                                                 </div>
-                                                Posted by: {typeof post.author === 'string' 
-                                                    ? post.author 
-                                                    : post.author?.username || 'Anonymous'} • {formatDate(post.created_at)}
                                             </span>
                                             <div className="flex items-center gap-4">
                                                 <Link 
