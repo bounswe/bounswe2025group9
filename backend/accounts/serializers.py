@@ -57,7 +57,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 # In Model-API interactions we need to convert our Python objects into JSON data.
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
-    tags = TagInputSerializer(many=True, required=False)
+    tags = TagOutputSerializer(many=True, required=False)
     allergens = AllergenInputSerializer(many=True, required=False)
 
     class Meta:
