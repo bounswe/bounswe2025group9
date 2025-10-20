@@ -3,16 +3,17 @@ import { Food } from '../../lib/apiClient';
 import FoodDetail from '../foods/FoodDetail';
 import FoodSelector from '../../components/FoodSelector';
 import { PencilSimple } from '@phosphor-icons/react';
-import { MockFoods, Chicken, Falafel, Pork } from './MockFoods';
+import { MockFoods, Goat, Brocolli, Pork } from './MockFoods';
+import {apiClient} from '../../lib/apiClient';
 
 interface weeklyMealPlan {
     [key: string]: [Food, Food, Food];
 }
 
 let MealPlans : { [key:string] : weeklyMealPlan} = {
-    'halal' : {monday: [Falafel, Chicken, Falafel], tuesday: [Chicken, Falafel, Chicken], wednesday: [Falafel, Chicken, Falafel], thursday: [Chicken, Falafel, Chicken], friday: [Falafel, Chicken, Falafel], saturday: [Chicken, Falafel, Chicken], sunday: [Falafel, Chicken, Falafel]},
-    'vegan' : {monday: [Falafel, Falafel, Falafel], tuesday: [Falafel, Falafel, Falafel], wednesday: [Falafel, Falafel, Falafel], thursday: [Falafel, Falafel, Falafel], friday: [Falafel, Falafel, Falafel], saturday: [Falafel, Falafel, Falafel], sunday: [Falafel, Falafel, Falafel]},
-    'high-protein' : {monday: [Chicken, Pork, Chicken], tuesday: [Pork, Chicken, Pork], wednesday: [Chicken, Pork, Chicken], thursday: [Pork, Chicken, Pork], friday: [Chicken, Pork, Chicken], saturday: [Pork, Chicken, Pork], sunday: [Chicken, Pork, Chicken]},
+    'halal' : {monday: [Brocolli, Goat, Brocolli], tuesday: [Goat, Brocolli, Goat], wednesday: [Brocolli, Goat, Brocolli], thursday: [Goat, Brocolli, Goat], friday: [Brocolli, Goat, Brocolli], saturday: [Goat, Brocolli, Goat], sunday: [Brocolli, Goat, Brocolli]},
+    'vegan' : {monday: [Brocolli, Brocolli, Brocolli], tuesday: [Brocolli, Brocolli, Brocolli], wednesday: [Brocolli, Brocolli, Brocolli], thursday: [Brocolli, Brocolli, Brocolli], friday: [Brocolli, Brocolli, Brocolli], saturday: [Brocolli, Brocolli, Brocolli], sunday: [Brocolli, Brocolli, Brocolli]},
+    'high-protein' : {monday: [Goat, Pork, Goat], tuesday: [Pork, Goat, Pork], wednesday: [Goat, Pork, Goat], thursday: [Pork, Goat, Pork], friday: [Goat, Pork, Goat], saturday: [Pork, Goat, Pork], sunday: [Goat, Pork, Goat]},
 }
 
 
@@ -21,6 +22,7 @@ const MealPlanner = () => {
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [editingMeal, setEditingMeal] = useState<{day: string, index: number} | null>(null);
     const [localMealPlans, setLocalMealPlans] = useState(MealPlans);
+    const [successMessage, setSuccessMessage] = useState('');
 
     const handleDietaryPreferenceChange = (event: { target: { value: React.SetStateAction<string>; }; }) => {
         setDietaryPreference(event.target.value);
@@ -36,8 +38,47 @@ const MealPlanner = () => {
     };
 
     const handleSaveMealPlan = () => {
-        // TODO: Implement save functionality
-        console.log('Saving meal plan:', localMealPlans[dietaryPreference]);
+        // Build meal plan data from localMealPlans
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
+        const weeklyPlan = localMealPlans[dietaryPreference];
+        const meals: { food_id: number; serving_size: number; meal_type: string }[] = [];
+        for (const day of days) {
+            const dayMeals = weeklyPlan[day as keyof typeof weeklyPlan];
+            dayMeals.forEach((food, index) => {
+                meals.push({
+                    food_id: food.id,
+                    serving_size: 1, // assuming serving size is 1 for all meals
+                    meal_type: mealTypes[index].toLowerCase()
+                });
+            });
+        }
+        const mealPlanData = {
+            name: `${dietaryPreference} meal plan`,
+            meals
+        };
+
+        apiClient.createMealPlan(mealPlanData)
+            .then(() => {
+                return apiClient.getMealPlans();
+            })
+            .then(response => {
+                const plans = response.results;
+                const newPlan = plans.find(plan => plan.name === mealPlanData.name);
+                if (!newPlan) {
+                    throw new Error("Newly created meal plan not found");
+                }
+                return apiClient.setCurrentMealPlan(newPlan.id);
+            })
+            .then(setCurrentResponse => {
+                console.log('Meal plan set as current:', setCurrentResponse);
+                setSuccessMessage('Meal plan saved successfully!');
+                // Clear success message after 3 seconds
+                setTimeout(() => setSuccessMessage(''), 3000);
+            })
+            .catch(err => {
+                console.error('Error saving meal plan:', err);
+            });
     };
 
     const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
@@ -52,6 +93,20 @@ const MealPlanner = () => {
                         Choose your time period and dietary preferences to start your nutritious journey.
                     </p>
                 </div>
+
+                {/* Display success message if present */}
+                {successMessage && (
+                    <div 
+                        className="px-4 py-3 rounded-md mb-6 flex items-start gap-2 border"
+                        style={{
+                            backgroundColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.1)', /* fallback to green-500 rgb */
+                            borderColor: 'rgba(var(--rgb-color-success, 34, 197, 94), 0.3)',
+                            color: 'var(--color-success)'
+                        }}
+                    >
+                        <span>{successMessage}</span>
+                    </div>
+                )}
 
                 <div className="flex flex-col md:flex-row gap-8">
                     <div className="w-full md:w-2/3">

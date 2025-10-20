@@ -1,8 +1,8 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X } from '@phosphor-icons/react'
-import { apiClient, ForumPost, Recipe } from '../lib/apiClient'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple } from '@phosphor-icons/react'
+import { apiClient, ForumPost, MealPlan, Recipe } from '../lib/apiClient'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -57,7 +57,7 @@ const Profile = () => {
   const navigate = useNavigate()
   
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans'>('overview')
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
@@ -75,6 +75,10 @@ const Profile = () => {
   const [reportUserId, setReportUserId] = useState('')
   const [reportReason, setReportReason] = useState('')
   const [reportDescription, setReportDescription] = useState('')
+
+  // States for saved meal plans
+  // const [savedMealPlans, setSavedMealPlans] = useState<MealPlan[]>([])
+  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan|null>()
 
   // Load user data on mount
   useEffect(() => {
@@ -142,6 +146,24 @@ const Profile = () => {
       setLikedRecipes([])
     }
   }
+
+  // New function: load saved meal plans
+  const loadCurrentMealPlan = async () => {
+    try {
+      const response = await apiClient.getCurrentMealPlan()
+      setCurrentMealPlan(response || [])
+    } catch (error) {
+      console.error('Error loading saved meal plans:', error)
+      setCurrentMealPlan(null)
+    }
+  }
+  
+  // Fetch saved meal plans when 'mealPlans' tab is activated
+  useEffect(() => {
+    if (activeTab === 'mealPlans') {
+      loadCurrentMealPlan()
+    }
+  }, [activeTab])
 
   const showSuccess = (message: string) => {
     setSuccessMessage(message)
@@ -458,6 +480,23 @@ const Profile = () => {
                 >
                   <Warning size={18} weight="fill" />
                   <span className="flex-grow text-center">Report User</span>
+                </button>
+
+                {/* New button for Saved Meal Plans */}
+                <button
+                  onClick={() => setActiveTab('mealPlans')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'mealPlans' 
+                      ? 'var(--forum-default-active-bg)' 
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'mealPlans' 
+                      ? 'var(--forum-default-active-text)' 
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <BookmarkSimple size={18} weight="fill" />
+                  <span className="flex-grow text-center">Saved Meal Plans</span>
                 </button>
               </div>
             </div>
@@ -880,8 +919,52 @@ const Profile = () => {
                 </div>
               </div>
             )}
-          </div>
 
+            {/* Saved Meal Plans Tab */}
+            {activeTab === 'mealPlans' && (
+              <div className="space-y-6">
+                <h2 className="nh-subtitle">
+                  {currentMealPlan ? currentMealPlan.name : 'Saved Meal Plan'}
+                </h2>
+                {currentMealPlan ? (
+                  <div className="space-y-4">
+                    {(() => {
+                      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+                      // Assume that currentMealPlan.meals_details has 21 items ordered as Monday-Breakfast, Monday-Lunch, Monday-Dinner, Tuesday-Breakfast, etc.
+                      const details = currentMealPlan.meals_details || [];
+                      return days.map((day, index) => {
+                        const start = index * 3;
+                        const dayMeals = details.slice(start, start + 3);
+                        return (
+                          <div key={day} className="nh-card">
+                            <h3 className="text-lg font-semibold mb-4">{day}</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                              {dayMeals.map((meal, i) => (
+                                <div key={`${day}-${i}`} className="bg-gray-50 rounded-md p-4 border border-gray-100">
+                                  <div className="text-sm font-medium text-gray-500 mb-2">
+                                    {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
+                                  </div>
+                                  <div className="text-sm text-gray-900">{meal.food.name}</div>
+                                  <div className="text-xs text-gray-600 mt-1">
+                                    Calories: {meal.calculated_nutrition.calories}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      });
+                    })()}
+                  </div>
+                ) : (
+                  <div className="nh-card text-center py-12">
+                    <BookmarkSimple size={48} className="mx-auto mb-4 opacity-50" />
+                    <p className="nh-text">You haven't saved any meal plan yet</p>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
           {/* Right column - Stats & Info */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">
