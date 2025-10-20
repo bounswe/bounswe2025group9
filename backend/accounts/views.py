@@ -101,6 +101,27 @@ class UserProfileView(APIView):
         return Response(serializer.data)
 
 
+class PublicUserProfileView(APIView):
+    """
+    GET /users/@{username}/
+    Fetch a user's public profile information by username.
+    Authentication is optional - works for both authenticated and anonymous users.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
+
+
 class LogoutView(APIView):
     """
     POST /users/token/logout/
