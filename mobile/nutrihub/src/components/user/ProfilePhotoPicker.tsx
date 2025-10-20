@@ -63,7 +63,7 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
       }
 
       const result = await ImagePicker.launchImageLibraryAsync({ 
-        mediaTypes: 'Images',
+        mediaTypes: ['images'],
         quality: 0.9,
         allowsEditing: true,
         aspect: [1, 1],
