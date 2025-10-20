@@ -318,8 +318,8 @@ let MixedSalad: Food = {
 };
 
 let Pork: Food = {
-  id: 101,
-  name: "Pork Tenderloin",
+  id: 56,
+  name: "Pork Chops",
   category: "Meat",
   servingSize: 100, // g
   caloriesPerServing: 143,
@@ -331,9 +331,9 @@ let Pork: Food = {
   nutritionScore: 62,
   imageUrl: ""
 };
-let Falafel: Food = {
-  id: 102,
-  name: "Falafel",
+let Brocolli: Food = {
+  id: 192,
+  name: "Broccoli",
   category: "Legume/Plant-based",
   servingSize: 100, // g
   caloriesPerServing: 333,
@@ -345,9 +345,9 @@ let Falafel: Food = {
   nutritionScore: 74,
   imageUrl: ""
 };
-let Chicken: Food = {
-  id: 103,
-  name: "Chicken Breast",
+let Goat: Food = {
+  id: 211,
+  name: "Goat Meat",
   category: "Poultry",
   servingSize: 100, // g
   caloriesPerServing: 165,
@@ -383,10 +383,10 @@ let MockFoods: Food[] = [
   Tuna,
   MixedSalad,
   Pork,
-  Falafel,
-    Chicken
+  Brocolli,
+    Goat
 ];
 
-export { MockFoods, Falafel, Chicken, Pork };
+export { MockFoods, Brocolli, Goat, Pork };
 
 
