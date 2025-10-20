@@ -16,7 +16,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { ForumStackParamList } from '../../navigation/types';
-import { ForumTopic, User } from '../../types/types';
+import { ForumTopic, User, ProfessionTag } from '../../types/types';
 import ForumPost from '../../components/forum/ForumPost';
 import { forumService } from '../../services/api/forum.service';
 import ProfilePhotoPicker from '../../components/user/ProfilePhotoPicker';
@@ -61,12 +61,13 @@ const UserProfileScreen: React.FC = () => {
     setError(null);
     
     try {
-      // Attempt to fetch profile (flexible endpoint)
+      // Attempt to fetch profile using the new method
       let fetchedProfile: User | null = null;
       try {
-        fetchedProfile = await userService.getUserByUsername(username);
+        fetchedProfile = await userService.getOtherUserProfile(username);
         setUserProfile(fetchedProfile);
       } catch (e) {
+        console.error('Error fetching user profile:', e);
         fetchedProfile = null;
         setUserProfile(null);
       }
@@ -140,6 +141,21 @@ const UserProfileScreen: React.FC = () => {
     navigation.navigate('PostDetail', { postId: post.id });
   };
 
+  const handleReportUser = () => {
+    // Navigate to report user screen
+    navigation.navigate('ReportUser' as any, { 
+      userId: userProfile?.id || 0, 
+      username: username 
+    });
+  };
+
+  const handleViewDocument = (tag: any) => {
+    if (tag.certificate_url) {
+      // TODO: Open document in a modal or external viewer
+      Alert.alert('Document', `View document for ${tag.name}`);
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -190,7 +206,12 @@ const UserProfileScreen: React.FC = () => {
           <Icon name="arrow-left" size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, textStyles.heading3]}>Profile</Text>
-        <View style={styles.headerSpacer} />
+        {!isOwner && (
+          <TouchableOpacity onPress={handleReportUser} style={styles.reportButton}>
+            <Icon name="flag" size={20} color={theme.error} />
+          </TouchableOpacity>
+        )}
+        {isOwner && <View style={styles.headerSpacer} />}
       </View>
 
       <FlatList
@@ -245,25 +266,80 @@ const UserProfileScreen: React.FC = () => {
                 {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname))) && (
                   <Text style={[styles.usernameText, textStyles.caption]}>@{username}</Text>
                 )}
-                {userProfile?.profession && (
-                  <View style={[styles.professionBadge, { backgroundColor: `${theme.primary}20` }]}>
-                    <Icon name="certificate" size={14} color={theme.primary} style={styles.badgeIcon} />
-                    <Text style={[styles.badgeText, { color: theme.primary }]}>{userProfile.profession}</Text>
+                {/* Profession Tags with Privacy Controls */}
+                {userProfile?.tags && userProfile.tags.length > 0 && (
+                  <View style={styles.professionTagsContainer}>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
+                      Profession
+                    </Text>
+                    <View style={styles.professionTagsRow}>
+                      {userProfile.tags.map((tag) => (
+                        <TouchableOpacity 
+                          key={tag.id} 
+                          style={[styles.professionTag, { backgroundColor: theme.primary }]}
+                          onPress={() => handleViewDocument(tag)}
+                        >
+                          <Text style={[textStyles.caption, { color: '#fff' }]}>
+                            {tag.name}
+                          </Text>
+                          {tag.is_verified ? (
+                            <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
+                              <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
+                              <Text style={[textStyles.small, { color: '#fff' }]}>Verified</Text>
+                            </View>
+                          ) : (
+                            <View style={[styles.unverifiedBadge, { backgroundColor: theme.warning }]}>
+                              <Icon name="clock-outline" size={12} color="#fff" style={styles.tagIcon} />
+                              <Text style={[textStyles.small, { color: '#fff' }]}>Unverified</Text>
+                            </View>
+                          )}
+                          {tag.certificate_url && (
+                            <Icon name="file-document" size={12} color="#fff" style={styles.tagIcon} />
+                          )}
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
                 )}
                 {userProfile?.bio && (
                   <Text style={[styles.bioText, textStyles.body]}>{userProfile.bio}</Text>
                 )}
-                {userProfile?.badges && userProfile.badges.length > 0 && (
-                  <View style={styles.badgesRow}>
-                    {userProfile.badges.map((badge, index) => (
-                      <View key={index} style={[styles.badge, { backgroundColor: `${theme.primary}15` }]}>
-                        <Icon name="star" size={12} color={theme.primary} style={styles.badgeIcon} />
-                        <Text style={[styles.badgeText, { color: theme.primary }]}>{badge}</Text>
-                      </View>
-                    ))}
+                {/* Badges with Privacy Controls */}
+                {userProfile?.privacy_settings?.show_badges && userProfile?.badges && userProfile.badges.length > 0 && (
+                  <View style={styles.badgesContainer}>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
+                      Badges
+                    </Text>
+                    <View style={styles.badgesRow}>
+                      {userProfile.badges.map((badge, index) => (
+                        <View key={index} style={[styles.badge, { backgroundColor: theme.warning }]}>
+                          <Icon name="medal" size={12} color="#fff" style={styles.badgeIcon} />
+                          <Text style={[styles.badgeText, { color: '#fff' }]}>{badge}</Text>
+                        </View>
+                      ))}
+                    </View>
                   </View>
                 )}
+
+                {/* Contact Information with Privacy Controls */}
+                <View style={styles.contactInfo}>
+                  {userProfile?.privacy_settings?.show_location && userProfile?.location && (
+                    <View style={styles.contactItem}>
+                      <Icon name="map-marker" size={14} color={theme.textSecondary} />
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                        {userProfile.location}
+                      </Text>
+                    </View>
+                  )}
+                  {userProfile?.website && (
+                    <View style={styles.contactItem}>
+                      <Icon name="web" size={14} color={theme.textSecondary} />
+                      <Text style={[textStyles.caption, { color: theme.primary }]}>
+                        {userProfile.website}
+                      </Text>
+                    </View>
+                  )}
+                </View>
               </View>
             </View>
 
@@ -490,6 +566,56 @@ const styles = StyleSheet.create({
   },
   retryButtonText: {
     fontWeight: 'bold',
+  },
+  reportButton: {
+    padding: SPACING.sm,
+  },
+  professionTagsContainer: {
+    marginBottom: SPACING.sm,
+  },
+  professionTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  professionTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  tagIcon: {
+    marginLeft: SPACING.xs,
+  },
+  unverifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+  },
+  badgesContainer: {
+    marginBottom: SPACING.sm,
+  },
+  contactInfo: {
+    marginTop: SPACING.sm,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
   },
 });
 

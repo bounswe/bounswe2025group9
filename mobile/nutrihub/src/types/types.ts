@@ -66,6 +66,8 @@ export interface ForumTopic {
   content: string;
   author: string;
   authorId: number;
+  authorDisplayName?: string;
+  authorProfileImage?: string;
   commentsCount: number;
   likesCount: number;
   isLiked?: boolean;
@@ -83,6 +85,8 @@ export interface Comment {
   content: string;
   author: string;
   authorId: number;
+  authorDisplayName?: string;
+  authorProfileImage?: string;
   createdAt: Date;
   likesCount: number;
   isLiked?: boolean;
@@ -125,7 +129,7 @@ export interface User {
   name?: string;
   surname?: string;
   address?: string;
-  tags?: string[];
+  tags?: ProfessionTag[]; // Backend returns tags as ProfessionTag array
   allergens?: string[];
   createdAt?: Date;
   // Optional public profile fields
@@ -133,7 +137,113 @@ export interface User {
   profession?: string;
   bio?: string;
   badges?: string[];
+  // Enhanced profile fields
+  phone?: string;
+  location?: string;
+  website?: string;
+  social_links?: SocialLink[];
+  profession_tags?: ProfessionTag[]; // Keep for compatibility
+  custom_allergens?: string[];
+  privacy_settings?: PrivacySettings;
+  account_warnings?: AccountWarning[];
 }
+
+/**
+ * Social media links
+ */
+export interface SocialLink {
+  platform: string;
+  url: string;
+}
+
+/**
+ * Profession tag with verification status
+ */
+export interface ProfessionTag {
+  id: number;
+  name: string;
+  is_verified: boolean;
+  certificate_url?: string;
+  certificate_name?: string;
+  created_at: Date;
+  verified_at?: Date;
+  verified_by?: string;
+}
+
+/**
+ * Privacy settings for profile visibility
+ */
+export interface PrivacySettings {
+  show_email: boolean;
+  show_phone: boolean;
+  show_location: boolean;
+  show_profession_tags: boolean;
+  show_recipes: boolean;
+  show_posts: boolean;
+  show_badges: boolean;
+}
+
+/**
+ * Account warnings and disciplinary actions
+ */
+export interface AccountWarning {
+  id: number;
+  type: 'warning' | 'post_removal' | 'ban' | 'suspension';
+  reason: string;
+  description: string;
+  issued_at: Date;
+  expires_at?: Date;
+  issued_by: string;
+  is_active: boolean;
+}
+
+/**
+ * Report types for user reporting
+ */
+export type ReportType = 'invalid_certificate' | 'misleading_information';
+
+/**
+ * User report
+ */
+export interface UserReport {
+  id: number;
+  reported_user_id: number;
+  report_type: ReportType;
+  description: string;
+  created_at: Date;
+  status: 'pending' | 'reviewed' | 'resolved' | 'dismissed';
+  reviewed_by?: string;
+  reviewed_at?: Date;
+}
+
+/**
+ * Allergen types
+ */
+export interface Allergen {
+  id: string;
+  name: string;
+  category: 'common' | 'additive';
+  is_custom?: boolean;
+}
+
+
+/**
+ * Profession tag options
+ */
+export const PROFESSION_TAGS = [
+  'Dietitian',
+  'Nutritionist',
+  'Chef',
+  'Food Scientist',
+  'Health Coach',
+  'Personal Trainer',
+  'Doctor',
+  'Nurse',
+  'Pharmacist',
+  'Researcher',
+] as const;
+
+export type ProfessionTagType = typeof PROFESSION_TAGS[number];
 
 export interface AuthTokens {
   access: string;

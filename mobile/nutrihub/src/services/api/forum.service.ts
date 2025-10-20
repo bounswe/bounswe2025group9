@@ -33,11 +33,21 @@ export interface PaginatedResponse<T> {
 }
 
 // API response interfaces matching backend structure
+type ApiAuthor =
+  | string
+  | {
+      id?: number;
+      username?: string;
+      profile_image?: string | null;
+      name?: string | null;
+      surname?: string | null;
+    };
+
 export interface ApiForumTopic {
   id: number;
   title: string;
   body: string;
-  author: string;
+  author: ApiAuthor;
   tags: Array<{
     id: number;
     name: string;
@@ -53,7 +63,7 @@ export interface ApiComment {
   id: number;
   post: number;
   body: string;
-  author: string;
+  author: ApiAuthor;
   like_count?: number;
   is_liked?: boolean;
   created_at: string;
@@ -87,13 +97,44 @@ export interface CreateRecipeRequest {
   ingredients: RecipeIngredient[];
 }
 
+const normalizeAuthor = (author: ApiAuthor) => {
+  if (!author) {
+    return {
+      username: 'Unknown user',
+      displayName: 'Unknown user',
+      id: undefined as number | undefined,
+      profileImage: undefined as string | undefined,
+    };
+  }
+
+  if (typeof author === 'string') {
+    return {
+      username: author,
+      displayName: author,
+      id: undefined as number | undefined,
+      profileImage: undefined as string | undefined,
+    };
+  }
+
+  const nameParts = [author.name, author.surname].filter(Boolean) as string[];
+  const displayName = nameParts.length > 0 ? nameParts.join(' ') : author.username;
+
+  return {
+    username: author.username || displayName || 'Unknown user',
+    displayName: displayName || author.username || 'Unknown user',
+    id: author.id,
+    profileImage: author.profile_image ?? undefined,
+  };
+};
+
 // Convert API response to our ForumTopic type
 const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTopic> => {
   // Check if this post is in our locally stored liked posts
   try {
     const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
     const likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
-    
+    const normalizedAuthor = normalizeAuthor(apiTopic.author);
+
     // Override isLiked based on local storage if available
     const isLocallyLiked = likedPosts.includes(apiTopic.id);
     const isLiked = isLocallyLiked || apiTopic.is_liked || false;
@@ -102,8 +143,10 @@ const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTo
       id: apiTopic.id,
       title: apiTopic.title,
       content: apiTopic.body,
-      author: apiTopic.author,
-      authorId: 0, // Not provided in API
+      author: normalizedAuthor.username,
+      authorId: normalizedAuthor.id || 0, // Fallback when ID is not provided
+      authorProfileImage: normalizedAuthor.profileImage,
+      authorDisplayName: normalizedAuthor.displayName,
       commentsCount: apiTopic.comments_count || 0, // Use API value if available
       likesCount: apiTopic.like_count || 0, // Add fallback for like_count
       isLiked: isLiked,
@@ -114,12 +157,15 @@ const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTo
   } catch (error) {
     console.error('Error checking liked posts storage in mapApiTopicToForumTopic:', error);
     // Fall back to default behavior if AsyncStorage fails
+    const normalizedAuthor = normalizeAuthor(apiTopic.author);
     return {
       id: apiTopic.id,
       title: apiTopic.title,
       content: apiTopic.body,
-      author: apiTopic.author,
-      authorId: 0,
+      author: normalizedAuthor.username,
+      authorId: normalizedAuthor.id || 0,
+      authorProfileImage: normalizedAuthor.profileImage,
+      authorDisplayName: normalizedAuthor.displayName,
       commentsCount: apiTopic.comments_count || 0,
       likesCount: apiTopic.like_count || 0,
       isLiked: apiTopic.is_liked || false,
@@ -154,12 +200,15 @@ const updateLikedPostsStorage = async (postId: number, isLiked: boolean): Promis
 
 // Convert API response to our Comment type
 const mapApiCommentToComment = (apiComment: ApiComment): Comment => {
+  const normalizedAuthor = normalizeAuthor(apiComment.author);
   return {
     id: apiComment.id,
     postId: apiComment.post,
     content: apiComment.body,
-    author: apiComment.author,
-    authorId: 0, // Not provided in API
+    author: normalizedAuthor.username,
+    authorId: normalizedAuthor.id || 0, // Fallback when ID is not provided
+    authorProfileImage: normalizedAuthor.profileImage,
+    authorDisplayName: normalizedAuthor.displayName,
     createdAt: new Date(apiComment.created_at),
     likesCount: apiComment.like_count || 0, // Add fallback
     isLiked: apiComment.is_liked || false, // Add fallback
