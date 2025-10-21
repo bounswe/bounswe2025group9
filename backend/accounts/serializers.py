@@ -27,8 +27,20 @@ class ContactInfoSerializer(serializers.Serializer):
 
 class TagInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
-    name = serializers.CharField(max_length=255, required=False)
+    name = serializers.CharField(max_length=64, required=False)
     verified = serializers.BooleanField(default=False, required=False, read_only=True)
+
+    def validate_name(self, value):
+        """Validate tag name"""
+        if value is not None:
+            # Strip whitespace
+            value = value.strip()
+            # Check if empty after stripping
+            if not value:
+                raise serializers.ValidationError(
+                    "Tag name cannot be empty or whitespace only."
+                )
+        return value
 
 
 class TagOutputSerializer(serializers.ModelSerializer):

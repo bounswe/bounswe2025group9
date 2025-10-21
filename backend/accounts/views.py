@@ -248,7 +248,24 @@ class TagSetView(APIView):
                 except Tag.DoesNotExist:
                     continue
             elif "name" in tag_data:
-                tag, _ = Tag.objects.get_or_create(name=tag_data["name"])
+                # Validate and sanitize tag name
+                tag_name = tag_data["name"].strip()
+
+                # Check if name is empty after stripping
+                if not tag_name:
+                    return Response(
+                        {"detail": "Tag name cannot be empty."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Check max length (Tag model has max_length=64)
+                if len(tag_name) > 64:
+                    return Response(
+                        {"detail": "Tag name cannot exceed 64 characters."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                tag, _ = Tag.objects.get_or_create(name=tag_name)
             else:
                 continue  # skip invalid entries
 
