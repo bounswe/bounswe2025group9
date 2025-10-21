@@ -17,7 +17,6 @@ from .serializers import (
     AllergenOutputSerializer,
     TagInputSerializer,
     TagOutputSerializer,
-    CertificateSerializer,
 )
 from .services import register_user, list_users, update_user
 from .models import User, Allergen, Tag, UserTag

@@ -139,10 +139,3 @@ class PhotoSerializer(serializers.ModelSerializer):
         model = User
         fields = ["profile_image"]
         extra_kwargs = {"profile_image": {"required": True}}
-
-
-class CertificateSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Tag
-        fields = ["certificate"]
-        extra_kwargs = {"certificate": {"required": True}}
