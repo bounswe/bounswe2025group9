@@ -20,7 +20,7 @@ from .serializers import (
     CertificateSerializer,
 )
 from .services import register_user, list_users, update_user
-from .models import User, Allergen, Tag
+from .models import User, Allergen, Tag, UserTag
 from forum.models import Like, Post, Recipe
 from forum.serializers import PostSerializer, RecipeSerializer
 import os
@@ -249,20 +249,23 @@ class TagSetView(APIView):
                 except Tag.DoesNotExist:
                     continue
             elif "name" in tag_data:
-                tag, _ = Tag.objects.get_or_create(
-                    name=tag_data["name"],
-                    defaults={"verified": tag_data.get("verified", False)},
-                )
+                tag, _ = Tag.objects.get_or_create(name=tag_data["name"])
             else:
                 continue  # skip invalid entries
 
             tags.append(tag)
 
-        # Update user's tags
-        user.tags.set(tags)
+        # Clear existing UserTag relationships
+        UserTag.objects.filter(user=user).delete()
 
-        # Serialize response
-        response_serializer = TagOutputSerializer(tags, many=True)
+        # Create new UserTag relationships
+        for tag in tags:
+            UserTag.objects.create(user=user, tag=tag, verified=False)
+
+        # Serialize response with user context
+        response_serializer = TagOutputSerializer(
+            tags, many=True, context={"user": user}
+        )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -387,16 +390,17 @@ class CertificateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Ensure the tag belongs to the user
+        # Ensure the user has this tag
         try:
-            tag = user.tags.get(id=tag_id)
-        except Tag.DoesNotExist:
+            user_tag = UserTag.objects.get(user=user, tag__id=tag_id)
+            tag = user_tag.tag
+        except UserTag.DoesNotExist:
             return Response(
                 {"detail": "Tag not found or not associated with user."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # ✅ Validate file size (max 5 MB)
+        #  Validate file size (max 5 MB)
         max_size = 5 * 1024 * 1024  # 5 MB
         if certificate.size > max_size:
             return Response(
@@ -404,7 +408,7 @@ class CertificateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file type
+        #  Validate file type
         valid_mime_types = ["image/jpeg", "image/png", "application/pdf"]
         if certificate.content_type not in valid_mime_types:
             return Response(
@@ -412,12 +416,12 @@ class CertificateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Save certificate to tag
-        tag.certificate = certificate
-        tag.save()
+        #  Save certificate to UserTag (not Tag)
+        user_tag.certificate = certificate
+        user_tag.save()
 
-        # ✅ Return updated tag info
-        serializer = TagOutputSerializer(tag)
+        #  Return updated tag info with user context
+        serializer = TagOutputSerializer(tag, context={"user": user})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request):
@@ -434,23 +438,24 @@ class CertificateView(APIView):
                 {"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Ensure the tag belongs to the user
+        # Ensure the user has this tag
         try:
-            tag = user.tags.get(id=tag_id)
-        except Tag.DoesNotExist:
+            user_tag = UserTag.objects.get(user=user, tag__id=tag_id)
+            tag = user_tag.tag
+        except UserTag.DoesNotExist:
             return Response(
                 {"detail": "Tag not found or not associated with user."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
         # Remove certificate file if it exists
-        if tag.certificate:
-            tag.certificate.delete(save=False)
-            tag.certificate = None
-            tag.save()
+        if user_tag.certificate:
+            user_tag.certificate.delete(save=False)
+            user_tag.certificate = None
+            user_tag.save()
 
-        # Return updated tag info
-        serializer = TagOutputSerializer(tag)
+        # Return updated tag info with user context
+        serializer = TagOutputSerializer(tag, context={"user": user})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 

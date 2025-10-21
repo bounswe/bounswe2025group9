@@ -3,7 +3,7 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth import get_user_model
 from django.utils.html import format_html
 
-from .models import Tag, Allergen, Recipe
+from .models import Tag, Allergen, Recipe, UserTag
 
 User = get_user_model()
 
@@ -19,7 +19,7 @@ class CustomUserAdmin(BaseUserAdmin):
     fieldsets = (
         (None, {"fields": ("username", "password")}),
         ("Personal Info", {"fields": ("name", "surname", "email", "address")}),
-        ("Preferences", {"fields": ("tags", "allergens")}),
+        ("Preferences", {"fields": ("allergens",)}),
         (
             "Permissions",
             {
@@ -34,22 +34,48 @@ class CustomUserAdmin(BaseUserAdmin):
         ),
         ("Important dates", {"fields": ("last_login", "date_joined")}),
     )
-    filter_horizontal = ("tags", "allergens", "groups", "user_permissions")
+    filter_horizontal = ("allergens", "groups", "user_permissions")
 
 
 @admin.register(Tag)
 class TagAdmin(admin.ModelAdmin):
+    list_display = ("name", "user_count")
+    search_fields = ("name",)
+
+    def user_count(self, obj):
+        return UserTag.objects.filter(tag=obj).count()
+
+    user_count.short_description = "Users with Tag"
+
+
+@admin.register(UserTag)
+class UserTagAdmin(admin.ModelAdmin):
+    """Admin interface for reviewing and approving user profession certificates"""
+
     list_display = (
-        "name",
+        "user_username",
+        "tag_name",
         "verified",
         "has_certificate",
         "certificate_link",
-        "user_count",
     )
-    list_filter = ("verified", "certificate")
-    search_fields = ("name",)
+    list_filter = ("verified", "tag__name")
+    search_fields = ("user__username", "user__email", "tag__name")
     list_editable = ("verified",)
     actions = ["approve_certificates", "reject_certificates"]
+    raw_id_fields = ("user", "tag")
+
+    def user_username(self, obj):
+        return obj.user.username
+
+    user_username.short_description = "User"
+    user_username.admin_order_field = "user__username"
+
+    def tag_name(self, obj):
+        return obj.tag.name
+
+    tag_name.short_description = "Profession Tag"
+    tag_name.admin_order_field = "tag__name"
 
     def has_certificate(self, obj):
         return bool(obj.certificate)
@@ -66,22 +92,19 @@ class TagAdmin(admin.ModelAdmin):
 
     certificate_link.short_description = "Certificate"
 
-    def user_count(self, obj):
-        return obj.user_set.count()
-
-    user_count.short_description = "Users"
-
     def approve_certificates(self, request, queryset):
         updated = queryset.update(verified=True)
-        self.message_user(request, f"{updated} tag(s) approved successfully.")
+        self.message_user(
+            request, f"{updated} user-tag certificate(s) approved successfully."
+        )
 
-    approve_certificates.short_description = "Approve selected tags"
+    approve_certificates.short_description = "Approve selected certificates"
 
     def reject_certificates(self, request, queryset):
         updated = queryset.update(verified=False)
-        self.message_user(request, f"{updated} tag(s) rejected.")
+        self.message_user(request, f"{updated} user-tag certificate(s) rejected.")
 
-    reject_certificates.short_description = "Reject selected tags"
+    reject_certificates.short_description = "Reject selected certificates"
 
 
 @admin.register(Allergen)

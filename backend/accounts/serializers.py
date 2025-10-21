@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Recipe, Tag, Allergen
+from .models import User, Recipe, Tag, Allergen, UserTag
 
 """
 Serializers are used for converting complex data types, like querysets and model instances, into native Python datatypes.
@@ -23,17 +23,43 @@ class ChangePasswordSerializer(serializers.Serializer):
 class ContactInfoSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
     address = serializers.CharField(required=True)
-    
+
 
 class TagInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
     name = serializers.CharField(max_length=255, required=False)
     verified = serializers.BooleanField(default=False, required=False, read_only=True)
 
+
 class TagOutputSerializer(serializers.ModelSerializer):
+    verified = serializers.SerializerMethodField()
+    certificate = serializers.SerializerMethodField()
+
     class Meta:
         model = Tag
         fields = ["id", "name", "verified", "certificate"]
+
+    def get_verified(self, tag_obj):
+        """Get verification status from UserTag relationship"""
+        user = self.context.get("user")
+        if not user:
+            return False
+        try:
+            user_tag = UserTag.objects.get(user=user, tag=tag_obj)
+            return user_tag.verified
+        except UserTag.DoesNotExist:
+            return False
+
+    def get_certificate(self, tag_obj):
+        """Get certificate URL from UserTag relationship"""
+        user = self.context.get("user")
+        if not user:
+            return None
+        try:
+            user_tag = UserTag.objects.get(user=user, tag=tag_obj)
+            return user_tag.certificate.url if user_tag.certificate else None
+        except UserTag.DoesNotExist:
+            return None
 
 
 # Serializer for creating/updating allergens (input)
@@ -42,11 +68,13 @@ class AllergenInputSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     common = serializers.BooleanField(default=False, required=False)
 
+
 # Serializer for returning allergens (output)
 class AllergenOutputSerializer(serializers.ModelSerializer):
     class Meta:
         model = Allergen
         fields = ["id", "name", "common"]
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,7 +85,7 @@ class RecipeSerializer(serializers.ModelSerializer):
 # In Model-API interactions we need to convert our Python objects into JSON data.
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
-    tags = TagInputSerializer(many=True, required=False)
+    tags = serializers.SerializerMethodField(read_only=True)
     allergens = AllergenInputSerializer(many=True, required=False)
 
     class Meta:
@@ -79,19 +107,23 @@ class UserSerializer(serializers.ModelSerializer):
             "tags",
             "allergens",
             "recipes",
-            "profile_image"
+            "profile_image",
         ]
         extra_kwargs = {
             "address": {"required": False},
             "password": {"write_only": True},
-            'profile_image': {'required': False}
+            "profile_image": {"required": False},
         }
+
+    def get_tags(self, user_obj):
+        """Serialize tags with user context for per-user verification"""
+        tags = user_obj.tags.all()
+        return TagOutputSerializer(tags, many=True, context={"user": user_obj}).data
 
     def create(self, validated_data):
         allergens_data = validated_data.pop("allergens", [])
-        tags_data = validated_data.pop("tags", [])
 
-        # Create the user
+        # Create the user (tags are read-only now, handled separately)
         user = User.objects.create_user(**validated_data)
 
         # Create or attach allergens
@@ -99,24 +131,18 @@ class UserSerializer(serializers.ModelSerializer):
             allergen, _ = Allergen.objects.get_or_create(**allergen_data)
             user.allergens.add(allergen)
 
-        for tag_data in tags_data:
-            tag, _ = Tag.objects.get_or_create(**tag_data)
-            user.tags.add(tag)
-
         return user
+
 
 class PhotoSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['profile_image']
-        extra_kwargs = {
-            'profile_image': {'required': True}
-        }
+        fields = ["profile_image"]
+        extra_kwargs = {"profile_image": {"required": True}}
+
 
 class CertificateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Tag
-        fields = ['certificate']
-        extra_kwargs = {
-            'certificate': {'required': True}
-        }
+        fields = ["certificate"]
+        extra_kwargs = {"certificate": {"required": True}}
