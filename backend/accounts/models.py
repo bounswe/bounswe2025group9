@@ -4,15 +4,24 @@ from django.contrib.auth.models import AbstractUser, Group, Permission
 
 class Tag(models.Model):
     name = models.CharField(max_length=64)
-    verified = models.BooleanField(default=False)
-    certificate = models.FileField(
-        upload_to='certificates/',  # folder inside MEDIA_ROOT
-        null=True,
-        blank=True
-    )
 
     def __str__(self):
         return self.name
+
+
+class UserTag(models.Model):
+    """Through model for User-Tag relationship with per-user verification"""
+
+    user = models.ForeignKey("User", on_delete=models.CASCADE)
+    tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
+    verified = models.BooleanField(default=False)
+    certificate = models.FileField(upload_to="certificates/", null=True, blank=True)
+
+    class Meta:
+        unique_together = ("user", "tag")
+
+    def __str__(self):
+        return f"{self.user.username} - {self.tag.name} ({'verified' if self.verified else 'unverified'})"
 
 
 class Allergen(models.Model):
@@ -32,21 +41,19 @@ class User(AbstractUser):
     surname = models.CharField(max_length=100)
     address = models.TextField(null=True, blank=True)
 
-    tags = models.ManyToManyField(Tag, blank=True)
+    tags = models.ManyToManyField(Tag, through="UserTag", blank=True)
     allergens = models.ManyToManyField(Allergen, blank=True)
 
     profile_image = models.ImageField(
-        upload_to='profile_images/',  # folder inside MEDIA_ROOT
-        null=True,
-        blank=True
+        upload_to="profile_images/", null=True, blank=True  # folder inside MEDIA_ROOT
     )
-    
+
     current_meal_plan = models.ForeignKey(
-        'meal_planner.MealPlan',
+        "meal_planner.MealPlan",
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='current_for_users'
+        related_name="current_for_users",
     )
 
     groups = models.ManyToManyField(
