@@ -22,3 +22,48 @@ dev-dependencies = [
     "ruff>=0.14.3",
 ]
 
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+
+exclude = [
+    ".git",
+    ".venv",
+    "__pycache__",
+    "*/migrations/*",
+    "staticfiles",
+    "media",
+]
+
+[tool.ruff.lint]
+select = [
+    "E",    # pycodestyle errors
+    "W",    # pycodestyle warnings
+    "F",    # pyflakes
+    "I",    # isort
+    "DJ",   # flake8-django
+    "UP",   # pyupgrade
+    "B",    # flake8-bugbear
+    "C4",   # flake8-comprehensions
+    "DTZ",  # flake8-datetimez (timezone aware)
+    "T20",  # flake8-print
+    "SIM",  # flake8-simplify
+]
+
+ignore = [
+    "E501",   # Line too long
+    "DJ001",  # Avoid nullable CharField/TextField
+	"F403", "F405",    # from .base import *` used; unable to detect undefined names
+]
+
+# Allow unused variables when underscore-prefixed
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.isort]
+known-first-party = ["myproject"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"settings/*.py" = ["F405", "F403"]
+"*/tests/*.py" = ["S101"]  # Allow assert in tests
