@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, Hamburger, Tag, Fire, Scales } from '@phosphor-icons/react';
 import { Food } from '../../lib/apiClient';
+import NutritionScore from '../../components/NutritionScore';
 
 interface FoodDetailProps {
   food: Food | null;
@@ -63,21 +64,33 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
         <div className="p-6 overflow-y-auto flex-1">
             
           {/* Basic Information */}
-          <div className="mb-8">
+          <div className="mb-8 overflow-visible">
             <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
               <Tag size={20} weight="fill" className="text-[var(--color-accent)]" />
               Basic Information
             </h3>
               
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-visible">
               <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
                 <p className="text-[var(--color-text-secondary)] text-sm">Category</p>
                 <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.category}</p>
               </div>
                 
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                <p className="text-[var(--color-text-secondary)] text-sm">Nutrition Score</p>
-                <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.nutritionScore}</p>
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] md:col-span-2 overflow-visible">
+                <p className="text-[var(--color-text-secondary)] text-sm mb-2">Nutrition Score</p>
+                <NutritionScore 
+                  score={food.nutritionScore} 
+                  size="md"
+                  foodDetails={{
+                    proteinContent: food.proteinContent,
+                    carbohydrateContent: food.carbohydrateContent,
+                    fatContent: food.fatContent,
+                    caloriesPerServing: food.caloriesPerServing,
+                    servingSize: food.servingSize,
+                    category: food.category,
+                    name: food.name
+                  }}
+                />
               </div>
                 
               <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">

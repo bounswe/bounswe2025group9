@@ -3,6 +3,7 @@ import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
+import NutritionScore from '../../components/NutritionScore';
 
 const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
@@ -32,8 +33,23 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
 
       <div className="mt-2">
         <p className="nh-text">Category: {item.category}</p>
-        <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
-        <p className="nh-text">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
+        <div className="mt-2">
+          <p className="nh-text mb-2">Nutrition Score:</p>
+          <NutritionScore 
+            score={item.nutritionScore} 
+            size="sm"
+            foodDetails={{
+              proteinContent: item.proteinContent,
+              carbohydrateContent: item.carbohydrateContent,
+              fatContent: item.fatContent,
+              caloriesPerServing: item.caloriesPerServing,
+              servingSize: item.servingSize,
+              category: item.category,
+              name: item.name
+            }}
+          />
+        </div>
+        <p className="nh-text mt-2">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
         <p className="nh-text">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
       </div>
     </div>
