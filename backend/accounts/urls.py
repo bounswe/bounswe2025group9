@@ -1,23 +1,20 @@
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.urls import path
-
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .views import (
-    UserListView,
-    CreateUserView,
-    UpdateUserView,
-    ChangePasswordView,
-    LogoutView,
-    UserProfileView,
-    PublicUserProfileView,
     AllergenAddView,
     AllergenSetView,
-    GetCommonAllergensView,
-    ProfileImageView,
-    TagSetView,
     CertificateView,
-    LikedPostsView,
-    LikedRecipesView,
+    ChangePasswordView,
+    CreateUserView,
+    GetCommonAllergensView,
+    LogoutView,
+    ProfileImageView,
+    PublicUserProfileView,
+    TagSetView,
+    UpdateUserView,
+    UserListView,
+    UserProfileView,
 )
 
 urlpatterns = [
@@ -32,8 +29,6 @@ urlpatterns = [
     path(
         "@<str:username>/", PublicUserProfileView.as_view(), name="public-user-profile"
     ),
-    path("profile/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),
-    path("profile/liked-recipes/", LikedRecipesView.as_view(), name="liked-recipes"),
     path("allergen/set/", AllergenSetView.as_view(), name="set-allergens"),
     path("tag/set/", TagSetView.as_view(), name="set-tags"),
     path("allergen/add/", AllergenAddView.as_view(), name="add-allergen"),

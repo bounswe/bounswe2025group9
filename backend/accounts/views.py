@@ -1,28 +1,24 @@
-from rest_framework.decorators import api_view
-from rest_framework.response import Response
-from rest_framework.request import Request
-from rest_framework import status
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.authentication import JWTAuthentication
-from rest_framework.pagination import PageNumberPagination
+import os
 
+from rest_framework import status
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.request import Request
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import Allergen, Tag, User, UserTag
 from .serializers import (
-    UserSerializer,
+    AllergenInputSerializer,
+    AllergenOutputSerializer,
     ChangePasswordSerializer,
     ContactInfoSerializer,
     PhotoSerializer,
-    AllergenInputSerializer,
-    AllergenOutputSerializer,
     TagInputSerializer,
     TagOutputSerializer,
+    UserSerializer,
 )
-from .services import register_user, list_users, update_user
-from .models import User, Allergen, Tag, UserTag
-from forum.models import Like, Post, Recipe
-from forum.serializers import PostSerializer, RecipeSerializer
-import os
 
 
 class UserListView(APIView):
@@ -34,7 +30,7 @@ class UserListView(APIView):
         GET /
         Fetch and return a list of all users in the system.
         """
-        users = list_users()
+        users = User.objects.all()
         serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
@@ -58,8 +54,12 @@ class UpdateUserView(APIView):
     def post(self, request: Request) -> Response:
         serializer = ContactInfoSerializer(data=request.data)
         if serializer.is_valid():
-            user = update_user(request.user, serializer.validated_data)
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            for key, value in serializer.validated_data.items():
+                setattr(request.user, key, value)
+            request.user.save()
+            return Response(
+                UserSerializer(request.user).data, status=status.HTTP_201_CREATED
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -334,7 +334,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file size (max 5 MB)
+        # Validate file size (max 5 MB)
         max_size = 5 * 1024 * 1024  # 5 MB in bytes
         if image.size > max_size:
             return Response(
@@ -342,7 +342,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file type
+        # Validate file type
         valid_mime_types = ["image/jpeg", "image/png"]
         if image.content_type not in valid_mime_types:
             return Response(
@@ -350,7 +350,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Save valid image
+        # Save valid image
         serializer = PhotoSerializer(user, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
@@ -366,20 +366,16 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Get full path to the image file
+        #  Get full path to the image file
         image_path = user.profile_image.path
 
-        # ✅ Clear the field and save to DB
+        #  Clear the field and save to DB
         user.profile_image = None
         user.save()
 
-        # ✅ Delete the actual file if it exists
+        #  Delete the actual file if it exists
         if os.path.exists(image_path):
-            try:
-                os.remove(image_path)
-            except Exception as e:
-                # Optional: log the error but still return success
-                print(f"Error deleting image file: {e}")
+            os.remove(image_path)
 
         return Response(
             {"detail": "Profile image removed successfully."}, status=status.HTTP_200_OK
@@ -473,67 +469,3 @@ class CertificateView(APIView):
         # Return updated tag info with user context
         serializer = TagOutputSerializer(tag, context={"user": user})
         return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class LikedPostsView(APIView):
-    """
-    GET /users/profile/liked-posts/
-    Fetch posts that the current user has liked.
-    """
-
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-
-        # Get all likes by this user
-        liked_post_ids = Like.objects.filter(user=user).values_list(
-            "post_id", flat=True
-        )
-
-        # Get the posts that were liked
-        liked_posts = Post.objects.filter(id__in=liked_post_ids).order_by("-created_at")
-
-        # Paginate results
-        paginator = PageNumberPagination()
-        paginator.page_size = 10
-        paginated_posts = paginator.paginate_queryset(liked_posts, request)
-
-        # Serialize the posts
-        serializer = PostSerializer(paginated_posts, many=True)
-
-        return paginator.get_paginated_response(serializer.data)
-
-
-class LikedRecipesView(APIView):
-    """
-    GET /users/profile/liked-recipes/
-    Fetch recipes whose posts the current user has liked.
-    """
-
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
-        user = request.user
-
-        # Get all post IDs that the user has liked
-        liked_post_ids = Like.objects.filter(user=user).values_list(
-            "post_id", flat=True
-        )
-
-        # Get recipes where the post is in the liked posts
-        liked_recipes = Recipe.objects.filter(post_id__in=liked_post_ids).order_by(
-            "-created_at"
-        )
-
-        # Paginate results
-        paginator = PageNumberPagination()
-        paginator.page_size = 10
-        paginated_recipes = paginator.paginate_queryset(liked_recipes, request)
-
-        # Serialize the recipes
-        serializer = RecipeSerializer(paginated_recipes, many=True)
-
-        return paginator.get_paginated_response(serializer.data)

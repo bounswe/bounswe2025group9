@@ -1,5 +1,5 @@
-from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+from django.db import models
 
 
 class Tag(models.Model):
@@ -45,16 +45,19 @@ class User(AbstractUser):
     allergens = models.ManyToManyField(Allergen, blank=True)
 
     profile_image = models.ImageField(
-        upload_to="profile_images/", null=True, blank=True  # folder inside MEDIA_ROOT
+        upload_to="profile_images/",
+        null=True,
+        blank=True,  # folder inside MEDIA_ROOT
     )
 
-    current_meal_plan = models.ForeignKey(
-        "meal_planner.MealPlan",
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name="current_for_users",
-    )
+    # TODO: Uncomment when meal_planner app is created
+    # current_meal_plan = models.ForeignKey(
+    #     "meal_planner.MealPlan",
+    #     on_delete=models.SET_NULL,
+    #     null=True,
+    #     blank=True,
+    #     related_name="current_for_users",
+    # )
 
     groups = models.ManyToManyField(
         Group,
