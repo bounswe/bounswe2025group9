@@ -1,5 +1,5 @@
 """
-URL configuration for project project.
+URL configuration for nutrihub project.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/5.2/topics/http/urls/
@@ -17,15 +17,8 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import include, path
-from django.conf import settings
-from django.conf.urls.static import static
 
 urlpatterns = [
     path("api/admin/", admin.site.urls),
-    path("api/", include("api.urls")),
     path("api/users/", include("accounts.urls")),
-    path("api/users/", include("django.contrib.auth.urls")),
-    path("api/foods/", include("foods.urls")),
-    path("api/forum/", include("forum.urls")),
-    path("api/meal-planner/", include("meal_planner.urls")),
-] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+]
