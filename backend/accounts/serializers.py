@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import User, Recipe, Tag, Allergen, UserTag
+from .models import User, Recipe, Tag, Allergen, UserTag, Report
+from .services import get_user_badges
 
 """
 Serializers are used for converting complex data types, like querysets and model instances, into native Python datatypes.
@@ -124,6 +125,7 @@ class UserSerializer(serializers.ModelSerializer):
             "allergens",
             "recipes",
             "profile_image",
+            "badges"
         ]
         extra_kwargs = {
             "address": {"required": False},
@@ -136,6 +138,10 @@ class UserSerializer(serializers.ModelSerializer):
             # Return relative URL - works in all environments
             return f"/api/users/profile-image/{obj.profile_image_token}/"
         return None
+
+    def get_badges(self, obj):
+        return get_user_badges(obj)
+
 
     def get_tags(self, user_obj):
         """Serialize tags with user context for per-user verification"""
@@ -180,3 +186,12 @@ class PhotoSerializer(serializers.ModelSerializer):
             # Return relative URL - works in all environments
             return f"/api/users/profile-image/{obj.profile_image_token}/"
         return None
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Report
+        fields = ["id", "reporter", "reportee", "reason"]
+        read_only_fields = ["id"]
+
