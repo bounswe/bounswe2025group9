@@ -70,13 +70,7 @@ class TagOutputSerializer(serializers.ModelSerializer):
         try:
             user_tag = UserTag.objects.get(user=user, tag=tag_obj)
             if user_tag.certificate:
-                request = self.context.get("request")
-                if request:
-                    # Build absolute URL for the secure endpoint
-                    return request.build_absolute_uri(
-                        f"/api/users/certificate/{user_tag.certificate_token}/"
-                    )
-                # Fallback to relative URL if no request in context
+                # Return relative URL - works in all environments
                 return f"/api/users/certificate/{user_tag.certificate_token}/"
             return None
         except UserTag.DoesNotExist:
@@ -139,13 +133,7 @@ class UserSerializer(serializers.ModelSerializer):
     def get_profile_image(self, obj):
         """Return the secure endpoint URL for profile image"""
         if obj.profile_image:
-            request = self.context.get("request")
-            if request:
-                # Build absolute URL for the secure endpoint
-                return request.build_absolute_uri(
-                    f"/api/users/profile-image/{obj.profile_image_token}/"
-                )
-            # Fallback to relative URL if no request in context
+            # Return relative URL - works in all environments
             return f"/api/users/profile-image/{obj.profile_image_token}/"
         return None
 
@@ -189,12 +177,6 @@ class PhotoSerializer(serializers.ModelSerializer):
     def get_profile_image(self, obj):
         """Return the secure endpoint URL for profile image"""
         if obj.profile_image:
-            request = self.context.get("request")
-            if request:
-                # Build absolute URL for the secure endpoint
-                return request.build_absolute_uri(
-                    f"/api/users/profile-image/{obj.profile_image_token}/"
-                )
-            # Fallback to relative URL if no request in context
+            # Return relative URL - works in all environments
             return f"/api/users/profile-image/{obj.profile_image_token}/"
         return None

@@ -39,7 +39,7 @@ class UserListView(APIView):
         Fetch and return a list of all users in the system.
         """
         users = list_users()
-        serializer = UserSerializer(users, many=True, context={"request": request})
+        serializer = UserSerializer(users, many=True)
         return Response(serializer.data)
 
 
@@ -52,7 +52,7 @@ class CreateUserView(APIView):
         if serializer.is_valid():
             user = serializer.create(serializer.validated_data)
             return Response(
-                UserSerializer(user, context={"request": request}).data,
+                UserSerializer(user).data,
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -67,7 +67,7 @@ class UpdateUserView(APIView):
         if serializer.is_valid():
             user = update_user(request.user, serializer.validated_data)
             return Response(
-                UserSerializer(user, context={"request": request}).data,
+                UserSerializer(user).data,
                 status=status.HTTP_201_CREATED,
             )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -106,7 +106,7 @@ class UserProfileView(APIView):
         # current user is available in request.user
         user = request.user
         # serialize user data
-        serializer = UserSerializer(user, context={"request": request})
+        serializer = UserSerializer(user)
         return Response(serializer.data)
 
 
@@ -123,7 +123,7 @@ class PublicUserProfileView(APIView):
     def get(self, request, username):
         try:
             user = User.objects.get(username=username)
-            serializer = UserSerializer(user, context={"request": request})
+            serializer = UserSerializer(user)
             return Response(serializer.data)
         except User.DoesNotExist:
             return Response(
@@ -288,9 +288,9 @@ class TagSetView(APIView):
         for tag in tags:
             UserTag.objects.create(user=user, tag=tag, verified=False)
 
-        # Serialize response with user context and request
+        # Serialize response with user context
         response_serializer = TagOutputSerializer(
-            tags, many=True, context={"user": user, "request": request}
+            tags, many=True, context={"user": user}
         )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
@@ -331,7 +331,7 @@ class ProfileImageView(APIView):
                 {"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND
             )
 
-        serializer = PhotoSerializer(user, context={"request": request})
+        serializer = PhotoSerializer(user)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
@@ -365,7 +365,7 @@ class ProfileImageView(APIView):
         if upload_serializer.is_valid():
             upload_serializer.save()
             # Return the URL using the read serializer
-            read_serializer = PhotoSerializer(user, context={"request": request})
+            read_serializer = PhotoSerializer(user)
             return Response(read_serializer.data, status=status.HTTP_200_OK)
         return Response(upload_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -448,10 +448,8 @@ class CertificateView(APIView):
         user_tag.certificate = certificate
         user_tag.save()
 
-        #  Return updated tag info with user context and request
-        serializer = TagOutputSerializer(
-            tag, context={"user": user, "request": request}
-        )
+        #  Return updated tag info with user context
+        serializer = TagOutputSerializer(tag, context={"user": user})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def delete(self, request):
@@ -484,10 +482,8 @@ class CertificateView(APIView):
             user_tag.certificate = None
             user_tag.save()
 
-        # Return updated tag info with user context and request
-        serializer = TagOutputSerializer(
-            tag, context={"user": user, "request": request}
-        )
+        # Return updated tag info with user context
+        serializer = TagOutputSerializer(tag, context={"user": user})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
