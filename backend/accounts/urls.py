@@ -18,6 +18,7 @@ from .views import (
     CertificateView,
     LikedPostsView,
     LikedRecipesView,
+    ReportUserView,
 )
 
 urlpatterns = [
@@ -42,4 +43,6 @@ urlpatterns = [
     ),
     path("image/", ProfileImageView.as_view(), name="image"),
     path("certificate/", CertificateView.as_view(), name="certificate"),
+
+    path("report/", ReportUserView.as_view(), name="report-user"),
 ]
