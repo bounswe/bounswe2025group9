@@ -17,3 +17,33 @@ def register_user(validated_data):
 
 def update_user(user, validated_data):
     return repo_update_user(user, validated_data)
+
+BADGE_RULES = {
+    "recipes": [
+        (10, "Posted 10 recipes"),
+        (50, "Posted 50 recipes"),
+        (100, "Posted 100 recipes"),
+    ],
+    "likes": [
+        (10, "Received 10 likes"),
+        (50, "Received 50 likes"),
+        (100, "Received 100 likes"),
+    ],
+}
+
+def get_user_badges(user):
+    badges = []
+
+    # recipe milestones
+    recipe_count = user.recipes.count()
+    for milestone, desc in BADGE_RULES["recipes"]:
+        if recipe_count >= milestone:
+            badges.append({"type": "recipes", "level": milestone, "description": desc})
+
+    # likes milestones
+    total_likes = sum(r.likes for r in user.recipes.all())
+    for milestone, desc in BADGE_RULES["likes"]:
+        if total_likes >= milestone:
+            badges.append({"type": "likes", "level": milestone, "description": desc})
+
+    return badges
