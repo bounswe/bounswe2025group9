@@ -85,8 +85,10 @@ class UserTagAdmin(admin.ModelAdmin):
 
     def certificate_link(self, obj):
         if obj.certificate:
+            # Use the new secure token-based endpoint
+            certificate_url = f"/api/users/certificate/{obj.certificate_token}/"
             return format_html(
-                '<a href="{}" target="_blank">View Certificate</a>', obj.certificate.url
+                '<a href="{}" target="_blank">View Certificate</a>', certificate_url
             )
         return "-"
 

@@ -69,7 +69,16 @@ class TagOutputSerializer(serializers.ModelSerializer):
             return None
         try:
             user_tag = UserTag.objects.get(user=user, tag=tag_obj)
-            return user_tag.certificate.url if user_tag.certificate else None
+            if user_tag.certificate:
+                request = self.context.get("request")
+                if request:
+                    # Build absolute URL for the secure endpoint
+                    return request.build_absolute_uri(
+                        f"/api/users/certificate/{user_tag.certificate_token}/"
+                    )
+                # Fallback to relative URL if no request in context
+                return f"/api/users/certificate/{user_tag.certificate_token}/"
+            return None
         except UserTag.DoesNotExist:
             return None
 
@@ -99,6 +108,7 @@ class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
     tags = serializers.SerializerMethodField(read_only=True)
     allergens = AllergenInputSerializer(many=True, required=False)
+    profile_image = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -124,8 +134,20 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "address": {"required": False},
             "password": {"write_only": True},
-            "profile_image": {"required": False},
         }
+
+    def get_profile_image(self, obj):
+        """Return the secure endpoint URL for profile image"""
+        if obj.profile_image:
+            request = self.context.get("request")
+            if request:
+                # Build absolute URL for the secure endpoint
+                return request.build_absolute_uri(
+                    f"/api/users/profile-image/{obj.profile_image_token}/"
+                )
+            # Fallback to relative URL if no request in context
+            return f"/api/users/profile-image/{obj.profile_image_token}/"
+        return None
 
     def get_tags(self, user_obj):
         """Serialize tags with user context for per-user verification"""
@@ -146,8 +168,33 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class PhotoSerializer(serializers.ModelSerializer):
+class PhotoUploadSerializer(serializers.ModelSerializer):
+    """Serializer for uploading profile images"""
+
     class Meta:
         model = User
         fields = ["profile_image"]
         extra_kwargs = {"profile_image": {"required": True}}
+
+
+class PhotoSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving profile image URLs"""
+
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["profile_image"]
+
+    def get_profile_image(self, obj):
+        """Return the secure endpoint URL for profile image"""
+        if obj.profile_image:
+            request = self.context.get("request")
+            if request:
+                # Build absolute URL for the secure endpoint
+                return request.build_absolute_uri(
+                    f"/api/users/profile-image/{obj.profile_image_token}/"
+                )
+            # Fallback to relative URL if no request in context
+            return f"/api/users/profile-image/{obj.profile_image_token}/"
+        return None
