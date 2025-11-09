@@ -101,9 +101,9 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
             }
-            
+
             // Hide animation after 1.5 seconds
-            timeoutRef.current = setTimeout(() => {
+            timeoutRef.current = window.setTimeout(() => {
                 setShowAnimation(false)
             }, 1500)
         }
