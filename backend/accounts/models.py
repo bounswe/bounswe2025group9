@@ -1,5 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+import uuid
+import os
+
+
+def certificate_upload_to(instance, filename):
+    """Generate secure filename for certificates using token"""
+    ext = os.path.splitext(filename)[1]
+    return f"certificates/{instance.certificate_token}{ext}"
+
+
+def profile_image_upload_to(instance, filename):
+    """Generate secure filename for profile images using token"""
+    ext = os.path.splitext(filename)[1]
+    return f"profile_images/{instance.profile_image_token}{ext}"
 
 
 class Tag(models.Model):
@@ -15,7 +29,12 @@ class UserTag(models.Model):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     verified = models.BooleanField(default=False)
-    certificate = models.FileField(upload_to="certificates/", null=True, blank=True)
+    certificate_token = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True
+    )
+    certificate = models.FileField(
+        upload_to=certificate_upload_to, null=True, blank=True
+    )
 
     class Meta:
         unique_together = ("user", "tag")
@@ -44,8 +63,11 @@ class User(AbstractUser):
     tags = models.ManyToManyField(Tag, through="UserTag", blank=True)
     allergens = models.ManyToManyField(Allergen, blank=True)
 
+    profile_image_token = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True
+    )
     profile_image = models.ImageField(
-        upload_to="profile_images/", null=True, blank=True  # folder inside MEDIA_ROOT
+        upload_to=profile_image_upload_to, null=True, blank=True
     )
 
     current_meal_plan = models.ForeignKey(
