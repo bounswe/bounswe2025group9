@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Recipe, Tag, Allergen, UserTag, Report
+from .models import User, Recipe, Tag, Allergen, UserTag
 from .services import get_user_badges
 
 """
@@ -121,7 +121,8 @@ class UserSerializer(serializers.ModelSerializer):
             "allergens",
             "recipes",
             "profile_image",
-            "badges"
+            "is_staff",
+            "is_superuser",
         ]
         extra_kwargs = {
             "address": {"required": False},
@@ -157,10 +158,12 @@ class PhotoSerializer(serializers.ModelSerializer):
         fields = ["profile_image"]
         extra_kwargs = {"profile_image": {"required": True}}
 
-class ReportSerializer(serializers.ModelSerializer):
-    reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
+#I got error here because of missing report model so I fixed it with comments
 
-    class Meta:
-        model = Report
-        fields = ["id", "reporter", "reportee", "reason"]
-        read_only_fields = ["id"]
+# class ReportSerializer(serializers.ModelSerializer):
+#     reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
+# 
+#     class Meta:
+#         model = Report
+#         fields = ["id", "reporter", "reportee", "reason"]
+#         read_only_fields = ["id"]
