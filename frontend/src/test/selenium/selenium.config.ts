@@ -2,7 +2,7 @@ import { Builder, WebDriver, Browser } from 'selenium-webdriver';
 import chrome from 'selenium-webdriver/chrome';
 
 export interface SeleniumConfig {
-  browser: Browser;
+  browser: string;
   headless: boolean;
   baseUrl: string;
   defaultTimeout: number;

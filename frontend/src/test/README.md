@@ -62,7 +62,11 @@ npm run dev
 
 Then run Selenium tests (in another terminal):
 ```bash
+# Run a single test
 npm test -- src/test/selenium/Login.selenium.test.ts
+
+# Run all Selenium tests
+npm test -- src/test/selenium
 ```
 
 ### Writing Selenium tests
