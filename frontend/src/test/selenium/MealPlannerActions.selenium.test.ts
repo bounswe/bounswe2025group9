@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Meal Planner Actions - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
     driver = await createDriver(defaultConfig);
+    // Login before running tests since all pages are protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
@@ -14,7 +16,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   });
 
   it('should display add to meal planner button on food detail page', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -27,7 +29,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should open meal selection modal when clicking add to meal planner', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -50,7 +52,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should show meal type options in add meal modal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -73,7 +75,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should show date selector in add meal modal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -96,7 +98,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should allow selecting meal type', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -124,7 +126,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should have confirm button in add meal modal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -147,7 +149,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should have cancel button in add meal modal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -170,7 +172,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should close modal when clicking cancel', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -204,7 +206,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should show add meal button on meal planner page', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(1500);
 
@@ -217,7 +219,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should open meal search when clicking add on meal planner', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(1500);
 
@@ -240,7 +242,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should display serving size selector when adding meal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -263,7 +265,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should show quick add buttons for today meals', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/foods/1`);
+    await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.sleep(1500);
 
@@ -286,7 +288,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should display planned meals on meal planner page', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(2000);
 
@@ -300,7 +302,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should allow removing meals from planner', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(2000);
 
@@ -313,7 +315,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should confirm before removing meal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(2000);
 
@@ -336,7 +338,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should show meal details when clicking on planned meal', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(2000);
 
@@ -357,7 +359,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should display total nutrition for the day', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(1500);
 
@@ -370,7 +372,7 @@ describe('Meal Planner Actions - Selenium E2E Tests', () => {
   }, 30000);
 
   it('should allow copying meals to another day', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/meal-planner`);
+    await driver.get(`${defaultConfig.baseUrl}/mealplanner`);
 
     await driver.sleep(2000);
 

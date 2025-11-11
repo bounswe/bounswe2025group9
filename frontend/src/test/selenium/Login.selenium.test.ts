@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, testCredentials } from './selenium.config';
 
 describe('Login Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
@@ -121,19 +121,49 @@ describe('Login Page - Selenium E2E Tests', () => {
     );
     const passwordInput = await driver.findElement(By.id('password'));
 
-    // Type test values
-    const testUsername = 'testuser';
-    const testPassword = 'testpassword123';
-
+    // Type test values using working credentials
     await usernameInput.clear();
-    await usernameInput.sendKeys(testUsername);
+    await usernameInput.sendKeys(testCredentials.username);
 
     await passwordInput.clear();
-    await passwordInput.sendKeys(testPassword);
+    await passwordInput.sendKeys(testCredentials.password);
 
     // Verify values were entered
-    expect(await usernameInput.getAttribute('value')).toBe(testUsername);
-    expect(await passwordInput.getAttribute('value')).toBe(testPassword);
+    expect(await usernameInput.getAttribute('value')).toBe(testCredentials.username);
+    expect(await passwordInput.getAttribute('value')).toBe(testCredentials.password);
+  }, 30000);
+
+  it('should successfully login with valid credentials', async () => {
+    // Navigate to the login page
+    await driver.get(`${defaultConfig.baseUrl}/login`);
+
+    // Wait for inputs to load
+    const usernameInput = await driver.wait(
+      until.elementLocated(By.id('username')),
+      defaultConfig.defaultTimeout
+    );
+    const passwordInput = await driver.findElement(By.id('password'));
+    const submitButton = await driver.findElement(By.xpath("//button[@type='submit']"));
+
+    // Enter valid credentials
+    await usernameInput.clear();
+    await usernameInput.sendKeys(testCredentials.username);
+
+    await passwordInput.clear();
+    await passwordInput.sendKeys(testCredentials.password);
+
+    // Submit the form
+    await submitButton.click();
+
+    // Wait for navigation
+    await driver.sleep(2000);
+
+    // Should be redirected away from login page (to home or dashboard)
+    const currentUrl = await driver.getCurrentUrl();
+    expect(currentUrl).not.toContain('/login');
+    
+    // Should be on the home page or another authenticated page
+    expect(currentUrl === `${defaultConfig.baseUrl}/` || !currentUrl.includes('/login')).toBe(true);
   }, 30000);
 });
 

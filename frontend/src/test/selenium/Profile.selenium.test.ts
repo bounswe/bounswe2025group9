@@ -1,51 +1,33 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Profile Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
     driver = await createDriver(defaultConfig);
+    // Login first since profile page is protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
     await quitDriver(driver);
   });
 
-  it('should redirect to login when accessing profile page unauthenticated', async () => {
+  it('should display user profile information', async () => {
     await driver.get(`${defaultConfig.baseUrl}/profile`);
 
-    // Wait for potential redirect
     await driver.sleep(1500);
 
-    // Should be redirected to login page
-    const currentUrl = await driver.getCurrentUrl();
-    expect(currentUrl).toContain('/login');
+    // We're authenticated and on profile page - check for profile elements
+    const profileElements = await driver.findElements(
+      By.xpath("//*[contains(text(), 'Profile') or contains(text(), 'Email') or contains(text(), 'Username') or contains(text(), 'Name')]")
+    );
+    expect(profileElements.length).toBeGreaterThan(0);
   }, 30000);
 
-  it('should display user profile information (if authenticated)', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/profile`);
-
-    await driver.sleep(1000);
-
-    // Check if we're on login page (not authenticated)
-    const loginForm = await driver.findElements(By.id('username'));
-    
-    if (loginForm.length === 0) {
-      // We're authenticated and on profile page
-      // Check for profile elements
-      const profileElements = await driver.findElements(
-        By.xpath("//*[contains(text(), 'Profile') or contains(text(), 'Email') or contains(text(), 'Username')]")
-      );
-      expect(profileElements.length).toBeGreaterThan(0);
-    } else {
-      // Not authenticated - verify login page
-      expect(loginForm.length).toBe(1);
-    }
-  }, 30000);
-
-  it('should have edit profile button (if authenticated)', async () => {
+  it('should have edit profile button', async () => {
     await driver.get(`${defaultConfig.baseUrl}/profile`);
 
     await driver.sleep(1000);

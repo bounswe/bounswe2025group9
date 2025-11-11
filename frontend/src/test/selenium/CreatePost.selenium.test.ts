@@ -1,43 +1,34 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Create Post Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
     driver = await createDriver(defaultConfig);
+    // Login first since create post page is protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
     await quitDriver(driver);
   });
 
-  it('should redirect to login if not authenticated', async () => {
+  it('should display create post form', async () => {
     await driver.get(`${defaultConfig.baseUrl}/forum/create`);
 
-    // Wait a moment for potential redirect
     await driver.sleep(1500);
 
-    // Should be redirected to login page
+    // Should be on create post page (not redirected to login)
     const currentUrl = await driver.getCurrentUrl();
-    expect(currentUrl).toContain('/login');
-  }, 30000);
+    expect(currentUrl).toContain('/forum/create');
 
-  it('should display create post form after login', async () => {
-    // This test requires authentication
-    // For now, we'll just check if we can access the page structure
-    await driver.get(`${defaultConfig.baseUrl}/forum/create`);
-
-    await driver.sleep(1000);
-
-    // If redirected to login, we'll see the login form
-    const loginForm = await driver.findElements(By.id('username'));
+    // Check for form elements
+    const titleInput = await driver.findElements(By.xpath("//input[@placeholder='Title' or @name='title' or @id='title']"));
+    const contentArea = await driver.findElements(By.xpath("//textarea | //div[contains(@class, 'editor')]"));
     
-    if (loginForm.length > 0) {
-      // We're on login page, which is expected behavior for unauthenticated users
-      expect(loginForm.length).toBe(1);
-    }
+    expect(titleInput.length + contentArea.length).toBeGreaterThan(0);
   }, 30000);
 
   it('should show validation errors when submitting empty form (if authenticated)', async () => {

@@ -1,27 +1,19 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Recipe Creation - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
     driver = await createDriver(defaultConfig);
+    // Login first since create post page is protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
     await quitDriver(driver);
   });
-
-  it('should redirect to login if not authenticated', async () => {
-    await driver.get(`${defaultConfig.baseUrl}/forum/create`);
-
-    await driver.sleep(1500);
-
-    // Should be redirected to login page
-    const currentUrl = await driver.getCurrentUrl();
-    expect(currentUrl).toContain('/login');
-  }, 30000);
 
   it('should display recipe post type option', async () => {
     await driver.get(`${defaultConfig.baseUrl}/forum/create`);

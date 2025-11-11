@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Theme Toggle - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
     driver = await createDriver(defaultConfig);
+    // Login first since most pages are protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {

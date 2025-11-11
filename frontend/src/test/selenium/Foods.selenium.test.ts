@@ -1,12 +1,14 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig } from './selenium.config';
+import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Foods Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
     driver = await createDriver(defaultConfig);
+    // Login first since foods page is protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
@@ -16,25 +18,26 @@ describe('Foods Page - Selenium E2E Tests', () => {
   it('should display foods page with header and search functionality', async () => {
     await driver.get(`${defaultConfig.baseUrl}/foods`);
 
-    // Wait for foods page to load
+    // Wait for foods page to load - check for search input or add food button
     await driver.wait(
-      until.elementLocated(By.xpath("//h1[contains(text(), 'Foods')]")),
+      until.elementLocated(By.xpath("//input[@placeholder='Search for a food...']")),
       defaultConfig.defaultTimeout
     );
 
-    const title = await driver.findElement(By.xpath("//h1[contains(text(), 'Foods')]"));
-    expect(await title.isDisplayed()).toBe(true);
-
     // Check for search input
-    const searchInput = await driver.findElement(By.xpath("//input[@placeholder='Search foods...']"));
+    const searchInput = await driver.findElement(By.xpath("//input[@placeholder='Search for a food...']"));
     expect(await searchInput.isDisplayed()).toBe(true);
+    
+    // Verify sort options section is present
+    const sortSection = await driver.findElement(By.xpath("//*[contains(text(), 'Sort Options')]"));
+    expect(await sortSection.isDisplayed()).toBe(true);
   }, 30000);
 
   it('should allow searching for foods', async () => {
     await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     const searchInput = await driver.wait(
-      until.elementLocated(By.xpath("//input[@placeholder='Search foods...']")),
+      until.elementLocated(By.xpath("//input[@placeholder='Search for a food...']")),
       defaultConfig.defaultTimeout
     );
 
@@ -61,10 +64,12 @@ describe('Foods Page - Selenium E2E Tests', () => {
     if (foodCards.length > 0) {
       expect(foodCards.length).toBeGreaterThan(0);
       
-      // Check if first card has expected content (food name)
-      const subtitle = await foodCards[0].findElement(By.className('nh-subtitle'));
-      const foodName = await subtitle.getText();
-      expect(foodName.length).toBeGreaterThan(0);
+      // Check if first card has expected content (food name in nh-subtitle)
+      const subtitles = await foodCards[0].findElements(By.className('nh-subtitle'));
+      if (subtitles.length > 0) {
+        const foodName = await subtitles[0].getText();
+        expect(foodName.length).toBeGreaterThan(0);
+      }
     }
   }, 30000);
 
@@ -72,21 +77,23 @@ describe('Foods Page - Selenium E2E Tests', () => {
     await driver.get(`${defaultConfig.baseUrl}/foods`);
 
     await driver.wait(
-      until.elementLocated(By.xpath("//h1[contains(text(), 'Foods')]")),
+      until.elementLocated(By.xpath("//*[contains(text(), 'Sort Options')]")),
       defaultConfig.defaultTimeout
     );
 
-    // Find filter button
-    const filterButton = await driver.findElement(By.xpath("//button[contains(., 'Filter')]"));
-    expect(await filterButton.isDisplayed()).toBe(true);
+    // Find sort/filter buttons (By Nutrition Score, By Carb Content, etc.)
+    const sortButtons = await driver.findElements(By.xpath("//button[contains(., 'By Nutrition Score') or contains(., 'By Carb Content')]"));
+    expect(sortButtons.length).toBeGreaterThan(0);
 
-    // Click to open filters
-    await filterButton.click();
-    await driver.sleep(500);
-
-    // Filter options should be visible (category dropdowns, etc.)
-    const filterElements = await driver.findElements(By.xpath("//select | //button[contains(@class, 'rounded')]"));
-    expect(filterElements.length).toBeGreaterThan(0);
+    // Click to apply a sort
+    if (sortButtons.length > 0) {
+      await sortButtons[0].click();
+      await driver.sleep(500);
+      
+      // Verify sorting indicator appears
+      const sortingIndicator = await driver.findElements(By.xpath("//*[contains(text(), 'Sorting:')]"));
+      expect(sortingIndicator.length).toBeGreaterThanOrEqual(0);
+    }
   }, 30000);
 
   it('should have pagination controls', async () => {

@@ -129,16 +129,18 @@ describe('Signup Page - Selenium E2E Tests', () => {
     // Initial type should be password
     expect(await passwordInput.getAttribute('type')).toBe('password');
 
-    // Find and click the toggle button (there are multiple, get the first one for password field)
-    const toggleButtons = await driver.findElements(By.xpath("//button[@type='button']"));
-    await toggleButtons[0].click();
+    // Find the toggle button within the password field's parent div
+    // The button should be a sibling to the password input
+    const passwordFieldContainer = await passwordInput.findElement(By.xpath('..'));
+    const toggleButton = await passwordFieldContainer.findElement(By.xpath(".//button[@type='button']"));
+    await toggleButton.click();
     await driver.sleep(200);
 
     // Should now be text
     expect(await passwordInput.getAttribute('type')).toBe('text');
 
     // Toggle back
-    await toggleButtons[0].click();
+    await toggleButton.click();
     await driver.sleep(200);
 
     expect(await passwordInput.getAttribute('type')).toBe('password');
