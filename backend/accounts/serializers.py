@@ -104,6 +104,7 @@ class UserSerializer(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField(read_only=True)
     allergens = AllergenInputSerializer(many=True, required=False)
     profile_image = serializers.SerializerMethodField()
+    badges = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -125,7 +126,7 @@ class UserSerializer(serializers.ModelSerializer):
             "allergens",
             "recipes",
             "profile_image",
-            "badges"
+            "badges",
         ]
         extra_kwargs = {
             "address": {"required": False},
@@ -141,7 +142,6 @@ class UserSerializer(serializers.ModelSerializer):
 
     def get_badges(self, obj):
         return get_user_badges(obj)
-
 
     def get_tags(self, user_obj):
         """Serialize tags with user context for per-user verification"""
@@ -186,6 +186,7 @@ class PhotoSerializer(serializers.ModelSerializer):
             # Return relative URL - works in all environments
             return f"/api/users/profile-image/{obj.profile_image_token}/"
         return None
+
 
 class ReportSerializer(serializers.ModelSerializer):
     reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
