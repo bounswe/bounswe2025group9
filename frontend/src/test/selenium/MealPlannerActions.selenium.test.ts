@@ -1,18 +1,21 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
+import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Meal Planner Actions - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
-    driver = await createDriver(defaultConfig);
-    // Login before running tests since all pages are protected
-    await loginWithTestCredentials(driver);
+    driver = await getDriver();
+    if (defaultConfig.headless) {
+      await loginWithTestCredentials(driver);
+    }
   }, 30000);
 
   afterAll(async () => {
-    await quitDriver(driver);
+    if (defaultConfig.headless) {
+      await quitDriver(driver);
+    }
   });
 
   it('should display add to meal planner button on food detail page', async () => {

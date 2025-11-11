@@ -1,18 +1,23 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { WebDriver, By, until } from 'selenium-webdriver';
-import { createDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
+import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Foods Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
-    driver = await createDriver(defaultConfig);
-    // Login first since foods page is protected
-    await loginWithTestCredentials(driver);
+    driver = await getDriver();
+    // In headless mode, login per test file; in non-headless, already logged in globally
+    if (defaultConfig.headless) {
+      await loginWithTestCredentials(driver);
+    }
   }, 30000);
 
   afterAll(async () => {
-    await quitDriver(driver);
+    // Only quit driver in headless mode (global driver is managed by globalSetup)
+    if (defaultConfig.headless) {
+      await quitDriver(driver);
+    }
   });
 
   it('should display foods page with header and search functionality', async () => {

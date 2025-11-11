@@ -6,12 +6,13 @@ describe('Login Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
-    // Create a new browser instance before running tests
+    // Login tests need a fresh, non-authenticated browser
+    // Always create a new driver for login tests
     driver = await createDriver(defaultConfig);
-  }, 30000); // 30 second timeout for browser startup
+  }, 30000);
 
   afterAll(async () => {
-    // Close the browser after all tests are done
+    // Always quit driver for login tests
     await quitDriver(driver);
   });
 

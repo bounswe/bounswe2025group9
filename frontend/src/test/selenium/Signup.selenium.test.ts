@@ -6,10 +6,13 @@ describe('Signup Page - Selenium E2E Tests', () => {
   let driver: WebDriver;
 
   beforeAll(async () => {
+    // Signup tests need a fresh, non-authenticated browser
+    // Always create a new driver for signup tests
     driver = await createDriver(defaultConfig);
   }, 30000);
 
   afterAll(async () => {
+    // Always quit driver for signup tests
     await quitDriver(driver);
   });
 
