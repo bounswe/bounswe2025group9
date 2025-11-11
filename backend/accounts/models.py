@@ -103,3 +103,29 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+class Report(models.Model):
+    """
+    Represents a user report (e.g., reporting inappropriate behavior).
+    """
+
+    reporter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reports_made",
+        help_text="The user who submitted the report.",
+    )
+    reportee = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reports_received",
+        help_text="The user being reported.",
+    )
+    reason = models.TextField(help_text="The reason or description of the report.")
+    reviewed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("reporter", "reportee")
+
+    def __str__(self):
+        return f"Report by {self.reporter.username} on {self.reportee.username}"

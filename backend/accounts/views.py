@@ -21,6 +21,7 @@ from .serializers import (
     AllergenOutputSerializer,
     TagInputSerializer,
     TagOutputSerializer,
+    ReportSerializer,
 )
 from .services import register_user, list_users, update_user
 from .models import User, Allergen, Tag, UserTag
@@ -551,6 +552,21 @@ class LikedRecipesView(APIView):
         return paginator.get_paginated_response(serializer.data)
 
 
+class ReportUserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ReportSerializer(data=request.data, context={"request": request})
+
+        if serializer.is_valid():
+            report = serializer.save()
+            return Response(
+                {"message": "Report submitted successfully.", "report_id": report.id},
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 class IsCertificateOwnerOrAdmin(BasePermission):
     """
     Custom permission to only allow certificate owners or admin users to view certificates.

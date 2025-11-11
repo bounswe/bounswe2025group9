@@ -194,4 +194,3 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = ["id", "reporter", "reportee", "reason"]
         read_only_fields = ["id"]
-
