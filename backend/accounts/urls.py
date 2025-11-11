@@ -19,6 +19,8 @@ from .views import (
     LikedPostsView,
     LikedRecipesView,
     ReportUserView,
+    ServeProfileImageView,
+    ServeCertificateView,
 )
 
 urlpatterns = [
@@ -45,4 +47,15 @@ urlpatterns = [
     path("certificate/", CertificateView.as_view(), name="certificate"),
 
     path("report/", ReportUserView.as_view(), name="report-user"),
+    # Secure file serving endpoints
+    path(
+        "profile-image/<uuid:token>/",
+        ServeProfileImageView.as_view(),
+        name="serve-profile-image",
+    ),
+    path(
+        "certificate/<uuid:token>/",
+        ServeCertificateView.as_view(),
+        name="serve-certificate",
+    ),
 ]

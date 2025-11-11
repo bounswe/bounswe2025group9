@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Food } from '../lib/apiClient';
 import { MagnifyingGlass, X, Hamburger } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
+import NutritionScore from './NutritionScore';
 
 interface FoodSelectorProps {
     open: boolean;
@@ -103,8 +104,11 @@ const FoodSelector = ({ open, onClose, onSelect, foods }: FoodSelectorProps) => 
 
                                     <div className="mt-2">
                                         <p className="nh-text text-sm">Category: {food.category}</p>
-                                        <p className="nh-text text-sm">Nutrition Score: {food.nutritionScore}</p>
-                                        <p className="nh-text text-sm">
+                                        <div className="mt-2">
+                                          <p className="nh-text text-sm mb-1">Nutrition Score:</p>
+                                          <NutritionScore score={food.nutritionScore} size="sm" />
+                                        </div>
+                                        <p className="nh-text text-sm mt-2">
                                             Calories: {food.caloriesPerServing} kcal per {food.servingSize}
                                         </p>
                                         {food.dietaryOptions && food.dietaryOptions.length > 0 && (

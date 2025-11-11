@@ -3,16 +3,20 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import PageNumberPagination
+from django.http import FileResponse, Http404
+from django.conf import settings
 
 from .serializers import (
     UserSerializer,
     ChangePasswordSerializer,
     ContactInfoSerializer,
     PhotoSerializer,
+    PhotoUploadSerializer,
     AllergenInputSerializer,
     AllergenOutputSerializer,
     TagInputSerializer,
@@ -48,7 +52,10 @@ class CreateUserView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.create(serializer.validated_data)
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            return Response(
+                UserSerializer(user).data,
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -60,7 +67,10 @@ class UpdateUserView(APIView):
         serializer = ContactInfoSerializer(data=request.data)
         if serializer.is_valid():
             user = update_user(request.user, serializer.validated_data)
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            return Response(
+                UserSerializer(user).data,
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -335,7 +345,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file size (max 5 MB)
+        #  Validate file size (max 5 MB)
         max_size = 5 * 1024 * 1024  # 5 MB in bytes
         if image.size > max_size:
             return Response(
@@ -343,7 +353,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file type
+        #  Validate file type
         valid_mime_types = ["image/jpeg", "image/png"]
         if image.content_type not in valid_mime_types:
             return Response(
@@ -351,12 +361,14 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Save valid image
-        serializer = PhotoSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #  Save valid image
+        upload_serializer = PhotoUploadSerializer(user, data=request.data, partial=True)
+        if upload_serializer.is_valid():
+            upload_serializer.save()
+            # Return the URL using the read serializer
+            read_serializer = PhotoSerializer(user)
+            return Response(read_serializer.data, status=status.HTTP_200_OK)
+        return Response(upload_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         user = request.user
@@ -367,14 +379,14 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Get full path to the image file
+        #  Get full path to the image file
         image_path = user.profile_image.path
 
-        # ✅ Clear the field and save to DB
+        #  Clear the field and save to DB
         user.profile_image = None
         user.save()
 
-        # ✅ Delete the actual file if it exists
+        #  Delete the actual file if it exists
         if os.path.exists(image_path):
             try:
                 os.remove(image_path)
@@ -555,3 +567,90 @@ class ReportUserView(APIView):
             )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class IsCertificateOwnerOrAdmin(BasePermission):
+    """
+    Custom permission to only allow certificate owners or admin users to view certificates.
+    """
+
+    def has_permission(self, request, view):
+        # Check if user is authenticated
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Get the token from the URL
+        token = view.kwargs.get("token")
+        if not token:
+            return False
+
+        try:
+            # Find the UserTag by certificate token
+            user_tag = UserTag.objects.get(certificate_token=token)
+
+            # Allow if user is the owner or an admin
+            return (
+                request.user == user_tag.user
+                or request.user.is_staff
+                or request.user.is_superuser
+            )
+        except UserTag.DoesNotExist:
+            return False
+
+
+class ServeProfileImageView(APIView):
+    """
+    Serve profile images by token. Public access.
+    GET /api/users/profile-image/<uuid:token>/
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        try:
+            user = User.objects.get(profile_image_token=token)
+        except User.DoesNotExist:
+            raise Http404("Profile image not found")
+
+        if not user.profile_image:
+            raise Http404("User has no profile image")
+
+        # Build the full path to the file
+        file_path = os.path.join(settings.MEDIA_ROOT, user.profile_image.name)
+
+        if not os.path.exists(file_path):
+            raise Http404("Profile image file not found")
+
+        # Serve the file with proper content type
+        response = FileResponse(open(file_path, "rb"))
+        # Let Django auto-detect content type from file extension
+        return response
+
+
+class ServeCertificateView(APIView):
+    """
+    Serve certificates by token. Restricted to certificate owner or admin.
+    GET /api/users/certificate/<uuid:token>/
+    Supports both JWT (for API clients) and Session (for Django admin) authentication.
+    """
+
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsCertificateOwnerOrAdmin]
+
+    def get(self, request, token):
+        try:
+            user_tag = UserTag.objects.get(certificate_token=token)
+        except UserTag.DoesNotExist:
+            raise Http404("Certificate not found")
+
+        if not user_tag.certificate:
+            raise Http404("No certificate file attached")
+
+        # Build the full path to the file
+        file_path = os.path.join(settings.MEDIA_ROOT, user_tag.certificate.name)
+
+        if not os.path.exists(file_path):
+            raise Http404("Certificate file not found")
+
+        # Serve the file with proper content type
+        response = FileResponse(open(file_path, "rb"))
+        # Let Django auto-detect content type from file extension
+        return response
