@@ -9,13 +9,14 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
-    // Run selenium tests sequentially when not in headless mode to avoid multiple browser windows
-    sequence: {
-      hooks: "list",
-      concurrent: defaultConfig.headless,
-    },
+    // Run selenium tests sequentially when not in headless mode
+    // This prevents multiple browser windows from opening simultaneously
     fileParallelism: defaultConfig.headless,
-    // Global setup for shared browser instance in non-headless mode
-    globalSetup: defaultConfig.headless ? undefined : "./src/test/selenium/globalSetup.ts",
+    pool: 'forks',
+    poolOptions: {
+      forks: {
+        singleFork: !defaultConfig.headless, // Single worker for non-headless mode
+      },
+    },
   },
 });

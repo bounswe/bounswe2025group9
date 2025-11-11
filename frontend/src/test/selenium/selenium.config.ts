@@ -75,15 +75,31 @@ export async function loginWithTestCredentials(driver: WebDriver, config: Seleni
   await driver.sleep(2000);
 }
 
-// Helper to get or create driver based on headless mode
+// Shared driver instance for non-headless mode (one per test file, but files run sequentially)
+let sharedDriver: WebDriver | null = null;
+
+// Helper to get or create driver
 export async function getDriver(): Promise<WebDriver> {
+  if (!defaultConfig.headless && sharedDriver) {
+    // Reuse driver within same test file
+    return sharedDriver;
+  }
+  
+  // Create new driver
+  const driver = await createDriver(defaultConfig);
+  
   if (!defaultConfig.headless) {
-    // In non-headless mode, use global driver
-    const { getGlobalDriver } = await import('./globalSetup');
-    return getGlobalDriver();
-  } else {
-    // In headless mode, create individual drivers per test file
-    return await createDriver(defaultConfig);
+    sharedDriver = driver;
+  }
+  
+  return driver;
+}
+
+// Helper to clean up shared driver
+export async function cleanupSharedDriver(): Promise<void> {
+  if (sharedDriver) {
+    await quitDriver(sharedDriver);
+    sharedDriver = null;
   }
 }
 

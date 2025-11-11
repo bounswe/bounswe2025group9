@@ -7,17 +7,13 @@ describe('Foods Page - Selenium E2E Tests', () => {
 
   beforeAll(async () => {
     driver = await getDriver();
-    // In headless mode, login per test file; in non-headless, already logged in globally
-    if (defaultConfig.headless) {
-      await loginWithTestCredentials(driver);
-    }
+    // Login since foods page is protected
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
-    // Only quit driver in headless mode (global driver is managed by globalSetup)
-    if (defaultConfig.headless) {
-      await quitDriver(driver);
-    }
+    // Quit driver after tests
+    await quitDriver(driver);
   });
 
   it('should display foods page with header and search functionality', async () => {

@@ -7,15 +7,11 @@ describe('Theme Toggle - Selenium E2E Tests', () => {
 
   beforeAll(async () => {
     driver = await getDriver();
-    if (defaultConfig.headless) {
-      await loginWithTestCredentials(driver);
-    }
+    await loginWithTestCredentials(driver);
   }, 30000);
 
   afterAll(async () => {
-    if (defaultConfig.headless) {
-      await quitDriver(driver);
-    }
+    await quitDriver(driver);
   });
 
   it('should display theme toggle button', async () => {
