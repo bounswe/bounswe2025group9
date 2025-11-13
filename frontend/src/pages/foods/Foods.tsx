@@ -117,26 +117,27 @@ const Foods = () => {
         }
     }
 
-    // Main fetch effect
+    // Initial load on component mount
+    useEffect(() => {
+        fetchFoods(1, '');
+    }, []);
+
+    // Refetch when shouldFetch flag is set (for pagination and search)
     useEffect(() => {
         if (shouldFetch) {
             fetchFoods(page, searchTerm);
             setShouldFetch(false);
         }
-    }, [page, shouldFetch, searchTerm]);
+    }, [shouldFetch]);
 
-    // Refetch when sort options change - separate effect to avoid race conditions
+    // Refetch when sort options change (but not on initial mount)
     useEffect(() => {
-        if (sortBy !== undefined) { // Only trigger if not initial render
+        // Skip if this is initial render (sortBy will be empty string on mount)
+        if (sortBy !== undefined && sortBy !== '') {
             console.log("Sort changed, fetching with:", { sortBy, sortOrder, page, searchTerm });
             fetchFoods(page, searchTerm);
         }
     }, [sortBy, sortOrder]);
-    
-    // Initial load on component mount
-    useEffect(() => {
-        fetchFoods(1, '');
-    }, []);
 
     const pageSize = foods.length
     const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
