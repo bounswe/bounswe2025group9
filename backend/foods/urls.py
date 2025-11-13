@@ -7,6 +7,7 @@ from .views import (
     suggest_recipe,
     get_random_meal,
     food_nutrition_info,
+    image_proxy,
 )
 
 urlpatterns = [
@@ -22,4 +23,5 @@ urlpatterns = [
     path("", FoodCatalog.as_view(), name="get_foods"),
     path("catalog/", FoodCatalog.as_view(), name="food-catalog"),
     path("food/nutrition-info/", food_nutrition_info, name="food_nutrition_info"),
+    path("image-proxy/", image_proxy, name="image_proxy"),
 ]

@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from foods.models import FoodEntry, FoodProposal
+from foods.models import FoodEntry, FoodProposal, ImageCache
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
 from rest_framework.generics import ListAPIView
@@ -14,6 +14,12 @@ import os
 import traceback
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework import status
+from django.http import HttpResponse, FileResponse, HttpResponseRedirect
+from django.core.files.base import ContentFile
+from django.utils.http import urlencode
+import hashlib
+from urllib.parse import unquote
+from concurrent.futures import ThreadPoolExecutor
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "api", "db_initialization")
@@ -21,6 +27,11 @@ sys.path.append(
 
 from scraper import make_request, extract_food_info, get_fatsecret_image_url
 from nutrition_score import calculate_nutrition_score
+
+# Global thread pool for background image caching (max 5 concurrent downloads)
+_image_cache_executor = ThreadPoolExecutor(
+    max_workers=5, thread_name_prefix="image_cache"
+)
 
 
 class FoodCatalog(ListAPIView):
@@ -338,3 +349,114 @@ def food_nutrition_info(request):
         return Response(
             {"error": f"Failed to fetch nutrition info: {str(e)}"}, status=500
         )
+
+
+def _download_and_cache_image(image_url, url_hash):
+    """
+    Background task to download and cache an image.
+    Runs in thread pool to avoid blocking the main request.
+    """
+    try:
+        # Check if already cached (might have been cached by another task)
+        if ImageCache.objects.filter(url_hash=url_hash).exists():
+            return
+
+        # Download the image
+        img_response = requests.get(image_url, timeout=10, stream=True)
+        img_response.raise_for_status()
+
+        # Get content type
+        content_type = img_response.headers.get("Content-Type", "image/jpeg")
+
+        # Read image content
+        image_content = b""
+        for chunk in img_response.iter_content(chunk_size=8192):
+            image_content += chunk
+
+        # Determine file extension
+        ext_map = {
+            "image/jpeg": ".jpg",
+            "image/jpg": ".jpg",
+            "image/png": ".png",
+            "image/webp": ".webp",
+            "image/gif": ".gif",
+        }
+        ext = ext_map.get(content_type, ".jpg")
+
+        # Create unique filename using hash
+        filename = f"{url_hash}{ext}"
+
+        # Save to cache
+        cache_entry = ImageCache.objects.create(
+            url_hash=url_hash,
+            original_url=image_url,
+            content_type=content_type,
+            file_size=len(image_content),
+            access_count=0,
+        )
+        cache_entry.cached_file.save(filename, ContentFile(image_content))
+
+        print(f"Successfully cached image: {image_url[:50]}...")
+
+    except Exception as e:
+        print(f"Failed to cache image {image_url[:50]}...: {str(e)}")
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def image_proxy(request):
+    """
+    GET /api/foods/image-proxy/?url={external_url}
+    Proxies external food images with local caching for improved performance.
+    - If image is cached: serves from local storage
+    - If not cached: redirects to original URL and submits caching task to thread pool
+    """
+    image_url = request.query_params.get("url")
+
+    if not image_url:
+        return Response(
+            {"error": "url parameter is required"}, status=status.HTTP_400_BAD_REQUEST
+        )
+
+    # Decode URL if it's encoded
+    image_url = unquote(image_url)
+
+    # Skip caching for local URLs (already served locally)
+    if (
+        image_url.startswith("/media/")
+        or "localhost" in image_url
+        or "127.0.0.1" in image_url
+    ):
+        return HttpResponseRedirect(image_url)
+
+    # Compute hash of URL for uniqueness
+    url_hash = hashlib.sha256(image_url.encode("utf-8")).hexdigest()
+
+    try:
+        # Check if image is already cached using hash
+        cache_entry = ImageCache.objects.filter(url_hash=url_hash).first()
+
+        if cache_entry and cache_entry.cached_file:
+            # Update access statistics
+            cache_entry.access_count += 1
+            cache_entry.save(update_fields=["access_count", "last_accessed"])
+
+            # Serve cached image
+            response = FileResponse(
+                cache_entry.cached_file.open("rb"),
+                content_type=cache_entry.content_type,
+            )
+            response["Cache-Control"] = "public, max-age=86400"  # Cache for 24 hours
+            return response
+
+        # Image not cached - submit caching task to thread pool and redirect immediately
+        _image_cache_executor.submit(_download_and_cache_image, image_url, url_hash)
+
+        # Redirect to original URL for immediate response
+        return HttpResponseRedirect(image_url)
+
+    except Exception as e:
+        # Any error, redirect to original URL as fallback
+        print(f"Error in image proxy for {image_url}: {str(e)}")
+        traceback.print_exc()
+        return HttpResponseRedirect(image_url)
