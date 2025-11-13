@@ -1,5 +1,19 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser, Group, Permission
+import uuid
+import os
+
+
+def certificate_upload_to(instance, filename):
+    """Generate secure filename for certificates using token"""
+    ext = os.path.splitext(filename)[1]
+    return f"certificates/{instance.certificate_token}{ext}"
+
+
+def profile_image_upload_to(instance, filename):
+    """Generate secure filename for profile images using token"""
+    ext = os.path.splitext(filename)[1]
+    return f"profile_images/{instance.profile_image_token}{ext}"
 
 
 class Tag(models.Model):
@@ -15,7 +29,12 @@ class UserTag(models.Model):
     user = models.ForeignKey("User", on_delete=models.CASCADE)
     tag = models.ForeignKey(Tag, on_delete=models.CASCADE)
     verified = models.BooleanField(default=False)
-    certificate = models.FileField(upload_to="certificates/", null=True, blank=True)
+    certificate_token = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True
+    )
+    certificate = models.FileField(
+        upload_to=certificate_upload_to, null=True, blank=True
+    )
 
     class Meta:
         unique_together = ("user", "tag")
@@ -44,8 +63,11 @@ class User(AbstractUser):
     tags = models.ManyToManyField(Tag, through="UserTag", blank=True)
     allergens = models.ManyToManyField(Allergen, blank=True)
 
+    profile_image_token = models.UUIDField(
+        default=uuid.uuid4, editable=False, unique=True
+    )
     profile_image = models.ImageField(
-        upload_to="profile_images/", null=True, blank=True  # folder inside MEDIA_ROOT
+        upload_to=profile_image_upload_to, null=True, blank=True
     )
 
     current_meal_plan = models.ForeignKey(
@@ -81,3 +103,29 @@ class Recipe(models.Model):
 
     def __str__(self):
         return self.name
+
+class Report(models.Model):
+    """
+    Represents a user report (e.g., reporting inappropriate behavior).
+    """
+
+    reporter = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reports_made",
+        help_text="The user who submitted the report.",
+    )
+    reportee = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="reports_received",
+        help_text="The user being reported.",
+    )
+    reason = models.TextField(help_text="The reason or description of the report.")
+    reviewed = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ("reporter", "reportee")
+
+    def __str__(self):
+        return f"Report by {self.reporter.username} on {self.reportee.username}"

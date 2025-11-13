@@ -70,7 +70,10 @@ class TagOutputSerializer(serializers.ModelSerializer):
             return None
         try:
             user_tag = UserTag.objects.get(user=user, tag=tag_obj)
-            return user_tag.certificate.url if user_tag.certificate else None
+            if user_tag.certificate:
+                # Return relative URL - works in all environments
+                return f"/api/users/certificate/{user_tag.certificate_token}/"
+            return None
         except UserTag.DoesNotExist:
             return None
 
@@ -100,6 +103,8 @@ class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
     tags = serializers.SerializerMethodField(read_only=True)
     allergens = AllergenInputSerializer(many=True, required=False)
+    profile_image = serializers.SerializerMethodField()
+    badges = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -123,12 +128,19 @@ class UserSerializer(serializers.ModelSerializer):
             "profile_image",
             "is_staff",
             "is_superuser",
+            "badges",
         ]
         extra_kwargs = {
             "address": {"required": False},
             "password": {"write_only": True},
-            "profile_image": {"required": False},
         }
+
+    def get_profile_image(self, obj):
+        """Return the secure endpoint URL for profile image"""
+        if obj.profile_image:
+            # Return relative URL - works in all environments
+            return f"/api/users/profile-image/{obj.profile_image_token}/"
+        return None
 
     def get_badges(self, obj):
         return get_user_badges(obj)
@@ -152,18 +164,36 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
 
-class PhotoSerializer(serializers.ModelSerializer):
+class PhotoUploadSerializer(serializers.ModelSerializer):
+    """Serializer for uploading profile images"""
+
     class Meta:
         model = User
         fields = ["profile_image"]
         extra_kwargs = {"profile_image": {"required": True}}
 
-#I got error here because of missing report model so I fixed it with comments
 
-# class ReportSerializer(serializers.ModelSerializer):
-#     reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
-# 
-#     class Meta:
-#         model = Report
-#         fields = ["id", "reporter", "reportee", "reason"]
-#         read_only_fields = ["id"]
+class PhotoSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving profile image URLs"""
+
+    profile_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ["profile_image"]
+
+    def get_profile_image(self, obj):
+        """Return the secure endpoint URL for profile image"""
+        if obj.profile_image:
+            # Return relative URL - works in all environments
+            return f"/api/users/profile-image/{obj.profile_image_token}/"
+        return None
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Report
+        fields = ["id", "reporter", "reportee", "reason"]
+        read_only_fields = ["id"]
