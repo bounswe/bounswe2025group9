@@ -129,3 +129,11 @@ class Report(models.Model):
 
     def __str__(self):
         return f"Report by {self.reporter.username} on {self.reportee.username}"
+    
+class Follow(models.Model):
+    follower = models.ForeignKey(User, on_delete=models.CASCADE, related_name="following_set")
+    following = models.ForeignKey(User, on_delete=models.CASCADE, related_name="followers_set")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('follower', 'following')

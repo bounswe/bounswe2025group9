@@ -550,6 +550,47 @@
 			"response": []
 		},
 		{
+			"name": "report_user",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYyNjg2MDc2LCJpYXQiOjE3NjI2ODI0NzcsImp0aSI6IjA1ODhlMWYyNzE5MzRmYmU4YTQ0MjA2MDIxNGRiYmM3IiwidXNlcl9pZCI6IjIifQ.4YsJStY-jCs04bkxNn5I2F6vZ4nLYR36Y8FDMSBx1-U",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"reportee\": 3,\r\n  \"reason\": \"Spamming and inappropriate messages.\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/report/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"report",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "time",
 			"request": {
 				"method": "GET",
@@ -1644,6 +1685,125 @@
 					]
 				},
 				"description": "**Get detailed information for a specific food entity from Wikidata**\n\nThis endpoint retrieves detailed information about a food entity from Wikidata using its entity ID.\n\nPath parameter:\n- `entity_id`: The Wikidata entity ID (e.g., Q193 for 'beer')\n\nResponse includes:\n- Basic entity information (ID, label, description)\n- Wikipedia link if available\n- Food-related properties such as:\n  - subclass_of\n  - instance_of\n  - made_from_material\n  - has_parts\n  - has_effect\n  - has_nutritional_value\n\nExample response for beer (Q193):\n```json\n{\n  \"id\": \"Q193\",\n  \"label\": \"beer\",\n  \"description\": \"alcoholic drink fermented from starch material\",\n  \"wikipedia_link\": \"https://en.wikipedia.org/wiki/Beer\",\n  \"properties\": {\n    \"instance_of\": [\"Q2095\"],\n    \"made_from_material\": [\"Q5371\", \"Q7772\"],\n    \"has_effect\": [\"Q47495\"]\n  }\n}\n```"
+			},
+			"response": []
+		},
+		{
+			"name": "follow_user_toggle",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjIxMzE1LCJpYXQiOjE3NjMyMTc3MTUsImp0aSI6IjkwNWJmYjcwYWFhYTQxODFiMzZjZmUzNDIwYWIzZGY3IiwidXNlcl9pZCI6IjIifQ.g2AzQhHtMaPT3HN2PxfQjWPRJLsOz_Fv7-0Lfsyn3Y0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"eren4\"}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/follow/",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"follow",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_followers",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjIxMzE1LCJpYXQiOjE3NjMyMTc3MTUsImp0aSI6IjkwNWJmYjcwYWFhYTQxODFiMzZjZmUzNDIwYWIzZGY3IiwidXNlcl9pZCI6IjIifQ.g2AzQhHtMaPT3HN2PxfQjWPRJLsOz_Fv7-0Lfsyn3Y0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"eren4\"}"
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/followers/eren4",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"followers",
+						"eren4"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get_following",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzYzMjIxMzE1LCJpYXQiOjE3NjMyMTc3MTUsImp0aSI6IjkwNWJmYjcwYWFhYTQxODFiMzZjZmUzNDIwYWIzZGY3IiwidXNlcl9pZCI6IjIifQ.g2AzQhHtMaPT3HN2PxfQjWPRJLsOz_Fv7-0Lfsyn3Y0",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"username\": \"eren4\"}"
+				},
+				"url": {
+					"raw": "http://localhost:9000/api/users/following/ffb",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9000",
+					"path": [
+						"api",
+						"users",
+						"following",
+						"ffb"
+					]
+				}
 			},
 			"response": []
 		}
