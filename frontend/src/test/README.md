@@ -1,68 +1,27 @@
 # Frontend Tests
 
-This directory contains tests for the frontend components and pages of the NutriHub application.
+We have two types of tests here: component tests and Selenium E2E tests.
 
-## Test Structure
+## Quick Start
 
-The tests are organized as follows:
-
-- `setup.ts`: Contains global test setup code
-- `components/`: Tests for individual UI components
-- `App.test.tsx`: Tests for the main App component and routing
-
-## Running Tests
-
-To run all tests, use the following command from the frontend directory:
-
+Run all tests:
 ```bash
 npm test
 ```
 
-To run tests in watch mode, which will re-run tests when files change:
-
+Run tests in watch mode:
 ```bash
 npm test -- --watch
 ```
 
-To run a specific test file:
-
-```bash
-npm test -- path/to/test/file.test.tsx
-```
-
-For example, to run only the Logo component tests:
-
+Run a specific test:
 ```bash
 npm test -- src/test/components/Logo.test.tsx
 ```
 
-## Test Coverage
+## Component Tests
 
-To generate a test coverage report:
-
-```bash
-npm test -- --coverage
-```
-
-This will create a coverage report in the `coverage` directory.
-
-## Testing Libraries Used
-
-- Vitest: Test runner and assertion library
-- React Testing Library: For rendering and interacting with React components
-- JSDOM: For simulating a browser environment
-
-## Writing New Tests
-
-When writing new tests:
-
-1. Create a new test file with the `.test.tsx` extension
-2. Import the necessary testing utilities from Vitest and React Testing Library
-3. Use the `describe`, `it`, and `expect` functions to structure your tests
-4. Use `render` to render components and `screen` to query the rendered output
-5. Use `fireEvent` or `userEvent` to simulate user interactions
-
-Example:
+These use Vitest and React Testing Library. Just write normal component tests:
 
 ```tsx
 import { describe, it, expect } from 'vitest'
@@ -77,14 +36,107 @@ describe('MyComponent', () => {
 })
 ```
 
-## Mocking Dependencies
+## Selenium E2E Tests
 
-When testing components that have dependencies (like context providers, routers, etc.), use Vitest's mocking capabilities to mock those dependencies:
+For testing real user flows in a browser. First-time setup:
 
-```tsx
-import { vi } from 'vitest'
+### 1. Install dependencies
+```bash
+npm install --save-dev selenium-webdriver @types/selenium-webdriver
+```
 
-vi.mock('../../path/to/dependency', () => ({
-  useDependency: vi.fn().mockReturnValue({ value: 'mocked value' })
-}))
-``` 
+### 2. Install ChromeDriver
+```bash
+# macOS
+brew install chromedriver
+
+# Linux
+sudo apt-get install chromium-chromedriver
+```
+
+### 3. Setup test user credentials
+Make sure your backend has a user with these credentials:
+- **Username:** `HakanFerah61!`
+- **Password:** `HakanFerah61!`
+
+These are used by tests to access protected routes (foods, forum, meal planner, etc.).
+
+### 4. Run the tests
+Start the dev server first:
+```bash
+npm run dev
+```
+
+Then run Selenium tests (in another terminal):
+```bash
+# Run a single test
+npm test -- src/test/selenium/Login.selenium.test.ts
+
+# Run all Selenium tests (runs sequentially with one browser when headless: false)
+npm test -- src/test/selenium
+```
+
+**Note:** When `headless: false` in `selenium.config.ts`, tests run sequentially in a single visible browser window. This is great for debugging! When `headless: true`, tests run in parallel for speed.
+
+### Writing Selenium tests
+
+Check out `selenium/Login.selenium.test.ts` for an example. Basic patterns:
+
+**For pages that require login (most pages):**
+```typescript
+import { WebDriver, By } from 'selenium-webdriver'
+import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config'
+
+describe('My Protected Page', () => {
+  let driver: WebDriver
+
+  beforeAll(async () => {
+    driver = await getDriver()
+    await loginWithTestCredentials(driver) // Login with test credentials
+  }, 30000)
+
+  afterAll(async () => {
+    await quitDriver(driver)
+  })
+
+  it('does something', async () => {
+    await driver.get(`${defaultConfig.baseUrl}/page`)
+    const button = await driver.findElement(By.id('submit'))
+    await button.click()
+    // assertions...
+  })
+})
+```
+
+**For public pages (login/signup):**
+```typescript
+import { WebDriver, By } from 'selenium-webdriver'
+import { createDriver, quitDriver, defaultConfig } from './selenium.config'
+
+describe('Login Page', () => {
+  let driver: WebDriver
+
+  beforeAll(async () => {
+    driver = await createDriver(defaultConfig) // Always create fresh browser
+  }, 30000)
+
+  afterAll(async () => {
+    await quitDriver(driver) // Always quit
+  })
+
+  it('shows login form', async () => {
+    await driver.get(`${defaultConfig.baseUrl}/login`)
+    // test login functionality...
+  })
+})
+```
+
+### Debugging tips
+- Set `headless: false` in `selenium.config.ts` to see the browser while tests run
+- When non-headless, tests run **sequentially** so you can watch each one
+- Tests use credentials: `HakanFerah61!` / `HakanFerah61!` for authentication
+
+## What to test where
+
+- **Component tests**: Individual components, simple interactions
+- **Selenium tests**: Multi-page flows, complex user scenarios, form submissions 
