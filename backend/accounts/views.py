@@ -10,6 +10,7 @@ from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import PageNumberPagination
 from django.http import FileResponse, Http404
 from django.conf import settings
+from django.db.models import Q
 
 from .serializers import (
     UserSerializer,
@@ -24,7 +25,7 @@ from .serializers import (
     ReportSerializer,
 )
 from .services import register_user, list_users, update_user
-from .models import User, Allergen, Tag, UserTag
+from .models import User, Allergen, Tag, UserTag, Follow
 from forum.models import Like, Post, Recipe
 from forum.serializers import PostSerializer, RecipeSerializer
 import os
@@ -654,3 +655,144 @@ class ServeCertificateView(APIView):
         response = FileResponse(open(file_path, "rb"))
         # Let Django auto-detect content type from file extension
         return response
+
+class FollowUserView(APIView):
+    """
+    POST /users/follow/
+    Body: { "username": "<target_username>" }
+    Toggle follow/unfollow operation.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        current_user = request.user
+        target_username = request.data.get("username")
+
+        if not target_username:
+            return Response(
+                {"detail": "username field is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if target_username == current_user.username:
+            return Response(
+                {"detail": "You cannot follow yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check target user existence
+        try:
+            target_user = User.objects.get(username=target_username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check existing follow relation
+        existing = Follow.objects.filter(
+            follower=current_user, following=target_user
+        ).first()
+
+        if existing:
+            # UNFOLLOW
+            existing.delete()
+            return Response(
+                {"message": f"You unfollowed {target_user.username}."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            # FOLLOW
+            Follow.objects.create(follower=current_user, following=target_user)
+            return Response(
+                {"message": f"You are now following {target_user.username}."},
+                status=status.HTTP_201_CREATED,
+            )
+
+class FollowersListView(APIView):
+    """
+    GET /users/followers/<username>/
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        followers = User.objects.filter(following_set__following=user)
+        serializer = UserSerializer(followers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FollowingListView(APIView):
+    """
+    GET /users/following/<username>/
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        following = User.objects.filter(followers_set__follower=user)
+        serializer = UserSerializer(following, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FeedView(APIView):
+    """
+    GET /forum/feed/
+    Returns a feed of posts that includes:
+    - Posts from users the current user follows
+    - Posts the current user has liked
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        # 1. Get IDs of users the current user follows
+        following_ids = Follow.objects.filter(follower=user).values_list(
+            "following_id", flat=True
+        )
+
+        # 2. Get posts the user has liked
+        liked_post_ids = Like.objects.filter(user=user).values_list(
+            "post_id", flat=True
+        )
+
+        # 3. Fetch feed posts: posts by followed users OR liked posts
+        posts = (
+            Post.objects.filter(
+                Q(author_id__in=following_ids) | Q(id__in=liked_post_ids)
+            )
+            .distinct()
+            .order_by("-created_at")
+        )
+
+        # 4. Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        paginated_posts = paginator.paginate_queryset(posts, request)
+
+        serializer = PostSerializer(paginated_posts, many=True)
+        return paginator.get_paginated_response(serializer.data)

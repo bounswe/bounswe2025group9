@@ -21,6 +21,10 @@ from .views import (
     ReportUserView,
     ServeProfileImageView,
     ServeCertificateView,
+    FollowUserView,
+    FollowersListView, 
+    FollowingListView,
+    FeedView,
 )
 
 urlpatterns = [
@@ -58,4 +62,20 @@ urlpatterns = [
         ServeCertificateView.as_view(),
         name="serve-certificate",
     ),
+
+    path("follow/", FollowUserView.as_view(), name="follow-user"),
+    path(
+    "followers/<str:username>/",
+        FollowersListView.as_view(),
+        name="user-followers",
+    ),
+
+    # List who a user is following
+    path(
+        "following/<str:username>/",
+        FollowingListView.as_view(),
+        name="user-following",
+    ),
+
+    path("feed/", FeedView.as_view(), name="forum-feed"),
 ]
