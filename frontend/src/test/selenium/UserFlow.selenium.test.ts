@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { WebDriver, By, until } from 'selenium-webdriver';
+import { WebDriver, By } from 'selenium-webdriver';
 import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('User Flow - Selenium E2E Tests', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { WebDriver, By, until } from 'selenium-webdriver';
+import { WebDriver, By } from 'selenium-webdriver';
 import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Theme Toggle - Selenium E2E Tests', () => {
@@ -66,7 +66,6 @@ describe('Theme Toggle - Selenium E2E Tests', () => {
     await driver.sleep(500);
 
     const htmlElement = await driver.findElement(By.xpath("//html"));
-    const initialClass = await htmlElement.getAttribute('class');
 
     // Find and click theme toggle
     const themeButtons = await driver.findElements(
