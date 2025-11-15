@@ -72,6 +72,8 @@ export interface UserResponse {
   tags: any[];
   allergens: any[];
   profile_image?: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
 }
 
 // pagination types

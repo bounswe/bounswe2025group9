@@ -176,6 +176,11 @@ const Navbar = () => {
                             <Link to="/mealplanner" className="text-white hover:text-gray-300 whitespace-nowrap">
                                 Meal Planner
                             </Link>
+                            {(user?.is_staff || user?.is_superuser) && (
+                                <Link to="/admin/moderation" className="text-white hover:text-gray-300 whitespace-nowrap">
+                                    Moderation
+                                </Link>
+                            )}
                         </>
                     ) : null}
                 </div>
@@ -276,6 +281,14 @@ const Navbar = () => {
                             >
                                 Forum
                             </Link>
+                            {(user?.is_staff || user?.is_superuser) && (
+                                <Link 
+                                    to="/admin/moderation" 
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                >
+                                    Moderation
+                                </Link>
+                            )}
                             <div className="pt-2 border-t divider flex flex-col gap-3">
                                 <Link
                                     to="/profile"

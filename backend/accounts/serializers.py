@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Recipe, Tag, Allergen, UserTag, Report
+from .models import User, Recipe, Tag, Allergen, UserTag
 from .services import get_user_badges
 
 """
@@ -126,6 +126,8 @@ class UserSerializer(serializers.ModelSerializer):
             "allergens",
             "recipes",
             "profile_image",
+            "is_staff",
+            "is_superuser",
             "badges",
         ]
         extra_kwargs = {

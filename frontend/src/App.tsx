@@ -10,6 +10,7 @@ import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
 import Profile from './pages/Profile'
 import UserProfile from './pages/UserProfile'
+import ModerationPanel from './pages/admin/ModerationPanel'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SwaggerPage from './components/SwaggerPage';
@@ -40,6 +41,11 @@ function App() {
               <Route path="profile" element={<Profile />} />
               <Route path="user/:username" element={<UserProfile />} />
               <Route path="mealplanner" element={<MealPlanner/>}/>
+            </Route>
+
+            {/* Staff-only Routes - moderation panel */}
+            <Route element={<ProtectedRoute requireStaff={true} />}>
+              <Route path="admin/moderation" element={<ModerationPanel />} />
             </Route>
 
             <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
