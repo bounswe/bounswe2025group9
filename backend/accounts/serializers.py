@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import User, Recipe, Tag, Allergen, UserTag
+from .models import User, Recipe, Tag, Allergen, UserTag, Report
 from .services import get_user_badges
 
 """
