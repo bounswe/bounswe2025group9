@@ -24,6 +24,7 @@ from .views import (
     FollowUserView,
     FollowersListView, 
     FollowingListView,
+    FeedView,
 )
 
 urlpatterns = [
@@ -75,4 +76,6 @@ urlpatterns = [
         FollowingListView.as_view(),
         name="user-following",
     ),
+
+    path("feed/", FeedView.as_view(), name="forum-feed"),
 ]

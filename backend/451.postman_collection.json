@@ -1806,6 +1806,14 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "get_feed",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
 		}
 	]
 }
