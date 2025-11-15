@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { WebDriver, By, until } from 'selenium-webdriver';
+import { WebDriver, By } from 'selenium-webdriver';
 import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Post Interaction - Selenium E2E Tests', () => {
@@ -51,9 +51,7 @@ describe('Post Interaction - Selenium E2E Tests', () => {
     );
     
     if (likeButtons.length > 0) {
-      // Get initial state
-      const initialState = await likeButtons[0].getAttribute('aria-pressed');
-      
+
       // Click like button
       await likeButtons[0].click();
       await driver.sleep(1000);
@@ -136,8 +134,6 @@ describe('Post Interaction - Selenium E2E Tests', () => {
     );
     
     if (likeButtons.length > 0) {
-      // Get initial class/style
-      const initialClass = await likeButtons[0].getAttribute('class');
       
       // Click like
       await likeButtons[0].click();
