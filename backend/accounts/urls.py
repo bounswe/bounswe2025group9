@@ -1,5 +1,6 @@
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.urls import path
+from django.urls import include, path
 
 
 from .views import (
@@ -22,10 +23,19 @@ from .views import (
     ServeProfileImageView,
     ServeCertificateView,
     FollowUserView,
-    FollowersListView, 
+    FollowersListView,
     FollowingListView,
     FeedView,
 )
+
+from .admin import UserModerationViewSet, UserTagModerationViewSet
+
+moderation_router = DefaultRouter()
+moderation_router.register(
+    r"user-tags", UserTagModerationViewSet, basename="moderation-user-tags"
+)
+moderation_router.register(r"", UserModerationViewSet, basename="moderation-users")
+
 
 urlpatterns = [
     path("", UserListView.as_view(), name="user-list"),
@@ -49,7 +59,6 @@ urlpatterns = [
     ),
     path("image/", ProfileImageView.as_view(), name="image"),
     path("certificate/", CertificateView.as_view(), name="certificate"),
-
     path("report/", ReportUserView.as_view(), name="report-user"),
     # Secure file serving endpoints
     path(
@@ -62,20 +71,18 @@ urlpatterns = [
         ServeCertificateView.as_view(),
         name="serve-certificate",
     ),
-
     path("follow/", FollowUserView.as_view(), name="follow-user"),
     path(
-    "followers/<str:username>/",
+        "followers/<str:username>/",
         FollowersListView.as_view(),
         name="user-followers",
     ),
-
     # List who a user is following
     path(
         "following/<str:username>/",
         FollowingListView.as_view(),
         name="user-following",
     ),
-
     path("feed/", FeedView.as_view(), name="forum-feed"),
+    path("moderation/", include(moderation_router.urls), name="moderation"),
 ]
