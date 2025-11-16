@@ -38,7 +38,9 @@ class FoodProposal(models.Model):
     dietaryOptions = models.JSONField(default=list)
     nutritionScore = models.FloatField()
     imageUrl = models.URLField(blank=True)
-    isApproved = models.BooleanField(default=False)
+    isApproved = models.BooleanField(
+        null=True, blank=True, default=None
+    )  # null=pending, True=approved, False=rejected
     createdAt = models.DateTimeField(default=django.utils.timezone.now)
     proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
