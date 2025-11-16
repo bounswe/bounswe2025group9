@@ -9,8 +9,14 @@ const FoodCompare: React.FC = () => {
     const [searchOpen, setSearchOpen] = useState(false);
 
     const handleFoodSelect = (food: Food) => {
+        // prevent duplicates
         if (selectedFoods.find(f => f.id === food.id)) {
             alert("This food is already selected for comparison.");
+            return;
+        }
+        // limit to 3 foods
+        if (selectedFoods.length >= 3) {
+            alert("You can compare up to 3 foods only.");
             return;
         }
         setSelectedFoods([...selectedFoods, food]);
@@ -22,7 +28,11 @@ const FoodCompare: React.FC = () => {
     };
 
     const handleAddFood = () => {
-        // Logic to open food selection dialog goes here
+        // prevent opening selector if already at limit
+        if (selectedFoods.length >= 3) {
+            alert("You can compare up to 3 foods only.");
+            return;
+        }
         console.log("Add food clicked");
         setSearchOpen(true);
     };
@@ -33,41 +43,63 @@ const FoodCompare: React.FC = () => {
                 <div className="flex flex-col md:flex-row gap-6">
                     {/* Left Column - Search Items */}
                     <div className="w-full md:w-1/5">
-                        <div className="nh-card top-20"> 
-                            <h3 className="nh-subtitle mb-4 flex items-center gap-2">
-                                Select Foods to Compare
-                            </h3>
-                            
-                            <div className="nh-card p-4 mb-4">
-                                {selectedFoods.length > 0 ? (
-                                    <div className="space-y-2">
-                                        {selectedFoods.map(food => (
-                                            <div key={food.id} className="flex items-center justify-between p-3 bg-opacity-10 bg-primary rounded-lg">
-                                                <span className="nh-text font-medium flex-grow">{food.name}</span>
-                                                <button
-                                                    onClick={() => handleRemoveFood(food.id)}
-                                                    className="flex items-center justify-center w-6 h-6 rounded hover:bg-red-100 transition-colors"
-                                                    title="Remove food"
-                                                >
-                                                    <X size={16} weight="bold" style={{ color: 'var(--color-primary)' }} />
-                                                </button>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <p className="text-center nh-text text-gray-500">No foods selected yet.</p>
+                        <div className="sticky top-20">
+                            <div className="nh-card p-4">
+                                <div className="flex items-center justify-between mb-3">
+                                    <h3 className="nh-subtitle flex items-center gap-2">Select Foods to Compare</h3>
+                                    <span className="text-xs nh-text bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-full font-medium">
+                                        {selectedFoods.length}/3
+                                    </span>
+                                </div>
+
+                                <div className="mb-4">
+                                    {selectedFoods.length > 0 ? (
+                                        <div className="flex flex-col gap-2">
+                                            {selectedFoods.map(food => (
+                                                <div key={food.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                                    {food.imageUrl ? (
+                                                        <img src={food.imageUrl} alt={food.name} className="w-10 h-10 object-cover rounded" onError={(e)=>{ (e.target as HTMLImageElement).style.display='none'; }} />
+                                                    ) : (
+                                                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-sm text-gray-500">—</div>
+                                                    )}
+                                                    <div className="flex-1">
+                                                        <div className="nh-text font-medium truncate">{food.name}</div>
+                                                        <div className="text-xs text-gray-500 truncate">{food.category}</div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => handleRemoveFood(food.id)}
+                                                        className="flex items-center justify-center w-8 h-8 rounded hover:bg-red-100 transition-colors"
+                                                        title="Remove food"
+                                                    >
+                                                        <X size={16} weight="bold" style={{ color: 'var(--color-primary)' }} />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <p className="text-center nh-text text-gray-500">No foods selected yet.</p>
+                                    )}
+                                </div>
+
+                                <button
+                                    onClick={handleAddFood}
+                                    disabled={selectedFoods.length >= 3}
+                                    className={`w-full nh-button nh-button-primary py-3 rounded-lg shadow-md transition-all text-base font-medium flex items-center justify-center gap-2 ${selectedFoods.length >= 3 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'}`}
+                                >
+                                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Add Foods
+                                </button>
+
+                                {selectedFoods.length < 2 && selectedFoods.length > 0 && (
+                                    <p className="text-center nh-text text-sm text-gray-500 mt-2">Select one more food to enable comparison</p>
+                                )}
+
+                                {selectedFoods.length >= 3 && (
+                                    <p className="text-center nh-text text-sm text-gray-500 mt-2">Maximum of 3 foods can be compared.</p>
                                 )}
                             </div>
-
-                            <button
-                                onClick={handleAddFood}
-                                className="w-full nh-button nh-button-primary py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium flex items-center justify-center gap-2"
-                            >
-                                <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                </svg>
-                                Add Foods to Compare
-                            </button>
                         </div>
                     </div>
 
@@ -91,7 +123,7 @@ const FoodCompare: React.FC = () => {
                             <div className="nh-card rounded-lg shadow-md">
                                 <h3 className="nh-subtitle mb-3 text-sm">Comparison Tips</h3>
                                 <ul className="nh-text text-xs space-y-2">
-                                    <li>• Compare up to 5 foods side by side</li>
+                                    <li>• Compare up to 3 foods side by side</li>
                                     <li>• Check nutrition scores for health value</li>
                                     <li>• Compare macronutrients (protein, carbs, fats)</li>
                                     <li>• View calorie content per serving</li>
