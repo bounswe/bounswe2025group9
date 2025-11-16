@@ -506,6 +506,15 @@ const Foods = () => {
                                 </div>
                             </Link>
 
+                            <Link to="/foods/compare" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium">
+                                <div className="flex items-center justify-center w-full">
+                                    <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Compare Foods
+                                </div>
+                            </Link>
+
                             <div className="nh-card rounded-lg shadow-md">
                                 <h3 className="nh-subtitle mb-3 text-sm">Food Facts</h3>
                                 <ul className="nh-text text-xs space-y-2">

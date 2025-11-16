@@ -14,6 +14,7 @@ import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SwaggerPage from './components/SwaggerPage';
 import MealPlanner from './pages/mealplanner/MealPlanner'
+import FoodCompare from './pages/foods/FoodCompare';
 
 // app component with react-router setup
 function App() {
@@ -34,6 +35,7 @@ function App() {
               <Route index element={<Home />} />
               <Route path="foods" element={<Foods />} />
               <Route path="foods/propose" element={<ProposeNewFood />} />
+              <Route path="foods/compare" element={<FoodCompare />} />
               <Route path="forum" element={<Forum />} />
               <Route path="forum/post/:postId" element={<PostDetail />} />
               <Route path="forum/create" element={<CreatePost />} />
