@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ForkKnife, Check, X, Eye } from '@phosphor-icons/react';
+import { apiClient } from '../../../lib/apiClient';
 
 interface FoodProposal {
   id: number;
@@ -22,59 +23,6 @@ interface FoodProposal {
   dietaryOptions?: string[];
 }
 
-// Mock data for UI-only PR
-const MOCK_PROPOSALS: FoodProposal[] = [
-  {
-    id: 1,
-    name: 'Quinoa Salad',
-    category: 'Salad',
-    servingSize: 250,
-    caloriesPerServing: 320,
-    proteinContent: 12,
-    fatContent: 8,
-    carbohydrateContent: 48,
-    nutritionScore: 8.6,
-    imageUrl: 'https://picsum.photos/seed/quinoa/200/200',
-    isApproved: null,
-    proposedBy: { id: 11, username: 'dietlover' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    dietaryOptions: ['Vegan'],
-    allergens: ['Nuts']
-  },
-  {
-    id: 2,
-    name: 'Greek Yogurt Bowl',
-    category: 'Breakfast',
-    servingSize: 200,
-    caloriesPerServing: 180,
-    proteinContent: 15,
-    fatContent: 4,
-    carbohydrateContent: 22,
-    nutritionScore: 7.9,
-    imageUrl: 'https://picsum.photos/seed/yogurt/200/200',
-    isApproved: true,
-    proposedBy: { id: 12, username: 'nutrihero' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
-    dietaryOptions: ['High-Protein']
-  },
-  {
-    id: 3,
-    name: 'Fried Donut',
-    category: 'Dessert',
-    servingSize: 90,
-    caloriesPerServing: 410,
-    proteinContent: 3,
-    fatContent: 24,
-    carbohydrateContent: 44,
-    nutritionScore: 3.2,
-    imageUrl: 'https://picsum.photos/seed/donut/200/200',
-    isApproved: false,
-    proposedBy: { id: 13, username: 'sweettooth' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
-    allergens: ['Gluten']
-  }
-];
-
 const FoodProposals = () => {
   const [proposals, setProposals] = useState<FoodProposal[]>([]);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
@@ -87,19 +35,38 @@ const FoodProposals = () => {
 
   const fetchProposals = async () => {
     setLoading(true);
-    // Mocked filtering logic
-    let data = [...MOCK_PROPOSALS];
-    if (filter === 'pending') data = data.filter(p => p.isApproved === null);
-    if (filter === 'approved') data = data.filter(p => p.isApproved === true);
-    if (filter === 'rejected') data = data.filter(p => p.isApproved === false);
-    setTimeout(() => {
-      setProposals(data);
+    try {
+      const params: { isApproved?: 'null' | 'true' | 'false' } = {};
+
+      if (filter === 'pending') {
+        params.isApproved = 'null';  // Pending proposals have isApproved=null (not reviewed)
+      } else if (filter === 'approved') {
+        params.isApproved = 'true';
+      } else if (filter === 'rejected') {
+        params.isApproved = 'false';  // Rejected proposals have isApproved=false
+      }
+
+      const data = await apiClient.moderation.getFoodProposals(params);
+      setProposals(data.results || data);
+    } catch (error) {
+      console.error('Failed to fetch proposals:', error);
+    } finally {
       setLoading(false);
-    }, 200); // tiny delay to show loader
+    }
   };
 
   const handleApprove = async (proposalId: number, approve: boolean) => {
-    alert('Moderation API is not included in this PR.');
+    try {
+      const result = await apiClient.moderation.approveFoodProposal(proposalId, approve);
+      console.log(result.message);
+
+      // Refresh the list
+      fetchProposals();
+      setSelectedProposal(null);
+    } catch (error) {
+      console.error('Failed to update proposal:', error);
+      alert('Failed to update proposal. Please try again.');
+    }
   };
 
   if (loading) {

@@ -857,4 +857,99 @@ export const apiClient = {
       throw error;
     });
   },
+
+  // Moderation endpoints
+  moderation: {
+    // User management
+    getUsers: (params?: { role?: 'staff' | 'users'; search?: string }) => {
+      let url = "/users/moderation/";
+      const queryParams = new URLSearchParams();
+
+      if (params?.role) {
+        queryParams.append('role', params.role);
+      }
+      if (params?.search) {
+        queryParams.append('search', params.search);
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
+      return fetchJson<any>(url, { method: "GET" }, true);
+    },
+
+    toggleUserActive: (userId: number, isActive: boolean, reason: string) =>
+      fetchJson<{ message: string }>(`/users/moderation/${userId}/toggle_active/`, {
+        method: "POST",
+        body: JSON.stringify({ is_active: isActive, reason }),
+      }, true),
+
+    // Content moderation
+    getPosts: () =>
+      fetchJson<any>("/forum/moderation/posts/", { method: "GET" }, true),
+
+    getComments: () =>
+      fetchJson<any>("/forum/moderation/comments/", { method: "GET" }, true),
+
+    deletePost: (postId: number) =>
+      fetchJson<void>(`/forum/moderation/posts/${postId}/`, {
+        method: "DELETE",
+      }, true),
+
+    deleteComment: (commentId: number) =>
+      fetchJson<void>(`/forum/moderation/comments/${commentId}/`, {
+        method: "DELETE",
+      }, true),
+
+    // Food proposals
+    getFoodProposals: (params?: { isApproved?: 'null' | 'true' | 'false' }) => {
+      let url = "/foods/moderation/food-proposals/";
+
+      if (params?.isApproved) {
+        url += `?isApproved=${params.isApproved}`;
+      }
+
+      return fetchJson<any>(url, { method: "GET" }, true);
+    },
+
+    approveFoodProposal: (proposalId: number, approved: boolean) =>
+      fetchJson<{ message: string }>(`/foods/moderation/food-proposals/${proposalId}/approve/`, {
+        method: "POST",
+        body: JSON.stringify({ approved }),
+      }, true),
+
+    // Certificate verification
+    getUserTags: (params?: { has_certificate?: boolean; verified?: boolean }) => {
+      let url = "/users/moderation/user-tags/";
+      const queryParams = new URLSearchParams();
+
+      if (params?.has_certificate !== undefined) {
+        queryParams.append('has_certificate', params.has_certificate.toString());
+      }
+      if (params?.verified !== undefined) {
+        queryParams.append('verified', params.verified.toString());
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
+      return fetchJson<any>(url, { method: "GET" }, true);
+    },
+
+    verifyUserTag: (userTagId: number, approved: boolean) =>
+      fetchJson<{ message: string }>(`/users/moderation/user-tags/${userTagId}/verify/`, {
+        method: "POST",
+        body: JSON.stringify({ approved }),
+      }, true),
+
+    // Statistics
+    getStats: (range: 'week' | 'month' | 'all' = 'week') =>
+      fetchJson<any>(`/users/moderation/stats/?range=${range}`, {
+        method: "GET",
+      }, true),
+  },
 };

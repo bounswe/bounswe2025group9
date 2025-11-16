@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, X, Check, Eye, Download } from '@phosphor-icons/react';
+import { apiClient } from '../../../lib/apiClient';
 
 interface UserTag {
   id: number;
@@ -14,28 +15,7 @@ interface UserTag {
   };
   verified: boolean;
   certificate: string | null;
-  createdAt: string;
 }
-
-// Mock data for UI-only PR
-const MOCK_USER_TAGS: UserTag[] = [
-  {
-    id: 1,
-    user: { id: 21, username: 'dr_aylin', email: 'aylin@example.com' },
-    tag: { id: 101, name: 'Dietitian' },
-    verified: false,
-    certificate: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-  },
-  {
-    id: 2,
-    user: { id: 22, username: 'chef_ali', email: 'ali@example.com' },
-    tag: { id: 102, name: 'Chef' },
-    verified: true,
-    certificate: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-  },
-];
 
 const CertificateVerification = () => {
   const [userTags, setUserTags] = useState<UserTag[]>([]);
@@ -49,17 +29,37 @@ const CertificateVerification = () => {
 
   const fetchUserTags = async () => {
     setLoading(true);
-    let data = [...MOCK_USER_TAGS];
-    if (filter === 'pending') data = data.filter(t => !t.verified);
-    if (filter === 'verified') data = data.filter(t => t.verified);
-    setTimeout(() => {
-      setUserTags(data);
+    try {
+      const params: { has_certificate: boolean; verified?: boolean } = {
+        has_certificate: true
+      };
+
+      if (filter === 'pending') {
+        params.verified = false;
+      } else if (filter === 'verified') {
+        params.verified = true;
+      }
+
+      const data = await apiClient.moderation.getUserTags(params);
+      setUserTags(data.results || data);
+    } catch (error) {
+      console.error('Failed to fetch user tags:', error);
+    } finally {
       setLoading(false);
-    }, 200);
+    }
   };
 
-  const handleVerify = async (_userTagId: number, _approve: boolean) => {
-    alert('Moderation API is not included in this PR.');
+  const handleVerify = async (userTagId: number, approve: boolean) => {
+    try {
+      const result = await apiClient.moderation.verifyUserTag(userTagId, approve);
+      console.log(result.message);
+
+      // Refresh the list
+      fetchUserTags();
+    } catch (error) {
+      console.error('Failed to verify user tag:', error);
+      alert('Failed to verify user tag. Please try again.');
+    }
   };
 
   if (loading) {
@@ -175,10 +175,6 @@ const CertificateVerification = () => {
                   )}
                 </div>
               )}
-
-              <div className="mt-3 text-xs text-gray-500 dark:text-gray-400">
-                Submitted: {new Date(userTag.createdAt).toLocaleString()}
-              </div>
             </div>
           ))
         )}

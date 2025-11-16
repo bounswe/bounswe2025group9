@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Article, Trash, Eye, ChatCircle } from '@phosphor-icons/react';
+import { apiClient } from '../../../lib/apiClient';
 
 interface Post {
   id: number;
@@ -31,47 +32,6 @@ interface Comment {
 
 type ContentType = 'posts' | 'comments';
 
-// Mock data for UI-only PR
-const MOCK_POSTS: Post[] = [
-  {
-    id: 101,
-    title: 'Healthy Breakfast Ideas',
-    body: 'Start your day with oats, fruits, and yogurt for a balanced meal.',
-    author: { id: 31, username: 'healthguru' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
-    likesCount: 24,
-    commentsCount: 5,
-    tags: ['Dietary tip', 'Breakfast']
-  },
-  {
-    id: 102,
-    title: 'High-Protein Lunch Bowl',
-    body: 'Quinoa, chicken breast, chickpeas, and greens make a great bowl.',
-    author: { id: 32, username: 'fitchef' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
-    likesCount: 41,
-    commentsCount: 12,
-    tags: ['Recipe', 'High-Protein']
-  }
-];
-
-const MOCK_COMMENTS: Comment[] = [
-  {
-    id: 201,
-    body: 'I tried this and it was great!',
-    author: { id: 41, username: 'ayse' },
-    post: { id: 102, title: 'High-Protein Lunch Bowl' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString()
-  },
-  {
-    id: 202,
-    body: 'Can I replace chicken with tofu?',
-    author: { id: 42, username: 'mehmet' },
-    post: { id: 102, title: 'High-Protein Lunch Bowl' },
-    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString()
-  }
-];
-
 const ContentModeration = () => {
   const [contentType, setContentType] = useState<ContentType>('posts');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -85,20 +45,55 @@ const ContentModeration = () => {
 
   const fetchContent = async () => {
     setLoading(true);
-    // Provide mock lists
-    setTimeout(() => {
-      setPosts(MOCK_POSTS);
-      setComments(MOCK_COMMENTS);
+    try {
+      const data = contentType === 'posts'
+        ? await apiClient.moderation.getPosts()
+        : await apiClient.moderation.getComments();
+
+      if (contentType === 'posts') {
+        setPosts(data.results || []);
+      } else {
+        setComments(data.results || []);
+      }
+    } catch (error) {
+      console.error(`Failed to fetch ${contentType}:`, error);
+      // Fallback to empty arrays on error
+      if (contentType === 'posts') {
+        setPosts([]);
+      } else {
+        setComments([]);
+      }
+    } finally {
       setLoading(false);
-    }, 200);
+    }
   };
 
   const handleDeletePost = async (postId: number) => {
-    alert('Moderation API is not included in this PR.');
+    if (!confirm('Are you sure you want to delete this post?')) return;
+
+    try {
+      await apiClient.moderation.deletePost(postId);
+
+      // Refresh the list
+      fetchContent();
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      alert('Failed to delete post. Please try again.');
+    }
   };
 
   const handleDeleteComment = async (commentId: number) => {
-    alert('Moderation API is not included in this PR.');
+    if (!confirm('Are you sure you want to delete this comment?')) return;
+
+    try {
+      await apiClient.moderation.deleteComment(commentId);
+
+      // Refresh the list
+      fetchContent();
+    } catch (error) {
+      console.error('Failed to delete comment:', error);
+      alert('Failed to delete comment. Please try again.');
+    }
   };
 
   const filteredPosts = posts.filter(post =>
