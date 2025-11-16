@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Food } from '../../lib/apiClient';
 import FoodDetail from '../foods/FoodDetail';
 import FoodSelector from '../../components/FoodSelector';
@@ -46,53 +46,10 @@ const MealPlanner = () => {
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [editingMeal, setEditingMeal] = useState<{day: string, index: number} | null>(null);
     const [successMessage, setSuccessMessage] = useState('');
-    const [availableFoods, setAvailableFoods] = useState<Food[]>([]);
-    const [loading, setLoading] = useState(true);
     const [planDuration, setPlanDuration] = useState<'weekly' | 'daily'>('weekly');
     
     // Initialize with predefined meal plans
     const [localMealPlans, setLocalMealPlans] = useState<{ [key:string] : weeklyMealPlan}>(MealPlans);
-
-    // Fetch foods from backend for the food selector
-    useEffect(() => {
-        const fetchFoods = async () => {
-            try {
-                setLoading(true);
-                
-                // Fetch multiple pages to get more foods
-                let allFoods: Food[] = [];
-                for (let page = 1; page <= 20; page++) {
-                    const response = await apiClient.getFoods({ page });
-                    if (response.status === 200 && response.results.length > 0) {
-                        allFoods = [...allFoods, ...response.results];
-                        // Stop if we've fetched all available foods
-                        if (!response.next) break;
-                    } else {
-                        break;
-                    }
-                }
-                
-                console.log('Total foods fetched:', allFoods.length);
-                console.log('Sample food names:', allFoods.slice(0, 5).map(f => f.name));
-                
-                if (allFoods.length > 0) {
-                    setAvailableFoods(allFoods);
-                    
-                    // Keep using the predefined MealPlans with our updated food variety
-                    // The MealPlans already contain the proper foods for each diet
-                    setLocalMealPlans(MealPlans);
-                }
-            } catch (error) {
-                console.error('Error fetching foods:', error);
-                // Fallback to predefined meal plans if backend fetch fails
-                setLocalMealPlans(MealPlans);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchFoods();
-    }, []);
 
     const handleFoodSelect = (food: Food) => {
         if (editingMeal) {
@@ -287,11 +244,6 @@ const MealPlanner = () => {
                             </p>
                         </div>
 
-                        {loading ? (
-                            <div className="text-center my-12">
-                                <p className="nh-text text-lg">Loading meal plan...</p>
-                            </div>
-                        ) : (
                         <div className="space-y-4">
                             {days.map(day => (
                                 <div key={day} className="nh-card">
@@ -365,7 +317,7 @@ const MealPlanner = () => {
                                 </div>
                             ))}
                         </div>
-                        )}
+                        
                     </div>
 
                     {/* Right column - Actions */}
@@ -422,7 +374,6 @@ const MealPlanner = () => {
                     open={!!editingMeal}
                     onClose={() => setEditingMeal(null)}
                     onSelect={handleFoodSelect}
-                    foods={availableFoods}
                 />
             </div>
         </div>
