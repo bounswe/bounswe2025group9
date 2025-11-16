@@ -3,7 +3,7 @@ from rest_framework import status
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
-from accounts.models import Tag
+from accounts.models import UserTag, Tag
 import os
 import tempfile
 from PIL import Image
@@ -235,8 +235,8 @@ class CertificateTests(APITestCase):
         self.certificate_url = reverse("certificate")
         
         # Create a tag for the user
-        self.tag = Tag.objects.create(name="Nutritionist", verified=False)
-        self.user.tags.add(self.tag)
+        tag = Tag.objects.create(name="Nutritionist")
+        self.tag = UserTag.objects.create(user=self.user, tag=tag)
 
         # Get authentication token
         token_res = self.client.post(
@@ -245,7 +245,7 @@ class CertificateTests(APITestCase):
         self.access_token = token_res.data["access"]
 
     def create_test_pdf(self):
-        """Helper method to create a simple PDF-like file"""
+        """Helper method to create a simple PDF-like file"""    
         pdf_content = b'%PDF-1.4\n%Test PDF'
         return SimpleUploadedFile(
             "certificate.pdf",
@@ -321,7 +321,7 @@ class CertificateTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         
         # Create a tag not associated with user
-        other_tag = Tag.objects.create(name="Chef", verified=False)
+        other_tag = Tag.objects.create(name="Chef")
         
         pdf_file = self.create_test_pdf()
         data = {
