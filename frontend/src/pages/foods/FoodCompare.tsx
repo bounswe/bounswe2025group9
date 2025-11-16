@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Food } from '../../lib/apiClient';
 import FoodSelector from '../../components/FoodSelector';
 import { X } from '@phosphor-icons/react';
+import NutritionCompare from '../../components/NutritionCompare';
 
 const FoodCompare: React.FC = () => {
     const [selectedFoods, setSelectedFoods] = useState<Food[]>([]);
@@ -13,6 +14,7 @@ const FoodCompare: React.FC = () => {
             return;
         }
         setSelectedFoods([...selectedFoods, food]);
+        console.log("Selected foods:", [...selectedFoods, food]);
     };
 
     const handleRemoveFood = (foodId: number) => {
@@ -74,8 +76,7 @@ const FoodCompare: React.FC = () => {
                         {selectedFoods.length > 0 ? (
                             <div className="nh-card p-6">
                                 <h2 className="nh-subtitle mb-6">Comparison Results</h2>
-                                {/* Comparison table/grid will go here */}
-                                <p className="nh-text text-gray-500">Comparison visualization coming soon...</p>
+                                <NutritionCompare foods={selectedFoods} />
                             </div>
                         ) : (
                             <div className="nh-card p-12 text-center">

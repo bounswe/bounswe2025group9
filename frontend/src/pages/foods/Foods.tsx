@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 import NutritionScore from '../../components/NutritionScore';
 
-const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
+export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
     <div
       key={item.id}
