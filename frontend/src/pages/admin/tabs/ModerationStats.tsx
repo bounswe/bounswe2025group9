@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ChartBar, TrendUp, TrendDown, Users, Article, Flag, ForkKnife } from '@phosphor-icons/react';
+import { apiClient } from '../../../lib/apiClient';
 
 interface Stats {
   totalUsers: number;
@@ -32,32 +33,19 @@ const ModerationStats = () => {
   }, [timeRange]);
 
   const fetchStats = async () => {
-    // Backend integration is out-of-scope for this PR
     setLoading(true);
-    console.warn('[Moderation] Stats API disabled in this PR.');
-    const mock: Stats = {
-      totalUsers: 1250,
-      activeUsers: 870,
-      newUsersThisWeek: 42,
-      totalPosts: 5340,
-      totalComments: 14210,
-      pendingReports: 6,
-      resolvedReports: 128,
-      pendingFoodProposals: 3,
-      approvedFoodProposals: 57,
-      pendingCertificates: 2,
-      verifiedCertificates: 19,
-      moderationActionsThisWeek: 24,
-    };
-    setTimeout(() => {
-      setStats(mock);
+    try {
+      const data = await apiClient.moderation.getStats(timeRange);
+      setStats(data);
+    } catch (error) {
+      console.error('Failed to fetch stats:', error);
+    } finally {
       setLoading(false);
-    }, 200);
+    }
   };
 
   const getTrend = (current: number, previous: number): Trend => {
-    const safePrev = previous === 0 ? 1 : previous;
-    const change = ((current - safePrev) / safePrev) * 100;
+    const change = ((current - previous) / previous) * 100;
     return {
       value: current,
       change: Math.abs(change),

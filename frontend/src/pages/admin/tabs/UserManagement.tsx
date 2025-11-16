@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Users, MagnifyingGlass, ShieldCheck, Warning, Prohibit } from '@phosphor-icons/react';
+import { apiClient } from '../../../lib/apiClient';
 
 interface User {
   id: number;
@@ -20,56 +21,6 @@ interface User {
   suspensionCount?: number;
 }
 
-// Mock data for UI-only PR
-const MOCK_USERS: User[] = [
-  {
-    id: 1,
-    username: 'admin',
-    email: 'admin@example.com',
-    name: 'Site',
-    surname: 'Admin',
-    isActive: true,
-    isStaff: true,
-    isSuperuser: true,
-    dateJoined: new Date(Date.now() - 1000 * 60 * 60 * 24 * 120).toISOString(),
-    tags: [
-      { id: 501, name: 'Dietitian', verified: true },
-    ],
-    warningCount: 0,
-    suspensionCount: 0,
-  },
-  {
-    id: 2,
-    username: 'ayse',
-    email: 'ayse@example.com',
-    name: 'Ayşe',
-    surname: 'Kaya',
-    isActive: true,
-    isStaff: false,
-    isSuperuser: false,
-    dateJoined: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
-    tags: [
-      { id: 502, name: 'Chef', verified: false },
-    ],
-    warningCount: 1,
-    suspensionCount: 0,
-  },
-  {
-    id: 3,
-    username: 'mehmet',
-    email: 'mehmet@example.com',
-    name: 'Mehmet',
-    surname: 'Yılmaz',
-    isActive: false,
-    isStaff: false,
-    isSuperuser: false,
-    dateJoined: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
-    tags: [],
-    warningCount: 2,
-    suspensionCount: 1,
-  },
-];
-
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -82,18 +33,57 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    setTimeout(() => {
-      setUsers(MOCK_USERS);
+    try {
+      const params: { role?: 'staff' | 'users'; search?: string } = {};
+
+      if (filterRole === 'staff') {
+        params.role = 'staff';
+      } else if (filterRole === 'users') {
+        params.role = 'users';
+      }
+
+      if (searchTerm) {
+        params.search = searchTerm;
+      }
+
+      const data = await apiClient.moderation.getUsers(params);
+      setUsers(data.results || data);
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
       setLoading(false);
-    }, 200);
+    }
   };
 
   const handleToggleActive = async (userId: number, active: boolean) => {
-    alert('Moderation API is not included in this PR.');
+    try {
+      const reason = prompt(`Please provide a reason for ${active ? 'activating' : 'suspending'} this user:`);
+
+      if (reason === null) return; // User cancelled
+
+      const result = await apiClient.moderation.toggleUserActive(userId, active, reason);
+      console.log(result.message);
+
+      // Refresh the list
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to update user status:', error);
+      alert('Failed to update user status. Please try again.');
+    }
   };
 
   const handleWarnUser = async (userId: number) => {
-    alert('Moderation API is not included in this PR.');
+    const reason = prompt('Enter warning reason:');
+    if (!reason) return;
+
+    try {
+      // TODO: Replace with actual API call
+      // await apiClient.moderation.warnUser(userId, reason);
+      console.log(`Warning user ${userId}: ${reason}`);
+      fetchUsers();
+    } catch (error) {
+      console.error('Failed to warn user:', error);
+    }
   };
 
   const filteredUsers = users.filter(user => {

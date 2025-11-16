@@ -1,4 +1,7 @@
 from django.urls import path
+from django.urls import include
+
+from rest_framework.routers import DefaultRouter
 
 from .views import (
     FoodCatalog,
@@ -8,6 +11,14 @@ from .views import (
     get_random_meal,
     food_nutrition_info,
     image_proxy,
+)
+from .admin import FoodProposalModerationViewSet
+
+moderation_router = DefaultRouter()
+moderation_router.register(
+    r"food-proposals",
+    FoodProposalModerationViewSet,
+    basename="moderation-food-proposals",
 )
 
 urlpatterns = [
@@ -24,4 +35,5 @@ urlpatterns = [
     path("catalog/", FoodCatalog.as_view(), name="food-catalog"),
     path("food/nutrition-info/", food_nutrition_info, name="food_nutrition_info"),
     path("image-proxy/", image_proxy, name="image_proxy"),
+    path("moderation/", include(moderation_router.urls), name="moderation"),
 ]
