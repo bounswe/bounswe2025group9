@@ -322,7 +322,6 @@ class CertificateTests(APITestCase):
         
         # Create a tag not associated with user
         other_tag = Tag.objects.create(name="Chef")
-        UserTag.objects.create(user=self.user, tag=other_tag)
         
         pdf_file = self.create_test_pdf()
         data = {

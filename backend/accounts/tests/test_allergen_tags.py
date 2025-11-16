@@ -196,12 +196,9 @@ class TagEndpointsTests(APITestCase):
         self.tag_set_url = reverse("set-tags")
         
         # Create some test tags
-        tag = Tag.objects.create(name="Nutritionist")
-        self.tag1 = UserTag.objects.create(user=self.user, tag=tag, verified=True)
-        tag = Tag.objects.create(name="Chef")
-        self.tag2 = UserTag.objects.create(user=self.user, tag=tag, verified=True)
-        tag = Tag.objects.create(name="Athlete")
-        self.tag3 = UserTag.objects.create(user=self.user, tag=tag, verified=False)
+        self.tag1 = Tag.objects.create(name="Nutritionist")
+        self.tag2 = Tag.objects.create(name="Chef")
+        self.tag3 = Tag.objects.create(name="Athlete")
 
         # Get authentication token
         token_res = self.client.post(
@@ -260,7 +257,7 @@ class TagEndpointsTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         
         # Set initial tags
-        userTag = UserTag.objects.create(user=self.user, tag=self.tag1)
+        self.user.tags.add(self.tag1)
         self.assertEqual(self.user.tags.count(), 1)
         
         # Replace with new tag
