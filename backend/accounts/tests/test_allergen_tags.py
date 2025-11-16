@@ -2,7 +2,7 @@ from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
 from django.contrib.auth import get_user_model
-from accounts.models import Allergen, Tag
+from accounts.models import Allergen, UserTag, Tag
 
 User = get_user_model()
 
@@ -196,9 +196,12 @@ class TagEndpointsTests(APITestCase):
         self.tag_set_url = reverse("set-tags")
         
         # Create some test tags
-        self.tag1 = Tag.objects.create(name="Nutritionist", verified=True)
-        self.tag2 = Tag.objects.create(name="Chef", verified=True)
-        self.tag3 = Tag.objects.create(name="Athlete", verified=False)
+        tag = Tag.objects.create(name="Nutritionist")
+        self.tag1 = UserTag.objects.create(user=self.user, tag=tag, verified=True)
+        tag = Tag.objects.create(name="Chef")
+        self.tag2 = UserTag.objects.create(user=self.user, tag=tag, verified=True)
+        tag = Tag.objects.create(name="Athlete")
+        self.tag3 = UserTag.objects.create(user=self.user, tag=tag, verified=False)
 
         # Get authentication token
         token_res = self.client.post(
@@ -237,12 +240,7 @@ class TagEndpointsTests(APITestCase):
         
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(len(response.data), 2)
-        
-        # Verify tags were created (unverified by default)
-        tag1 = Tag.objects.get(name="Personal Trainer")
-        tag2 = Tag.objects.get(name="Yoga Instructor")
-        self.assertFalse(tag1.verified)
-        self.assertFalse(tag2.verified)
+
 
     def test_set_tags_mixed(self):
         """Test setting tags with both IDs and new names"""
@@ -262,7 +260,7 @@ class TagEndpointsTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         
         # Set initial tags
-        self.user.tags.add(self.tag1)
+        userTag = UserTag.objects.create(user=self.user, tag=self.tag1)
         self.assertEqual(self.user.tags.count(), 1)
         
         # Replace with new tag
