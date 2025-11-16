@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Food } from '../lib/apiClient';
+import { useState, useEffect, useRef } from 'react';
+import { apiClient, Food } from '../lib/apiClient';
 import { MagnifyingGlass, X, Hamburger } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import NutritionScore from './NutritionScore';
@@ -8,15 +8,53 @@ interface FoodSelectorProps {
     open: boolean;
     onClose: () => void;
     onSelect: (food: Food) => void;
-    foods: Food[];
 }
 
-const FoodSelector = ({ open, onClose, onSelect, foods }: FoodSelectorProps) => {
+const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
     const [searchTerm, setSearchTerm] = useState('');
-    
-    const filteredFoods = foods.filter(food => 
-        food.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const [searchResults, setSearchResults] = useState<Food[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [warning, setWarning] = useState<string | null>(null);
+    const debounceRef = useRef<number | null>(null);
+
+    useEffect(() => {
+        // debounce search
+        if (debounceRef.current) {
+            clearTimeout(debounceRef.current);
+        }
+
+        if (searchTerm.trim().length === 0) {
+            setSearchResults([]);
+            setWarning(null);
+            setLoading(false);
+            return;
+        }
+
+        debounceRef.current = window.setTimeout(async () => {
+            setLoading(true);
+            try {
+                const response = await apiClient.getFoods({ page: 1, search: searchTerm });
+
+                if (response.status === 200 || response.status === 206) {
+                    setSearchResults(response.results || []);
+                    setWarning(response.warning || null);
+                } else if (response.status === 204) {
+                    setSearchResults([]);
+                    setWarning(response.warning || `No foods found for "${searchTerm}".`);
+                }
+            } catch (err) {
+                console.error('Error searching foods:', err);
+                setWarning('Error searching for foods.');
+                setSearchResults([]);
+            } finally {
+                setLoading(false);
+            }
+        }, 300);
+
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [searchTerm]);
 
     return (
         <Dialog open={open} onClose={onClose} className="relative z-50">
@@ -73,57 +111,67 @@ const FoodSelector = ({ open, onClose, onSelect, foods }: FoodSelectorProps) => 
 
                     <div className="max-h-96 overflow-y-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {filteredFoods.map(food => (
-                                <div
-                                    key={food.id}
-                                    className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow flex flex-col"
-                                    onClick={() => {
-                                        onSelect(food);
-                                        onClose();
-                                        setSearchTerm(''); // Reset search on selection
-                                    }}
-                                >
-                                    <div className="food-image-container h-40 w-full flex justify-center items-center mb-4 overflow-hidden">
-                                        {food.imageUrl ? (
-                                            <img
-                                                src={food.imageUrl}
-                                                alt={food.name}
-                                                className="object-contain h-full w-full rounded"
-                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                            />
-                                        ) : (
-                                            <div className="food-image-placeholder w-full h-full flex items-center justify-center">
-                                                <Hamburger size={48} weight="fill" className="text-primary opacity-50" />
-                                            </div>
-                                        )}
-                                    </div>
+                            {loading && (
+                                <div className="col-span-full p-6 text-center nh-text">Searching...</div>
+                            )}
 
-                                    <div className="flex items-center">
-                                        <h3 className="nh-subtitle text-base">{food.name}</h3>
-                                    </div>
-
-                                    <div className="mt-2">
-                                        <p className="nh-text text-sm">Category: {food.category}</p>
-                                        <div className="mt-2">
-                                          <p className="nh-text text-sm mb-1">Nutrition Score:</p>
-                                          <NutritionScore score={food.nutritionScore} size="sm" />
+                            {!loading && searchResults.map((food) => {
+                                return (
+                                    <div
+                                        key={food.id}
+                                        className="nh-card p-4 cursor-pointer hover:shadow-lg transition-shadow flex flex-col"
+                                        onClick={() => {
+                                            onSelect(food);
+                                            onClose();
+                                            setSearchTerm(''); // Reset search on selection
+                                            setSearchResults([]);
+                                        }}
+                                    >
+                                        <div className="food-image-container h-40 w-full flex justify-center items-center mb-4 overflow-hidden">
+                                            {food.imageUrl ? (
+                                                <img
+                                                    src={food.imageUrl}
+                                                    alt={food.name}
+                                                    className="object-contain h-full w-full rounded"
+                                                    onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                />
+                                            ) : (
+                                                <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+                                                    <Hamburger size={48} weight="fill" className="text-primary opacity-50" />
+                                                </div>
+                                            )}
                                         </div>
-                                        <p className="nh-text text-sm mt-2">
-                                            Calories: {food.caloriesPerServing} kcal per {food.servingSize}
-                                        </p>
-                                        {food.dietaryOptions && food.dietaryOptions.length > 0 && (
-                                            <p className="nh-text text-sm">
-                                                Dietary Tags: {food.dietaryOptions.join(', ')}
+
+                                        <div className="flex items-center">
+                                            <h3 className="nh-subtitle text-base">{food.name}</h3>
+                                        </div>
+
+                                        <div className="mt-2">
+                                            <p className="nh-text text-sm">Category: {food.category}</p>
+                                            <div className="mt-2">
+                                              <p className="nh-text text-sm mb-1">Nutrition Score:</p>
+                                              <NutritionScore score={food.nutritionScore} size="sm" />
+                                            </div>
+                                            <p className="nh-text text-sm mt-2">
+                                                Calories: {food.caloriesPerServing} kcal per {food.servingSize}
                                             </p>
-                                        )}
+                                            {food.dietaryOptions && food.dietaryOptions.length > 0 && (
+                                                <p className="nh-text text-sm">
+                                                    Dietary Tags: {food.dietaryOptions.join(', ')}
+                                                </p>
+                                            )}
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                );
+                            })}
                         </div>
-                        {filteredFoods.length === 0 && (
+                        {!loading && searchResults.length === 0 && searchTerm.trim().length > 0 && (
                             <div className="text-center py-12">
                                 <p className="nh-text">No foods found matching your search.</p>
                             </div>
+                        )}
+                        {!loading && warning && (
+                            <div className="text-center py-4 text-yellow-700">{warning}</div>
                         )}
                     </div>
                 </Dialog.Panel>
