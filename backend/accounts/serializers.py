@@ -126,6 +126,8 @@ class UserSerializer(serializers.ModelSerializer):
             "allergens",
             "recipes",
             "profile_image",
+            "is_staff",
+            "is_superuser",
             "badges",
         ]
         extra_kwargs = {
