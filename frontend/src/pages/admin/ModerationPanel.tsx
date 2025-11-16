@@ -68,6 +68,9 @@ const ModerationPanel = () => {
           <p className="nh-text mt-2">
             Manage content, users, and community standards
           </p>
+          <div className="mt-3 px-4 py-3 rounded-lg border border-yellow-300 bg-yellow-50 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300 dark:border-yellow-700">
+            Note: Backend moderation APIs are intentionally not used in this PR. UI only; integration will follow in a separate PR.
+          </div>
         </div>
 
         <div className="flex flex-col md:flex-row gap-6">

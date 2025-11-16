@@ -31,6 +31,47 @@ interface Comment {
 
 type ContentType = 'posts' | 'comments';
 
+// Mock data for UI-only PR
+const MOCK_POSTS: Post[] = [
+  {
+    id: 101,
+    title: 'Healthy Breakfast Ideas',
+    body: 'Start your day with oats, fruits, and yogurt for a balanced meal.',
+    author: { id: 31, username: 'healthguru' },
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
+    likesCount: 24,
+    commentsCount: 5,
+    tags: ['Dietary tip', 'Breakfast']
+  },
+  {
+    id: 102,
+    title: 'High-Protein Lunch Bowl',
+    body: 'Quinoa, chicken breast, chickpeas, and greens make a great bowl.',
+    author: { id: 32, username: 'fitchef' },
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 30).toISOString(),
+    likesCount: 41,
+    commentsCount: 12,
+    tags: ['Recipe', 'High-Protein']
+  }
+];
+
+const MOCK_COMMENTS: Comment[] = [
+  {
+    id: 201,
+    body: 'I tried this and it was great!',
+    author: { id: 41, username: 'ayse' },
+    post: { id: 102, title: 'High-Protein Lunch Bowl' },
+    createdAt: new Date(Date.now() - 1000 * 60 * 40).toISOString()
+  },
+  {
+    id: 202,
+    body: 'Can I replace chicken with tofu?',
+    author: { id: 42, username: 'mehmet' },
+    post: { id: 102, title: 'High-Protein Lunch Bowl' },
+    createdAt: new Date(Date.now() - 1000 * 60 * 120).toISOString()
+  }
+];
+
 const ContentModeration = () => {
   const [contentType, setContentType] = useState<ContentType>('posts');
   const [posts, setPosts] = useState<Post[]>([]);
@@ -44,97 +85,20 @@ const ContentModeration = () => {
 
   const fetchContent = async () => {
     setLoading(true);
-    try {
-      const token = localStorage.getItem('nh_access_token');
-      const endpoint = contentType === 'posts' 
-        ? '/api/moderation/posts/'
-        : '/api/moderation/comments/';
-      
-      const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}${endpoint}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch ${contentType}`);
-      }
-
-      const data = await response.json();
-      
-      if (contentType === 'posts') {
-        setPosts(data.results || []);
-      } else {
-        setComments(data.results || []);
-      }
-    } catch (error) {
-      console.error(`Failed to fetch ${contentType}:`, error);
-      // Fallback to empty arrays on error
-      if (contentType === 'posts') {
-        setPosts([]);
-      } else {
-        setComments([]);
-      }
-    } finally {
+    // Provide mock lists
+    setTimeout(() => {
+      setPosts(MOCK_POSTS);
+      setComments(MOCK_COMMENTS);
       setLoading(false);
-    }
+    }, 200);
   };
 
   const handleDeletePost = async (postId: number) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    
-    try {
-      const token = localStorage.getItem('nh_access_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/moderation/posts/${postId}/`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to delete post');
-      }
-
-      // Refresh the list
-      fetchContent();
-    } catch (error) {
-      console.error('Failed to delete post:', error);
-      alert('Failed to delete post. Please try again.');
-    }
+    alert('Moderation API is not included in this PR.');
   };
 
   const handleDeleteComment = async (commentId: number) => {
-    if (!confirm('Are you sure you want to delete this comment?')) return;
-    
-    try {
-      const token = localStorage.getItem('nh_access_token');
-      const response = await fetch(
-        `${import.meta.env.VITE_API_BASE_URL}/api/moderation/comments/${commentId}/`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-          },
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error('Failed to delete comment');
-      }
-
-      // Refresh the list
-      fetchContent();
-    } catch (error) {
-      console.error('Failed to delete comment:', error);
-      alert('Failed to delete comment. Please try again.');
-    }
+    alert('Moderation API is not included in this PR.');
   };
 
   const filteredPosts = posts.filter(post =>

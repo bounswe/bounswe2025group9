@@ -20,6 +20,56 @@ interface User {
   suspensionCount?: number;
 }
 
+// Mock data for UI-only PR
+const MOCK_USERS: User[] = [
+  {
+    id: 1,
+    username: 'admin',
+    email: 'admin@example.com',
+    name: 'Site',
+    surname: 'Admin',
+    isActive: true,
+    isStaff: true,
+    isSuperuser: true,
+    dateJoined: new Date(Date.now() - 1000 * 60 * 60 * 24 * 120).toISOString(),
+    tags: [
+      { id: 501, name: 'Dietitian', verified: true },
+    ],
+    warningCount: 0,
+    suspensionCount: 0,
+  },
+  {
+    id: 2,
+    username: 'ayse',
+    email: 'ayse@example.com',
+    name: 'Ayşe',
+    surname: 'Kaya',
+    isActive: true,
+    isStaff: false,
+    isSuperuser: false,
+    dateJoined: new Date(Date.now() - 1000 * 60 * 60 * 24 * 20).toISOString(),
+    tags: [
+      { id: 502, name: 'Chef', verified: false },
+    ],
+    warningCount: 1,
+    suspensionCount: 0,
+  },
+  {
+    id: 3,
+    username: 'mehmet',
+    email: 'mehmet@example.com',
+    name: 'Mehmet',
+    surname: 'Yılmaz',
+    isActive: false,
+    isStaff: false,
+    isSuperuser: false,
+    dateJoined: new Date(Date.now() - 1000 * 60 * 60 * 24 * 60).toISOString(),
+    tags: [],
+    warningCount: 2,
+    suspensionCount: 1,
+  },
+];
+
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -32,82 +82,18 @@ const UserManagement = () => {
 
   const fetchUsers = async () => {
     setLoading(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      
-      let url = '/api/moderation/users/';
-      if (filterRole === 'staff') {
-        url += '?role=staff';
-      } else if (filterRole === 'users') {
-        url += '?role=users';
-      }
-      
-      if (searchTerm) {
-        url += (url.includes('?') ? '&' : '?') + `search=${encodeURIComponent(searchTerm)}`;
-      }
-      
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch users');
-      }
-
-      const data = await response.json();
-      setUsers(data);
-    } catch (error) {
-      console.error('Failed to fetch users:', error);
-    } finally {
+    setTimeout(() => {
+      setUsers(MOCK_USERS);
       setLoading(false);
-    }
+    }, 200);
   };
 
   const handleToggleActive = async (userId: number, active: boolean) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      const reason = prompt(`Please provide a reason for ${active ? 'activating' : 'suspending'} this user:`);
-      
-      if (reason === null) return; // User cancelled
-      
-      const response = await fetch(`/api/moderation/users/${userId}/toggle_active/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ is_active: active, reason }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to update user status');
-      }
-
-      const result = await response.json();
-      console.log(result.message);
-      
-      // Refresh the list
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to update user status:', error);
-      alert('Failed to update user status. Please try again.');
-    }
+    alert('Moderation API is not included in this PR.');
   };
 
   const handleWarnUser = async (userId: number) => {
-    const reason = prompt('Enter warning reason:');
-    if (!reason) return;
-
-    try {
-      // TODO: Replace with actual API call
-      // await apiClient.moderation.warnUser(userId, reason);
-      console.log(`Warning user ${userId}: ${reason}`);
-      fetchUsers();
-    } catch (error) {
-      console.error('Failed to warn user:', error);
-    }
+    alert('Moderation API is not included in this PR.');
   };
 
   const filteredUsers = users.filter(user => {

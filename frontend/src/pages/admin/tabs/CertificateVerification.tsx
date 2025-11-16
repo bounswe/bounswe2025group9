@@ -17,6 +17,26 @@ interface UserTag {
   createdAt: string;
 }
 
+// Mock data for UI-only PR
+const MOCK_USER_TAGS: UserTag[] = [
+  {
+    id: 1,
+    user: { id: 21, username: 'dr_aylin', email: 'aylin@example.com' },
+    tag: { id: 101, name: 'Dietitian' },
+    verified: false,
+    certificate: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
+  },
+  {
+    id: 2,
+    user: { id: 22, username: 'chef_ali', email: 'ali@example.com' },
+    tag: { id: 102, name: 'Chef' },
+    verified: true,
+    certificate: 'https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf',
+    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
+  },
+];
+
 const CertificateVerification = () => {
   const [userTags, setUserTags] = useState<UserTag[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'verified'>('pending');
@@ -29,61 +49,17 @@ const CertificateVerification = () => {
 
   const fetchUserTags = async () => {
     setLoading(true);
-    try {
-      const token = localStorage.getItem('access_token');
-      
-      let url = '/api/moderation/user-tags/?has_certificate=true';
-      if (filter === 'pending') {
-        url += '&verified=false';
-      } else if (filter === 'verified') {
-        url += '&verified=true';
-      }
-      
-      const response = await fetch(url, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch user tags');
-      }
-
-      const data = await response.json();
+    let data = [...MOCK_USER_TAGS];
+    if (filter === 'pending') data = data.filter(t => !t.verified);
+    if (filter === 'verified') data = data.filter(t => t.verified);
+    setTimeout(() => {
       setUserTags(data);
-    } catch (error) {
-      console.error('Failed to fetch user tags:', error);
-    } finally {
       setLoading(false);
-    }
+    }, 200);
   };
 
-  const handleVerify = async (userTagId: number, approve: boolean) => {
-    try {
-      const token = localStorage.getItem('access_token');
-      
-      const response = await fetch(`/api/moderation/user-tags/${userTagId}/verify/`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ approved: approve }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to verify user tag');
-      }
-
-      const result = await response.json();
-      console.log(result.message);
-      
-      // Refresh the list
-      fetchUserTags();
-    } catch (error) {
-      console.error('Failed to verify user tag:', error);
-      alert('Failed to verify user tag. Please try again.');
-    }
+  const handleVerify = async (_userTagId: number, _approve: boolean) => {
+    alert('Moderation API is not included in this PR.');
   };
 
   if (loading) {
