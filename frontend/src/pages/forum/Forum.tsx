@@ -1,5 +1,5 @@
 // forum page component
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { PlusCircle, CaretLeft, CaretRight, Tag, X, Funnel, MagnifyingGlass } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost } from '../../lib/apiClient'
@@ -7,6 +7,86 @@ import { useAuth } from '../../context/AuthContext'
 import ForumPostCard from '../../components/ForumPostCard'
 // import cross-tab notification system
 import { notifyLikeChange, subscribeLikeChanges } from '../../lib/likeNotifications';
+
+const FUZZY_SIMILARITY_THRESHOLD = 75;
+
+const levenshteinDistance = (source: string, target: string): number => {
+    const lenSource = source.length;
+    const lenTarget = target.length;
+
+    if (lenSource === 0) return lenTarget;
+    if (lenTarget === 0) return lenSource;
+
+    const matrix = Array.from({ length: lenSource + 1 }, () => new Array(lenTarget + 1).fill(0));
+
+    for (let i = 0; i <= lenSource; i++) matrix[i][0] = i;
+    for (let j = 0; j <= lenTarget; j++) matrix[0][j] = j;
+
+    for (let i = 1; i <= lenSource; i++) {
+        for (let j = 1; j <= lenTarget; j++) {
+            const cost = source[i - 1] === target[j - 1] ? 0 : 1;
+            matrix[i][j] = Math.min(
+                matrix[i - 1][j] + 1,
+                matrix[i][j - 1] + 1,
+                matrix[i - 1][j - 1] + cost
+            );
+        }
+    }
+
+    return matrix[lenSource][lenTarget];
+};
+
+const simpleRatio = (a: string, b: string): number => {
+    if (!a || !b) return 0;
+    if (a === b) return 100;
+    const dist = levenshteinDistance(a, b);
+    const maxLen = Math.max(a.length, b.length);
+    return Math.round(((maxLen - dist) / maxLen) * 100);
+};
+
+const partialRatio = (a: string, b: string): number => {
+    if (!a || !b) return 0;
+    const shorter = a.length < b.length ? a : b;
+    const longer = a.length < b.length ? b : a;
+
+    const lenShort = shorter.length;
+    if (lenShort === 0) return 0;
+
+    let highest = 0;
+    for (let i = 0; i <= longer.length - lenShort; i++) {
+        const window = longer.slice(i, i + lenShort);
+        const ratio = simpleRatio(shorter, window);
+        if (ratio > highest) highest = ratio;
+        if (highest === 100) break;
+    }
+
+    return highest;
+};
+
+const tokenSortRatio = (a: string, b: string): number => {
+    if (!a || !b) return 0;
+    const normalize = (str: string) =>
+        str
+            .split(/\s+/)
+            .map(token => token.trim())
+            .filter(Boolean)
+            .sort()
+            .join(' ');
+    const normalizedA = normalize(a);
+    const normalizedB = normalize(b);
+    return simpleRatio(normalizedA, normalizedB);
+};
+
+const calculateFuzzySimilarity = (query: string, target: string): number => {
+    const source = query.toLowerCase();
+    const compared = target.toLowerCase();
+
+    const ratio = simpleRatio(source, compared);
+    const partial = partialRatio(source, compared);
+    const tokenSort = tokenSortRatio(source, compared);
+
+    return Math.max(ratio, partial, tokenSort);
+};
 
 // local storage key for liked posts (keep for direct localStorage access)
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
@@ -110,9 +190,12 @@ const Forum = () => {
     const [isSearching, setIsSearching] = useState<boolean>(false);
     const [searchResults, setSearchResults] = useState<ForumPost[]>([]);
     const [searchResultsCount, setSearchResultsCount] = useState<number>(0);
+    const [executedSearchQuery, setExecutedSearchQuery] = useState<string>('');
+    const [ingredientMatchMap, setIngredientMatchMap] = useState<Record<number, string[]>>({});
+    const SEARCH_DEBOUNCE_MS = 400;
     
     // helper to get liked posts for the current user from local storage
-    const getUserLikedPostsFromStorage = (): {[key: number]: boolean} => {
+    const getUserLikedPostsFromStorage = useCallback((): {[key: number]: boolean} => {
         const storedLikedPosts = localStorage.getItem(LIKED_POSTS_STORAGE_KEY);
         if (storedLikedPosts) {
             try {
@@ -125,7 +208,7 @@ const Forum = () => {
             }
         }
         return {};
-    };
+    }, [username]);
 
     // Track previous location to detect navigation from PostDetail and sync liked posts from server
     useEffect(() => {
@@ -400,23 +483,16 @@ const Forum = () => {
         }
     };
 
-    // Handle searching for posts
-    const handleSearch = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (!searchQuery.trim()) {
-            // If search query is empty, clear search
-            clearSearch();
-            return;
-        }
-        
+    const runSearch = useCallback(async (normalizedQuery: string) => {
         setLoading(true);
         setIsSearching(true);
         setCurrentPage(1); // Reset to first page for search results
+        setExecutedSearchQuery(normalizedQuery);
+        setIngredientMatchMap({});
         
         try {
-            const response = await apiClient.searchForumPosts(searchQuery);
-            console.log(`[Forum] Search results for "${searchQuery}":`, response);
+            const response = await apiClient.searchForumPosts(normalizedQuery);
+            console.log(`[Forum] Search results for "${normalizedQuery}":`, response);
             
             // Use local storage as the primary source of truth for liked status
             const userLikedPosts = getUserLikedPostsFromStorage();
@@ -442,16 +518,100 @@ const Forum = () => {
         } finally {
             setLoading(false);
         }
+    }, [getUserLikedPostsFromStorage]);
+
+    // Handle searching for posts (manual trigger)
+    const handleSearch = (e: React.FormEvent) => {
+        e.preventDefault();
+        
+        if (!searchQuery.trim()) {
+            clearSearch();
+            return;
+        }
+
+        runSearch(searchQuery.trim());
     };
     
     // Clear search results and return to normal view
-    const clearSearch = () => {
+    const clearSearch = useCallback(() => {
         setSearchQuery('');
         setIsSearching(false);
         setSearchResults([]);
         setSearchResultsCount(0);
         setCurrentPage(1); // Reset to first page
-    };
+        setExecutedSearchQuery('');
+        setIngredientMatchMap({});
+    }, []);
+
+    useEffect(() => {
+        const normalized = searchQuery.trim();
+
+        if (!normalized) {
+            if (isSearching) {
+                clearSearch();
+            }
+            return;
+        }
+
+        if (normalized === executedSearchQuery) {
+            return;
+        }
+
+        const timeoutId = window.setTimeout(() => {
+            runSearch(normalized);
+        }, SEARCH_DEBOUNCE_MS);
+
+        return () => {
+            window.clearTimeout(timeoutId);
+        };
+    }, [searchQuery, isSearching, executedSearchQuery, runSearch, clearSearch]);
+
+    // Fetch ingredient matches for current posts when searching so users know why a result matched
+    useEffect(() => {
+        if (!isSearching || !executedSearchQuery) {
+            return;
+        }
+
+        const normalizedQuery = executedSearchQuery.toLowerCase();
+
+        const postsNeedingIngredients = posts.filter(post => 
+            post.has_recipe !== false &&
+            ingredientMatchMap[post.id] === undefined
+        );
+
+        if (postsNeedingIngredients.length === 0) {
+            return;
+        }
+
+        postsNeedingIngredients.forEach(post => {
+            apiClient.getRecipeForPost(post.id)
+                .then(recipe => {
+                    if (!recipe || !recipe.ingredients) {
+                        setIngredientMatchMap(prev => ({ ...prev, [post.id]: [] }));
+                        return;
+                    }
+
+                    const matches = recipe.ingredients
+                        .map(ingredient => ingredient.food_name || '')
+                        .filter(name => {
+                            if (!name) {
+                                return false;
+                            }
+                            const lowerName = name.toLowerCase();
+                            if (lowerName.includes(normalizedQuery)) {
+                                return true;
+                            }
+                            const similarityScore = calculateFuzzySimilarity(normalizedQuery, lowerName);
+                            return similarityScore >= FUZZY_SIMILARITY_THRESHOLD;
+                        });
+
+                    setIngredientMatchMap(prev => ({ ...prev, [post.id]: matches }));
+                })
+                .catch(() => {
+                    setIngredientMatchMap(prev => ({ ...prev, [post.id]: [] }));
+                });
+        });
+    }, [posts, executedSearchQuery, isSearching, ingredientMatchMap]);
 
     // Helper function to update a single post's like status in local storage
     const updateSinglePostLikeInStorage = (postId: number, isLiked: boolean) => {
@@ -822,6 +982,11 @@ const Forum = () => {
                                         post={post}
                                         isLiked={likedPosts[post.id] || false}
                                         onLikeToggle={handleLikeToggle}
+                                        ingredientMatches={
+                                            isSearching && ingredientMatchMap[post.id]?.length
+                                                ? ingredientMatchMap[post.id]
+                                                : undefined
+                                        }
                                     />
                                 ))}
                             </div>
