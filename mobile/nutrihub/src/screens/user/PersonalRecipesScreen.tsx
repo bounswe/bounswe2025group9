@@ -198,7 +198,7 @@ const PersonalRecipesScreen: React.FC = () => {
         Start creating your personal recipe collection
       </Text>
       <TouchableOpacity
-        style={[styles.createButton, { backgroundColor: theme.primary }]}
+        style={[styles.primaryCreateButton, { backgroundColor: theme.primary }]}
         onPress={handleCreateRecipe}
       >
         <Icon name="plus" size={20} color="#fff" />
@@ -250,7 +250,7 @@ const PersonalRecipesScreen: React.FC = () => {
           <Icon name="arrow-left" size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={[styles.headerTitle, textStyles.heading3]}>My Recipes</Text>
-        <TouchableOpacity onPress={handleCreateRecipe} style={styles.createButton}>
+        <TouchableOpacity onPress={handleCreateRecipe} style={styles.headerCreateButton}>
           <Icon name="plus" size={24} color={theme.primary} />
         </TouchableOpacity>
       </View>
@@ -288,7 +288,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginHorizontal: SPACING.md,
   },
-  createButton: {
+  headerCreateButton: {
     padding: SPACING.sm,
   },
   content: {
@@ -345,7 +345,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: SPACING.xl,
   },
-  createButton: {
+  primaryCreateButton: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.lg,
