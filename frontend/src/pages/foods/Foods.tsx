@@ -3,8 +3,9 @@ import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
+import NutritionScore from '../../components/NutritionScore';
 
-const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
+export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
     <div
       key={item.id}
@@ -32,8 +33,23 @@ const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
 
       <div className="mt-2">
         <p className="nh-text">Category: {item.category}</p>
-        <p className="nh-text">Nutrition Score: {item.nutritionScore}</p>
-        <p className="nh-text">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
+        <div className="mt-2">
+          <p className="nh-text mb-2">Nutrition Score:</p>
+          <NutritionScore 
+            score={item.nutritionScore} 
+            size="sm"
+            foodDetails={{
+              proteinContent: item.proteinContent,
+              carbohydrateContent: item.carbohydrateContent,
+              fatContent: item.fatContent,
+              caloriesPerServing: item.caloriesPerServing,
+              servingSize: item.servingSize,
+              category: item.category,
+              name: item.name
+            }}
+          />
+        </div>
+        <p className="nh-text mt-2">Calories: {item.caloriesPerServing} kcal per {item.servingSize}</p>
         <p className="nh-text">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
       </div>
     </div>
@@ -101,26 +117,27 @@ const Foods = () => {
         }
     }
 
-    // Main fetch effect
+    // Initial load on component mount
+    useEffect(() => {
+        fetchFoods(1, '');
+    }, []);
+
+    // Refetch when shouldFetch flag is set (for pagination and search)
     useEffect(() => {
         if (shouldFetch) {
             fetchFoods(page, searchTerm);
             setShouldFetch(false);
         }
-    }, [page, shouldFetch, searchTerm]);
+    }, [shouldFetch]);
 
-    // Refetch when sort options change - separate effect to avoid race conditions
+    // Refetch when sort options change (but not on initial mount)
     useEffect(() => {
-        if (sortBy !== undefined) { // Only trigger if not initial render
+        // Skip if this is initial render (sortBy will be empty string on mount)
+        if (sortBy !== undefined && sortBy !== '') {
             console.log("Sort changed, fetching with:", { sortBy, sortOrder, page, searchTerm });
             fetchFoods(page, searchTerm);
         }
     }, [sortBy, sortOrder]);
-    
-    // Initial load on component mount
-    useEffect(() => {
-        fetchFoods(1, '');
-    }, []);
 
     const pageSize = foods.length
     const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
@@ -486,6 +503,15 @@ const Foods = () => {
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     </svg>
                                     Add Food
+                                </div>
+                            </Link>
+
+                            <Link to="/foods/compare" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium">
+                                <div className="flex items-center justify-center w-full">
+                                    <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
+                                    </svg>
+                                    Compare Foods
                                 </div>
                             </Link>
 

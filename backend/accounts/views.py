@@ -3,24 +3,29 @@ from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import IsAuthenticated, AllowAny, BasePermission
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.authentication import JWTAuthentication
+from rest_framework.authentication import SessionAuthentication
 from rest_framework.pagination import PageNumberPagination
+from django.http import FileResponse, Http404
+from django.conf import settings
+from django.db.models import Q
 
 from .serializers import (
     UserSerializer,
     ChangePasswordSerializer,
     ContactInfoSerializer,
     PhotoSerializer,
+    PhotoUploadSerializer,
     AllergenInputSerializer,
     AllergenOutputSerializer,
     TagInputSerializer,
     TagOutputSerializer,
-    CertificateSerializer,
+    ReportSerializer,
 )
 from .services import register_user, list_users, update_user
-from .models import User, Allergen, Tag
+from .models import User, Allergen, Tag, UserTag, Follow
 from forum.models import Like, Post, Recipe
 from forum.serializers import PostSerializer, RecipeSerializer
 import os
@@ -48,7 +53,10 @@ class CreateUserView(APIView):
         serializer = UserSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.create(serializer.validated_data)
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            return Response(
+                UserSerializer(user).data,
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -60,7 +68,10 @@ class UpdateUserView(APIView):
         serializer = ContactInfoSerializer(data=request.data)
         if serializer.is_valid():
             user = update_user(request.user, serializer.validated_data)
-            return Response(UserSerializer(user).data, status=status.HTTP_201_CREATED)
+            return Response(
+                UserSerializer(user).data,
+                status=status.HTTP_201_CREATED,
+            )
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
@@ -99,6 +110,27 @@ class UserProfileView(APIView):
         # serialize user data
         serializer = UserSerializer(user)
         return Response(serializer.data)
+
+
+class PublicUserProfileView(APIView):
+    """
+    GET /users/@{username}/
+    Fetch a user's public profile information by username.
+    Authentication is optional - works for both authenticated and anonymous users.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+            serializer = UserSerializer(user)
+            return Response(serializer.data)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found"}, status=status.HTTP_404_NOT_FOUND
+            )
 
 
 class LogoutView(APIView):
@@ -228,20 +260,40 @@ class TagSetView(APIView):
                 except Tag.DoesNotExist:
                     continue
             elif "name" in tag_data:
-                tag, _ = Tag.objects.get_or_create(
-                    name=tag_data["name"],
-                    defaults={"verified": tag_data.get("verified", False)},
-                )
+                # Validate and sanitize tag name
+                tag_name = tag_data["name"].strip()
+
+                # Check if name is empty after stripping
+                if not tag_name:
+                    return Response(
+                        {"detail": "Tag name cannot be empty."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                # Check max length (Tag model has max_length=64)
+                if len(tag_name) > 64:
+                    return Response(
+                        {"detail": "Tag name cannot exceed 64 characters."},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+                tag, _ = Tag.objects.get_or_create(name=tag_name)
             else:
                 continue  # skip invalid entries
 
             tags.append(tag)
 
-        # Update user's tags
-        user.tags.set(tags)
+        # Clear existing UserTag relationships
+        UserTag.objects.filter(user=user).delete()
 
-        # Serialize response
-        response_serializer = TagOutputSerializer(tags, many=True)
+        # Create new UserTag relationships
+        for tag in tags:
+            UserTag.objects.create(user=user, tag=tag, verified=False)
+
+        # Serialize response with user context
+        response_serializer = TagOutputSerializer(
+            tags, many=True, context={"user": user}
+        )
         return Response(response_serializer.data, status=status.HTTP_201_CREATED)
 
 
@@ -294,7 +346,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file size (max 5 MB)
+        #  Validate file size (max 5 MB)
         max_size = 5 * 1024 * 1024  # 5 MB in bytes
         if image.size > max_size:
             return Response(
@@ -302,7 +354,7 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file type
+        #  Validate file type
         valid_mime_types = ["image/jpeg", "image/png"]
         if image.content_type not in valid_mime_types:
             return Response(
@@ -310,12 +362,14 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Save valid image
-        serializer = PhotoSerializer(user, data=request.data, partial=True)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        #  Save valid image
+        upload_serializer = PhotoUploadSerializer(user, data=request.data, partial=True)
+        if upload_serializer.is_valid():
+            upload_serializer.save()
+            # Return the URL using the read serializer
+            read_serializer = PhotoSerializer(user)
+            return Response(read_serializer.data, status=status.HTTP_200_OK)
+        return Response(upload_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request):
         user = request.user
@@ -326,14 +380,14 @@ class ProfileImageView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Get full path to the image file
+        #  Get full path to the image file
         image_path = user.profile_image.path
 
-        # ✅ Clear the field and save to DB
+        #  Clear the field and save to DB
         user.profile_image = None
         user.save()
 
-        # ✅ Delete the actual file if it exists
+        #  Delete the actual file if it exists
         if os.path.exists(image_path):
             try:
                 os.remove(image_path)
@@ -366,16 +420,17 @@ class CertificateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Ensure the tag belongs to the user
+        # Ensure the user has this tag
         try:
-            tag = user.tags.get(id=tag_id)
-        except Tag.DoesNotExist:
+            user_tag = UserTag.objects.get(user=user, tag__id=tag_id)
+            tag = user_tag.tag
+        except UserTag.DoesNotExist:
             return Response(
                 {"detail": "Tag not found or not associated with user."},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
-        # ✅ Validate file size (max 5 MB)
+        #  Validate file size (max 5 MB)
         max_size = 5 * 1024 * 1024  # 5 MB
         if certificate.size > max_size:
             return Response(
@@ -383,7 +438,7 @@ class CertificateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Validate file type
+        #  Validate file type
         valid_mime_types = ["image/jpeg", "image/png", "application/pdf"]
         if certificate.content_type not in valid_mime_types:
             return Response(
@@ -391,12 +446,46 @@ class CertificateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # ✅ Save certificate to tag
-        tag.certificate = certificate
-        tag.save()
+        #  Save certificate to UserTag (not Tag)
+        user_tag.certificate = certificate
+        user_tag.save()
 
-        # ✅ Return updated tag info
-        serializer = TagOutputSerializer(tag)
+        #  Return updated tag info with user context
+        serializer = TagOutputSerializer(tag, context={"user": user})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def delete(self, request):
+        """
+        DELETE /users/certificate/
+        Remove certificate from a profession tag.
+        Expected body: { "tag_id": <tag_id> }
+        """
+        user = request.user
+        tag_id = request.data.get("tag_id")
+
+        if not tag_id:
+            return Response(
+                {"detail": "Missing tag_id."}, status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Ensure the user has this tag
+        try:
+            user_tag = UserTag.objects.get(user=user, tag__id=tag_id)
+            tag = user_tag.tag
+        except UserTag.DoesNotExist:
+            return Response(
+                {"detail": "Tag not found or not associated with user."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Remove certificate file if it exists
+        if user_tag.certificate:
+            user_tag.certificate.delete(save=False)
+            user_tag.certificate = None
+            user_tag.save()
+
+        # Return updated tag info with user context
+        serializer = TagOutputSerializer(tag, context={"user": user})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
@@ -461,4 +550,249 @@ class LikedRecipesView(APIView):
         # Serialize the recipes
         serializer = RecipeSerializer(paginated_recipes, many=True)
 
+        return paginator.get_paginated_response(serializer.data)
+
+
+class ReportUserView(APIView):
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        serializer = ReportSerializer(data=request.data, context={"request": request})
+
+        if serializer.is_valid():
+            report = serializer.save()
+            return Response(
+                {"message": "Report submitted successfully.", "report_id": report.id},
+                status=status.HTTP_201_CREATED,
+            )
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+class IsCertificateOwnerOrAdmin(BasePermission):
+    """
+    Custom permission to only allow certificate owners or admin users to view certificates.
+    """
+
+    def has_permission(self, request, view):
+        # Check if user is authenticated
+        if not request.user or not request.user.is_authenticated:
+            return False
+
+        # Get the token from the URL
+        token = view.kwargs.get("token")
+        if not token:
+            return False
+
+        try:
+            # Find the UserTag by certificate token
+            user_tag = UserTag.objects.get(certificate_token=token)
+
+            # Allow if user is the owner or an admin
+            return (
+                request.user == user_tag.user
+                or request.user.is_staff
+                or request.user.is_superuser
+            )
+        except UserTag.DoesNotExist:
+            return False
+
+
+class ServeProfileImageView(APIView):
+    """
+    Serve profile images by token. Public access.
+    GET /api/users/profile-image/<uuid:token>/
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request, token):
+        try:
+            user = User.objects.get(profile_image_token=token)
+        except User.DoesNotExist:
+            raise Http404("Profile image not found")
+
+        if not user.profile_image:
+            raise Http404("User has no profile image")
+
+        # Build the full path to the file
+        file_path = os.path.join(settings.MEDIA_ROOT, user.profile_image.name)
+
+        if not os.path.exists(file_path):
+            raise Http404("Profile image file not found")
+
+        # Serve the file with proper content type
+        response = FileResponse(open(file_path, "rb"))
+        # Let Django auto-detect content type from file extension
+        return response
+
+
+class ServeCertificateView(APIView):
+    """
+    Serve certificates by token. Restricted to certificate owner or admin.
+    GET /api/users/certificate/<uuid:token>/
+    Supports both JWT (for API clients) and Session (for Django admin) authentication.
+    """
+
+    authentication_classes = [JWTAuthentication, SessionAuthentication]
+    permission_classes = [IsCertificateOwnerOrAdmin]
+
+    def get(self, request, token):
+        try:
+            user_tag = UserTag.objects.get(certificate_token=token)
+        except UserTag.DoesNotExist:
+            raise Http404("Certificate not found")
+
+        if not user_tag.certificate:
+            raise Http404("No certificate file attached")
+
+        # Build the full path to the file
+        file_path = os.path.join(settings.MEDIA_ROOT, user_tag.certificate.name)
+
+        if not os.path.exists(file_path):
+            raise Http404("Certificate file not found")
+
+        # Serve the file with proper content type
+        response = FileResponse(open(file_path, "rb"))
+        # Let Django auto-detect content type from file extension
+        return response
+
+class FollowUserView(APIView):
+    """
+    POST /users/follow/
+    Body: { "username": "<target_username>" }
+    Toggle follow/unfollow operation.
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        current_user = request.user
+        target_username = request.data.get("username")
+
+        if not target_username:
+            return Response(
+                {"detail": "username field is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if target_username == current_user.username:
+            return Response(
+                {"detail": "You cannot follow yourself."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        # Check target user existence
+        try:
+            target_user = User.objects.get(username=target_username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        # Check existing follow relation
+        existing = Follow.objects.filter(
+            follower=current_user, following=target_user
+        ).first()
+
+        if existing:
+            # UNFOLLOW
+            existing.delete()
+            return Response(
+                {"message": f"You unfollowed {target_user.username}."},
+                status=status.HTTP_200_OK,
+            )
+        else:
+            # FOLLOW
+            Follow.objects.create(follower=current_user, following=target_user)
+            return Response(
+                {"message": f"You are now following {target_user.username}."},
+                status=status.HTTP_201_CREATED,
+            )
+
+class FollowersListView(APIView):
+    """
+    GET /users/followers/<username>/
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        followers = User.objects.filter(following_set__following=user)
+        serializer = UserSerializer(followers, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FollowingListView(APIView):
+    """
+    GET /users/following/<username>/
+    """
+
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [AllowAny]
+
+    def get(self, request, username):
+        try:
+            user = User.objects.get(username=username)
+        except User.DoesNotExist:
+            return Response(
+                {"detail": "User not found."},
+                status=status.HTTP_404_NOT_FOUND,
+            )
+
+        following = User.objects.filter(followers_set__follower=user)
+        serializer = UserSerializer(following, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class FeedView(APIView):
+    """
+    GET /forum/feed/
+    Returns a feed of posts that includes:
+    - Posts from users the current user follows
+    - Posts the current user has liked
+    """
+    
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+
+        user = request.user
+
+        # 1. Get IDs of users the current user follows
+        following_ids = Follow.objects.filter(follower=user).values_list(
+            "following_id", flat=True
+        )
+
+        # 2. Get posts the user has liked
+        liked_post_ids = Like.objects.filter(user=user).values_list(
+            "post_id", flat=True
+        )
+
+        # 3. Fetch feed posts: posts by followed users OR liked posts
+        posts = (
+            Post.objects.filter(
+                Q(author_id__in=following_ids) | Q(id__in=liked_post_ids)
+            )
+            .distinct()
+            .order_by("-created_at")
+        )
+
+        # 4. Pagination
+        paginator = PageNumberPagination()
+        paginator.page_size = 10
+        paginated_posts = paginator.paginate_queryset(posts, request)
+
+        serializer = PostSerializer(paginated_posts, many=True)
         return paginator.get_paginated_response(serializer.data)

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp, useFocusEffect } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
+import * as WebBrowser from 'expo-web-browser';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
@@ -32,7 +33,7 @@ const UserProfileScreen: React.FC = () => {
   const navigation = useNavigation<UserProfileNavigationProp>();
   const route = useRoute<UserProfileRouteProp>();
 
-  const { username } = route.params;
+  const { username, userId } = route.params;
   const { user: currentUser } = useAuth();
 
   const getCurrentUserDisplayName = (): string => {
@@ -55,6 +56,39 @@ const UserProfileScreen: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const privacySettings = userProfile?.privacy_settings;
+  const isFieldVisible = (flag?: boolean) => flag !== false;
+
+  const canShowProfessionTags = isOwner || isFieldVisible(privacySettings?.show_profession_tags);
+  const canShowBadges = isOwner || isFieldVisible(privacySettings?.show_badges);
+  const canShowPosts = isOwner || isFieldVisible(privacySettings?.show_posts);
+  const canShowRecipes = isOwner || isFieldVisible(privacySettings?.show_recipes);
+  const canShowLocation = isOwner || isFieldVisible(privacySettings?.show_location);
+  const canShowLiked = isOwner;
+
+  const professionTags = useMemo<ProfessionTag[]>(() => {
+    if (!userProfile) return [];
+    if (userProfile.tags && userProfile.tags.length > 0) {
+      return userProfile.tags;
+    }
+    if (userProfile.profession_tags && userProfile.profession_tags.length > 0) {
+      return userProfile.profession_tags;
+    }
+    return [];
+  }, [userProfile]);
+
+  const listData = useMemo<ForumTopic[]>(() => {
+    if (viewMode === 'liked') {
+      if (!canShowLiked) return [];
+      const likedRecipeOnly = likedPosts.filter(post =>
+        (post.tags || []).some(tag => tag?.toLowerCase().includes('recipe'))
+      );
+      return likedFilter === 'recipes' ? likedRecipeOnly : likedPosts;
+    }
+
+    return canShowPosts ? userPosts : [];
+  }, [viewMode, canShowLiked, likedFilter, likedPosts, canShowPosts, userPosts]);
+
   // Fetch ALL posts and filter by username to avoid filter dependency
   const fetchUserData = useCallback(async () => {
     setLoading(true);
@@ -64,7 +98,7 @@ const UserProfileScreen: React.FC = () => {
       // Attempt to fetch profile using the new method
       let fetchedProfile: User | null = null;
       try {
-        fetchedProfile = await userService.getOtherUserProfile(username);
+        fetchedProfile = await userService.getOtherUserProfile(username, userId);
         setUserProfile(fetchedProfile);
       } catch (e) {
         console.error('Error fetching user profile:', e);
@@ -133,6 +167,17 @@ const UserProfileScreen: React.FC = () => {
     }, [])
   );
 
+  useEffect(() => {
+    if (viewMode === 'liked' && !canShowLiked) {
+      setViewMode('shared');
+      return;
+    }
+
+    if (viewMode === 'shared' && !canShowPosts && canShowLiked) {
+      setViewMode('liked');
+    }
+  }, [viewMode, canShowLiked, canShowPosts]);
+
   const handleBack = () => {
     navigation.goBack();
   };
@@ -149,11 +194,39 @@ const UserProfileScreen: React.FC = () => {
     });
   };
 
-  const handleViewDocument = (tag: any) => {
-    if (tag.certificate_url) {
-      // TODO: Open document in a modal or external viewer
-      Alert.alert('Document', `View document for ${tag.name}`);
+  const handleViewDocument = async (tag: ProfessionTag) => {
+    if (tag.certificate) {
+      try {
+        await WebBrowser.openBrowserAsync(tag.certificate, {
+          presentationStyle: WebBrowser.WebBrowserPresentationStyle.FORM_SHEET,
+          controlsColor: theme.primary,
+        });
+      } catch (error) {
+        console.error('Error opening document:', error);
+        Alert.alert('Error', 'Failed to open document. Please try again.');
+      }
+    } else {
+      Alert.alert('No Certificate', `No certificate document is available for ${tag.name}.`);
     }
+  };
+
+  const renderEmptyComponent = () => {
+    let message = '';
+    let iconName: React.ComponentProps<typeof Icon>['name'] = 'post-outline';
+
+    if (viewMode === 'liked') {
+      message = 'No liked posts yet.';
+      iconName = 'heart-outline';
+    } else {
+      message = canShowPosts ? 'No posts from this user yet.' : 'This user keeps their posts private.';
+    }
+
+    return (
+      <View style={styles.emptyContainer}>
+        <Icon name={iconName} size={48} color={theme.textSecondary} />
+        <Text style={[styles.emptyText, textStyles.body]}>{message}</Text>
+      </View>
+    );
   };
 
   if (loading) {
@@ -215,176 +288,261 @@ const UserProfileScreen: React.FC = () => {
       </View>
 
       <FlatList
-        data={
-          viewMode === 'shared'
-            ? userPosts
-            : likedFilter === 'recipes'
-              ? likedPosts.filter(p => (p.tags || []).some(t => t.toLowerCase().includes('recipe')))
-              : likedPosts
-        }
+        data={listData}
         keyExtractor={(item) => `${viewMode}-${item.id}`}
         contentContainerStyle={styles.listContent}
         ListHeaderComponent={
-          <View>
-            <View style={styles.profileHeader}>
+          <View style={styles.headerContent}>
+            <View style={[styles.profileCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
               <ProfilePhotoPicker
                 uri={userProfile?.profile_image || null}
-                editable={Boolean(currentUser && (currentUser.username === username || username === getCurrentUserDisplayName() || (userProfile && currentUser.id === userProfile.id)))}
+                editable={isOwner}
                 onUploaded={async (localUri) => {
                   try {
                     const name = localUri.split('/').pop() || 'profile.jpg';
                     const res = await userService.uploadProfilePhoto(localUri, name);
-                    
-                    // Update local state immediately
+
                     setUserProfile(prev => prev ? { ...prev, profile_image: res.profile_image } : prev);
-                    
-                    // Also refresh profile data from server to ensure consistency
+
                     try {
-                      const refreshedProfile = await userService.getUserByUsername(username);
+                      const refreshedProfile = await userService.getOtherUserProfile(
+                        username,
+                        userProfile?.id ?? userId
+                      );
                       setUserProfile(refreshedProfile);
                     } catch (refreshError) {
-                      // Profile refresh failed, but local update should be sufficient
+                      // Silent refresh failure
                     }
-                  } catch (e) {
-                    Alert.alert('Upload Failed', `Failed to upload image: ${e.message || e}`);
+                  } catch (error) {
+                    const message = error instanceof Error ? error.message : String(error);
+                    Alert.alert('Upload Failed', `Failed to upload image: ${message}`);
                   }
                 }}
                 onRemoved={async () => {
                   try {
                     await userService.removeProfilePhoto();
-                    setUserProfile(prev => prev ? { ...prev, profile_image: undefined } : prev);
+                    setUserProfile(prev => prev ? { ...prev, profile_image: null } : prev);
                   } catch (e) {}
                 }}
-                removable={!!userProfile?.profile_image}
+                removable={isOwner && !!userProfile?.profile_image}
               />
-              <View style={styles.profileInfo}>
-                <Text style={[styles.displayName, textStyles.heading4]}>
-                  {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname)))
-                    ? `${userProfile?.name || currentUser?.name || ''} ${userProfile?.surname || currentUser?.surname || ''}`.trim()
-                    : `@${username}`}
-                </Text>
-                {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname))) && (
-                  <Text style={[styles.usernameText, textStyles.caption]}>@{username}</Text>
-                )}
-                {/* Profession Tags with Privacy Controls */}
-                {userProfile?.tags && userProfile.tags.length > 0 && (
-                  <View style={styles.professionTagsContainer}>
-                    <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
-                      Profession
-                    </Text>
-                    <View style={styles.professionTagsRow}>
-                      {userProfile.tags.map((tag) => (
-                        <TouchableOpacity 
-                          key={tag.id} 
-                          style={[styles.professionTag, { backgroundColor: theme.primary }]}
-                          onPress={() => handleViewDocument(tag)}
-                        >
-                          <Text style={[textStyles.caption, { color: '#fff' }]}>
-                            {tag.name}
-                          </Text>
-                          {tag.is_verified ? (
-                            <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
-                              <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
-                              <Text style={[textStyles.small, { color: '#fff' }]}>Verified</Text>
-                            </View>
-                          ) : (
-                            <View style={[styles.unverifiedBadge, { backgroundColor: theme.warning }]}>
-                              <Icon name="clock-outline" size={12} color="#fff" style={styles.tagIcon} />
-                              <Text style={[textStyles.small, { color: '#fff' }]}>Unverified</Text>
-                            </View>
-                          )}
-                          {tag.certificate_url && (
-                            <Icon name="file-document" size={12} color="#fff" style={styles.tagIcon} />
-                          )}
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  </View>
-                )}
-                {userProfile?.bio && (
-                  <Text style={[styles.bioText, textStyles.body]}>{userProfile.bio}</Text>
-                )}
-                {/* Badges with Privacy Controls */}
-                {userProfile?.privacy_settings?.show_badges && userProfile?.badges && userProfile.badges.length > 0 && (
-                  <View style={styles.badgesContainer}>
-                    <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
-                      Badges
-                    </Text>
-                    <View style={styles.badgesRow}>
-                      {userProfile.badges.map((badge, index) => (
-                        <View key={index} style={[styles.badge, { backgroundColor: theme.warning }]}>
-                          <Icon name="medal" size={12} color="#fff" style={styles.badgeIcon} />
-                          <Text style={[styles.badgeText, { color: '#fff' }]}>{badge}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                )}
+              <Text style={[styles.profileName, textStyles.heading3, { color: theme.text }]}>
+                {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname)))
+                  ? `${userProfile?.name || currentUser?.name || ''} ${userProfile?.surname || currentUser?.surname || ''}`.trim()
+                  : `@${username}`}
+              </Text>
+              {(userProfile?.name || userProfile?.surname || (isOwner && (currentUser?.name || currentUser?.surname))) && (
+                <Text style={[styles.profileUsername, textStyles.caption, { color: theme.textSecondary }]}>@{username}</Text>
+              )}
+              {userProfile?.bio && (
+                <Text style={[styles.profileBio, textStyles.body, { color: theme.text }]}>{userProfile.bio}</Text>
+              )}
+              <View style={styles.statsRow}>
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, textStyles.heading4, { color: theme.primary }]}>
+                    {professionTags.length}
+                  </Text>
+                  <Text style={[styles.statLabel, textStyles.caption, { color: theme.textSecondary }]}>
+                    Profession Tags
+                  </Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, textStyles.heading4, { color: theme.success }]}>
+                    {userProfile?.badges?.length || 0}
+                  </Text>
+                  <Text style={[styles.statLabel, textStyles.caption, { color: theme.textSecondary }]}>
+                    Badges
+                  </Text>
+                </View>
+                <View style={styles.statItem}>
+                  <Text style={[styles.statValue, textStyles.heading4, { color: theme.warning }]}>
+                    {userProfile?.recipes?.length || 0}
+                  </Text>
+                  <Text style={[styles.statLabel, textStyles.caption, { color: theme.textSecondary }]}>
+                    Recipes
+                  </Text>
+                </View>
+              </View>
+            </View>
 
-                {/* Contact Information with Privacy Controls */}
+            {canShowProfessionTags && professionTags.length > 0 && (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
+                  Profession Tags
+                </Text>
+                <View style={styles.professionTagsRow}>
+                  {professionTags.map((tag) => (
+                    <TouchableOpacity
+                      key={tag.id || tag.name}
+                      style={[
+                        styles.professionTag, 
+                        { 
+                          backgroundColor: `${theme.primary}20`, 
+                          borderColor: theme.primary,
+                          minHeight: 40,
+                        }
+                      ]}
+                      onPress={() => handleViewDocument(tag)}
+                      activeOpacity={0.6}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Text style={[textStyles.caption, { color: theme.primary }]}>
+                        {tag.name}
+                      </Text>
+                      {tag.verified ? (
+                        <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
+                          <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
+                          <Text style={[textStyles.small, { color: '#fff' }]}>Verified</Text>
+                        </View>
+                      ) : (
+                        <View style={[styles.unverifiedBadge, { backgroundColor: theme.warning }]}>
+                          <Icon name="clock-outline" size={12} color="#fff" style={styles.tagIcon} />
+                          <Text style={[textStyles.small, { color: '#fff' }]}>Unverified</Text>
+                        </View>
+                      )}
+                      {tag.certificate && (
+                        <Icon name="file-document" size={12} color={theme.primary} style={styles.tagIcon} />
+                      )}
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {!canShowProfessionTags && !isOwner && professionTags.length > 0 && (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                  This user keeps their profession tags private.
+                </Text>
+              </View>
+            )}
+
+            {canShowBadges && userProfile?.badges && userProfile.badges.length > 0 && (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
+                  Badges
+                </Text>
+                <View style={styles.badgesRow}>
+                  {userProfile.badges.map((badge, index) => (
+                    <View key={index} style={[styles.badge, { backgroundColor: theme.warning }]}>
+                      <Icon name="medal" size={12} color="#fff" style={styles.badgeIcon} />
+                      <Text style={[styles.badgeText, { color: '#fff' }]}>{badge}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+            )}
+
+            {!canShowBadges && !isOwner && userProfile?.badges && userProfile.badges.length > 0 && (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                  This user keeps their badges private.
+                </Text>
+              </View>
+            )}
+
+            {canShowRecipes && (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
+                  Recipes
+                </Text>
+                {userProfile?.recipes && userProfile.recipes.length > 0 ? (
+                  userProfile.recipes.map((recipe) => (
+                    <View key={recipe.id} style={styles.recipeItem}>
+                      <Icon name="chef-hat" size={16} color={theme.primary} />
+                      <Text style={[textStyles.body, { marginLeft: SPACING.xs, color: theme.text }]}>
+                        {recipe.name}
+                      </Text>
+                    </View>
+                  ))
+                ) : (
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                    No recipes shared yet.
+                  </Text>
+                )}
+              </View>
+            )}
+
+            {!canShowRecipes && !isOwner && userProfile?.recipes && userProfile.recipes.length > 0 && (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                  This user keeps their recipes private.
+                </Text>
+              </View>
+            )}
+
+            {(canShowLocation && userProfile?.location) || userProfile?.website ? (
+              <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
+                  Contact
+                </Text>
                 <View style={styles.contactInfo}>
-                  {userProfile?.privacy_settings?.show_location && userProfile?.location && (
+                  {canShowLocation && userProfile?.location && (
                     <View style={styles.contactItem}>
-                      <Icon name="map-marker" size={14} color={theme.textSecondary} />
-                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                      <Icon name="map-marker" size={16} color={theme.textSecondary} />
+                      <Text style={[textStyles.body, { color: theme.textSecondary, marginLeft: SPACING.xs }]}>
                         {userProfile.location}
                       </Text>
                     </View>
                   )}
                   {userProfile?.website && (
                     <View style={styles.contactItem}>
-                      <Icon name="web" size={14} color={theme.textSecondary} />
-                      <Text style={[textStyles.caption, { color: theme.primary }]}>
+                      <Icon name="web" size={16} color={theme.textSecondary} />
+                      <Text style={[textStyles.body, { color: theme.primary, marginLeft: SPACING.xs }]}>
                         {userProfile.website}
                       </Text>
                     </View>
                   )}
                 </View>
               </View>
-            </View>
+            ) : null}
 
-            {/* Tabs for Posts / Liked */}
-            <View style={styles.tabsContainer}>
-              <TouchableOpacity
-                style={[styles.tabButton, viewMode === 'shared' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }]}
-                onPress={() => setViewMode('shared')}
-              >
-                <Text style={[styles.tabText, { color: viewMode === 'shared' ? theme.primary : theme.text }]}>Posts</Text>
-              </TouchableOpacity>
+            {(canShowPosts || canShowLiked) && (
+              <View style={[styles.tabsCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                <View style={styles.tabsContainer}>
+                  {canShowPosts && (
+                    <TouchableOpacity
+                      style={[styles.tabButton, viewMode === 'shared' && { borderBottomColor: theme.primary }]}
+                      onPress={() => setViewMode('shared')}
+                    >
+                      <Text style={[styles.tabText, { color: viewMode === 'shared' ? theme.primary : theme.text }]}>
+                        Posts
+                      </Text>
+                    </TouchableOpacity>
+                  )}
 
-              {(() => {
-                const displayName = getCurrentUserDisplayName();
-                const isOwner = !!currentUser && (currentUser.username === username || username === displayName || (userProfile && currentUser.id === userProfile.id));
-                return isOwner;
-              })() && (
-                <TouchableOpacity
-                  style={[styles.tabButton, viewMode === 'liked' && { borderBottomColor: theme.primary, borderBottomWidth: 2 }]}
-                  onPress={() => setViewMode('liked')}
-                >
-                  <Text style={[styles.tabText, { color: viewMode === 'liked' ? theme.primary : theme.text }]}>Liked</Text>
-                </TouchableOpacity>
-              )}
-            </View>
+                  {canShowLiked && (
+                    <TouchableOpacity
+                      style={[styles.tabButton, viewMode === 'liked' && { borderBottomColor: theme.primary }]}
+                      onPress={() => setViewMode('liked')}
+                    >
+                      <Text style={[styles.tabText, { color: viewMode === 'liked' ? theme.primary : theme.text }]}>
+                        Liked
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
 
-            {/* Sub-filters when on Liked tab: All / Recipes */}
-            {viewMode === 'liked' && (() => {
-              const displayName = getCurrentUserDisplayName();
-              const isOwner = !!currentUser && (currentUser.username === username || username === displayName || (userProfile && currentUser.id === userProfile.id));
-              return isOwner;
-            })() && (
-              <View style={styles.subFiltersContainer}>
-                <TouchableOpacity
-                  style={[styles.chip, likedFilter === 'all' && { backgroundColor: `${theme.primary}20` }]}
-                  onPress={() => setLikedFilter('all')}
-                >
-                  <Text style={[styles.chipText, { color: likedFilter === 'all' ? theme.primary : theme.text }]}>All</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={[styles.chip, likedFilter === 'recipes' && { backgroundColor: `${theme.primary}20` }]}
-                  onPress={() => setLikedFilter('recipes')}
-                >
-                  <Text style={[styles.chipText, { color: likedFilter === 'recipes' ? theme.primary : theme.text }]}>Recipes</Text>
-                </TouchableOpacity>
+                {viewMode === 'liked' && canShowLiked && (
+                  <View style={styles.subFiltersContainer}>
+                    <TouchableOpacity
+                      style={[styles.chip, likedFilter === 'all' && { backgroundColor: `${theme.primary}20` }]}
+                      onPress={() => setLikedFilter('all')}
+                    >
+                      <Text style={[styles.chipText, { color: likedFilter === 'all' ? theme.primary : theme.text }]}>
+                        All
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.chip, likedFilter === 'recipes' && { backgroundColor: `${theme.primary}20` }]}
+                      onPress={() => setLikedFilter('recipes')}
+                    >
+                      <Text style={[styles.chipText, { color: likedFilter === 'recipes' ? theme.primary : theme.text }]}>
+                        Recipes
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
               </View>
             )}
           </View>
@@ -395,17 +553,18 @@ const UserProfileScreen: React.FC = () => {
             onPress={handleOpenPost}
             onLike={() => {}}
             onComment={handleOpenPost}
-            onAuthorPress={() => navigation.navigate('UserProfile', { username: item.author })}
+            onAuthorPress={() => {
+              if (isOwner) {
+                // Navigate to own profile tab instead of UserProfile screen
+                navigation.navigate('MyProfile' as any);
+              } else {
+                // Navigate to other user's profile
+                navigation.navigate('UserProfile', { username: item.author });
+              }
+            }}
           />
         )}
-        ListEmptyComponent={
-          <View style={styles.emptyContainer}>
-            <Icon name="post-outline" size={48} color={theme.textSecondary} />
-            <Text style={[styles.emptyText, textStyles.body]}>
-              {viewMode === 'shared' ? 'No posts from this user yet.' : 'No liked posts yet.'}
-            </Text>
-          </View>
-        }
+        ListEmptyComponent={renderEmptyComponent}
         showsVerticalScrollIndicator={false}
       />
     </SafeAreaView>
@@ -434,102 +593,157 @@ const styles = StyleSheet.create({
     width: 32,
   },
   listContent: {
-    padding: SPACING.md,
     paddingBottom: SPACING.xl,
   },
-  profileHeader: {
+  headerContent: {
+    paddingBottom: SPACING.lg,
+  },
+  profileCard: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  profileName: {
+    marginTop: SPACING.md,
+    textAlign: 'center',
+  },
+  profileUsername: {
+    marginTop: SPACING.xs,
+    textAlign: 'center',
+  },
+  profileBio: {
+    marginTop: SPACING.sm,
+    textAlign: 'center',
+  },
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.lg,
+    justifyContent: 'space-between',
+    width: '100%',
+    marginTop: SPACING.lg,
   },
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: BORDER_RADIUS.round,
+  statItem: {
     alignItems: 'center',
-    justifyContent: 'center',
-  },
-  profileInfo: {
-    marginLeft: SPACING.md,
     flex: 1,
   },
-  displayName: {
+  statValue: {
     marginBottom: SPACING.xs,
   },
-  username: {
-    marginBottom: SPACING.xs,
+  statLabel: {
+    textAlign: 'center',
   },
-  usernameText: {
+  sectionCard: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+  },
+  sectionTitle: {
     marginBottom: SPACING.sm,
+  },
+  professionTagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  professionTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    marginRight: SPACING.sm,
+    marginBottom: SPACING.sm,
+  },
+  tagIcon: {
+    marginLeft: SPACING.xs,
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+  },
+  unverifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
   },
   badgesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',
   },
-  tabsContainer: {
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    marginRight: SPACING.sm,
     marginBottom: SPACING.sm,
   },
+  badgeIcon: {
+    marginRight: SPACING.xs,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  recipeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  contactInfo: {
+    marginTop: SPACING.xs,
+  },
+  contactItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+  },
+  tabsCard: {
+    marginHorizontal: SPACING.md,
+    marginTop: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingTop: SPACING.sm,
+    paddingBottom: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+  },
+  tabsContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+  },
   tabButton: {
-    marginRight: SPACING.lg,
-    paddingBottom: SPACING.xs,
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
   },
   tabText: {
     fontWeight: '600',
   },
   subFiltersContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+    marginTop: SPACING.sm,
   },
   chip: {
     paddingHorizontal: SPACING.sm,
-    paddingVertical: 6,
-    borderRadius: BORDER_RADIUS.xs,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
     marginRight: SPACING.sm,
   },
   chipText: {
-    fontWeight: '600',
-  },
-  professionBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    marginBottom: SPACING.sm,
-  },
-  bioText: {
-    marginTop: SPACING.xs,
-    marginBottom: SPACING.sm,
-  },
-  badge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.xs,
-    marginRight: SPACING.xs,
-  },
-  badgeIcon: {
-    marginRight: 4,
-  },
-  badgeText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.md,
-    marginBottom: SPACING.sm,
-  },
-  sectionTitle: {
-    marginLeft: SPACING.xs,
     fontWeight: '600',
   },
   emptyContainer: {
@@ -570,55 +784,6 @@ const styles = StyleSheet.create({
   reportButton: {
     padding: SPACING.sm,
   },
-  professionTagsContainer: {
-    marginBottom: SPACING.sm,
-  },
-  professionTagsRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
-  },
-  professionTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.sm,
-    marginRight: SPACING.xs,
-    marginBottom: SPACING.xs,
-  },
-  tagIcon: {
-    marginLeft: SPACING.xs,
-  },
-  unverifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: SPACING.xs,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.xs,
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginLeft: SPACING.xs,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 2,
-    borderRadius: BORDER_RADIUS.xs,
-  },
-  badgesContainer: {
-    marginBottom: SPACING.sm,
-  },
-  contactInfo: {
-    marginTop: SPACING.sm,
-  },
-  contactItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
 });
 
 export default UserProfileScreen;
-
-

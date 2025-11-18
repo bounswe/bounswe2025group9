@@ -133,11 +133,11 @@ const ProfileSettingsScreen: React.FC = () => {
 
   const handleProfilePhotoUploaded = async (uri: string) => {
     try {
-      // TODO: Replace with actual API call
-      // await userService.uploadProfilePhoto(uri);
-      console.log('Profile photo uploaded:', uri);
-      // Update local state immediately
-      setUser(prev => prev ? { ...prev, profile_image: uri } : prev);
+      const name = uri.split('/').pop() || 'profile.jpg';
+      const res = await userService.uploadProfilePhoto(uri, name);
+      
+      // Update local state with the server response
+      setUser(prev => prev ? { ...prev, profile_image: res.profile_image } : prev);
     } catch (error) {
       console.error('Error uploading profile photo:', error);
       Alert.alert('Error', 'Failed to upload profile photo');
@@ -146,11 +146,9 @@ const ProfileSettingsScreen: React.FC = () => {
 
   const handleProfilePhotoRemoved = async () => {
     try {
-      // TODO: Replace with actual API call
-      // await userService.removeProfilePhoto();
-      console.log('Profile photo removed');
+      await userService.removeProfilePhoto();
       // Update local state immediately
-      setUser(prev => prev ? { ...prev, profile_image: undefined } : prev);
+      setUser(prev => prev ? { ...prev, profile_image: null } : prev);
     } catch (error) {
       console.error('Error removing profile photo:', error);
       Alert.alert('Error', 'Failed to remove profile photo');
@@ -192,7 +190,7 @@ const ProfileSettingsScreen: React.FC = () => {
                   <Text style={[textStyles.caption, { color: '#fff' }]}>
                     {tag.name}
                   </Text>
-                  {tag.is_verified ? (
+                  {tag.verified ? (
                     <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
                       <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
                     </View>

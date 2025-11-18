@@ -1,5 +1,6 @@
+from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from django.urls import path
+from django.urls import include, path
 
 
 from .views import (
@@ -9,6 +10,7 @@ from .views import (
     ChangePasswordView,
     LogoutView,
     UserProfileView,
+    PublicUserProfileView,
     AllergenAddView,
     AllergenSetView,
     GetCommonAllergensView,
@@ -17,7 +19,23 @@ from .views import (
     CertificateView,
     LikedPostsView,
     LikedRecipesView,
+    ReportUserView,
+    ServeProfileImageView,
+    ServeCertificateView,
+    FollowUserView,
+    FollowersListView,
+    FollowingListView,
+    FeedView,
 )
+
+from .admin import UserModerationViewSet, UserTagModerationViewSet
+
+moderation_router = DefaultRouter()
+moderation_router.register(
+    r"user-tags", UserTagModerationViewSet, basename="moderation-user-tags"
+)
+moderation_router.register(r"", UserModerationViewSet, basename="moderation-users")
+
 
 urlpatterns = [
     path("", UserListView.as_view(), name="user-list"),
@@ -28,6 +46,9 @@ urlpatterns = [
     path("token/logout/", LogoutView.as_view(), name="token_logout"),
     path("change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("profile/", UserProfileView.as_view(), name="user-profile"),
+    path(
+        "@<str:username>/", PublicUserProfileView.as_view(), name="public-user-profile"
+    ),
     path("profile/liked-posts/", LikedPostsView.as_view(), name="liked-posts"),
     path("profile/liked-recipes/", LikedRecipesView.as_view(), name="liked-recipes"),
     path("allergen/set/", AllergenSetView.as_view(), name="set-allergens"),
@@ -38,4 +59,30 @@ urlpatterns = [
     ),
     path("image/", ProfileImageView.as_view(), name="image"),
     path("certificate/", CertificateView.as_view(), name="certificate"),
+    path("report/", ReportUserView.as_view(), name="report-user"),
+    # Secure file serving endpoints
+    path(
+        "profile-image/<uuid:token>/",
+        ServeProfileImageView.as_view(),
+        name="serve-profile-image",
+    ),
+    path(
+        "certificate/<uuid:token>/",
+        ServeCertificateView.as_view(),
+        name="serve-certificate",
+    ),
+    path("follow/", FollowUserView.as_view(), name="follow-user"),
+    path(
+        "followers/<str:username>/",
+        FollowersListView.as_view(),
+        name="user-followers",
+    ),
+    # List who a user is following
+    path(
+        "following/<str:username>/",
+        FollowingListView.as_view(),
+        name="user-following",
+    ),
+    path("feed/", FeedView.as_view(), name="forum-feed"),
+    path("moderation/", include(moderation_router.urls), name="moderation"),
 ]

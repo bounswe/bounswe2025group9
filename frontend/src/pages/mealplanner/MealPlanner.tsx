@@ -1,10 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Food } from '../../lib/apiClient';
 import FoodDetail from '../foods/FoodDetail';
 import FoodSelector from '../../components/FoodSelector';
 import { PencilSimple, Funnel, CalendarBlank, Hamburger } from '@phosphor-icons/react';
 import {apiClient} from '../../lib/apiClient';
-import { Brocolli, Goat, Pork } from './MockFoods';
+import { Brocolli, Goat, Pork, ChickenBreast, Beef, RiceNoodles, Anchovies, Tilapia, RiceCakes, Egg, MultigrainBread, Oatmeal, Tofu, LentilSoup, Quinoa, GreekYogurt, CottageCheese } from './MockFoods';
 
 interface weeklyMealPlan {
     [key: string]: [Food, Food, Food];
@@ -12,9 +12,33 @@ interface weeklyMealPlan {
 
 // Predefined meal plans using mock foods
 let MealPlans : { [key:string] : weeklyMealPlan} = {
-    'halal' : {monday: [Brocolli, Goat, Brocolli], tuesday: [Goat, Brocolli, Goat], wednesday: [Brocolli, Goat, Brocolli], thursday: [Goat, Brocolli, Goat], friday: [Brocolli, Goat, Brocolli], saturday: [Goat, Brocolli, Goat], sunday: [Brocolli, Goat, Brocolli]},
-    'vegan' : {monday: [Brocolli, Brocolli, Brocolli], tuesday: [Brocolli, Brocolli, Brocolli], wednesday: [Brocolli, Brocolli, Brocolli], thursday: [Brocolli, Brocolli, Brocolli], friday: [Brocolli, Brocolli, Brocolli], saturday: [Brocolli, Brocolli, Brocolli], sunday: [Brocolli, Brocolli, Brocolli]},
-    'high-protein' : {monday: [Goat, Pork, Goat], tuesday: [Pork, Goat, Pork], wednesday: [Goat, Pork, Goat], thursday: [Pork, Goat, Pork], friday: [Goat, Pork, Goat], saturday: [Pork, Goat, Pork], sunday: [Goat, Pork, Goat]},
+    'halal' : {
+        monday: [Egg, ChickenBreast, Tilapia], 
+        tuesday: [MultigrainBread, Goat, RiceNoodles], 
+        wednesday: [Oatmeal, Anchovies, ChickenBreast], 
+        thursday: [Egg, Goat, Tilapia], 
+        friday: [MultigrainBread, ChickenBreast, RiceNoodles], 
+        saturday: [Oatmeal, Goat, Anchovies], 
+        sunday: [Egg, Tilapia, ChickenBreast]
+    },
+    'vegan' : {
+        monday: [Oatmeal, Tofu, Brocolli], 
+        tuesday: [MultigrainBread, LentilSoup, Quinoa], 
+        wednesday: [RiceCakes, Tofu, Brocolli], 
+        thursday: [Oatmeal, LentilSoup, Quinoa], 
+        friday: [MultigrainBread, Tofu, Brocolli], 
+        saturday: [RiceCakes, LentilSoup, Quinoa], 
+        sunday: [Oatmeal, Tofu, Brocolli]
+    },
+    'high-protein' : {
+        monday: [Egg, Beef, ChickenBreast], 
+        tuesday: [GreekYogurt, Pork, Goat], 
+        wednesday: [CottageCheese, Beef, ChickenBreast], 
+        thursday: [Egg, Pork, Goat], 
+        friday: [GreekYogurt, Beef, ChickenBreast], 
+        saturday: [CottageCheese, Pork, Goat], 
+        sunday: [Egg, Beef, ChickenBreast]
+    },
 };
 
 const MealPlanner = () => {
@@ -22,100 +46,10 @@ const MealPlanner = () => {
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [editingMeal, setEditingMeal] = useState<{day: string, index: number} | null>(null);
     const [successMessage, setSuccessMessage] = useState('');
-    const [availableFoods, setAvailableFoods] = useState<Food[]>([]);
-    const [loading, setLoading] = useState(true);
     const [planDuration, setPlanDuration] = useState<'weekly' | 'daily'>('weekly');
     
     // Initialize with predefined meal plans
     const [localMealPlans, setLocalMealPlans] = useState<{ [key:string] : weeklyMealPlan}>(MealPlans);
-
-    // Fetch foods from backend and create meal plans with real food images
-    useEffect(() => {
-        const fetchFoods = async () => {
-            try {
-                setLoading(true);
-                
-                // Fetch multiple pages to get more foods
-                let allFoods: Food[] = [];
-                for (let page = 1; page <= 20; page++) {
-                    const response = await apiClient.getFoods({ page });
-                    if (response.status === 200 && response.results.length > 0) {
-                        allFoods = [...allFoods, ...response.results];
-                        // Stop if we've fetched all available foods
-                        if (!response.next) break;
-                    } else {
-                        break;
-                    }
-                }
-                
-                console.log('Total foods fetched:', allFoods.length);
-                console.log('Sample food names:', allFoods.slice(0, 5).map(f => f.name));
-                
-                if (allFoods.length > 0) {
-                    setAvailableFoods(allFoods);
-                    
-                    // Find real foods from backend by name (case-insensitive search)
-                    const broccoli = allFoods.find(f => f.name.toLowerCase() === 'broccoli');
-                    const goatMeat = allFoods.find(f => f.name.toLowerCase() === 'goat meat (cooked, roasted)');
-                    const porkChops = allFoods.find(f => f.name.toLowerCase() === 'pork chops (top loin, boneless)');
-                    
-                    console.log('Found foods:', {
-                        totalFoods: allFoods.length,
-                        broccoli: broccoli?.name,
-                        broccoliImage: broccoli?.imageUrl?.substring(0, 50) + '...',
-                        goatMeat: goatMeat?.name,
-                        goatImage: goatMeat?.imageUrl?.substring(0, 50) + '...',
-                        porkChops: porkChops?.name,
-                        porkImage: porkChops?.imageUrl?.substring(0, 50) + '...'
-                    });
-                    
-                    // Use found foods or fallback to mock foods
-                    const broccoliFood = broccoli || Brocolli;
-                    const goatMeatFood = goatMeat || Goat;
-                    const porkChopsFood = porkChops || Pork;
-                    
-                    // Create meal plans with real foods that have images
-                    const realMealPlans: { [key:string] : weeklyMealPlan} = {
-                        'halal': {
-                            monday: [broccoliFood, goatMeatFood, broccoliFood],
-                            tuesday: [goatMeatFood, broccoliFood, goatMeatFood],
-                            wednesday: [broccoliFood, goatMeatFood, broccoliFood],
-                            thursday: [goatMeatFood, broccoliFood, goatMeatFood],
-                            friday: [broccoliFood, goatMeatFood, broccoliFood],
-                            saturday: [goatMeatFood, broccoliFood, goatMeatFood],
-                            sunday: [broccoliFood, goatMeatFood, broccoliFood]
-                        },
-                        'vegan': {
-                            monday: [broccoliFood, broccoliFood, broccoliFood],
-                            tuesday: [broccoliFood, broccoliFood, broccoliFood],
-                            wednesday: [broccoliFood, broccoliFood, broccoliFood],
-                            thursday: [broccoliFood, broccoliFood, broccoliFood],
-                            friday: [broccoliFood, broccoliFood, broccoliFood],
-                            saturday: [broccoliFood, broccoliFood, broccoliFood],
-                            sunday: [broccoliFood, broccoliFood, broccoliFood]
-                        },
-                        'high-protein': {
-                            monday: [goatMeatFood, porkChopsFood, goatMeatFood],
-                            tuesday: [porkChopsFood, goatMeatFood, porkChopsFood],
-                            wednesday: [goatMeatFood, porkChopsFood, goatMeatFood],
-                            thursday: [porkChopsFood, goatMeatFood, porkChopsFood],
-                            friday: [goatMeatFood, porkChopsFood, goatMeatFood],
-                            saturday: [porkChopsFood, goatMeatFood, porkChopsFood],
-                            sunday: [goatMeatFood, porkChopsFood, goatMeatFood]
-                        }
-                    };
-                    
-                    setLocalMealPlans(realMealPlans);
-                }
-            } catch (error) {
-                console.error('Error fetching foods:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
-        
-        fetchFoods();
-    }, []);
 
     const handleFoodSelect = (food: Food) => {
         if (editingMeal) {
@@ -310,11 +244,6 @@ const MealPlanner = () => {
                             </p>
                         </div>
 
-                        {loading ? (
-                            <div className="text-center my-12">
-                                <p className="nh-text text-lg">Loading meal plan...</p>
-                            </div>
-                        ) : (
                         <div className="space-y-4">
                             {days.map(day => (
                                 <div key={day} className="nh-card">
@@ -346,7 +275,7 @@ const MealPlanner = () => {
                                                                 src={currentFood.imageUrl}
                                                                 alt={currentFood.name}
                                                                 className="object-contain max-h-14 max-w-full rounded"
-                                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                                                                onError={e => { console.log(currentFood.imageUrl); (e.target as HTMLImageElement).style.display = 'none'; }}
                                                             />
                                                         ) : (
                                                             <div className="food-image-placeholder w-full h-full flex items-center justify-center">
@@ -388,7 +317,7 @@ const MealPlanner = () => {
                                 </div>
                             ))}
                         </div>
-                        )}
+                        
                     </div>
 
                     {/* Right column - Actions */}
@@ -445,7 +374,6 @@ const MealPlanner = () => {
                     open={!!editingMeal}
                     onClose={() => setEditingMeal(null)}
                     onSelect={handleFoodSelect}
-                    foods={availableFoods}
                 />
             </div>
         </div>

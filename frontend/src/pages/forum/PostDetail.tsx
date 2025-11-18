@@ -550,8 +550,11 @@ const PostDetail = () => {
                             
                             {/* Footer of the card with author and likes - Ensure styling is relative to the card padding */}
                             <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4 pb-4 px-4"> {/* Added padding here */}
-                                <span className="flex items-center gap-2">
-                                    <ProfileImage 
+                                <Link
+                                    to={`/user/${post.author.username}`}
+                                    className="flex items-center gap-2 hover:text-blue-600 transition-colors"
+                                >
+                                    <ProfileImage
                                         profileImage={post.author.profile_image}
                                         username={post.author.username}
                                         size="sm"
@@ -560,7 +563,7 @@ const PostDetail = () => {
                                         <User size={16} className="flex-shrink-0" />
                                         Posted by: {post.author.username} • {formatDate(post.created_at)}
                                     </div>
-                                </span>
+                                </Link>
                                 <button 
                                     onClick={handleLikeToggle}
                                     className={`flex items-center gap-1 transition-colors duration-200 rounded-md px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 ${post.liked ? 'text-primary' : 'text-gray-600 dark:text-gray-400'}`}
@@ -608,18 +611,24 @@ const PostDetail = () => {
                                     {comments.map((comment) => (
                                         <div key={comment.id} className="nh-card rounded-lg shadow-sm border border-gray-700">
                                             <div className="flex items-start">
-                                                <div className="flex-shrink-0 mr-3">
-                                                    <ProfileImage 
+                                                <Link
+                                                    to={`/user/${comment.author.username}`}
+                                                    className="flex-shrink-0 mr-3"
+                                                >
+                                                    <ProfileImage
                                                         profileImage={comment.author.profile_image}
                                                         username={comment.author.username}
                                                         size="md"
                                                     />
-                                                </div>
+                                                </Link>
                                                 <div className="flex-grow">
                                                     <div className="flex items-center gap-2 mb-2">
-                                                        <h4 className="font-semibold text-primary">
+                                                        <Link
+                                                            to={`/user/${comment.author.username}`}
+                                                            className="font-semibold text-primary hover:text-blue-600 transition-colors"
+                                                        >
                                                             {comment.author.username}
-                                                        </h4>
+                                                        </Link>
                                                         <span className="text-gray-400">•</span>
                                                         <span className="text-xs text-gray-500">
                                                             {formatDate(comment.created_at)}

@@ -101,9 +101,9 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current)
             }
-            
+
             // Hide animation after 1.5 seconds
-            timeoutRef.current = setTimeout(() => {
+            timeoutRef.current = window.setTimeout(() => {
                 setShowAnimation(false)
             }, 1500)
         }
@@ -159,8 +159,12 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                     : post.body}
             </p>
             <div className="flex justify-between items-center text-sm text-gray-500">
-                <span className="flex items-center gap-2">
-                    <ProfileImage 
+                <Link
+                    to={`/user/${post.author.username}`}
+                    className="flex items-center gap-2 hover:text-blue-600 transition-colors z-20 relative"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    <ProfileImage
                         profileImage={post.author.profile_image}
                         username={post.author.username}
                         size="sm"
@@ -168,7 +172,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                     <div className="flex items-center gap-1">
                         {post.author.username} • {formatDate(post.created_at)}
                     </div>
-                </span>
+                </Link>
                 <div className="flex items-center gap-4">
                     <Link 
                         to={`/forum/post/${post.id}`}

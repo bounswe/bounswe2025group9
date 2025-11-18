@@ -43,6 +43,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   clearError: () => void;
   checkAuth: () => Promise<boolean>;
+  updateUser: (userData: User) => void;
 }
 
 // Create context with undefined initial value
@@ -242,6 +243,15 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const clearError = (): void => {
     setError(null);
   };
+
+  /**
+   * Update user data in context
+   */
+  const updateUser = (userData: User): void => {
+    setUser(userData);
+    // Also update stored user data
+    AsyncStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
+  };
   
   // Create context value
   const value: AuthContextType = {
@@ -254,6 +264,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     logout,
     clearError,
     checkAuth,
+    updateUser,
   };
   
   // Provide context value to children

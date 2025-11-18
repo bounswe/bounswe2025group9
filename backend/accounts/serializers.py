@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import User, Recipe, Tag, Allergen
+from .models import User, Recipe, Tag, Allergen, UserTag, Report
+from .services import get_user_badges
 
 """
 Serializers are used for converting complex data types, like querysets and model instances, into native Python datatypes.
@@ -23,17 +24,58 @@ class ChangePasswordSerializer(serializers.Serializer):
 class ContactInfoSerializer(serializers.Serializer):
     email = serializers.CharField(required=True)
     address = serializers.CharField(required=True)
-    
+
 
 class TagInputSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=False)
-    name = serializers.CharField(max_length=255, required=False)
+    name = serializers.CharField(max_length=64, required=False)
     verified = serializers.BooleanField(default=False, required=False, read_only=True)
 
+    def validate_name(self, value):
+        """Validate tag name"""
+        if value is not None:
+            # Strip whitespace
+            value = value.strip()
+            # Check if empty after stripping
+            if not value:
+                raise serializers.ValidationError(
+                    "Tag name cannot be empty or whitespace only."
+                )
+        return value
+
+
 class TagOutputSerializer(serializers.ModelSerializer):
+    verified = serializers.SerializerMethodField()
+    certificate = serializers.SerializerMethodField()
+
     class Meta:
         model = Tag
         fields = ["id", "name", "verified", "certificate"]
+
+    def get_verified(self, tag_obj):
+        """Get verification status from UserTag relationship"""
+        user = self.context.get("user")
+        if not user:
+            return False
+        try:
+            user_tag = UserTag.objects.get(user=user, tag=tag_obj)
+            return user_tag.verified
+        except UserTag.DoesNotExist:
+            return False
+
+    def get_certificate(self, tag_obj):
+        """Get certificate URL from UserTag relationship"""
+        user = self.context.get("user")
+        if not user:
+            return None
+        try:
+            user_tag = UserTag.objects.get(user=user, tag=tag_obj)
+            if user_tag.certificate:
+                # Return relative URL - works in all environments
+                return f"/api/users/certificate/{user_tag.certificate_token}/"
+            return None
+        except UserTag.DoesNotExist:
+            return None
 
 
 # Serializer for creating/updating allergens (input)
@@ -42,11 +84,13 @@ class AllergenInputSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=255, required=False)
     common = serializers.BooleanField(default=False, required=False)
 
+
 # Serializer for returning allergens (output)
 class AllergenOutputSerializer(serializers.ModelSerializer):
     class Meta:
         model = Allergen
         fields = ["id", "name", "common"]
+
 
 class RecipeSerializer(serializers.ModelSerializer):
     class Meta:
@@ -57,8 +101,10 @@ class RecipeSerializer(serializers.ModelSerializer):
 # In Model-API interactions we need to convert our Python objects into JSON data.
 class UserSerializer(serializers.ModelSerializer):
     recipes = RecipeSerializer(many=True, read_only=True)
-    tags = TagInputSerializer(many=True, required=False)
+    tags = serializers.SerializerMethodField(read_only=True)
     allergens = AllergenInputSerializer(many=True, required=False)
+    profile_image = serializers.SerializerMethodField()
+    badges = serializers.SerializerMethodField()
 
     class Meta:
         """
@@ -79,19 +125,35 @@ class UserSerializer(serializers.ModelSerializer):
             "tags",
             "allergens",
             "recipes",
-            "profile_image"
+            "profile_image",
+            "is_staff",
+            "is_superuser",
+            "badges",
         ]
         extra_kwargs = {
             "address": {"required": False},
             "password": {"write_only": True},
-            'profile_image': {'required': False}
         }
+
+    def get_profile_image(self, obj):
+        """Return the secure endpoint URL for profile image"""
+        if obj.profile_image:
+            # Return relative URL - works in all environments
+            return f"/api/users/profile-image/{obj.profile_image_token}/"
+        return None
+
+    def get_badges(self, obj):
+        return get_user_badges(obj)
+
+    def get_tags(self, user_obj):
+        """Serialize tags with user context for per-user verification"""
+        tags = user_obj.tags.all()
+        return TagOutputSerializer(tags, many=True, context={"user": user_obj}).data
 
     def create(self, validated_data):
         allergens_data = validated_data.pop("allergens", [])
-        tags_data = validated_data.pop("tags", [])
 
-        # Create the user
+        # Create the user (tags are read-only now, handled separately)
         user = User.objects.create_user(**validated_data)
 
         # Create or attach allergens
@@ -99,24 +161,39 @@ class UserSerializer(serializers.ModelSerializer):
             allergen, _ = Allergen.objects.get_or_create(**allergen_data)
             user.allergens.add(allergen)
 
-        for tag_data in tags_data:
-            tag, _ = Tag.objects.get_or_create(**tag_data)
-            user.tags.add(tag)
-
         return user
 
-class PhotoSerializer(serializers.ModelSerializer):
+
+class PhotoUploadSerializer(serializers.ModelSerializer):
+    """Serializer for uploading profile images"""
+
     class Meta:
         model = User
-        fields = ['profile_image']
-        extra_kwargs = {
-            'profile_image': {'required': True}
-        }
+        fields = ["profile_image"]
+        extra_kwargs = {"profile_image": {"required": True}}
 
-class CertificateSerializer(serializers.ModelSerializer):
+
+class PhotoSerializer(serializers.ModelSerializer):
+    """Serializer for retrieving profile image URLs"""
+
+    profile_image = serializers.SerializerMethodField()
+
     class Meta:
-        model = Tag
-        fields = ['certificate']
-        extra_kwargs = {
-            'certificate': {'required': True}
-        }
+        model = User
+        fields = ["profile_image"]
+
+    def get_profile_image(self, obj):
+        """Return the secure endpoint URL for profile image"""
+        if obj.profile_image:
+            # Return relative URL - works in all environments
+            return f"/api/users/profile-image/{obj.profile_image_token}/"
+        return None
+
+
+class ReportSerializer(serializers.ModelSerializer):
+    reporter = serializers.HiddenField(default=serializers.CurrentUserDefault())
+
+    class Meta:
+        model = Report
+        fields = ["id", "reporter", "reportee", "reason"]
+        read_only_fields = ["id"]

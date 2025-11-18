@@ -9,10 +9,13 @@ import Forum from './pages/forum/Forum'
 import PostDetail from './pages/forum/PostDetail'
 import CreatePost from './pages/forum/CreatePost'
 import Profile from './pages/Profile'
+import UserProfile from './pages/UserProfile'
+import ModerationPanel from './pages/admin/ModerationPanel'
 import { AuthProvider } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import SwaggerPage from './components/SwaggerPage';
 import MealPlanner from './pages/mealplanner/MealPlanner'
+import FoodCompare from './pages/foods/FoodCompare';
 
 // app component with react-router setup
 function App() {
@@ -33,11 +36,18 @@ function App() {
               <Route index element={<Home />} />
               <Route path="foods" element={<Foods />} />
               <Route path="foods/propose" element={<ProposeNewFood />} />
+              <Route path="foods/compare" element={<FoodCompare />} />
               <Route path="forum" element={<Forum />} />
               <Route path="forum/post/:postId" element={<PostDetail />} />
               <Route path="forum/create" element={<CreatePost />} />
               <Route path="profile" element={<Profile />} />
+              <Route path="user/:username" element={<UserProfile />} />
               <Route path="mealplanner" element={<MealPlanner/>}/>
+            </Route>
+
+            {/* Staff-only Routes - moderation panel */}
+            <Route element={<ProtectedRoute requireStaff={true} />}>
+              <Route path="admin/moderation" element={<ModerationPanel />} />
             </Route>
 
             <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />

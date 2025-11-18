@@ -158,38 +158,8 @@ const Forum = () => {
             setAllPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked, likes: event.likeCount } : p));
         });
 
-        // Poll server every 5 seconds to refresh posts and keep everything in sync
-        const intervalId = window.setInterval(async () => {
-            try {
-                // Fetch the latest posts from server
-                const params = {
-                    ordering: '-created_at',
-                    page: 1,
-                    page_size: 500
-                };
-                const response = await apiClient.getForumPosts(params);
-                
-                // Get current liked posts from server
-                const likedMapFromServer = await fetchAndSyncLikedPostsFromServer();
-                
-                // Merge server data with liked status
-                const updatedPosts = response.results.map(post => ({
-                    ...post,
-                    author: post.author || { id: 0, username: 'Anonymous' },
-                    liked: likedMapFromServer[post.id] !== undefined ? likedMapFromServer[post.id] : (post.liked || false),
-                }));
-                
-                // Update state
-                setAllPosts(updatedPosts);
-                setLikedPosts(likedMapFromServer);
-            } catch {
-                // ignore polling errors silently
-            }
-        }, 5000);
-
         return () => {
             unsubscribe();
-            clearInterval(intervalId);
         };
     }, [location, username, navigate]);
     

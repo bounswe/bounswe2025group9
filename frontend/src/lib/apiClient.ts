@@ -72,6 +72,8 @@ export interface UserResponse {
   tags: any[];
   allergens: any[];
   profile_image?: string;
+  is_staff?: boolean;
+  is_superuser?: boolean;
 }
 
 // pagination types
@@ -308,7 +310,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 export const apiClient = {
   // foods
   getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string }) => {
-    let url = "/foods";
+    let url = "/foods/";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
       queryParams.append('page', params.page.toString());
@@ -372,24 +374,41 @@ export const apiClient = {
     const url = "/users/profile/";
     console.log('Request URL:', BACKEND_API_URL + url);
     console.log('Auth headers:', getAuthHeader());
-    
+
     return fetchJson<UserResponse>(url, {
       method: "GET"
     }, true);
   },
 
-  // update allergens
-  updateAllergens: (allergens: string[]) =>
-    fetchJson<UserResponse>("/users/profile/allergens/", {
+  // get other user's profile by username
+  getOtherUserProfile: (username: string) => {
+    console.log(`Getting user profile for username: ${username}`);
+    const url = `/users/@${username}/`;
+    console.log('Request URL:', BACKEND_API_URL + url);
+
+    return fetchJson<UserResponse>(url, {
+      method: "GET"
+    }, true);
+  },
+
+  // get common allergens
+  getCommonAllergens: () =>
+    fetchJson<Array<{ id: number; name: string; common: boolean }>>("/users/allergen/common-list/", {
+      method: "GET",
+    }, true),
+
+  // update allergens - expects array of allergen objects with optional id or name
+  updateAllergens: (allergens: Array<{ id?: number; name?: string; common?: boolean }>) =>
+    fetchJson<Array<{ id: number; name: string; common: boolean }>>("/users/allergen/set/", {
       method: "POST",
-      body: JSON.stringify({ allergens }),
+      body: JSON.stringify(allergens),
     }, true),
 
   // update profession tags
   updateProfessionTags: (tags: any[]) =>
-    fetchJson<UserResponse>("/users/profile/tags/", {
+    fetchJson<UserResponse>("/users/tag/set/", {
       method: "POST",
-      body: JSON.stringify({ tags }),
+      body: JSON.stringify(tags),
     }, true),
 
   // upload certificate
@@ -398,11 +417,33 @@ export const apiClient = {
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
-    
-    return fetch(`${BACKEND_API_URL}/users/profile/certificate/`, {
+
+    return fetch(`${BACKEND_API_URL}/users/certificate/`, {
       method: "POST",
       headers,
       body: formData,
+      credentials: 'include' as RequestCredentials,
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
+    });
+  },
+
+  // remove certificate
+  removeCertificate: (tagId: number) => {
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+    if (accessToken) {
+      headers["Authorization"] = `Bearer ${accessToken}`;
+    }
+
+    return fetch(`${BACKEND_API_URL}/users/certificate/`, {
+      method: "DELETE",
+      headers,
+      body: JSON.stringify({ tag_id: tagId }),
       credentials: 'include' as RequestCredentials,
     }).then(response => {
       if (!response.ok) {
@@ -815,5 +856,100 @@ export const apiClient = {
       console.error(`[API] Error fetching current meal plan:`, error);
       throw error;
     });
+  },
+
+  // Moderation endpoints
+  moderation: {
+    // User management
+    getUsers: (params?: { role?: 'staff' | 'users'; search?: string }) => {
+      let url = "/users/moderation/";
+      const queryParams = new URLSearchParams();
+
+      if (params?.role) {
+        queryParams.append('role', params.role);
+      }
+      if (params?.search) {
+        queryParams.append('search', params.search);
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
+      return fetchJson<any>(url, { method: "GET" }, true);
+    },
+
+    toggleUserActive: (userId: number, isActive: boolean, reason: string) =>
+      fetchJson<{ message: string }>(`/users/moderation/${userId}/toggle_active/`, {
+        method: "POST",
+        body: JSON.stringify({ is_active: isActive, reason }),
+      }, true),
+
+    // Content moderation
+    getPosts: () =>
+      fetchJson<any>("/forum/moderation/posts/", { method: "GET" }, true),
+
+    getComments: () =>
+      fetchJson<any>("/forum/moderation/comments/", { method: "GET" }, true),
+
+    deletePost: (postId: number) =>
+      fetchJson<void>(`/forum/moderation/posts/${postId}/`, {
+        method: "DELETE",
+      }, true),
+
+    deleteComment: (commentId: number) =>
+      fetchJson<void>(`/forum/moderation/comments/${commentId}/`, {
+        method: "DELETE",
+      }, true),
+
+    // Food proposals
+    getFoodProposals: (params?: { isApproved?: 'null' | 'true' | 'false' }) => {
+      let url = "/foods/moderation/food-proposals/";
+
+      if (params?.isApproved) {
+        url += `?isApproved=${params.isApproved}`;
+      }
+
+      return fetchJson<any>(url, { method: "GET" }, true);
+    },
+
+    approveFoodProposal: (proposalId: number, approved: boolean) =>
+      fetchJson<{ message: string }>(`/foods/moderation/food-proposals/${proposalId}/approve/`, {
+        method: "POST",
+        body: JSON.stringify({ approved }),
+      }, true),
+
+    // Certificate verification
+    getUserTags: (params?: { has_certificate?: boolean; verified?: boolean }) => {
+      let url = "/users/moderation/user-tags/";
+      const queryParams = new URLSearchParams();
+
+      if (params?.has_certificate !== undefined) {
+        queryParams.append('has_certificate', params.has_certificate.toString());
+      }
+      if (params?.verified !== undefined) {
+        queryParams.append('verified', params.verified.toString());
+      }
+
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+
+      return fetchJson<any>(url, { method: "GET" }, true);
+    },
+
+    verifyUserTag: (userTagId: number, approved: boolean) =>
+      fetchJson<{ message: string }>(`/users/moderation/user-tags/${userTagId}/verify/`, {
+        method: "POST",
+        body: JSON.stringify({ approved }),
+      }, true),
+
+    // Statistics
+    getStats: (range: 'week' | 'month' | 'all' = 'week') =>
+      fetchJson<any>(`/users/moderation/stats/?range=${range}`, {
+        method: "GET",
+      }, true),
   },
 };
