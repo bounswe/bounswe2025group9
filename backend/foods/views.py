@@ -1,11 +1,28 @@
-from django.shortcuts import render
+from django.shortcuts import render, get_object_or_404
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from foods.models import FoodEntry, FoodProposal, ImageCache
+from foods.models import (
+    FoodEntry,
+    FoodProposal,
+    ImageCache,
+    PriceAudit,
+    PriceCategoryThreshold,
+    PriceReport,
+)
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from foods.serializers import FoodEntrySerializer, FoodProposalSerializer
-from rest_framework.generics import ListAPIView
-from rest_framework import status
+from foods.serializers import (
+    FoodEntrySerializer,
+    FoodProposalSerializer,
+    FoodPriceUpdateSerializer,
+    PriceCategoryThresholdSerializer,
+    PriceAuditSerializer,
+    PriceReportSerializer,
+    PriceReportCreateSerializer,
+    PriceReportUpdateSerializer,
+    PriceThresholdRecalculateSerializer,
+)
+from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
+from rest_framework import status, generics
 from django.db import transaction
 from django.db.models import Q
 import requests
@@ -13,13 +30,14 @@ import sys
 import os
 import traceback
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework import status
 from django.http import HttpResponse, FileResponse, HttpResponseRedirect
 from django.core.files.base import ContentFile
 from django.utils.http import urlencode
 import hashlib
 from urllib.parse import unquote
 from concurrent.futures import ThreadPoolExecutor
+from rest_framework.exceptions import PermissionDenied
+from django.utils import timezone
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "api", "db_initialization")
@@ -27,6 +45,13 @@ sys.path.append(
 
 from scraper import make_request, extract_food_info, get_fatsecret_image_url
 from nutrition_score import calculate_nutrition_score
+from foods.permissions import IsPriceModerator
+from foods.services import (
+    update_food_price,
+    override_food_price_category,
+    clear_food_price_override,
+    recalculate_price_thresholds,
+)
 
 # Global thread pool for background image caching (max 5 concurrent downloads)
 _image_cache_executor = ThreadPoolExecutor(
@@ -460,3 +485,141 @@ def image_proxy(request):
         print(f"Error in image proxy for {image_url}: {str(e)}")
         traceback.print_exc()
         return HttpResponseRedirect(image_url)
+
+
+class FoodPriceUpdateView(APIView):
+    permission_classes = [IsAuthenticated, IsPriceModerator]
+
+    def post(self, request, pk):
+        entry = get_object_or_404(FoodEntry, pk=pk)
+        serializer = FoodPriceUpdateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        entry = update_food_price(
+            entry,
+            base_price=data["base_price"],
+            price_unit=data["price_unit"],
+            currency=data["currency"],
+            changed_by=request.user,
+            reason=data.get("reason", ""),
+        )
+
+        override_category = data.get("override_category")
+        if override_category:
+            entry = override_food_price_category(
+                entry,
+                category=override_category,
+                changed_by=request.user,
+                reason=data["override_reason"],
+            )
+        elif data.get("clear_override"):
+            entry = clear_food_price_override(entry, changed_by=request.user)
+
+        response_data = FoodEntrySerializer(
+            entry, context={"request": request}
+        ).data
+        return Response(response_data, status=status.HTTP_200_OK)
+
+
+class PriceThresholdListView(ListAPIView):
+    permission_classes = [IsAuthenticated, IsPriceModerator]
+    serializer_class = PriceCategoryThresholdSerializer
+    queryset = PriceCategoryThreshold.objects.all().order_by("price_unit")
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        currency = self.request.query_params.get("currency")
+        if currency:
+            qs = qs.filter(currency__iexact=currency)
+        return qs
+
+
+class PriceThresholdRecalculateView(APIView):
+    permission_classes = [IsAuthenticated, IsPriceModerator]
+
+    def post(self, request):
+        serializer = PriceThresholdRecalculateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+        threshold = recalculate_price_thresholds(
+            data["price_unit"],
+            currency=data["currency"],
+            changed_by=request.user,
+            reason="Manual recalculation",
+        )
+        response = PriceCategoryThresholdSerializer(threshold).data
+        return Response(response, status=status.HTTP_200_OK)
+
+
+class PriceAuditListView(ListAPIView):
+    permission_classes = [IsAuthenticated, IsPriceModerator]
+    serializer_class = PriceAuditSerializer
+    queryset = PriceAudit.objects.select_related("food", "changed_by").all()
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        food_id = self.request.query_params.get("food")
+        change_type = self.request.query_params.get("change_type")
+        price_unit = self.request.query_params.get("price_unit")
+        if food_id:
+            qs = qs.filter(food_id=food_id)
+        if change_type:
+            qs = qs.filter(change_type=change_type)
+        if price_unit:
+            qs = qs.filter(price_unit=price_unit)
+        return qs
+
+
+class PriceReportListCreateView(ListCreateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = PriceReport.objects.select_related(
+        "food", "reported_by", "resolved_by"
+    ).all()
+
+    def get_serializer_class(self):
+        if self.request.method == "POST":
+            return PriceReportCreateSerializer
+        return PriceReportSerializer
+
+    def get_queryset(self):
+        qs = super().get_queryset()
+        status_param = self.request.query_params.get("status")
+        if status_param:
+            qs = qs.filter(status=status_param)
+
+        moderator = IsPriceModerator().has_permission(self.request, self)
+        if not moderator:
+            qs = qs.filter(reported_by=self.request.user)
+        return qs
+
+    def perform_create(self, serializer):
+        serializer.save(reported_by=self.request.user)
+
+
+class PriceReportDetailView(RetrieveUpdateAPIView):
+    permission_classes = [IsAuthenticated]
+    queryset = PriceReport.objects.select_related(
+        "food", "reported_by", "resolved_by"
+    ).all()
+
+    def get_serializer_class(self):
+        if self.request.method in ("PUT", "PATCH"):
+            return PriceReportUpdateSerializer
+        return PriceReportSerializer
+
+    def get_object(self):
+        obj = super().get_object()
+        moderator = IsPriceModerator().has_permission(self.request, self)
+        if not moderator and obj.reported_by != self.request.user:
+            raise PermissionDenied("You can only view your own reports.")
+        return obj
+
+    def perform_update(self, serializer):
+        if not IsPriceModerator().has_permission(self.request, self):
+            raise PermissionDenied("Only moderators can update reports.")
+        status_value = serializer.validated_data.get("status")
+        resolved_at = None
+        if status_value == PriceReport.Status.RESOLVED:
+            resolved_at = timezone.now()
+        serializer.save(resolved_by=self.request.user, resolved_at=resolved_at)
