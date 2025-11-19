@@ -190,7 +190,7 @@ const FoodCompareScreen: React.FC = () => {
             Comparison Tips
           </Text>
           <View style={styles.tipsList}>
-            <TipItem icon="check-circle" text="Compare up to 3 foods side by side" />
+            <TipItem icon="check-circle" text="Compare up to 2 foods side by side" />
             <TipItem icon="star" text="Check nutrition scores for health value" />
             <TipItem icon="food-apple" text="Compare macronutrients (protein, carbs, fats)" />
             <TipItem icon="fire" text="View calorie content per serving" />
