@@ -14,6 +14,7 @@ import CreatePostScreen from '../screens/forum/CreatePostScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 import MyProfileScreen from '../screens/user/MyProfileScreen';
 import FoodScreen from '../screens/food/FoodScreen';
+import FoodCompareScreen from '../screens/food/FoodCompareScreen';
 
 // Profile screens
 import ProfileSettingsScreen from '../screens/user/ProfileSettingsScreen';
@@ -27,7 +28,7 @@ import ProfessionTagsScreen from '../screens/user/ProfessionTagsScreen';
 import AccountWarningsScreen from '../screens/user/AccountWarningsScreen';
 import ReportUserScreen from '../screens/user/ReportUserScreen';
 
-import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList } from './types';
+import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -37,6 +38,7 @@ type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
 const Tab = createBottomTabNavigator<MainTabParamList>();
 const ForumStack = createNativeStackNavigator<ForumStackParamList>();
 const ProfileStack = createNativeStackNavigator<ProfileStackParamList>();
+const FoodStack = createNativeStackNavigator<FoodStackParamList>();
 
 // Custom header component
 const Header: React.FC<{ title?: string }> = ({ title }) => {
@@ -112,6 +114,16 @@ const ForumStackNavigator = () => {
   );
 };
 
+// Food Stack Navigator
+const FoodStackNavigator = () => {
+  return (
+    <FoodStack.Navigator screenOptions={{ headerShown: false }}>
+      <FoodStack.Screen name="FoodList" component={FoodScreen} />
+      <FoodStack.Screen name="FoodCompare" component={FoodCompareScreen} />
+    </FoodStack.Navigator>
+  );
+};
+
 // Profile Stack Navigator
 const ProfileStackNavigator = () => {
   return (
@@ -173,7 +185,7 @@ const MainTabNavigator = () => {
       >
         {/* Define Screens within the Tab Navigator */}
         <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Food" component={FoodScreen} />
+        <Tab.Screen name="Food" component={FoodStackNavigator} />
         <Tab.Screen name="Forum" component={ForumStackNavigator} />
         <Tab.Screen name="MyProfile" component={ProfileStackNavigator} />
       </Tab.Navigator>
