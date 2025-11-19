@@ -74,6 +74,7 @@ export interface ForumTopic {
   tags: string[]; // Using string instead of PostTagType to accommodate any tag from API
   createdAt: Date;
   updatedAt?: Date;
+  hasRecipe?: boolean;
 }
 
 /**

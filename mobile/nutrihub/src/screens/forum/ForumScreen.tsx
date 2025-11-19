@@ -31,6 +31,86 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 // Storage key for liked posts - must match the one in forum.service.ts
 const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
+const SEARCH_DEBOUNCE_MS = 400;
+const FUZZY_SIMILARITY_THRESHOLD = 75;
+
+const levenshteinDistance = (source: string, target: string): number => {
+  const lenSource = source.length;
+  const lenTarget = target.length;
+
+  if (lenSource === 0) return lenTarget;
+  if (lenTarget === 0) return lenSource;
+
+  const matrix = Array.from({ length: lenSource + 1 }, () => new Array(lenTarget + 1).fill(0));
+
+  for (let i = 0; i <= lenSource; i++) matrix[i][0] = i;
+  for (let j = 0; j <= lenTarget; j++) matrix[0][j] = j;
+
+  for (let i = 1; i <= lenSource; i++) {
+    for (let j = 1; j <= lenTarget; j++) {
+      const cost = source[i - 1] === target[j - 1] ? 0 : 1;
+      matrix[i][j] = Math.min(
+        matrix[i - 1][j] + 1,
+        matrix[i][j - 1] + 1,
+        matrix[i - 1][j - 1] + cost
+      );
+    }
+  }
+
+  return matrix[lenSource][lenTarget];
+};
+
+const simpleRatio = (a: string, b: string): number => {
+  if (!a || !b) return 0;
+  if (a === b) return 100;
+  const dist = levenshteinDistance(a, b);
+  const maxLen = Math.max(a.length, b.length);
+  return Math.round(((maxLen - dist) / maxLen) * 100);
+};
+
+const partialRatio = (a: string, b: string): number => {
+  if (!a || !b) return 0;
+  const shorter = a.length < b.length ? a : b;
+  const longer = a.length < b.length ? b : a;
+
+  const lenShort = shorter.length;
+  if (lenShort === 0) return 0;
+
+  let highest = 0;
+  for (let i = 0; i <= longer.length - lenShort; i++) {
+    const window = longer.slice(i, i + lenShort);
+    const ratio = simpleRatio(shorter, window);
+    if (ratio > highest) highest = ratio;
+    if (highest === 100) break;
+  }
+
+  return highest;
+};
+
+const tokenSortRatio = (a: string, b: string): number => {
+  if (!a || !b) return 0;
+  const normalize = (str: string) =>
+    str
+      .split(/\s+/)
+      .map(token => token.trim())
+      .filter(Boolean)
+      .sort()
+      .join(' ');
+  const normalizedA = normalize(a);
+  const normalizedB = normalize(b);
+  return simpleRatio(normalizedA, normalizedB);
+};
+
+const calculateFuzzySimilarity = (query: string, target: string): number => {
+  const source = query.toLowerCase();
+  const compared = target.toLowerCase();
+
+  const ratio = simpleRatio(source, compared);
+  const partial = partialRatio(source, compared);
+  const tokenSort = tokenSortRatio(source, compared);
+
+  return Math.max(ratio, partial, tokenSort);
+};
 
 type ForumScreenNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'ForumList'>;
 type ForumScreenRouteProp = RouteProp<ForumStackParamList, 'ForumList'>;
@@ -52,6 +132,8 @@ const ForumScreen: React.FC = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [searchResults, setSearchResults] = useState<ForumTopic[]>([]);
   const [searchResultsCount, setSearchResultsCount] = useState<number>(0);
+  const [executedSearchQuery, setExecutedSearchQuery] = useState<string>('');
+  const [ingredientMatchMap, setIngredientMatchMap] = useState<Record<number, string[]>>({});
   
   // Use the global posts context
   const { posts, setPosts, updatePost } = usePosts();
@@ -274,30 +356,12 @@ const ForumScreen: React.FC = () => {
     setSelectedTagIds(newSelectedTags);
     
     // If we're in search mode, re-apply search with new filter
-    if (isSearching && searchQuery.trim()) {
-      setLoading(true);
-      try {
-        const searchPosts = await forumService.searchPosts(searchQuery.trim());
-        
-        // Apply the new tag filter to search results
-        let filteredSearchPosts = searchPosts;
-        if (newSelectedTags.length > 0) {
-          filteredSearchPosts = searchPosts.filter(post => {
-            // Check if the post has any of the selected tags
-            const postTagIds = availableTags
-              .filter(tag => post.tags.includes(tag.name))
-              .map(tag => tag.id);
-            return newSelectedTags.some(tagId => postTagIds.includes(tagId));
-          });
-        }
-        
-        const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
-        setSearchResults(mergedSearchPosts);
-        setSearchResultsCount(mergedSearchPosts.length);
-      } catch (err) {
-        console.error('Error filtering search results:', err);
-      } finally {
-        setLoading(false);
+    if (isSearching && (searchQuery.trim() || executedSearchQuery)) {
+      const queryToUse = executedSearchQuery || searchQuery.trim();
+      if (queryToUse) {
+        runSearch(queryToUse, newSelectedTags);
+      } else {
+        clearSearch();
       }
     } else {
       // Normal filter behavior - fetch posts with the new filter
@@ -314,77 +378,138 @@ const ForumScreen: React.FC = () => {
     return availableTags.find(tag => tag && tag.name && tag.name.toLowerCase() === name.toLowerCase());
   };
   
-  // Handle search for posts
-  const handleSearch = useCallback(async () => {
-    if (!searchQuery.trim()) {
-      // If search query is empty, clear search
-      clearSearch();
-      return;
-    }
-    
-    setLoading(true);
-    setIsSearching(true);
-    
-    try {
-      const searchPosts = await forumService.searchPosts(searchQuery.trim());
-      
-      // Apply tag filter to search results if a filter is active
-      let filteredSearchPosts = searchPosts;
-      if (selectedTagIds.length > 0) {
-        filteredSearchPosts = searchPosts.filter(post => {
-          // Check if the post has any of the selected tags
-          const postTagIds = availableTags
-            .filter(tag => post.tags.includes(tag.name))
-            .map(tag => tag.id);
-          return selectedTagIds.some(tagId => postTagIds.includes(tagId));
-        });
-      }
-      
-      // Preserve like status for search results
-      const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
-      setSearchResults(mergedSearchPosts);
-      setSearchResultsCount(mergedSearchPosts.length);
-    } catch (err) {
-      console.error('Error searching for posts:', err);
-      Alert.alert('Error', 'Failed to search posts. Please try again.');
-      setSearchResults([]);
-      setSearchResultsCount(0);
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, posts, preserveLikeStatus, selectedTagIds, availableTags]);
-
   // Clear search results and return to normal view
   const clearSearch = useCallback(() => {
     setSearchQuery('');
     setIsSearching(false);
     setSearchResults([]);
     setSearchResultsCount(0);
+    setExecutedSearchQuery('');
+    setIngredientMatchMap({});
   }, []);
+
+  const runSearch = useCallback(async (query: string, overrideTagIds?: number[]) => {
+    const normalizedQuery = query.trim();
+    if (!normalizedQuery) {
+      clearSearch();
+      return;
+    }
+
+    setLoading(true);
+    setIsSearching(true);
+    setExecutedSearchQuery(normalizedQuery);
+    setIngredientMatchMap({});
+    
+    try {
+      const searchPosts = await forumService.searchPosts(normalizedQuery);
+      
+      const activeTagIds = overrideTagIds ?? selectedTagIds;
+      let filteredSearchPosts = searchPosts;
+      if (activeTagIds.length > 0) {
+        filteredSearchPosts = searchPosts.filter(post => {
+          const postTagIds = availableTags
+            .filter(tag => post.tags.includes(tag.name))
+            .map(tag => tag.id);
+          return activeTagIds.some(tagId => postTagIds.includes(tagId));
+        });
+      }
+      
+      const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
+      setSearchResults(mergedSearchPosts);
+      setSearchResultsCount(mergedSearchPosts.length);
+    } catch (err) {
+      console.error('Error searching for posts:', err);
+      setSearchResults([]);
+      setSearchResultsCount(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [availableTags, clearSearch, preserveLikeStatus, posts, selectedTagIds]);
+
+  // Handle search for posts
+  const handleSearch = useCallback(() => {
+    if (!searchQuery.trim()) {
+      clearSearch();
+      return;
+    }
+    runSearch(searchQuery);
+  }, [searchQuery, runSearch, clearSearch]);
+
+  useEffect(() => {
+    const normalized = searchQuery.trim();
+
+    if (!normalized) {
+      if (isSearching) {
+        clearSearch();
+      }
+      return;
+    }
+
+    if (normalized === executedSearchQuery) {
+      return;
+    }
+
+    const timeoutId = setTimeout(() => {
+      runSearch(normalized);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [searchQuery, executedSearchQuery, isSearching, runSearch, clearSearch]);
+
+  useEffect(() => {
+    if (!isSearching || !executedSearchQuery) {
+      return;
+    }
+
+    const normalizedQuery = executedSearchQuery.toLowerCase();
+    const postsNeedingMatches = searchResults.filter(
+      post => post.hasRecipe !== false && ingredientMatchMap[post.id] === undefined
+    );
+
+    postsNeedingMatches.forEach(post => {
+      forumService
+        .getRecipe(post.id)
+        .then(recipe => {
+          if (!recipe || !recipe.ingredients) {
+            setIngredientMatchMap(prev => ({ ...prev, [post.id]: [] }));
+            return;
+          }
+
+          const matches = recipe.ingredients
+            .map(ingredient => ingredient.food_name || '')
+            .filter(name => {
+              if (!name) {
+                return false;
+              }
+              const lowerName = name.toLowerCase();
+              if (lowerName.includes(normalizedQuery)) {
+                return true;
+              }
+              const similarityScore = calculateFuzzySimilarity(normalizedQuery, lowerName);
+              return similarityScore >= FUZZY_SIMILARITY_THRESHOLD;
+            });
+
+          setIngredientMatchMap(prev => ({ ...prev, [post.id]: matches }));
+        })
+        .catch(() => {
+          setIngredientMatchMap(prev => ({ ...prev, [post.id]: [] }));
+        });
+    });
+  }, [isSearching, executedSearchQuery, searchResults, ingredientMatchMap]);
 
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setLoading(true);
     try {
-      if (isSearching && searchQuery.trim()) {
-        // If we're in search mode, refresh search results
-        const searchPosts = await forumService.searchPosts(searchQuery.trim());
-        
-        // Apply tag filter to search results if a filter is active
-        let filteredSearchPosts = searchPosts;
-        if (selectedTagIds.length > 0) {
-          filteredSearchPosts = searchPosts.filter(post => {
-            // Check if the post has any of the selected tags
-            const postTagIds = availableTags
-              .filter(tag => post.tags.includes(tag.name))
-              .map(tag => tag.id);
-            return selectedTagIds.some(tagId => postTagIds.includes(tagId));
-          });
+      if (isSearching && (searchQuery.trim() || executedSearchQuery)) {
+        const queryToUse = executedSearchQuery || searchQuery.trim();
+        if (queryToUse) {
+          await runSearch(queryToUse);
+        } else {
+          clearSearch();
         }
-        
-        const mergedSearchPosts = await preserveLikeStatus(filteredSearchPosts, posts);
-        setSearchResults(mergedSearchPosts);
-        setSearchResultsCount(mergedSearchPosts.length);
       } else {
         // Normal refresh
         let fetchedPosts;
@@ -404,7 +529,7 @@ const ForumScreen: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  }, [selectedTagIds, setPosts, posts, preserveLikeStatus, isSearching, searchQuery, availableTags]);
+  }, [selectedTagIds, setPosts, posts, preserveLikeStatus, isSearching, searchQuery, availableTags, executedSearchQuery, runSearch, clearSearch]);
 
   // Get current posts to display (search results or regular posts)
   const getCurrentPosts = useCallback((): ForumTopic[] => {
@@ -415,15 +540,22 @@ const ForumScreen: React.FC = () => {
   }, [isSearching, searchResults, posts]);
 
   // Render forum post
-  const renderItem = ({ item }: { item: ForumTopic }) => (
-    <ForumPost
-      post={item}
-      onPress={handlePostPress}
-      onLike={handlePostLike}
-      onComment={handlePostComment}
-      onAuthorPress={handleAuthorPress}
-    />
-  );
+  const renderItem = ({ item }: { item: ForumTopic }) => {
+    const matches = ingredientMatchMap[item.id];
+    const ingredientMatches =
+      isSearching && matches && matches.length > 0 ? matches : undefined;
+
+    return (
+      <ForumPost
+        post={item}
+        onPress={handlePostPress}
+        onLike={handlePostLike}
+        onComment={handlePostComment}
+        onAuthorPress={handleAuthorPress}
+        ingredientMatches={ingredientMatches}
+      />
+    );
+  };
 
   if (loading && posts.length === 0) {
     return (
@@ -514,10 +646,10 @@ const ForumScreen: React.FC = () => {
         <View style={[styles.searchStatus, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
           <Text style={[styles.searchStatusText, textStyles.body]}>
             {searchResultsCount > 0 
-              ? `Found ${searchResultsCount} result${searchResultsCount !== 1 ? 's' : ''} for "${searchQuery}"${selectedTagIds.length > 0 ? ' in selected category' : ''}` 
+              ? `Found ${searchResultsCount} result${searchResultsCount !== 1 ? 's' : ''} for "${executedSearchQuery || searchQuery}"${selectedTagIds.length > 0 ? ' in selected category' : ''}` 
               : selectedTagIds.length > 0 
-                ? `No results found for "${searchQuery}" in selected category`
-                : `No results found for "${searchQuery}"`}
+                ? `No results found for "${executedSearchQuery || searchQuery}" in selected category`
+                : `No results found for "${executedSearchQuery || searchQuery}"`}
           </Text>
           <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
             <Icon name="close" size={16} color={theme.primary} />

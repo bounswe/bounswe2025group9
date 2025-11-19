@@ -70,9 +70,10 @@ interface ForumPostCardProps {
     post: ForumPost
     isLiked: boolean
     onLikeToggle: (postId: number) => void
+    ingredientMatches?: string[]
 }
 
-const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
+const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: ForumPostCardProps) => {
     const [prevLikes, setPrevLikes] = useState(post.likes || 0)
     const [showAnimation, setShowAnimation] = useState(false)
     const [likeDiff, setLikeDiff] = useState(0)
@@ -150,6 +151,29 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {ingredientMatches && ingredientMatches.length > 0 && (
+                <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
+                    <span className="uppercase text-xs tracking-[0.2em] font-semibold text-sky-400">
+                        Includes:
+                    </span>
+                    <div className="flex flex-wrap gap-1">
+                        {ingredientMatches.slice(0, 2).map((match, idx) => (
+                            <span
+                                key={`${match}-${idx}`}
+                                className="px-2 py-0.5 rounded-full bg-emerald-900/60 text-emerald-200 text-xs font-semibold"
+                            >
+                                {match}
+                            </span>
+                        ))}
+                        {ingredientMatches.length > 2 && (
+                            <span className="text-xs text-gray-400">
+                                +{ingredientMatches.length - 2} more
+                            </span>
+                        )}
+                    </div>
                 </div>
             )}
             
@@ -249,4 +273,3 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle }: ForumPostCardProps) => {
 };
 
 export default ForumPostCard;
-
