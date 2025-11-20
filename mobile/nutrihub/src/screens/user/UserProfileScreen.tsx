@@ -55,6 +55,10 @@ const UserProfileScreen: React.FC = () => {
   const [likedFilter, setLikedFilter] = useState<'all' | 'recipes'>('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followLoading, setFollowLoading] = useState(false);
 
   const privacySettings = userProfile?.privacy_settings;
   const isFieldVisible = (flag?: boolean) => flag !== false;
@@ -100,6 +104,13 @@ const UserProfileScreen: React.FC = () => {
       try {
         fetchedProfile = await userService.getOtherUserProfile(username, userId);
         setUserProfile(fetchedProfile);
+        
+        // Set follow state if available from profile
+        if (fetchedProfile) {
+          setIsFollowing(fetchedProfile.is_following || false);
+          setFollowersCount(fetchedProfile.followers_count || 0);
+          setFollowingCount(fetchedProfile.following_count || 0);
+        }
       } catch (e) {
         console.error('Error fetching user profile:', e);
         fetchedProfile = null;
@@ -208,6 +219,37 @@ const UserProfileScreen: React.FC = () => {
     } else {
       Alert.alert('No Certificate', `No certificate document is available for ${tag.name}.`);
     }
+  };
+
+  const handleFollowToggle = async () => {
+    if (followLoading) return;
+    
+    setFollowLoading(true);
+    try {
+      const response = await userService.toggleFollow(username);
+      
+      // Update follow state
+      const newIsFollowing = !isFollowing;
+      setIsFollowing(newIsFollowing);
+      
+      // Update followers count
+      setFollowersCount(prev => newIsFollowing ? prev + 1 : Math.max(0, prev - 1));
+      
+      Alert.alert('Success', response.message);
+    } catch (err) {
+      console.error('Error toggling follow:', err);
+      Alert.alert('Error', 'Failed to update follow status. Please try again.');
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const handleFollowersPress = () => {
+    navigation.navigate('FollowersList', { username });
+  };
+
+  const handleFollowingPress = () => {
+    navigation.navigate('FollowingList', { username });
   };
 
   const renderEmptyComponent = () => {
@@ -337,6 +379,62 @@ const UserProfileScreen: React.FC = () => {
               {userProfile?.bio && (
                 <Text style={[styles.profileBio, textStyles.body, { color: theme.text }]}>{userProfile.bio}</Text>
               )}
+              
+              {/* Follow Stats */}
+              <View style={styles.followStatsRow}>
+                <TouchableOpacity style={styles.followStat} onPress={handleFollowersPress}>
+                  <Text style={[styles.followStatValue, textStyles.heading4, { color: theme.text }]}>
+                    {followersCount}
+                  </Text>
+                  <Text style={[styles.followStatLabel, textStyles.caption, { color: theme.textSecondary }]}>
+                    Followers
+                  </Text>
+                </TouchableOpacity>
+                <View style={[styles.followStatDivider, { backgroundColor: theme.border }]} />
+                <TouchableOpacity style={styles.followStat} onPress={handleFollowingPress}>
+                  <Text style={[styles.followStatValue, textStyles.heading4, { color: theme.text }]}>
+                    {followingCount}
+                  </Text>
+                  <Text style={[styles.followStatLabel, textStyles.caption, { color: theme.textSecondary }]}>
+                    Following
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Follow Button (only show for other users) */}
+              {!isOwner && (
+                <TouchableOpacity
+                  style={[
+                    styles.followButton,
+                    { 
+                      backgroundColor: isFollowing ? theme.surface : theme.primary,
+                      borderColor: isFollowing ? theme.border : theme.primary,
+                      borderWidth: isFollowing ? 1 : 0,
+                    }
+                  ]}
+                  onPress={handleFollowToggle}
+                  disabled={followLoading}
+                >
+                  {followLoading ? (
+                    <ActivityIndicator size="small" color={isFollowing ? theme.text : theme.buttonText} />
+                  ) : (
+                    <>
+                      <Icon 
+                        name={isFollowing ? "account-check" : "account-plus"} 
+                        size={20} 
+                        color={isFollowing ? theme.text : theme.buttonText} 
+                      />
+                      <Text style={[
+                        textStyles.buttonText,
+                        { color: isFollowing ? theme.text : theme.buttonText, marginLeft: SPACING.xs }
+                      ]}>
+                        {isFollowing ? 'Following' : 'Follow'}
+                      </Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+
               <View style={styles.statsRow}>
                 <View style={styles.statItem}>
                   <Text style={[styles.statValue, textStyles.heading4, { color: theme.primary }]}>
@@ -617,6 +715,38 @@ const styles = StyleSheet.create({
   profileBio: {
     marginTop: SPACING.sm,
     textAlign: 'center',
+  },
+  followStatsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: SPACING.md,
+    paddingVertical: SPACING.sm,
+  },
+  followStat: {
+    alignItems: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
+  followStatValue: {
+    fontWeight: '600',
+  },
+  followStatLabel: {
+    marginTop: SPACING.xs,
+  },
+  followStatDivider: {
+    width: 1,
+    height: 30,
+  },
+  followButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
+    marginTop: SPACING.md,
+    width: '100%',
   },
   statsRow: {
     flexDirection: 'row',

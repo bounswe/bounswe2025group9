@@ -97,6 +97,25 @@ export type ForumStackParamList = {
     username: string;
     userId?: number;
   };
+
+  /**
+   * Personalized feed screen
+   */
+  Feed: undefined;
+
+  /**
+   * List of followers for a user
+   */
+  FollowersList: {
+    username: string;
+  };
+
+  /**
+   * List of users that a user is following
+   */
+  FollowingList: {
+    username: string;
+  };
 };
 
 /**

@@ -11,6 +11,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ForumScreen from '../screens/forum/ForumScreen';
 import PostDetailScreen from '../screens/forum/PostDetailScreen';
 import CreatePostScreen from '../screens/forum/CreatePostScreen';
+import FeedScreen from '../screens/forum/FeedScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 import MyProfileScreen from '../screens/user/MyProfileScreen';
 import FoodScreen from '../screens/food/FoodScreen';
@@ -27,6 +28,8 @@ import LikedRecipesScreen from '../screens/user/LikedRecipesScreen';
 import ProfessionTagsScreen from '../screens/user/ProfessionTagsScreen';
 import AccountWarningsScreen from '../screens/user/AccountWarningsScreen';
 import ReportUserScreen from '../screens/user/ReportUserScreen';
+import FollowersListScreen from '../screens/user/FollowersListScreen';
+import FollowingListScreen from '../screens/user/FollowingListScreen';
 
 import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
@@ -110,6 +113,9 @@ const ForumStackNavigator = () => {
       <ForumStack.Screen name="PostDetail" component={PostDetailScreen} />
       <ForumStack.Screen name="CreatePost" component={CreatePostScreen} />
       <ForumStack.Screen name="UserProfile" component={UserProfileScreen} />
+      <ForumStack.Screen name="Feed" component={FeedScreen} />
+      <ForumStack.Screen name="FollowersList" component={FollowersListScreen} />
+      <ForumStack.Screen name="FollowingList" component={FollowingListScreen} />
     </ForumStack.Navigator>
   );
 };

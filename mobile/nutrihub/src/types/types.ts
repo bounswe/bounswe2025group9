@@ -155,6 +155,9 @@ export interface User {
   custom_allergens?: string[];
   privacy_settings?: PrivacySettings;
   account_warnings?: AccountWarning[];
+  followers_count?: number;
+  following_count?: number;
+  is_following?: boolean;
 }
 
 /**
