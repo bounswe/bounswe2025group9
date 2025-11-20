@@ -43,6 +43,12 @@ class FoodEntry(models.Model):
     )
     category_overridden_at = models.DateTimeField(null=True, blank=True)
     category_override_reason = models.TextField(blank=True)
+    micronutrients = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Micronutrient content (vitamins, minerals) per serving"
+    )
+
 
 
 class FoodProposal(models.Model):
@@ -66,6 +72,11 @@ class FoodProposal(models.Model):
         max_length=20, choices=PriceUnit.choices, default=PriceUnit.PER_100G
     )
     currency = models.CharField(max_length=3, default=DEFAULT_CURRENCY)
+    micronutrients = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Micronutrient content (vitamins, minerals) per serving"
+    )
     isApproved = models.BooleanField(
         null=True, blank=True, default=None
     )  # null=pending, True=approved, False=rejected

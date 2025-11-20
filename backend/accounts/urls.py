@@ -26,7 +26,11 @@ from .views import (
     FollowersListView,
     FollowingListView,
     FeedView,
+    UserMetricsView,
+    NutritionTargetsView,
+    ResetNutritionTargetsView,
 )
+
 
 from .admin import UserModerationViewSet, UserTagModerationViewSet
 
@@ -84,5 +88,14 @@ urlpatterns = [
         name="user-following",
     ),
     path("feed/", FeedView.as_view(), name="forum-feed"),
+    # Nutrition tracking endpoints
+    path("metrics/", UserMetricsView.as_view(), name="user-metrics"),
+    path("nutrition-targets/", NutritionTargetsView.as_view(), name="nutrition-targets"),
+    path(
+        "nutrition-targets/reset/",
+        ResetNutritionTargetsView.as_view(),
+        name="reset-nutrition-targets",
+    ),
     path("moderation/", include(moderation_router.urls), name="moderation"),
 ]
+

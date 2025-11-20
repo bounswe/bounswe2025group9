@@ -66,6 +66,21 @@ interface ForumPostProps {
    * Custom testID for testing
    */
   testID?: string;
+
+  /**
+   * Ingredient matches from search queries to highlight
+   */
+  ingredientMatches?: string[];
+
+  /**
+   * Control rendering of the like button
+   */
+  showLikeButton?: boolean;
+
+  /**
+   * Override text for the like button
+   */
+  likeButtonText?: string;
 }
 
 /**
@@ -82,6 +97,9 @@ const ForumPost: React.FC<ForumPostProps> = ({
   showTags = true,
   style,
   testID,
+  ingredientMatches,
+  showLikeButton = true,
+  likeButtonText,
 }) => {
   const { theme, textStyles } = useTheme();
   
@@ -214,6 +232,34 @@ const ForumPost: React.FC<ForumPostProps> = ({
           </View>
         )}
       </View>
+
+      {/* Ingredient matches */}
+      {ingredientMatches && ingredientMatches.length > 0 && (
+        <View style={styles.ingredientContainer}>
+          <Text style={[styles.ingredientLabel, { color: theme.primary }]}>INCLUDES:</Text>
+          <View style={styles.ingredientBadges}>
+            {ingredientMatches.slice(0, 2).map((match, index) => (
+              <View
+                key={`${match}-${index}`}
+                style={[
+                  styles.ingredientBadge,
+                  { backgroundColor: `${theme.success || '#34D399'}30` },
+                  { borderColor: theme.success || '#34D399' },
+                ]}
+              >
+                <Text style={[styles.ingredientText, { color: theme.success || '#34D399' }]}>
+                  {match}
+                </Text>
+              </View>
+            ))}
+            {ingredientMatches.length > 2 && (
+              <Text style={[styles.ingredientMoreText, { color: theme.textSecondary }]}>
+                +{ingredientMatches.length - 2} more
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
       
       {/* Content */}
       <View style={styles.contentContainer}>
@@ -236,15 +282,17 @@ const ForumPost: React.FC<ForumPostProps> = ({
       
       {/* Footer with actions */}
       <View style={[styles.footer, { borderTopColor: theme.divider }]}>
-        <Button
-          iconName={post.isLiked ? "thumb-up" : "thumb-up-outline"}
-          title={(post.likesCount || 0).toString()}
-          variant="text"
-          size="small"
-          onPress={handleLike}
-          style={styles.actionButton}
-          textStyle={likeButtonTextStyle}
-        />
+        {showLikeButton && (
+          <Button
+            iconName={post.isLiked ? "thumb-up" : "thumb-up-outline"}
+            title={likeButtonText ?? (post.likesCount || 0).toString()}
+            variant="text"
+            size="small"
+            onPress={handleLike}
+            style={styles.actionButton}
+            textStyle={likeButtonTextStyle}
+          />
+        )}
         
         <Button
           iconName="comment-outline"
@@ -285,6 +333,40 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'flex-end',
+  },
+  ingredientContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: SPACING.xs,
+  },
+  ingredientLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 2,
+    marginRight: SPACING.xs,
+  },
+  ingredientBadges: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  ingredientBadge: {
+    borderRadius: BORDER_RADIUS.round,
+    borderWidth: 1,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    marginRight: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
+  ingredientText: {
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  ingredientMoreText: {
+    fontSize: 12,
+    fontWeight: '500',
   },
   tagContainer: {
     flexDirection: 'row',
