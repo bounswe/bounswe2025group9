@@ -37,6 +37,40 @@ export type MainTabParamList = {
    * My Profile tab with no parameters
    */
   MyProfile: undefined;
+  
+  /**
+   * Feed tab with no parameters (kept for backwards compatibility)
+   */
+  Feed: undefined;
+  
+  /**
+   * Post detail accessible from Home/Feed
+   */
+  PostDetail: {
+    postId: number;
+  };
+  
+  /**
+   * User profile accessible from Home/Feed
+   */
+  UserProfile: {
+    username: string;
+    userId?: number;
+  };
+  
+  /**
+   * Followers list accessible from profiles
+   */
+  FollowersList: {
+    username: string;
+  };
+  
+  /**
+   * Following list accessible from profiles
+   */
+  FollowingList: {
+    username: string;
+  };
 };
 
 /**
@@ -97,11 +131,6 @@ export type ForumStackParamList = {
     username: string;
     userId?: number;
   };
-
-  /**
-   * Personalized feed screen
-   */
-  Feed: undefined;
 
   /**
    * List of followers for a user

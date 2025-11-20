@@ -16,18 +16,22 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useFocusEffect } from '@react-navigation/native';
+import { useNavigation, useFocusEffect, CompositeNavigationProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ForumPost from '../../components/forum/ForumPost';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { ForumTopic } from '../../types/types';
-import { ForumStackParamList } from '../../navigation/types';
+import { MainTabParamList, ForumStackParamList } from '../../navigation/types';
 import { forumService } from '../../services/api/forum.service';
 import { useAuth } from '../../context/AuthContext';
 
-type FeedScreenNavigationProp = NativeStackNavigationProp<ForumStackParamList, 'Feed'>;
+type FeedScreenNavigationProp = CompositeNavigationProp<
+  BottomTabNavigationProp<MainTabParamList, 'Feed'>,
+  NativeStackNavigationProp<ForumStackParamList>
+>;
 
 /**
  * Feed screen component displaying personalized posts
@@ -111,7 +115,7 @@ const FeedScreen: React.FC = () => {
    * Navigate to post detail
    */
   const handlePostPress = (postId: number) => {
-    navigation.navigate('PostDetail', { postId });
+    (navigation as any).navigate('PostDetail', { postId });
   };
 
   /**
@@ -119,11 +123,29 @@ const FeedScreen: React.FC = () => {
    */
   const handleAuthorPress = (username: string, userId?: number) => {
     if (currentUser && username === currentUser.username) {
-      // Navigate to user's own profile (main tab)
+      (navigation as any).navigate('MyProfile');
       return;
     }
-    navigation.navigate('UserProfile', { username, userId });
+    (navigation as any).navigate('UserProfile', { username, userId });
   };
+
+  /**
+   * Render header for all states
+   */
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerLeft} />
+      <Text style={[textStyles.h2, styles.headerTitle, { color: theme.text }]}>
+        My Feed
+      </Text>
+      <TouchableOpacity
+        style={styles.refreshButton}
+        onPress={handleRefresh}
+      >
+        <Icon name="refresh" size={24} color={theme.text} />
+      </TouchableOpacity>
+    </View>
+  );
 
   /**
    * Render empty state
@@ -139,7 +161,7 @@ const FeedScreen: React.FC = () => {
       </Text>
       <TouchableOpacity
         style={[styles.exploreButton, { backgroundColor: theme.primary }]}
-        onPress={() => navigation.navigate('ForumList')}
+        onPress={() => (navigation as any).navigate('Forum')}
       >
         <Text style={[textStyles.buttonText, { color: theme.buttonText }]}>
           Explore Forum
@@ -174,18 +196,7 @@ const FeedScreen: React.FC = () => {
   if (loading && !refreshing) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
-        <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Icon name="arrow-left" size={24} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={[textStyles.h2, styles.headerTitle, { color: theme.text }]}>
-            My Feed
-          </Text>
-          <View style={styles.headerRight} />
-        </View>
+        {renderHeader()}
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
         </View>
@@ -198,24 +209,7 @@ const FeedScreen: React.FC = () => {
    */
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
-      {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Icon name="arrow-left" size={24} color={theme.text} />
-        </TouchableOpacity>
-        <Text style={[textStyles.h2, styles.headerTitle, { color: theme.text }]}>
-          My Feed
-        </Text>
-        <TouchableOpacity
-          style={styles.refreshButton}
-          onPress={handleRefresh}
-        >
-          <Icon name="refresh" size={24} color={theme.text} />
-        </TouchableOpacity>
-      </View>
+      {renderHeader()}
 
       {/* Error State */}
       {error ? (
@@ -265,17 +259,13 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(0, 0, 0, 0.1)',
   },
-  backButton: {
-    padding: SPACING.xs,
+  headerLeft: {
     width: 40,
   },
   headerTitle: {
     flex: 1,
     textAlign: 'center',
     fontWeight: '600',
-  },
-  headerRight: {
-    width: 40,
   },
   refreshButton: {
     padding: SPACING.xs,

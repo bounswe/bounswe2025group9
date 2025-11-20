@@ -603,18 +603,10 @@ const ForumScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <View style={styles.headerTextContainer}>
-          <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
-          <Text style={[styles.subtitle, textStyles.caption]}>
-            Connect with others, share recipes, and get nutrition advice from our community.
-          </Text>
-        </View>
-        <TouchableOpacity
-          style={styles.feedButton}
-          onPress={() => navigation.navigate('Feed')}
-        >
-          <Icon name="rss" size={24} color={theme.primary} />
-        </TouchableOpacity>
+        <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
+        <Text style={[styles.subtitle, textStyles.caption]}>
+          Connect with others, share recipes, and get nutrition advice from our community.
+        </Text>
       </View>
       
       {/* Search Bar */}
@@ -809,12 +801,6 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: SPACING.md,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  headerTextContainer: {
-    flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
@@ -823,9 +809,6 @@ const styles = StyleSheet.create({
   subtitle: {
     textAlign: 'center',
     marginBottom: SPACING.md,
-  },
-  feedButton: {
-    padding: SPACING.xs,
   },
   loadingContainer: {
     flex: 1,
