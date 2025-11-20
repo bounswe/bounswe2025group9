@@ -89,7 +89,8 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
         setLocalUploading(false);
       }
     } catch (error) {
-      Alert.alert('Error', `Failed to open image picker: ${error.message}`);
+      const message = error instanceof Error ? error.message : 'Unknown error';
+      Alert.alert('Error', `Failed to open image picker: ${message}`);
     }
   };
 
@@ -189,5 +190,4 @@ const styles = StyleSheet.create({
 });
 
 export default ProfilePhotoPicker;
-
 

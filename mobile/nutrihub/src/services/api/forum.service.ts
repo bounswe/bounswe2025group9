@@ -57,6 +57,7 @@ export interface ApiForumTopic {
   is_liked?: boolean;      // Some endpoints might include this
   created_at: string;
   updated_at: string;
+  has_recipe?: boolean;
 }
 
 export interface ApiComment {
@@ -178,6 +179,7 @@ const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTo
       tags: apiTopic.tags.map(tag => tag.name),
       createdAt: new Date(apiTopic.created_at),
       updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
+      hasRecipe: apiTopic.has_recipe,
     };
   } catch (error) {
     console.error('Error checking liked posts storage in mapApiTopicToForumTopic:', error);
@@ -197,6 +199,7 @@ const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTo
       tags: apiTopic.tags.map(tag => tag.name),
       createdAt: new Date(apiTopic.created_at),
       updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
+      hasRecipe: apiTopic.has_recipe,
     };
   }
 };
