@@ -1,6 +1,12 @@
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
 
-cd frontend
-npm run build
+# Check if any frontend files are staged
+if git diff --cached --name-only --diff-filter=ACM | grep -q "^frontend/"; then
+  echo "Frontend files changed, running build..."
+  cd frontend
+  npm run build
+else
+  echo "No frontend files changed, skipping build check."
+fi
 
