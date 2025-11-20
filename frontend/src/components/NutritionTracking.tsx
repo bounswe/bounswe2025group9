@@ -349,7 +349,7 @@ const NutritionTracking = () => {
           </div>
           
           <div className="space-y-4">
-            {[...mockHistoricalLogs, todayLog].reverse().map((log, index) => {
+            {[...mockHistoricalLogs, todayLog].reverse().map((log) => {
               const date = new Date(log.date);
               const caloriePercent = Math.round((log.total_calories / targets.calories) * 100);
               
