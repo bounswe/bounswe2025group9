@@ -18,6 +18,8 @@ import {
   Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PALETTE, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -29,9 +31,12 @@ import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
 import useFoodFilters from '../../hooks/useFoodFilters';
 import { FoodItem, FoodCategoryType, DietaryOptionType, FoodFilters } from '../../types/types';
+import { FoodStackParamList } from '../../navigation/types';
 import { FOOD_CATEGORIES, DIETARY_OPTIONS, FOOD_SORT_OPTIONS } from '../../constants/foodConstants';
 import { getFoodCatalog, submitFoodProposal } from '../../services/api/food.service';
 import { API_CONFIG } from '../../config';
+
+type FoodScreenNavigationProp = NativeStackNavigationProp<FoodStackParamList, 'FoodList'>;
 
 // Success notification component
 const SuccessNotification: React.FC<{
@@ -65,6 +70,7 @@ const SuccessNotification: React.FC<{
  */
 const FoodScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const navigation = useNavigation<FoodScreenNavigationProp>();
   
   // Layout mode state
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('grid');
@@ -445,13 +451,23 @@ const FoodScreen: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={[styles.headerTitle, textStyles.heading2]}>Foods Catalog</Text>
-          <Button
-            title="Propose Food"
-            variant="primary"
-            size="small"
-            iconName="plus"
-            onPress={() => setProposeFoodModalVisible(true)}
-          />
+          <View style={styles.headerButtons}>
+            <Button
+              title="Compare"
+              variant="primary"
+              size="small"
+              iconName="chart-line"
+              onPress={() => navigation.navigate('FoodCompare')}
+              style={styles.compareButton}
+            />
+            <Button
+              title="Propose Food"
+              variant="primary"
+              size="small"
+              iconName="plus"
+              onPress={() => setProposeFoodModalVisible(true)}
+            />
+          </View>
         </View>
         
         {/* Search and filter bar */}
@@ -738,6 +754,13 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     flex: 1,
+  },
+  headerButtons: {
+    flexDirection: 'row',
+    gap: SPACING.sm,
+  },
+  compareButton: {
+    marginRight: SPACING.xs,
   },
   searchContainer: {
     flexDirection: 'row',

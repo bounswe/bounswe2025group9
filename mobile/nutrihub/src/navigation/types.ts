@@ -40,15 +40,13 @@ export type MainTabParamList = {
 };
 
 /**
- * Food stack navigation parameters (for future implementation)
+ * Food stack navigation parameters
  */
 export type FoodStackParamList = {
   /**
    * Food list screen with optional category filter
    */
-  FoodList: {
-    category?: string;
-  };
+  FoodList: undefined;
   
   /**
    * Food detail screen with food item ID
@@ -56,6 +54,11 @@ export type FoodStackParamList = {
   FoodDetail: {
     id: number;
   };
+
+  /**
+   * Food comparison screen
+   */
+  FoodCompare: undefined;
 };
 
 /**
