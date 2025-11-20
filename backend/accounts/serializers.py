@@ -197,3 +197,91 @@ class ReportSerializer(serializers.ModelSerializer):
         model = Report
         fields = ["id", "reporter", "reportee", "reason"]
         read_only_fields = ["id"]
+
+
+class UserMetricsSerializer(serializers.ModelSerializer):
+    """Serializer for user physical metrics with BMR/TDEE calculation."""
+    bmr = serializers.SerializerMethodField(read_only=True)
+    tdee = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        from .models import UserMetrics
+        model = UserMetrics
+        fields = ['height', 'weight', 'age', 'gender', 'activity_level', 
+                  'bmr', 'tdee', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate_age(self, value):
+        """Validate age is reasonable."""
+        if value < 1 or value > 150:
+            raise serializers.ValidationError("Age must be between 1 and 150.")
+        return value
+
+    def validate_height(self, value):
+        """Validate height in centimeters."""
+        if value < 50 or value > 300:
+            raise serializers.ValidationError("Height must be between 50 and 300 cm.")
+        return value
+
+    def validate_weight(self, value):
+        """Validate weight in kilograms."""
+        if value < 20 or value > 500:
+            raise serializers.ValidationError("Weight must be between 20 and 500 kg.")
+        return value
+
+    def get_bmr(self, obj):
+        """Calculate and return BMR."""
+        return obj.calculate_bmr()
+
+    def get_tdee(self, obj):
+        """Calculate and return TDEE."""
+        return obj.calculate_tdee()
+
+
+class NutritionTargetsSerializer(serializers.ModelSerializer):
+    """Serializer for nutrition targets with validation."""
+    bmr = serializers.SerializerMethodField(read_only=True)
+    tdee = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        from .models import NutritionTargets
+        model = NutritionTargets
+        fields = ['calories', 'protein', 'carbohydrates', 'fat', 'micronutrients',
+                  'is_custom', 'bmr', 'tdee', 'created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, data):
+        """Validate that macro calories don't significantly exceed total calories."""
+        from project.utils.nutrition_calculator import calculate_macro_calories
+        
+        protein = float(data.get('protein', 0))
+        carbs = float(data.get('carbohydrates', 0))
+        fat = float(data.get('fat', 0))
+        calories = float(data.get('calories', 0))
+        
+        # Calculate calories from macros
+        macro_calories = calculate_macro_calories(protein, carbs, fat)
+        
+        # Allow 5% margin for rounding
+        if macro_calories > calories * 1.05:
+            raise serializers.ValidationError(
+                f"Macronutrients exceed calorie target. "
+                f"Macros account for {macro_calories:.0f} kcal but target is {calories:.0f} kcal."
+            )
+        
+        return data
+
+    def get_bmr(self, obj):
+        """Get BMR from user metrics if available."""
+        try:
+            return obj.user.metrics.calculate_bmr()
+        except:
+            return None
+
+    def get_tdee(self, obj):
+        """Get TDEE from user metrics if available."""
+        try:
+            return obj.user.metrics.calculate_tdee()
+        except:
+            return None
+
