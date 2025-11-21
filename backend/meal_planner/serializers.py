@@ -93,3 +93,95 @@ class MealPlanSerializer(serializers.ModelSerializer):
             except FoodEntry.DoesNotExist:
                 continue
         return meals_details
+
+
+class FoodLogEntrySerializer(serializers.ModelSerializer):
+    """Serializer for individual food log entries."""
+    food_name = serializers.CharField(source='food.name', read_only=True)
+    food_id = serializers.PrimaryKeyRelatedField(
+        source='food',
+        queryset=FoodEntry.objects.all(),
+        write_only=True
+    )
+
+    class Meta:
+        from .models import FoodLogEntry
+        model = FoodLogEntry
+        fields = [
+            'id', 'food_id', 'food_name', 'serving_size', 'serving_unit',
+            'meal_type', 'calories', 'protein', 'carbohydrates', 'fat',
+            'micronutrients', 'logged_at'
+        ]
+        read_only_fields = ['id', 'calories', 'protein', 'carbohydrates', 
+                           'fat', 'micronutrients', 'logged_at']
+
+    def validate_serving_size(self, value):
+        """Validate serving size is positive."""
+        if value <= 0:
+            raise serializers.ValidationError("Serving size must be greater than 0.")
+        return value
+
+
+class DailyNutritionLogSerializer(serializers.ModelSerializer):
+    """Serializer for daily nutrition log with nested entries and target comparison."""
+    entries = FoodLogEntrySerializer(many=True, read_only=True)
+    targets = serializers.SerializerMethodField(read_only=True)
+    adherence = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        from .models import DailyNutritionLog
+        model = DailyNutritionLog
+        fields = [
+            'date', 'total_calories', 'total_protein', 'total_carbohydrates',
+            'total_fat', 'micronutrients_summary', 'entries', 'targets', 'adherence',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'total_calories', 'total_protein', 'total_carbohydrates', 'total_fat',
+            'micronutrients_summary', 'created_at', 'updated_at'
+        ]
+
+    def get_targets(self, obj):
+        """Get user's nutrition targets if available."""
+        try:
+            targets = obj.user.nutrition_targets
+            return {
+                'calories': float(targets.calories),
+                'protein': float(targets.protein),
+                'carbohydrates': float(targets.carbohydrates),
+                'fat': float(targets.fat),
+                'micronutrients': targets.micronutrients,
+            }
+        except:
+            return None
+
+    def get_adherence(self, obj):
+        """Calculate adherence percentage to targets."""
+        try:
+            targets = obj.user.nutrition_targets
+            adherence = {
+                'calories': round((float(obj.total_calories) / float(targets.calories)) * 100, 1) if float(targets.calories) > 0 else 0,
+                'protein': round((float(obj.total_protein) / float(targets.protein)) * 100, 1) if float(targets.protein) > 0 else 0,
+                'carbohydrates': round((float(obj.total_carbohydrates) / float(targets.carbohydrates)) * 100, 1) if float(targets.carbohydrates) > 0 else 0,
+                'fat': round((float(obj.total_fat) / float(targets.fat)) * 100, 1) if float(targets.fat) > 0 else 0,
+            }
+            return adherence
+        except:
+            return None
+
+
+class DailyNutritionLogListSerializer(serializers.ModelSerializer):
+    """Simplified serializer for list views (no nested entries)."""
+    
+    class Meta:
+        from .models import DailyNutritionLog
+        model = DailyNutritionLog
+        fields = [
+            'date', 'total_calories', 'total_protein', 'total_carbohydrates',
+            'total_fat', 'micronutrients_summary'
+        ]
+        read_only_fields = [
+            'total_calories', 'total_protein', 'total_carbohydrates', 'total_fat',
+            'micronutrients_summary'
+        ]
+

@@ -498,16 +498,6 @@ describe('Nutrition Tracking - Selenium E2E Tests', () => {
       await nutritionTab[0].click();
       await driver.sleep(2000);
 
-      // Get initial date
-      const dateElements = await driver.findElements(
-        By.css('.text-primary')
-      );
-      
-      let initialDate = '';
-      if (dateElements.length > 0) {
-        initialDate = await dateElements[0].getText();
-      }
-
       // Look for previous/next navigation buttons (typically with arrow icons)
       const navButtons = await driver.findElements(
         By.css('button')

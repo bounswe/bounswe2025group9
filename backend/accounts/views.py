@@ -23,7 +23,10 @@ from .serializers import (
     TagInputSerializer,
     TagOutputSerializer,
     ReportSerializer,
+    UserMetricsSerializer,
+    NutritionTargetsSerializer,
 )
+
 from .services import register_user, list_users, update_user
 from .models import User, Allergen, Tag, UserTag, Follow
 from forum.models import Like, Post, Recipe
@@ -796,3 +799,125 @@ class FeedView(APIView):
 
         serializer = PostSerializer(paginated_posts, many=True)
         return paginator.get_paginated_response(serializer.data)
+
+
+class UserMetricsView(APIView):
+    """
+    GET /api/users/metrics/
+    Get user's physical metrics.
+    
+    POST /api/users/metrics/
+    Create or update user's physical metrics.
+    Auto-calculates nutrition targets if not custom.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        try:
+            metrics = request.user.metrics
+            serializer = UserMetricsSerializer(metrics)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        except:
+            return Response(
+                {"detail": "User metrics not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+    def post(self, request):
+        from .models import UserMetrics, NutritionTargets
+        
+        try:
+            # Update existing metrics
+            metrics = request.user.metrics
+            serializer = UserMetricsSerializer(metrics, data=request.data, partial=True)
+        except:
+            # Create new metrics
+            serializer = UserMetricsSerializer(data=request.data)
+
+        if serializer.is_valid():
+            metrics = serializer.save(user=request.user)
+            
+            # Auto-recalculate targets if not custom
+            try:
+                targets = request.user.nutrition_targets
+                if not targets.is_custom:
+                    NutritionTargets.create_from_metrics(metrics)
+            except:
+                # No targets exist, create them
+                NutritionTargets.create_from_metrics(metrics)
+            
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class NutritionTargetsView(APIView):
+    """
+    GET /api/users/nutrition-targets/
+    Get user's nutrition targets (auto-calculated if not set).
+    
+    PUT /api/users/nutrition-targets/
+    Update custom nutrition targets.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        from .models import NutritionTargets
+        
+        try:
+            targets = request.user.nutrition_targets
+        except:
+            # Try to auto-generate from metrics
+            try:
+                metrics = request.user.metrics
+                targets = NutritionTargets.create_from_metrics(metrics)
+            except:
+                return Response(
+                    {"detail": "No nutrition targets or metrics found. Please set your metrics first."},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+        
+        serializer = NutritionTargetsSerializer(targets)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request):
+        from .models import NutritionTargets
+        
+        try:
+            targets = request.user.nutrition_targets
+            serializer = NutritionTargetsSerializer(targets, data=request.data, partial=True)
+        except:
+            serializer = NutritionTargetsSerializer(data=request.data)
+
+        if serializer.is_valid():
+            targets = serializer.save(user=request.user, is_custom=True)
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class ResetNutritionTargetsView(APIView):
+    """
+    POST /api/users/nutrition-targets/reset/
+    Reset nutrition targets to auto-calculated values from user metrics.
+    """
+    authentication_classes = [JWTAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        from .models import NutritionTargets
+        
+        try:
+            metrics = request.user.metrics
+        except:
+            return Response(
+                {"detail": "User metrics not found. Please set your metrics first."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        targets = NutritionTargets.create_from_metrics(metrics)
+        serializer = NutritionTargetsSerializer(targets)
+        
+        return Response(serializer.data, status=status.HTTP_200_OK)

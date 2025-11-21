@@ -22,6 +22,12 @@ class FoodEntry(models.Model):
     dietaryOptions = models.JSONField(default=list)
     nutritionScore = models.FloatField()
     imageUrl = models.URLField(blank=True)
+    micronutrients = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Micronutrient content (vitamins, minerals) per serving"
+    )
+
 
 
 class FoodProposal(models.Model):
@@ -38,11 +44,17 @@ class FoodProposal(models.Model):
     dietaryOptions = models.JSONField(default=list)
     nutritionScore = models.FloatField()
     imageUrl = models.URLField(blank=True)
+    micronutrients = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Micronutrient content (vitamins, minerals) per serving"
+    )
     isApproved = models.BooleanField(
         null=True, blank=True, default=None
     )  # null=pending, True=approved, False=rejected
     createdAt = models.DateTimeField(default=django.utils.timezone.now)
     proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+
 
 
 class ImageCache(models.Model):

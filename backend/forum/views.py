@@ -48,6 +48,7 @@ class PostViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ["tags", "author"]
     ordering_fields = ["created_at"]
+    SIMILARITY_THRESHOLD = 75
 
     def get_queryset(self):
         return Post.objects.all().order_by("-created_at")
@@ -59,6 +60,37 @@ class PostViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def _calculate_similarity(self, query: str, target: str) -> int:
+        """
+        Apply the same fuzzy matching logic to any text target.
+        Returns the max similarity score derived from different ratio checks.
+        """
+        target_text = (target or "").lower()
+        if not target_text:
+            return 0
+
+        ratio = fuzz.ratio(query, target_text)
+        partial_ratio = fuzz.partial_ratio(query, target_text)
+        token_sort_ratio = fuzz.token_sort_ratio(query, target_text)
+        return max(ratio, partial_ratio, token_sort_ratio)
+
+    def _best_ingredient_similarity(self, query: str, post: Post) -> int:
+        """
+        Iterate through the post's ingredients (if any) and return the
+        best fuzzy similarity score among them.
+        """
+        recipe = getattr(post, "recipe", None)
+        if not recipe:
+            return 0
+
+        best_score = 0
+        for ingredient in recipe.ingredients.all():
+            food_name = getattr(ingredient.food, "name", "") or ""
+            best_score = max(best_score, self._calculate_similarity(query, food_name))
+            if best_score == 100:
+                break
+        return best_score
 
     @action(
         detail=False,
@@ -74,34 +106,32 @@ class PostViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        # Get all posts
-        posts = self.get_queryset()
+        # Prefetch recipe data so ingredient lookup stays efficient
+        posts = self.get_queryset().prefetch_related("recipe__ingredients__food")
+        serializer_cls = self.get_serializer_class()
+        serializer_context = self.get_serializer_context()
 
-        # Apply fuzzy search on titles
+        # Apply fuzzy search on titles and ingredient names
         results = []
         for post in posts:
-            # Calculate multiple similarity ratios
-            title = post.title.lower()
-            ratio = fuzz.ratio(query, title)
-            partial_ratio = fuzz.partial_ratio(query, title)
-            token_sort_ratio = fuzz.token_sort_ratio(query, title)
+            title_similarity = self._calculate_similarity(query, post.title)
+            ingredient_similarity = self._best_ingredient_similarity(query, post)
 
-            # Use the highest ratio among different matching methods
-            max_ratio = max(ratio, partial_ratio, token_sort_ratio)
+            max_ratio = max(title_similarity, ingredient_similarity)
 
             # Log the matching details for debugging
-            logging.info(f"Post: {title}")
+            logging.info(f"Post: {post.title.lower()}")
             logging.info(f"Query: {query}")
             logging.info(
-                f"Ratios - Full: {ratio}, Partial: {partial_ratio}, Token Sort: {token_sort_ratio}"
+                f"Title ratio: {title_similarity}, Ingredient ratio: {ingredient_similarity}"
             )
             logging.info(f"Max Ratio: {max_ratio}")
 
-            # Only include posts with similarity ratio >= 60 (we may configure it to get the best results)
-            if max_ratio >= 75:
-                results.append(
-                    {"post": PostSerializer(post).data, "similarity": max_ratio}
-                )
+            if max_ratio >= self.SIMILARITY_THRESHOLD:
+                serialized_post = serializer_cls(
+                    post, context=serializer_context
+                ).data
+                results.append({"post": serialized_post, "similarity": max_ratio})
 
         # Sort results by similarity score (highest first)
         results.sort(key=lambda x: x["similarity"], reverse=True)

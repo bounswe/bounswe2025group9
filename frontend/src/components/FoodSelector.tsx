@@ -152,11 +152,16 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                                               <p className="nh-text text-sm mb-1">Nutrition Score:</p>
                                               <NutritionScore score={food.nutritionScore} size="sm" />
                                             </div>
-                                            <p className="nh-text text-sm mt-2">
-                                                Calories: {food.caloriesPerServing} kcal per {food.servingSize}
-                                            </p>
-                                            {food.dietaryOptions && food.dietaryOptions.length > 0 && (
+                                            <div className="mt-2 space-y-1">
                                                 <p className="nh-text text-sm">
+                                                    Per {food.servingSize}g: {food.caloriesPerServing} kcal
+                                                </p>
+                                                <p className="nh-text text-sm">
+                                                    Per 100g: {((food.caloriesPerServing / food.servingSize) * 100).toFixed(1)} kcal
+                                                </p>
+                                            </div>
+                                            {food.dietaryOptions && food.dietaryOptions.length > 0 && (
+                                                <p className="nh-text text-sm mt-2">
                                                     Dietary Tags: {food.dietaryOptions.join(', ')}
                                                 </p>
                                             )}

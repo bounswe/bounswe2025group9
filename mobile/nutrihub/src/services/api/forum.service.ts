@@ -57,6 +57,7 @@ export interface ApiForumTopic {
   is_liked?: boolean;      // Some endpoints might include this
   created_at: string;
   updated_at: string;
+  has_recipe?: boolean;
 }
 
 export interface ApiComment {
@@ -178,6 +179,7 @@ const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTo
       tags: apiTopic.tags.map(tag => tag.name),
       createdAt: new Date(apiTopic.created_at),
       updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
+      hasRecipe: apiTopic.has_recipe,
     };
   } catch (error) {
     console.error('Error checking liked posts storage in mapApiTopicToForumTopic:', error);
@@ -197,6 +199,7 @@ const mapApiTopicToForumTopic = async (apiTopic: ApiForumTopic): Promise<ForumTo
       tags: apiTopic.tags.map(tag => tag.name),
       createdAt: new Date(apiTopic.created_at),
       updatedAt: apiTopic.updated_at ? new Date(apiTopic.updated_at) : undefined,
+      hasRecipe: apiTopic.has_recipe,
     };
   }
 };
@@ -516,6 +519,39 @@ export const forumService = {
     if (!response.data || !response.data.results) {
       console.error('Unexpected search response format:', response.data);
       throw new Error('Unexpected API response format for search');
+    }
+    
+    const mappedPosts = await Promise.all(
+      response.data.results.map(apiTopic => mapApiTopicToForumTopic(apiTopic))
+    );
+    
+    return mappedPosts;
+  },
+
+  /**
+   * Get personalized feed of posts from followed users and liked posts
+   * @returns Array of ForumTopic objects
+   */
+  async getFeed(): Promise<ForumTopic[]> {
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      console.log("Skipping feed request - no access token available");
+      return [];
+    }
+    
+    const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>('/users/feed/');
+    if (response.error) {
+      if (response.status === 401) {
+        console.error("Authentication error in getFeed - token may be invalid");
+        throw new Error("Authentication error - please login again");
+      }
+      throw new Error(response.error);
+    }
+    
+    if (!response.data || !response.data.results) {
+      console.error('Unexpected feed response format:', response.data);
+      throw new Error('Unexpected API response format for feed');
     }
     
     const mappedPosts = await Promise.all(
