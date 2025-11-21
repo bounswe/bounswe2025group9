@@ -15,6 +15,11 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
   const [showAllVitamins, setShowAllVitamins] = useState(false);
   const [showAllMinerals, setShowAllMinerals] = useState(false);
 
+  // Format numbers to 1 decimal place
+  const formatNumber = (num: number): string => {
+    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
+  };
+
   const vitamins = micronutrients.filter(m => m.category === 'vitamin');
   const minerals = micronutrients.filter(m => m.category === 'mineral');
 
@@ -71,14 +76,14 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
 
         <View style={styles.nutrientValues}>
           <Text style={[textStyles.body, { color: theme.primary, fontWeight: 'bold' }]}>
-            {nutrient.current}{nutrient.unit}
+            {formatNumber(nutrient.current)}{nutrient.unit}
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            / {nutrient.target}{nutrient.unit}
+            / {formatNumber(nutrient.target)}{nutrient.unit}
           </Text>
           {nutrient.maximum && (
             <Text style={[textStyles.caption, { color: theme.textSecondary, opacity: 0.7 }]}>
-              (max: {nutrient.maximum}{nutrient.unit})
+              (max: {formatNumber(nutrient.maximum)}{nutrient.unit})
             </Text>
           )}
         </View>

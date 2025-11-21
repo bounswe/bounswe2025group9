@@ -30,6 +30,11 @@ const NutritionTrackingScreen: React.FC = () => {
   const [showAddFood, setShowAddFood] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
 
+  // Format numbers to 1 decimal place
+  const formatNumber = (num: number): string => {
+    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
+  };
+
   // Mock data - in production, this would come from API
   const todayLog = mockTodayLog;
   const targets = mockNutritionTargets;
@@ -149,68 +154,156 @@ const NutritionTrackingScreen: React.FC = () => {
           const caloriePercent = Math.round((log.total_calories / targets.calories) * 100);
           const isLogToday = date.toDateString() === new Date().toDateString();
           
+          // Under-target severity levels
+          const isVeryLow = caloriePercent < 50;
+          const isLow = caloriePercent >= 50 && caloriePercent < 70;
+          const isFair = caloriePercent >= 70 && caloriePercent < 90;
+          const isOnTrack = caloriePercent >= 90 && caloriePercent <= 100;
+          
+          // Over-target severity levels
+          const isMinorOver = caloriePercent > 100 && caloriePercent <= 110;
+          const isModerateOver = caloriePercent > 110 && caloriePercent <= 130;
+          const isSevereOver = caloriePercent > 130;
+          
+          const getDayStatusColor = () => {
+            if (isOnTrack) return theme.success;
+            
+            // Under target
+            if (caloriePercent < 100) {
+              if (isVeryLow) return theme.error;
+              if (isLow) return theme.warning;
+              return theme.warning; // Fair
+            }
+            
+            // Over target
+            if (isMinorOver) return theme.warning;
+            if (isModerateOver) return theme.error;
+            return '#dc2626'; // Dark red for severe
+          };
+          
+          const statusColor = getDayStatusColor();
+          
           return (
             <View 
               key={log.id} 
               style={[styles.weeklyDayItem, { backgroundColor: `${theme.surface}99` }]}
             >
               <View style={styles.weeklyDayHeader}>
-                <View>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
-                    {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                  </Text>
+                <View style={{ flex: 1 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
+                    <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                      {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                    </Text>
+                    {isSevereOver && (
+                      <Icon name="alert" size={14} color={statusColor} />
+                    )}
+                  </View>
                   {isLogToday && (
                     <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.xs }]}>
                       <Text style={[textStyles.small, { color: '#fff' }]}>Today</Text>
                     </View>
                   )}
                 </View>
-                <Text 
-                  style={[
-                    textStyles.body,
-                    { 
-                      color: caloriePercent > 100 ? theme.error : caloriePercent >= 90 ? theme.success : theme.warning,
-                      fontWeight: '600'
-                    }
-                  ]}
-                >
-                  {caloriePercent}%
-                </Text>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text 
+                    style={[
+                      textStyles.body,
+                      { 
+                        color: statusColor,
+                        fontWeight: '600'
+                      }
+                    ]}
+                  >
+                    {caloriePercent}%
+                  </Text>
+                  {/* Only show checkmark when actually met (100%) */}
+                  {caloriePercent === 100 && (
+                    <Icon name="check-circle" size={14} color={theme.success} style={{ marginTop: 2 }} />
+                  )}
+                  {/* Show progress icon for 90-99% */}
+                  {isOnTrack && caloriePercent < 100 && (
+                    <Icon name="chart-line" size={14} color={theme.success} style={{ marginTop: 2 }} />
+                  )}
+                  {/* Show alert for very low */}
+                  {isVeryLow && (
+                    <Icon name="alert-circle" size={14} color={theme.error} style={{ marginTop: 2 }} />
+                  )}
+                </View>
               </View>
               
               <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.sm }]}>
                 {log.total_calories} / {targets.calories} kcal
               </Text>
               
-              <View style={[styles.progressBarContainer, { backgroundColor: theme.border, height: 8 }]}>
-                <View 
-                  style={[
-                    styles.progressBar,
-                    {
-                      width: `${Math.min(caloriePercent, 100)}%`,
-                      backgroundColor: caloriePercent > 100 ? theme.error : theme.success
-                    }
-                  ]}
-                />
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <View style={[styles.progressBarContainer, { backgroundColor: theme.border, height: 8, flex: 1 }]}>
+                  <View 
+                    style={[
+                      styles.progressBar,
+                      {
+                        width: `${Math.min(caloriePercent, 100)}%`,
+                        backgroundColor: caloriePercent > 100 ? statusColor : (isOnTrack ? theme.success : statusColor)
+                      }
+                    ]}
+                  />
+                </View>
+                {/* Overflow indicator - only for actual warnings (not minor acceptable over) */}
+                {caloriePercent > 110 && (
+                  <View 
+                    style={[
+                      styles.weeklyOverflowBadge,
+                      { backgroundColor: statusColor }
+                    ]}
+                  >
+                    <Text style={[textStyles.small, { color: '#fff', fontSize: 9, fontWeight: '700' }]}>
+                      +{caloriePercent - 100}%
+                    </Text>
+                  </View>
+                )}
+                {/* "Met" badge for exactly 100% or minor over (100-110%) */}
+                {caloriePercent === 100 && (
+                  <View 
+                    style={[
+                      styles.weeklyOverflowBadge,
+                      { backgroundColor: theme.success }
+                    ]}
+                  >
+                    <Text style={[textStyles.small, { color: '#fff', fontSize: 9, fontWeight: '700' }]}>
+                      Met
+                    </Text>
+                  </View>
+                )}
+                {caloriePercent > 100 && caloriePercent <= 110 && (
+                  <View 
+                    style={[
+                      styles.weeklyOverflowBadge,
+                      { backgroundColor: theme.warning }
+                    ]}
+                  >
+                    <Text style={[textStyles.small, { color: '#fff', fontSize: 9, fontWeight: '700' }]}>
+                      +{caloriePercent - 100}%
+                    </Text>
+                  </View>
+                )}
               </View>
               
               <View style={styles.weeklyDayMacros}>
                 <View style={styles.weeklyMacroItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Protein</Text>
                   <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
-                    {log.total_protein}g
+                    {formatNumber(log.total_protein)}g
                   </Text>
                 </View>
                 <View style={styles.weeklyMacroItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Carbs</Text>
                   <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
-                    {log.total_carbohydrates}g
+                    {formatNumber(log.total_carbohydrates)}g
                   </Text>
                 </View>
                 <View style={styles.weeklyMacroItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Fat</Text>
                   <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
-                    {log.total_fat}g
+                    {formatNumber(log.total_fat)}g
                   </Text>
                 </View>
               </View>
@@ -286,19 +379,19 @@ const NutritionTrackingScreen: React.FC = () => {
                     <Text style={[textStyles.body, { color: theme.text, fontWeight: '500' }]} numberOfLines={1}>
                       {entry.food_name}
                     </Text>
-                    <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                      {entry.serving_size} {entry.serving_unit}
-                    </Text>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                  {formatNumber(entry.serving_size)} {entry.serving_unit}
+                </Text>
                   </View>
 
                   {/* Nutrition Info */}
                   <View style={styles.nutritionInfo}>
-                    <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                      {entry.calories} kcal
-                    </Text>
-                    <Text style={[textStyles.caption, { color: theme.textSecondary }]} numberOfLines={1}>
-                      P: {entry.protein}g • C: {entry.carbohydrates}g • F: {entry.fat}g
-                    </Text>
+                  <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+                    {formatNumber(entry.calories)} kcal
+                  </Text>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]} numberOfLines={1}>
+                    P: {formatNumber(entry.protein)}g • C: {formatNumber(entry.carbohydrates)}g • F: {formatNumber(entry.fat)}g
+                  </Text>
                   </View>
                 </View>
 
@@ -329,25 +422,25 @@ const NutritionTrackingScreen: React.FC = () => {
             <View style={styles.totalItem}>
               <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Calories</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                {totals.calories}
+                {formatNumber(totals.calories)}
               </Text>
             </View>
             <View style={styles.totalItem}>
               <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Protein</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                {totals.protein}g
+                {formatNumber(totals.protein)}g
               </Text>
             </View>
             <View style={styles.totalItem}>
               <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Carbs</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                {totals.carbs}g
+                {formatNumber(totals.carbs)}g
               </Text>
             </View>
             <View style={styles.totalItem}>
               <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Fat</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                {totals.fat}g
+                {formatNumber(totals.fat)}g
               </Text>
             </View>
           </View>
@@ -740,6 +833,12 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
     borderRadius: BORDER_RADIUS.full,
+  },
+  weeklyOverflowBadge: {
+    marginLeft: SPACING.xs,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
   },
 });
 
