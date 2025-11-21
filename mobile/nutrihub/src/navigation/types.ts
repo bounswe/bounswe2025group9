@@ -203,6 +203,11 @@ export type ProfileStackParamList = {
     userId: number;
     username: string;
   };
+  
+  /**
+   * Nutrition tracking screen
+   */
+  NutritionTracking: undefined;
 };
 
 /**
