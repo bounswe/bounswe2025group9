@@ -692,6 +692,54 @@ export const apiClient = {
     }, true),
 
   
+  // Get personalized feed
+  getPersonalizedFeed: (params?: PaginationParams) => {
+    let url = "/users/feed/";
+    
+    if (params) {
+      const queryParams = new URLSearchParams();
+      
+      if (params.page !== undefined) {
+        queryParams.append('page', params.page.toString());
+      }
+      
+      if (params.page_size !== undefined) {
+        queryParams.append('page_size', params.page_size.toString());
+      }
+      
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    
+    console.log('[API] Fetching personalized feed');
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received personalized feed:`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          // Ensure likes is always a non-negative number
+          if (typeof postObj.likes !== 'number' || postObj.likes < 0) {
+            console.log('[API] Ensuring non-negative like count for post', postObj.id, 'current:', postObj.likes);
+            postObj.likes = Math.max(0, postObj.likes || 0);
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    });
+  },
+
   toggleLikePost: (postId: number) => {
     console.log(`[API] Toggling like for post ID: ${postId}`);
     return fetchJson<{ liked: boolean, like_count?: number }>(`/forum/posts/${postId}/like/`, {
