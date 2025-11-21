@@ -296,9 +296,6 @@ const NutritionTrackingScreen: React.FC = () => {
                     <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
                       {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                     </Text>
-                    {isSevereOver && (
-                      <Icon name="alert" size={16} color={statusColor} />
-                    )}
                   </View>
                   {isLogToday && (
                     <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.sm }]}>
@@ -324,7 +321,12 @@ const NutritionTrackingScreen: React.FC = () => {
                     >
                       {caloriePercent}%
                     </Text>
-                    <Icon name="information-outline" size={16} color={theme.textSecondary} style={{ opacity: 0.6 }} />
+                    {/* Show warning icon for severe over, otherwise info icon */}
+                    {(isSevereOver || isModerateOver) ? (
+                      <Icon name="alert-circle" size={16} color={statusColor} style={{ opacity: 0.8 }} />
+                    ) : (
+                      <Icon name="information-outline" size={16} color={theme.textSecondary} style={{ opacity: 0.6 }} />
+                    )}
                   </View>
                   {/* Only show checkmark when actually met (100%) */}
                   {caloriePercent === 100 && (

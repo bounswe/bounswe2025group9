@@ -114,12 +114,16 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <View style={[styles.iconContainer, { backgroundColor: theme.surface, borderColor: `${theme.primary}40`, borderWidth: 1, width: 28, height: 28, borderRadius: BORDER_RADIUS.sm, marginRight: SPACING.sm }]}>
               <Icon name="pill" size={14} color={theme.primary} />
             </View>
-            <Text style={[textStyles.body, { color: theme.text, fontWeight: '500' }]}>
+            <Text 
+              style={[textStyles.body, { color: theme.text, fontWeight: '500' }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
               {nutrient.name}
             </Text>
           </View>
           <TouchableOpacity 
-            style={[styles.statusBadge, { flexDirection: 'row', alignItems: 'center' }]}
+            style={[styles.statusBadge, { flexDirection: 'row', alignItems: 'center', flexShrink: 0 }]}
             onPress={() => setSelectedNutrient(nutrient)}
             activeOpacity={0.7}
           >
@@ -129,7 +133,10 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             {isOverMax && (
               <Icon name="alert-circle" size={16} color={color} style={{ marginRight: 4 }} />
             )}
-            <Text style={[textStyles.caption, { color, fontWeight: '700' }]}>
+            <Text 
+              style={[textStyles.caption, { color, fontWeight: '700' }]}
+              numberOfLines={1}
+            >
               {label}
             </Text>
             <Icon name="information" size={12} color={theme.textSecondary} style={{ marginLeft: 4, opacity: 0.6 }} />
