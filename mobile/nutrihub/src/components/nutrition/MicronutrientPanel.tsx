@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
@@ -13,6 +13,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
   const { theme, textStyles } = useTheme();
   const [isVitaminsExpanded, setIsVitaminsExpanded] = useState(true);
   const [isMineralsExpanded, setIsMineralsExpanded] = useState(true);
+  const [selectedNutrient, setSelectedNutrient] = useState<MicroNutrient | null>(null);
 
   // Format numbers to 1 decimal place
   const formatNumber = (num: number): string => {
@@ -40,6 +41,64 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
     return { status: 'low', color: theme.error, label: 'Low' };
   };
 
+  const getDetailedMicronutrientInfo = (nutrient: MicroNutrient) => {
+    const percentage = Math.round((nutrient.current / nutrient.target) * 100);
+    const isOverMax = nutrient.maximum && nutrient.current > nutrient.maximum;
+    
+    if (isOverMax && nutrient.maximum) {
+      const overAmount = (nutrient.current - nutrient.maximum).toFixed(1);
+      const overPercentage = Math.round(((nutrient.current - nutrient.maximum) / nutrient.maximum) * 100);
+      return {
+        title: `${nutrient.name} - Exceeds Maximum`,
+        message: `You've consumed ${nutrient.current.toFixed(1)}${nutrient.unit}, which exceeds the recommended maximum of ${nutrient.maximum.toFixed(1)}${nutrient.unit} by ${overAmount}${nutrient.unit} (${overPercentage}% over).\n\nExceeding the maximum intake for ${nutrient.name} may have health implications. Consider reducing your intake from foods high in this nutrient for the rest of the day.`,
+        recommendation: `Recommended maximum: ${nutrient.maximum.toFixed(1)}${nutrient.unit}`,
+        icon: 'alert-circle',
+        color: theme.error,
+      };
+    }
+    
+    if (percentage >= 100) {
+      return {
+        title: `${nutrient.name} - Target Met! 🎉`,
+        message: `Excellent! You've reached ${nutrient.current.toFixed(1)}${nutrient.unit} of your ${nutrient.target.toFixed(1)}${nutrient.unit} daily target (${percentage}%).\n\nYou're getting adequate ${nutrient.name} for optimal health. ${nutrient.maximum ? `Just be mindful not to exceed ${nutrient.maximum.toFixed(1)}${nutrient.unit} maximum.` : 'Keep up the good work!'}`,
+        recommendation: nutrient.maximum ? `Maximum recommended: ${nutrient.maximum.toFixed(1)}${nutrient.unit}` : 'Keep maintaining this level',
+        icon: 'check-circle',
+        color: theme.success,
+      };
+    }
+    
+    if (percentage >= 75) {
+      const remaining = (nutrient.target - nutrient.current).toFixed(1);
+      return {
+        title: `${nutrient.name} - Good Progress (${percentage}%)`,
+        message: `You're doing well with ${nutrient.current.toFixed(1)}${nutrient.unit} consumed so far. You need just ${remaining}${nutrient.unit} more to reach your ${nutrient.target.toFixed(1)}${nutrient.unit} daily target.\n\nYou're on the right track! A little more and you'll meet your daily requirement.`,
+        recommendation: `Target: ${nutrient.target.toFixed(1)}${nutrient.unit}`,
+        icon: 'check',
+        color: '#22c55e',
+      };
+    }
+    
+    if (percentage >= 50) {
+      const remaining = (nutrient.target - nutrient.current).toFixed(1);
+      return {
+        title: `${nutrient.name} - Fair Progress (${percentage}%)`,
+        message: `You've consumed ${nutrient.current.toFixed(1)}${nutrient.unit}, which is about halfway to your ${nutrient.target.toFixed(1)}${nutrient.unit} target. You still need ${remaining}${nutrient.unit} more.\n\nConsider adding foods rich in ${nutrient.name} to your remaining meals today to meet your daily requirement.`,
+        recommendation: `Target: ${nutrient.target.toFixed(1)}${nutrient.unit}`,
+        icon: 'alert',
+        color: theme.warning,
+      };
+    }
+    
+    const remaining = (nutrient.target - nutrient.current).toFixed(1);
+    return {
+      title: `${nutrient.name} - Low (${percentage}%)`,
+      message: `You've only consumed ${nutrient.current.toFixed(1)}${nutrient.unit} of your ${nutrient.target.toFixed(1)}${nutrient.unit} daily target. You need ${remaining}${nutrient.unit} more.\n\nThis is significantly below your daily requirement. Try to incorporate foods rich in ${nutrient.name} in your remaining meals today. Deficiency in ${nutrient.name} may affect your health.`,
+      recommendation: `Target: ${nutrient.target.toFixed(1)}${nutrient.unit}`,
+      icon: 'close-circle',
+      color: theme.error,
+    };
+  };
+
   const renderNutrientRow = (nutrient: MicroNutrient) => {
     const percentage = Math.min((nutrient.current / nutrient.target) * 100, 100);
     const { status, color, label } = getNutrientStatus(nutrient);
@@ -59,7 +118,11 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
               {nutrient.name}
             </Text>
           </View>
-          <View style={styles.statusBadge}>
+          <TouchableOpacity 
+            style={styles.statusBadge}
+            onPress={() => setSelectedNutrient(nutrient)}
+            activeOpacity={0.7}
+          >
             {status === 'complete' && !isOverMax && (
               <Icon name="check-circle" size={16} color={color} style={{ marginRight: 4 }} />
             )}
@@ -69,7 +132,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <Text style={[textStyles.caption, { color, fontWeight: '700' }]}>
               {label}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.nutrientValues}>
@@ -208,6 +271,84 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
           </Text>
         </View>
       </View>
+
+      {/* Info Modal */}
+      {selectedNutrient && (
+        <Modal
+          visible={selectedNutrient !== null}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setSelectedNutrient(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+              <View style={styles.modalHeader}>
+                <View style={[
+                  styles.modalIconContainer, 
+                  { 
+                    backgroundColor: theme.surface,
+                    borderColor: `${getDetailedMicronutrientInfo(selectedNutrient).color}50`,
+                    borderWidth: 1,
+                  }
+                ]}>
+                  <Icon 
+                    name={getDetailedMicronutrientInfo(selectedNutrient).icon} 
+                    size={24} 
+                    color={getDetailedMicronutrientInfo(selectedNutrient).color} 
+                  />
+                </View>
+                <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.md, flex: 1 }]}>
+                  {getDetailedMicronutrientInfo(selectedNutrient).title}
+                </Text>
+              </View>
+              
+              <Text style={[textStyles.body, { color: theme.textSecondary, lineHeight: 22, marginTop: SPACING.md }]}>
+                {getDetailedMicronutrientInfo(selectedNutrient).message}
+              </Text>
+              
+              {getDetailedMicronutrientInfo(selectedNutrient).recommendation && (
+                <View style={[styles.recommendationBox, { backgroundColor: theme.background, borderColor: theme.border }]}>
+                  <Icon name="information" size={16} color={theme.primary} style={{ marginRight: SPACING.xs }} />
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                    {getDetailedMicronutrientInfo(selectedNutrient).recommendation}
+                  </Text>
+                </View>
+              )}
+
+              <View style={styles.modalStats}>
+                <View style={styles.modalStatItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Current</Text>
+                  <Text style={[textStyles.heading4, { color: theme.primary }]}>
+                    {selectedNutrient.current.toFixed(1)}{selectedNutrient.unit}
+                  </Text>
+                </View>
+                <View style={styles.modalStatItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Target</Text>
+                  <Text style={[textStyles.heading4, { color: theme.text }]}>
+                    {selectedNutrient.target.toFixed(1)}{selectedNutrient.unit}
+                  </Text>
+                </View>
+                {selectedNutrient.maximum && (
+                  <View style={styles.modalStatItem}>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Maximum</Text>
+                    <Text style={[textStyles.heading4, { color: theme.error }]}>
+                      {selectedNutrient.maximum.toFixed(1)}{selectedNutrient.unit}
+                    </Text>
+                  </View>
+                )}
+              </View>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                onPress={() => setSelectedNutrient(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Got it</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 };
@@ -330,6 +471,61 @@ const styles = StyleSheet.create({
   warningContent: {
     flex: 1,
     marginLeft: SPACING.md,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recommendationBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.lg,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    borderWidth: 1,
+  },
+  modalStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xl,
+    paddingTop: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  modalStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  modalButton: {
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
   },
 });
 

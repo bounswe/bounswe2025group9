@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
@@ -28,6 +28,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   mealBreakdown
 }) => {
   const { theme, textStyles } = useTheme();
+  const [showInfoModal, setShowInfoModal] = useState(false);
   
   // Format numbers to 1 decimal place if needed
   const formatNumber = (num: number): string => {
@@ -131,6 +132,57 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
     return `${overAmount}${unit} significantly over target`;
   };
 
+  const getDetailedInfo = () => {
+    if (!isOverTarget) {
+      if (isVeryLow) {
+        return {
+          title: `${name} - Very Low (${percentage}%)`,
+          message: `You've consumed only ${formatNumber(current)}${unit} out of ${formatNumber(target)}${unit} target. This is significantly below your daily goal. Consider adding ${name.toLowerCase()}-rich foods to your remaining meals today.`
+        };
+      }
+      if (isLow) {
+        return {
+          title: `${name} - Low (${percentage}%)`,
+          message: `You've reached ${formatNumber(current)}${unit} of your ${formatNumber(target)}${unit} target. You still need ${formatNumber(remaining)}${unit} to meet your daily goal. Try to include more ${name.toLowerCase()}-rich foods.`
+        };
+      }
+      if (isFair) {
+        return {
+          title: `${name} - Fair Progress (${percentage}%)`,
+          message: `You're making good progress with ${formatNumber(current)}${unit} consumed. You need ${formatNumber(remaining)}${unit} more to reach your ${formatNumber(target)}${unit} target. You're on the right track!`
+        };
+      }
+      return {
+        title: `${name} - Almost There (${percentage}%)`,
+        message: `Great job! You've consumed ${formatNumber(current)}${unit}. Just ${formatNumber(remaining)}${unit} more to reach your ${formatNumber(target)}${unit} target.`
+      };
+    }
+    
+    const overAmount = formatNumber(current - target);
+    if (name === 'Protein' && isMinorOver) {
+      return {
+        title: `${name} - Target Met (${percentage}%)`,
+        message: `You've consumed ${formatNumber(current)}${unit}, which is ${overAmount}${unit} over your ${formatNumber(target)}${unit} target. This is perfectly acceptable for protein as it supports muscle recovery and satiety.`
+      };
+    }
+    if (isMinorOver) {
+      return {
+        title: `${name} - Slightly Over (${percentage}%)`,
+        message: `You've consumed ${formatNumber(current)}${unit}, exceeding your ${formatNumber(target)}${unit} target by ${overAmount}${unit}. This is a minor excess. Consider lighter options for remaining meals.`
+      };
+    }
+    if (isModerateOver) {
+      return {
+        title: `${name} - Moderately Over (${percentage}%)`,
+        message: `You've consumed ${formatNumber(current)}${unit}, which is ${overAmount}${unit} above your ${formatNumber(target)}${unit} target. This is a moderate excess. Try to balance this tomorrow and consider portion control.`
+      };
+    }
+    return {
+      title: `${name} - Significantly Over (${percentage}%)`,
+      message: `You've consumed ${formatNumber(current)}${unit}, significantly exceeding your ${formatNumber(target)}${unit} target by ${overAmount}${unit}. This is a substantial excess. Focus on lighter meals going forward and increase physical activity if possible.`
+    };
+  };
+
   return (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       {/* Header */}
@@ -158,13 +210,18 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           </View>
         </View>
         
-        {/* Status Icon */}
-        <Icon 
-          name={getStatusIcon()} 
-          size={28} 
-          color={isOverTarget || isNearTarget ? statusColor : theme.textSecondary} 
-          style={!isOverTarget && !isNearTarget ? { opacity: 0.4 } : undefined}
-        />
+        {/* Status Icon - Clickable for detailed info */}
+        <TouchableOpacity 
+          onPress={() => setShowInfoModal(true)}
+          activeOpacity={0.7}
+        >
+          <Icon 
+            name={getStatusIcon()} 
+            size={28} 
+            color={isOverTarget || isNearTarget ? statusColor : theme.textSecondary} 
+            style={!isOverTarget && !isNearTarget ? { opacity: 0.4 } : undefined}
+          />
+        </TouchableOpacity>
       </View>
 
       {/* Progress Info */}
@@ -270,6 +327,60 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           </View>
         </View>
       )}
+
+      {/* Info Modal */}
+      <Modal
+        visible={showInfoModal}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
+            <View style={styles.modalHeader}>
+              <Icon name={getStatusIcon()} size={32} color={statusColor} />
+              <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.md, flex: 1 }]}>
+                {getDetailedInfo().title}
+              </Text>
+            </View>
+            
+            <Text style={[textStyles.body, { color: theme.textSecondary, lineHeight: 22, marginTop: SPACING.md }]}>
+              {getDetailedInfo().message}
+            </Text>
+            
+            <View style={styles.modalStats}>
+              <View style={styles.modalStatItem}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Current</Text>
+                <Text style={[textStyles.heading4, { color: theme.primary }]}>
+                  {formatNumber(current)}{unit}
+                </Text>
+              </View>
+              <View style={styles.modalStatItem}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Target</Text>
+                <Text style={[textStyles.heading4, { color: theme.text }]}>
+                  {formatNumber(target)}{unit}
+                </Text>
+              </View>
+              <View style={styles.modalStatItem}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                  {isOverTarget ? 'Over' : 'Remaining'}
+                </Text>
+                <Text style={[textStyles.heading4, { color: statusColor }]}>
+                  {isOverTarget ? formatNumber(current - target) : formatNumber(remaining)}{unit}
+                </Text>
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.modalButton, { backgroundColor: theme.primary }]}
+              onPress={() => setShowInfoModal(false)}
+              activeOpacity={0.8}
+            >
+              <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -406,6 +517,46 @@ const styles = StyleSheet.create({
   mealItem: {
     alignItems: 'center',
     paddingVertical: SPACING.xs,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: SPACING.xl,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xl,
+    paddingTop: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  modalStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  modalButton: {
+    paddingVertical: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
   },
 });
 
