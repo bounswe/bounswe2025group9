@@ -83,6 +83,17 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   };
   
   const statusColor = getStatusColor();
+
+  const renderStatusBadge = (
+    label: string,
+    color: string,
+    iconName?: React.ComponentProps<typeof Icon>['name']
+  ) => (
+    <View style={styles.badgeRow}>
+      {iconName && <Icon name={iconName} size={16} color={color} style={{ marginRight: 4 }} />}
+      <Text style={[styles.badgeText, { color }]}>{label}</Text>
+    </View>
+  );
   
   const getStatusIcon = () => {
     // Only show checkmark when actually at 100% or met
@@ -130,9 +141,9 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
               style={[
                 styles.iconContainer, 
                 { 
-                  backgroundColor: `${color}15`,
-                  borderColor: color,
-                  borderWidth: 2
+                  backgroundColor: theme.surface,
+                  borderColor: `${color}50`,
+                  borderWidth: 1,
                 }
               ]}
             >
@@ -178,7 +189,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
 
       {/* Progress Bar */}
       <View style={styles.progressBarWrapper}>
-        <View style={[styles.progressBarContainer, { backgroundColor: theme.border }]}>
+        <View style={[styles.progressBarContainer, { backgroundColor: `${color}15` }]}>
           {/* Single progress bar - simple and clear */}
           <View 
             style={[
@@ -231,21 +242,9 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
         </View>
         
         {/* Show badge based on status */}
-        {percentage === 100 && (
-          <View style={[styles.badge, { backgroundColor: theme.success }]}>
-            <Text style={[textStyles.small, { color: '#fff' }]}>Met</Text>
-          </View>
-        )}
-        {isNearTarget && percentage < 100 && (
-          <View style={[styles.badge, { backgroundColor: theme.success, opacity: 0.8 }]}>
-            <Text style={[textStyles.small, { color: '#fff' }]}>Almost</Text>
-          </View>
-        )}
-        {(name === 'Protein' && isMinorOver) && (
-          <View style={[styles.badge, { backgroundColor: theme.success }]}>
-            <Text style={[textStyles.small, { color: '#fff' }]}>Met</Text>
-          </View>
-        )}
+        {percentage === 100 && renderStatusBadge('Met', theme.success, 'check-circle')}
+        {isNearTarget && percentage < 100 && renderStatusBadge('Almost', theme.success, 'chart-line')}
+        {(name === 'Protein' && isMinorOver) && renderStatusBadge('Met', theme.success, 'check-circle')}
       </View>
 
       {/* Meal Breakdown for Calories */}
@@ -277,65 +276,76 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   headerLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     flex: 1,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: BORDER_RADIUS.sm,
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconText: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
   },
   progressInfo: {
     flexDirection: 'row',
     alignItems: 'baseline',
     justifyContent: 'space-between',
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.xs,
   },
   currentValue: {
-    fontSize: 32,
-    fontWeight: 'bold',
+    fontSize: 36,
+    fontWeight: '700',
+    letterSpacing: -0.5,
   },
   percentageContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: 'transparent',
   },
   percentage: {
-    fontSize: 14,
-    fontWeight: '600',
+    fontSize: 16,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
   progressBarWrapper: {
     position: 'relative',
     width: '100%',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
     flexDirection: 'row',
     alignItems: 'center',
+    paddingHorizontal: SPACING.xs,
   },
   progressBarContainer: {
     position: 'relative',
     flex: 1,
-    height: 16,
+    height: 20,
     borderRadius: BORDER_RADIUS.full,
     overflow: 'hidden',
+    // Add subtle inner shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
   progressBar: {
     position: 'absolute',
@@ -343,48 +353,59 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
     borderRadius: BORDER_RADIUS.full,
+    // Add subtle glow effect
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
   },
   overflowExtension: {
-    height: 16,
+    height: 20,
     borderTopRightRadius: BORDER_RADIUS.full,
     borderBottomRightRadius: BORDER_RADIUS.full,
     marginLeft: -1, // Connects to main bar
-    opacity: 0.8,
+    opacity: 0.75,
   },
   overflowBadge: {
     position: 'absolute',
-    right: -4,
-    top: -8,
+    right: -6,
+    top: -10,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 3,
-    borderRadius: BORDER_RADIUS.xs,
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: 4,
+    borderRadius: BORDER_RADIUS.sm,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 3,
   },
   statusMessage: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     justifyContent: 'space-between',
+    minHeight: 36,
   },
-  badge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.xs,
+  badgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
   },
   mealBreakdown: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: SPACING.md,
-    paddingTop: SPACING.md,
+    marginTop: SPACING.lg,
+    paddingTop: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
     borderTopWidth: 1,
   },
   mealItem: {
     alignItems: 'center',
+    paddingVertical: SPACING.xs,
   },
 });
 

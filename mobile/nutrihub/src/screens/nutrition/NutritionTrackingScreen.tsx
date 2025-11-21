@@ -75,17 +75,28 @@ const NutritionTrackingScreen: React.FC = () => {
   };
 
   const formatDate = (date: Date) => {
+    // Format without year to prevent overflow, add year only if not current year
+    const currentYear = new Date().getFullYear();
+    const dateYear = date.getFullYear();
+    
+    if (currentYear === dateYear) {
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    }
     return date.toLocaleDateString('en-US', { 
-      weekday: 'short', 
-      year: 'numeric', 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      year: 'numeric'
     });
   };
 
   const formatWeekRange = (startDate: Date) => {
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
+    const currentYear = new Date().getFullYear();
     
     const startStr = startDate.toLocaleDateString('en-US', { 
       month: 'short', 
@@ -93,11 +104,13 @@ const NutritionTrackingScreen: React.FC = () => {
     });
     const endStr = endDate.toLocaleDateString('en-US', { 
       month: 'short', 
-      day: 'numeric',
-      year: 'numeric'
+      day: 'numeric'
     });
     
-    return `${startStr} - ${endStr}`;
+    // Only add year if not current year
+    const yearStr = startDate.getFullYear() !== currentYear ? `, ${startDate.getFullYear()}` : '';
+    
+    return `${startStr} - ${endStr}${yearStr}`;
   };
 
   // Get Monday of the current week
@@ -186,21 +199,21 @@ const NutritionTrackingScreen: React.FC = () => {
           return (
             <View 
               key={log.id} 
-              style={[styles.weeklyDayItem, { backgroundColor: `${theme.surface}99` }]}
+              style={[styles.weeklyDayItem, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border }]}
             >
               <View style={styles.weeklyDayHeader}>
                 <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.xs }}>
-                    <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+                    <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
                       {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
                     </Text>
                     {isSevereOver && (
-                      <Icon name="alert" size={14} color={statusColor} />
+                      <Icon name="alert" size={16} color={statusColor} />
                     )}
                   </View>
                   {isLogToday && (
-                    <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.xs }]}>
-                      <Text style={[textStyles.small, { color: '#fff' }]}>Today</Text>
+                    <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.sm }]}>
+                      <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>Today</Text>
                     </View>
                   )}
                 </View>
@@ -210,7 +223,8 @@ const NutritionTrackingScreen: React.FC = () => {
                       textStyles.body,
                       { 
                         color: statusColor,
-                        fontWeight: '600'
+                        fontWeight: '700',
+                        fontSize: 16
                       }
                     ]}
                   >
@@ -231,12 +245,12 @@ const NutritionTrackingScreen: React.FC = () => {
                 </View>
               </View>
               
-              <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.sm }]}>
-                {log.total_calories} / {targets.calories} kcal
+              <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.md, fontWeight: '500' }]}>
+                {log.total_calories.toFixed(0)} / {targets.calories.toFixed(0)} kcal
               </Text>
               
               <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={[styles.progressBarContainer, { backgroundColor: theme.border, height: 8, flex: 1 }]}>
+                <View style={[styles.progressBarContainer, { backgroundColor: `${theme.primary}10`, height: 10, flex: 1 }]}>
                   <View 
                     style={[
                       styles.progressBar,
@@ -289,20 +303,20 @@ const NutritionTrackingScreen: React.FC = () => {
               
               <View style={styles.weeklyDayMacros}>
                 <View style={styles.weeklyMacroItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Protein</Text>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Protein</Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
                     {formatNumber(log.total_protein)}g
                   </Text>
                 </View>
                 <View style={styles.weeklyMacroItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Carbs</Text>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Carbs</Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
                     {formatNumber(log.total_carbohydrates)}g
                   </Text>
                 </View>
                 <View style={styles.weeklyMacroItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Fat</Text>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Fat</Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
                     {formatNumber(log.total_fat)}g
                   </Text>
                 </View>
@@ -332,17 +346,21 @@ const NutritionTrackingScreen: React.FC = () => {
             <View 
               style={[
                 styles.mealIconContainer,
-                { backgroundColor: `${mealColor}20` }
+                { 
+                  backgroundColor: theme.surface,
+                  borderColor: `${mealColor}50`,
+                  borderWidth: 1
+                }
               ]}
             >
               <Icon name={getMealIcon(mealType)} size={24} color={mealColor} />
             </View>
-            <View>
-              <Text style={[textStyles.heading4, { color: theme.text, textTransform: 'capitalize' }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[textStyles.heading4, { color: theme.text, textTransform: 'capitalize', fontWeight: '700' }]}>
                 {mealType}
               </Text>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                {totals.calories} kcal • {entries.length} items
+              <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.xs / 2 }]}>
+                {totals.calories.toFixed(0)} kcal • {entries.length} {entries.length === 1 ? 'item' : 'items'}
               </Text>
             </View>
           </View>
@@ -353,9 +371,10 @@ const NutritionTrackingScreen: React.FC = () => {
               setSelectedMeal(mealType);
               setShowAddFood(true);
             }}
+            activeOpacity={0.8}
           >
-            <Icon name="plus" size={18} color="#fff" />
-            <Text style={[textStyles.body, { color: '#fff', marginLeft: SPACING.xs }]}>Add</Text>
+            <Icon name="plus" size={16} color="#fff" />
+            <Text style={[textStyles.small, { color: '#fff', marginLeft: 4, fontWeight: '700' }]}>Add</Text>
           </TouchableOpacity>
         </View>
 
@@ -365,10 +384,10 @@ const NutritionTrackingScreen: React.FC = () => {
             {entries.map((entry) => (
               <View
                 key={entry.id}
-                style={[styles.entryItem, { backgroundColor: `${theme.surface}99` }]}
+                style={[styles.entryItem, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border }]}
               >
                 {/* Food Image Placeholder */}
-                <View style={[styles.foodImagePlaceholder, { backgroundColor: theme.border }]}>
+                <View style={[styles.foodImagePlaceholder, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border }]}>
                   <Icon name="food" size={24} color={theme.textSecondary} />
                 </View>
 
@@ -426,20 +445,20 @@ const NutritionTrackingScreen: React.FC = () => {
               </Text>
             </View>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Protein</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Protein</Text>
+              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
                 {formatNumber(totals.protein)}g
               </Text>
             </View>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Carbs</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Carbs</Text>
+              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
                 {formatNumber(totals.carbs)}g
               </Text>
             </View>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Fat</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Fat</Text>
+              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
                 {formatNumber(totals.fat)}g
               </Text>
             </View>
@@ -453,11 +472,14 @@ const NutritionTrackingScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
+        <TouchableOpacity 
+          onPress={() => navigation.goBack()}
+          activeOpacity={0.7}
+        >
           <Icon name="arrow-left" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[textStyles.heading3, { color: theme.text }]}>Nutrition Tracking</Text>
-        <TouchableOpacity>
+        <Text style={[textStyles.heading3, { color: theme.text, fontWeight: '700' }]}>Nutrition Tracking</Text>
+        <TouchableOpacity activeOpacity={0.7}>
           <Icon name="cog" size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
@@ -474,13 +496,24 @@ const NutritionTrackingScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.viewModeButton,
-                viewMode === 'daily' && { backgroundColor: theme.primary }
+                viewMode === 'daily' && { 
+                  backgroundColor: theme.surface,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 2,
+                  elevation: 2
+                }
               ]}
               onPress={() => setViewMode('daily')}
+              activeOpacity={0.8}
             >
               <Text style={[
                 textStyles.body,
-                { color: viewMode === 'daily' ? '#fff' : theme.text }
+                { 
+                  color: viewMode === 'daily' ? theme.primary : theme.textSecondary,
+                  fontWeight: viewMode === 'daily' ? '700' : '500'
+                }
               ]}>
                 Daily
               </Text>
@@ -488,13 +521,24 @@ const NutritionTrackingScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.viewModeButton,
-                viewMode === 'weekly' && { backgroundColor: theme.primary }
+                viewMode === 'weekly' && { 
+                  backgroundColor: theme.surface,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 2,
+                  elevation: 2
+                }
               ]}
               onPress={() => setViewMode('weekly')}
+              activeOpacity={0.8}
             >
               <Text style={[
                 textStyles.body,
-                { color: viewMode === 'weekly' ? '#fff' : theme.text }
+                { 
+                  color: viewMode === 'weekly' ? theme.primary : theme.textSecondary,
+                  fontWeight: viewMode === 'weekly' ? '700' : '500'
+                }
               ]}>
                 Weekly
               </Text>
@@ -502,36 +546,46 @@ const NutritionTrackingScreen: React.FC = () => {
           </View>
 
           {/* Date Selector */}
-          <View style={[styles.dateSelector, { backgroundColor: `${theme.surface}99` }]}>
+          <View style={[styles.dateSelector]}>
             <TouchableOpacity
-              style={styles.dateArrow}
+              style={[styles.dateArrow]}
               onPress={() => changeDate(-1)}
+              activeOpacity={0.7}
             >
-              <Icon name="chevron-left" size={24} color={theme.text} />
+              <Icon name="chevron-left" size={24} color={theme.primary} />
             </TouchableOpacity>
             
             <View style={styles.dateInfo}>
-              <Text style={[textStyles.heading4, { color: theme.primary }]}>
+              <Text 
+                style={[textStyles.heading4, { color: theme.primary, fontWeight: '700' }]}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
                 {viewMode === 'weekly' ? formatWeekRange(getWeekStart(selectedDate)) : formatDate(selectedDate)}
               </Text>
               {viewMode === 'daily' && isToday && (
                 <View style={[styles.todayBadge, { backgroundColor: theme.success }]}>
-                  <Text style={[textStyles.small, { color: '#fff' }]}>Today</Text>
+                  <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>Today</Text>
                 </View>
               )}
               {viewMode === 'weekly' && isCurrentWeek && (
                 <View style={[styles.todayBadge, { backgroundColor: theme.success }]}>
-                  <Text style={[textStyles.small, { color: '#fff' }]}>This Week</Text>
+                  <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>This Week</Text>
                 </View>
               )}
             </View>
             
             <TouchableOpacity
-              style={[styles.dateArrow, ((viewMode === 'daily' && isToday) || (viewMode === 'weekly' && isCurrentWeek)) && { opacity: 0.3 }]}
+              style={[
+                styles.dateArrow,
+                ((viewMode === 'daily' && isToday) || (viewMode === 'weekly' && isCurrentWeek)) && { opacity: 0.3 }
+              ]}
               onPress={() => changeDate(1)}
               disabled={(viewMode === 'daily' && isToday) || (viewMode === 'weekly' && isCurrentWeek)}
+              activeOpacity={0.7}
             >
-              <Icon name="chevron-right" size={24} color={theme.text} />
+              <Icon name="chevron-right" size={24} color={theme.primary} />
             </TouchableOpacity>
           </View>
         </View>
@@ -561,7 +615,7 @@ const NutritionTrackingScreen: React.FC = () => {
                 current={todayLog.total_carbohydrates}
                 target={targets.carbohydrates}
                 unit="g"
-                color="#22c55e"
+                color="#10b981"
                 icon="C"
               />
               <MacronutrientCard
@@ -569,7 +623,7 @@ const NutritionTrackingScreen: React.FC = () => {
                 current={todayLog.total_fat}
                 target={targets.fat}
                 unit="g"
-                color="#eab308"
+                color="#f59e0b"
                 icon="F"
               />
             </View>
@@ -637,67 +691,90 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.md,
-    paddingVertical: SPACING.sm,
-    borderBottomWidth: 1,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderBottomWidth: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 3,
+    elevation: 2,
   },
   scrollView: {
     flex: 1,
   },
   content: {
-    padding: SPACING.md,
+    padding: SPACING.lg,
+    paddingBottom: SPACING.xl * 2,
   },
   dateCard: {
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
     marginBottom: SPACING.lg,
   },
   viewModeToggle: {
     flexDirection: 'row',
     gap: SPACING.sm,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
+    padding: 4,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: 'rgba(128, 128, 128, 0.1)', // Subtle gray background for the toggle track
   },
   viewModeButton: {
     flex: 1,
-    paddingVertical: SPACING.sm,
+    paddingVertical: SPACING.sm + 2,
     paddingHorizontal: SPACING.md,
     borderRadius: BORDER_RADIUS.sm,
     alignItems: 'center',
+    // Default transparent
   },
   dateSelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.sm,
+    borderRadius: BORDER_RADIUS.md,
+    backgroundColor: 'rgba(128, 128, 128, 0.05)', // Very subtle background
   },
   dateArrow: {
-    padding: SPACING.xs,
+    padding: SPACING.sm,
+    borderRadius: BORDER_RADIUS.full,
+    backgroundColor: 'rgba(128, 128, 128, 0.1)', // Restore background with better styling
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dateInfo: {
     alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: SPACING.md,
   },
   todayBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: SPACING.xs,
-    borderRadius: BORDER_RADIUS.xs,
-    marginTop: SPACING.xs,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 1,
+    borderRadius: BORDER_RADIUS.sm,
+    marginTop: SPACING.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 1,
   },
   macroSection: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
   mealsSection: {
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
+    paddingHorizontal: SPACING.xs,
   },
   mealCard: {
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
     marginBottom: SPACING.md,
   },
@@ -705,42 +782,48 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
   },
   mealHeaderLeft: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: SPACING.sm,
+    gap: SPACING.md,
     flex: 1,
   },
   mealIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: BORDER_RADIUS.md,
+    width: 52,
+    height: 52,
+    borderRadius: BORDER_RADIUS.lg,
     alignItems: 'center',
     justifyContent: 'center',
   },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 999, // Ensure fully rounded
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
   },
   entriesList: {
-    marginBottom: SPACING.sm,
+    marginBottom: SPACING.md,
+    gap: SPACING.sm,
   },
   entryItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.sm,
-    marginBottom: SPACING.sm,
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.md,
+    marginBottom: SPACING.md,
   },
   foodImagePlaceholder: {
-    width: 50,
-    height: 50,
-    borderRadius: BORDER_RADIUS.sm,
+    width: 56,
+    height: 56,
+    borderRadius: BORDER_RADIUS.md,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -771,12 +854,16 @@ const styles = StyleSheet.create({
   mealTotals: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     marginTop: SPACING.md,
-    paddingTop: SPACING.md,
-    borderTopWidth: 1,
+    borderTopWidth: 0,
+    borderRadius: BORDER_RADIUS.md,
   },
   totalItem: {
     alignItems: 'center',
+    paddingVertical: SPACING.xs,
   },
   modalOverlay: {
     flex: 1,
@@ -795,37 +882,47 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   weeklyCard: {
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.md,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.lg,
     borderWidth: 1,
     marginBottom: SPACING.lg,
   },
   weeklyDayItem: {
-    padding: SPACING.md,
-    borderRadius: BORDER_RADIUS.sm,
+    padding: SPACING.lg,
+    borderRadius: BORDER_RADIUS.md,
     marginBottom: SPACING.md,
   },
   weeklyDayHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: SPACING.xs,
+    marginBottom: SPACING.sm,
   },
   weeklyDayMacros: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginTop: SPACING.sm,
+    marginTop: SPACING.md,
+    paddingTop: SPACING.md,
+    paddingHorizontal: SPACING.sm,
+    borderTopWidth: 0,
+    borderRadius: BORDER_RADIUS.md,
   },
   weeklyMacroItem: {
     alignItems: 'center',
+    paddingVertical: SPACING.xs,
   },
   progressBarContainer: {
     position: 'relative',
     width: '100%',
-    height: 8,
+    height: 10,
     borderRadius: BORDER_RADIUS.full,
     overflow: 'hidden',
     marginBottom: SPACING.sm,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 1,
+    elevation: 1,
   },
   progressBar: {
     position: 'absolute',
@@ -833,6 +930,10 @@ const styles = StyleSheet.create({
     top: 0,
     height: '100%',
     borderRadius: BORDER_RADIUS.full,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
   },
   weeklyOverflowBadge: {
     marginLeft: SPACING.xs,
