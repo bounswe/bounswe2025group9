@@ -136,8 +136,13 @@ const ProfileSettingsScreen: React.FC = () => {
       const name = uri.split('/').pop() || 'profile.jpg';
       const res = await userService.uploadProfilePhoto(uri, name);
       
+      // Add cache-busting parameter to force image reload
+      const cacheBustedUrl = res.profile_image 
+        ? `${res.profile_image}${res.profile_image.includes('?') ? '&' : '?'}t=${Date.now()}`
+        : res.profile_image;
+      
       // Update local state with the server response
-      setUser(prev => prev ? { ...prev, profile_image: res.profile_image } : prev);
+      setUser(prev => prev ? { ...prev, profile_image: cacheBustedUrl } : prev);
     } catch (error) {
       console.error('Error uploading profile photo:', error);
       Alert.alert('Error', 'Failed to upload profile photo');
