@@ -119,7 +119,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             </Text>
           </View>
           <TouchableOpacity 
-            style={styles.statusBadge}
+            style={[styles.statusBadge, { flexDirection: 'row', alignItems: 'center' }]}
             onPress={() => setSelectedNutrient(nutrient)}
             activeOpacity={0.7}
           >
@@ -132,6 +132,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <Text style={[textStyles.caption, { color, fontWeight: '700' }]}>
               {label}
             </Text>
+            <Icon name="information" size={12} color={theme.textSecondary} style={{ marginLeft: 4, opacity: 0.6 }} />
           </TouchableOpacity>
         </View>
 
@@ -258,7 +259,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
 
       {/* Warning Box */}
       <View style={[styles.warningBox, { backgroundColor: '#FFF7EB', borderLeftColor: theme.warning }]}>
-        <View style={[styles.iconContainer, { backgroundColor: theme.surface, borderColor: `${theme.warning}50`, borderWidth: 1, width: 40, height: 40, borderRadius: BORDER_RADIUS.full }]}>
+        <View style={[styles.iconContainer, { backgroundColor: theme.surface, borderColor: `${theme.warning}50`, borderWidth: 1, width: 40, height: 40, borderRadius: BORDER_RADIUS.round }]}>
           <Icon name="alert" size={20} color={theme.warning} />
         </View>
         <View style={styles.warningContent}>
@@ -427,7 +428,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     height: 10,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     overflow: 'hidden',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
@@ -440,7 +441,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     height: '100%',
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.12,
@@ -452,8 +453,8 @@ const styles = StyleSheet.create({
     top: 0,
     width: 4,
     height: '100%',
-    borderTopRightRadius: BORDER_RADIUS.full,
-    borderBottomRightRadius: BORDER_RADIUS.full,
+    borderTopRightRadius: BORDER_RADIUS.round,
+    borderBottomRightRadius: BORDER_RADIUS.round,
   },
   warningBox: {
     flexDirection: 'row',
@@ -497,7 +498,7 @@ const styles = StyleSheet.create({
   modalIconContainer: {
     width: 48,
     height: 48,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     alignItems: 'center',
     justifyContent: 'center',
   },

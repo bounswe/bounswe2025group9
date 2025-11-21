@@ -214,6 +214,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
         <TouchableOpacity 
           onPress={() => setShowInfoModal(true)}
           activeOpacity={0.7}
+          style={{ position: 'relative' }}
         >
           <Icon 
             name={getStatusIcon()} 
@@ -221,6 +222,16 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
             color={isOverTarget || isNearTarget ? statusColor : theme.textSecondary} 
             style={!isOverTarget && !isNearTarget ? { opacity: 0.4 } : undefined}
           />
+          <View style={{ 
+            position: 'absolute', 
+            bottom: -2, 
+            right: -2, 
+            backgroundColor: theme.surface,
+            borderRadius: 8,
+            padding: 1
+          }}>
+            <Icon name="information" size={12} color={theme.primary} style={{ opacity: 0.7 }} />
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -449,7 +460,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     flex: 1,
     height: 20,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     overflow: 'hidden',
     // Add subtle inner shadow for depth
     shadowColor: '#000',
@@ -463,7 +474,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     height: '100%',
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     // Add subtle glow effect
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
@@ -472,8 +483,8 @@ const styles = StyleSheet.create({
   },
   overflowExtension: {
     height: 20,
-    borderTopRightRadius: BORDER_RADIUS.full,
-    borderBottomRightRadius: BORDER_RADIUS.full,
+    borderTopRightRadius: BORDER_RADIUS.round,
+    borderBottomRightRadius: BORDER_RADIUS.round,
     marginLeft: -1, // Connects to main bar
     opacity: 0.75,
   },

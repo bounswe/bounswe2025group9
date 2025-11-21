@@ -29,6 +29,7 @@ const NutritionTrackingScreen: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showAddFood, setShowAddFood] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
+  const [selectedWeeklyDay, setSelectedWeeklyDay] = useState<{ log: DailyNutritionLog; percentage: number } | null>(null);
 
   // Format numbers to 1 decimal place
   const formatNumber = (num: number): string => {
@@ -144,6 +145,94 @@ const NutritionTrackingScreen: React.FC = () => {
     dinner: calculateMealTotals(dinnerEntries).calories,
   };
 
+  const getWeeklyDayDetailedInfo = (log: DailyNutritionLog, percentage: number) => {
+    const date = new Date(log.date);
+    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    const isLogToday = date.toDateString() === new Date().toDateString();
+    
+    const isVeryLow = percentage < 50;
+    const isLow = percentage >= 50 && percentage < 70;
+    const isFair = percentage >= 70 && percentage < 90;
+    const isOnTrack = percentage >= 90 && percentage <= 100;
+    const isMinorOver = percentage > 100 && percentage <= 110;
+    const isModerateOver = percentage > 110 && percentage <= 130;
+    const isSevereOver = percentage > 130;
+    
+    const remaining = targets.calories - log.total_calories;
+    const over = log.total_calories - targets.calories;
+    
+    if (percentage === 100) {
+      return {
+        title: `${dayName} - Perfect! 🎉`,
+        message: `You hit exactly ${formatNumber(log.total_calories)} calories, meeting your daily target perfectly! This is optimal for maintaining your health goals.${isLogToday ? '\n\nKeep up this excellent balance for the rest of today!' : ''}`,
+        icon: 'check-circle',
+        color: theme.success,
+      };
+    }
+    
+    if (isOnTrack) {
+      return {
+        title: `${dayName} - Almost There (${percentage}%)`,
+        message: `You consumed ${formatNumber(log.total_calories)} calories, which is ${formatNumber(remaining)} calories short of your ${formatNumber(targets.calories)} target. This is still within a healthy range.${isLogToday ? '\n\nJust a bit more to reach your goal!' : ''}`,
+        icon: 'chart-line',
+        color: theme.success,
+      };
+    }
+    
+    if (isFair) {
+      return {
+        title: `${dayName} - Fair Progress (${percentage}%)`,
+        message: `You've consumed ${formatNumber(log.total_calories)} of your ${formatNumber(targets.calories)} calorie target. You need ${formatNumber(remaining)} more calories.${isLogToday ? '\n\nTry to add more nutritious foods to your remaining meals today.' : '\n\nConsider adding more calorie-dense, healthy foods to meet your targets.'}`,
+        icon: 'alert',
+        color: theme.warning,
+      };
+    }
+    
+    if (isLow) {
+      return {
+        title: `${dayName} - Low (${percentage}%)`,
+        message: `You consumed only ${formatNumber(log.total_calories)} of your ${formatNumber(targets.calories)} calorie target. This is significantly low and may affect your energy levels and metabolism.${isLogToday ? '\n\nMake sure to eat substantial meals for the rest of the day.' : '\n\nConsistently low intake can impact your health negatively.'}`,
+        icon: 'alert-circle',
+        color: theme.error,
+      };
+    }
+    
+    if (isVeryLow) {
+      return {
+        title: `${dayName} - Very Low! (${percentage}%)`,
+        message: `You consumed only ${formatNumber(log.total_calories)} calories, which is critically below your ${formatNumber(targets.calories)} target. This level of intake is concerning and can harm your metabolism, energy levels, and overall health.${isLogToday ? '\n\nPlease ensure you eat adequate meals for the rest of today.' : '\n\nConsult a healthcare professional if this pattern continues.'}`,
+        icon: 'close-circle',
+        color: theme.error,
+      };
+    }
+    
+    if (isMinorOver) {
+      return {
+        title: `${dayName} - Slightly Over (${percentage}%)`,
+        message: `You consumed ${formatNumber(log.total_calories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targets.calories)} target. This is a minor excess and shouldn't be a major concern.${isLogToday ? '\n\nConsider lighter options for the rest of the day.' : '\n\nTry to balance this tomorrow with slightly reduced portions.'}`,
+        icon: 'alert',
+        color: theme.warning,
+      };
+    }
+    
+    if (isModerateOver) {
+      return {
+        title: `${dayName} - Moderately Over (${percentage}%)`,
+        message: `You consumed ${formatNumber(log.total_calories)} calories, exceeding your ${formatNumber(targets.calories)} target by ${formatNumber(over)} calories. This is a moderate excess that can impact your health goals.${isLogToday ? '\n\nConsider skipping snacks and choosing lighter options.' : '\n\nBalance this by reducing intake tomorrow and increasing physical activity.'}`,
+        icon: 'alert-circle',
+        color: theme.error,
+      };
+    }
+    
+    // Severe over
+    return {
+      title: `${dayName} - Significantly Over! (${percentage}%)`,
+      message: `You consumed ${formatNumber(log.total_calories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targets.calories)} target. This is a substantial excess that can significantly impact your health goals.${isLogToday ? '\n\nPlease avoid additional meals and snacks for the rest of today.' : '\n\nFocus on portion control, increase physical activity, and aim to balance this over the next few days.'}`,
+      icon: 'alert',
+      color: '#dc2626',
+    };
+  };
+
   const renderWeeklySummary = () => {
     const weekStart = getWeekStart(selectedDate);
     const weekLogs = [...mockHistoricalLogs, todayLog].filter(log => {
@@ -217,19 +306,26 @@ const NutritionTrackingScreen: React.FC = () => {
                     </View>
                   )}
                 </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text 
-                    style={[
-                      textStyles.body,
-                      { 
-                        color: statusColor,
-                        fontWeight: '700',
-                        fontSize: 16
-                      }
-                    ]}
-                  >
-                    {caloriePercent}%
-                  </Text>
+                <TouchableOpacity 
+                  style={{ alignItems: 'flex-end' }}
+                  onPress={() => setSelectedWeeklyDay({ log, percentage: caloriePercent })}
+                  activeOpacity={0.7}
+                >
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                    <Text 
+                      style={[
+                        textStyles.body,
+                        { 
+                          color: statusColor,
+                          fontWeight: '700',
+                          fontSize: 16
+                        }
+                      ]}
+                    >
+                      {caloriePercent}%
+                    </Text>
+                    <Icon name="information-outline" size={16} color={theme.textSecondary} style={{ opacity: 0.6 }} />
+                  </View>
                   {/* Only show checkmark when actually met (100%) */}
                   {caloriePercent === 100 && (
                     <Icon name="check-circle" size={14} color={theme.success} style={{ marginTop: 2 }} />
@@ -242,7 +338,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   {isVeryLow && (
                     <Icon name="alert-circle" size={14} color={theme.error} style={{ marginTop: 2 }} />
                   )}
-                </View>
+                </TouchableOpacity>
               </View>
               
               <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.md, fontWeight: '500' }]}>
@@ -679,6 +775,78 @@ const NutritionTrackingScreen: React.FC = () => {
           </View>
         </View>
       </Modal>
+
+      {/* Weekly Day Info Modal */}
+      {selectedWeeklyDay && (
+        <Modal
+          visible={selectedWeeklyDay !== null}
+          animationType="fade"
+          transparent={true}
+          onRequestClose={() => setSelectedWeeklyDay(null)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.weeklyInfoModalContent, { backgroundColor: theme.surface }]}>
+              <View style={styles.modalHeader}>
+                <View style={[
+                  styles.modalIconContainer, 
+                  { 
+                    backgroundColor: theme.surface,
+                    borderColor: `${getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color}50`,
+                    borderWidth: 1,
+                  }
+                ]}>
+                  <Icon 
+                    name={getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).icon as React.ComponentProps<typeof Icon>['name']} 
+                    size={24} 
+                    color={getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color} 
+                  />
+                </View>
+                <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.md, flex: 1 }]}>
+                  {getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).title}
+                </Text>
+              </View>
+              
+              <Text style={[textStyles.body, { color: theme.textSecondary, lineHeight: 22, marginTop: SPACING.md }]}>
+                {getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).message}
+              </Text>
+              
+              <View style={styles.weeklyModalStats}>
+                <View style={styles.weeklyModalStatItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Consumed</Text>
+                  <Text style={[textStyles.heading4, { color: theme.primary }]}>
+                    {formatNumber(selectedWeeklyDay.log.total_calories)} kcal
+                  </Text>
+                </View>
+                <View style={styles.weeklyModalStatItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Target</Text>
+                  <Text style={[textStyles.heading4, { color: theme.text }]}>
+                    {formatNumber(targets.calories)} kcal
+                  </Text>
+                </View>
+                <View style={styles.weeklyModalStatItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                    {selectedWeeklyDay.percentage > 100 ? 'Over' : 'Remaining'}
+                  </Text>
+                  <Text style={[textStyles.heading4, { color: getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color }]}>
+                    {selectedWeeklyDay.percentage > 100 
+                      ? formatNumber(selectedWeeklyDay.log.total_calories - targets.calories)
+                      : formatNumber(targets.calories - selectedWeeklyDay.log.total_calories)
+                    } kcal
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[styles.modalButton, { backgroundColor: theme.primary }]}
+                onPress={() => setSelectedWeeklyDay(null)}
+                activeOpacity={0.8}
+              >
+                <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Got it</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+      )}
     </SafeAreaView>
   );
 };
@@ -739,7 +907,7 @@ const styles = StyleSheet.create({
   },
   dateArrow: {
     padding: SPACING.sm,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     backgroundColor: 'rgba(128, 128, 128, 0.1)', // Restore background with better styling
     alignItems: 'center',
     justifyContent: 'center',
@@ -881,6 +1049,41 @@ const styles = StyleSheet.create({
     borderRadius: BORDER_RADIUS.sm,
     alignItems: 'center',
   },
+  weeklyInfoModalContent: {
+    width: '100%',
+    maxWidth: 400,
+    borderRadius: BORDER_RADIUS.lg,
+    padding: SPACING.xl,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  modalIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: BORDER_RADIUS.round,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  weeklyModalStats: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.xl,
+    marginBottom: SPACING.xl,
+    paddingTop: SPACING.lg,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  weeklyModalStatItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
   weeklyCard: {
     padding: SPACING.lg,
     borderRadius: BORDER_RADIUS.lg,
@@ -915,7 +1118,7 @@ const styles = StyleSheet.create({
     position: 'relative',
     width: '100%',
     height: 10,
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     overflow: 'hidden',
     marginBottom: SPACING.sm,
     shadowColor: '#000',
@@ -929,7 +1132,7 @@ const styles = StyleSheet.create({
     left: 0,
     top: 0,
     height: '100%',
-    borderRadius: BORDER_RADIUS.full,
+    borderRadius: BORDER_RADIUS.round,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.15,
