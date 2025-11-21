@@ -11,6 +11,7 @@ import HomeScreen from '../screens/HomeScreen';
 import ForumScreen from '../screens/forum/ForumScreen';
 import PostDetailScreen from '../screens/forum/PostDetailScreen';
 import CreatePostScreen from '../screens/forum/CreatePostScreen';
+import FeedScreen from '../screens/forum/FeedScreen';
 import UserProfileScreen from '../screens/user/UserProfileScreen';
 import MyProfileScreen from '../screens/user/MyProfileScreen';
 import FoodScreen from '../screens/food/FoodScreen';
@@ -27,6 +28,8 @@ import LikedRecipesScreen from '../screens/user/LikedRecipesScreen';
 import ProfessionTagsScreen from '../screens/user/ProfessionTagsScreen';
 import AccountWarningsScreen from '../screens/user/AccountWarningsScreen';
 import ReportUserScreen from '../screens/user/ReportUserScreen';
+import FollowersListScreen from '../screens/user/FollowersListScreen';
+import FollowingListScreen from '../screens/user/FollowingListScreen';
 
 import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
@@ -110,6 +113,8 @@ const ForumStackNavigator = () => {
       <ForumStack.Screen name="PostDetail" component={PostDetailScreen} />
       <ForumStack.Screen name="CreatePost" component={CreatePostScreen} />
       <ForumStack.Screen name="UserProfile" component={UserProfileScreen} />
+      <ForumStack.Screen name="FollowersList" component={FollowersListScreen} />
+      <ForumStack.Screen name="FollowingList" component={FollowingListScreen} />
     </ForumStack.Navigator>
   );
 };
@@ -142,53 +147,68 @@ const ProfileStackNavigator = () => {
   );
 };
 
-const MainTabNavigator = () => {
+// Root Stack that wraps tabs and modal screens
+const RootStack = createNativeStackNavigator<MainTabParamList>();
+
+const TabNavigator = () => {
   const { theme } = useTheme();
   
   return (
+    <Tab.Navigator
+      screenOptions={({ route }) => ({ 
+        headerShown: false, 
+        tabBarActiveTintColor: theme.tabBarActiveColor,
+        tabBarInactiveTintColor: theme.tabBarInactiveColor,
+        tabBarStyle: {
+          backgroundColor: theme.tabBarBackground,
+          borderTopColor: 'transparent',
+          elevation: 8,
+          shadowColor: PALETTE.NEUTRAL.BLACK,
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+        },
+        tabBarLabelStyle: {
+          paddingBottom: SPACING.xs,
+          fontWeight: '500',
+        },
+        tabBarIcon: ({ color, size, focused }) => {
+          let iconName: React.ComponentProps<typeof Icon>['name'];
+          if (route.name === 'Home') {
+            iconName = focused ? 'home' : 'home-outline';
+          } else if (route.name === 'Food') {
+            iconName = focused ? 'food-apple' : 'food-apple-outline';
+          } else if (route.name === 'Forum') {
+            iconName = focused ? 'forum' : 'forum-outline';
+          } else if (route.name === 'MyProfile') {
+            iconName = focused ? 'account' : 'account-outline';
+          } else {
+            iconName = 'help-circle'; 
+          }
+          return <Icon name={iconName} size={focused? 26 : 24} color={color} />;
+        },
+      })}
+    >
+      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Food" component={FoodStackNavigator} />
+      <Tab.Screen name="Forum" component={ForumStackNavigator} />
+      <Tab.Screen name="MyProfile" component={ProfileStackNavigator} />
+    </Tab.Navigator>
+  );
+};
+
+const MainTabNavigator = () => {
+  return (
     <View style={{ flex: 1 }}>
       <Header />
-      <Tab.Navigator
-        screenOptions={({ route }) => ({ 
-          headerShown: false, 
-          tabBarActiveTintColor: theme.tabBarActiveColor,
-          tabBarInactiveTintColor: theme.tabBarInactiveColor,
-          tabBarStyle: {
-            backgroundColor: theme.tabBarBackground,
-            borderTopColor: 'transparent',
-            elevation: 8,
-            shadowColor: PALETTE.NEUTRAL.BLACK,
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-          },
-          tabBarLabelStyle: {
-            paddingBottom: SPACING.xs,
-            fontWeight: '500',
-          },
-          tabBarIcon: ({ color, size, focused }) => {
-            let iconName: React.ComponentProps<typeof Icon>['name'];
-            if (route.name === 'Home') {
-              iconName = focused ? 'home' : 'home-outline';
-            } else if (route.name === 'Food') {
-              iconName = focused ? 'food-apple' : 'food-apple-outline';
-            } else if (route.name === 'Forum') {
-              iconName = focused ? 'forum' : 'forum-outline';
-            } else if (route.name === 'MyProfile') {
-              iconName = focused ? 'account' : 'account-outline';
-            } else {
-              iconName = 'help-circle'; 
-            }
-            return <Icon name={iconName} size={focused? 26 : 24} color={color} />;
-          },
-        })}
-      >
-        {/* Define Screens within the Tab Navigator */}
-        <Tab.Screen name="Home" component={HomeScreen} />
-        <Tab.Screen name="Food" component={FoodStackNavigator} />
-        <Tab.Screen name="Forum" component={ForumStackNavigator} />
-        <Tab.Screen name="MyProfile" component={ProfileStackNavigator} />
-      </Tab.Navigator>
+      <RootStack.Navigator screenOptions={{ headerShown: false, presentation: 'card' }}>
+        <RootStack.Screen name="Home" component={TabNavigator} />
+        <RootStack.Screen name="PostDetail" component={PostDetailScreen} />
+        <RootStack.Screen name="UserProfile" component={UserProfileScreen} />
+        <RootStack.Screen name="Feed" component={FeedScreen} />
+        <RootStack.Screen name="FollowersList" component={FollowersListScreen} />
+        <RootStack.Screen name="FollowingList" component={FollowingListScreen} />
+      </RootStack.Navigator>
     </View>
   );
 };

@@ -238,4 +238,45 @@ export const userService = {
     const data = await response.json();
     return normalizeTagResponse(data);
   },
+
+  /**
+   * Follow or unfollow a user (toggle)
+   * @param username - Username of the user to follow/unfollow
+   * @returns Response message indicating success
+   */
+  async toggleFollow(username: string): Promise<{ message: string }> {
+    const response = await apiClient.post<{ message: string }>('/users/follow/', { username });
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    return response.data!;
+  },
+
+  /**
+   * Get list of followers for a user
+   * @param username - Username of the user
+   * @returns Array of User objects representing followers
+   */
+  async getFollowers(username: string): Promise<User[]> {
+    const response = await apiClient.get<any[]>(`/users/followers/${username}/`);
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    const followers = Array.isArray(response.data) ? response.data : [];
+    return followers.map(normalizeUserProfile);
+  },
+
+  /**
+   * Get list of users that a user is following
+   * @param username - Username of the user
+   * @returns Array of User objects representing following
+   */
+  async getFollowing(username: string): Promise<User[]> {
+    const response = await apiClient.get<any[]>(`/users/following/${username}/`);
+    if (response.error) {
+      throw new Error(response.error);
+    }
+    const following = Array.isArray(response.data) ? response.data : [];
+    return following.map(normalizeUserProfile);
+  },
 };
