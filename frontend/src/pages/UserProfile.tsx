@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import ForumPostCard from '../components/ForumPostCard'
-import { User, Certificate, ArrowLeft } from '@phosphor-icons/react'
+import { User, Certificate, ArrowLeft, UserPlus, UserMinus } from '@phosphor-icons/react'
 import { apiClient, ForumPost, UserResponse } from '../lib/apiClient'
 import { notifyLikeChange } from '../lib/likeNotifications'
+import { useAuth } from '../context/AuthContext'
 
 interface ProfessionTag {
   id?: number
@@ -15,6 +16,7 @@ interface ProfessionTag {
 const UserProfile = () => {
   const { username } = useParams<{ username: string }>()
   const navigate = useNavigate()
+  const { user: currentUser } = useAuth()
 
   const [userProfile, setUserProfile] = useState<UserResponse | null>(null)
   const [activeTab, setActiveTab] = useState<'posts' | 'tags'>('posts')
@@ -23,6 +25,11 @@ const UserProfile = () => {
   const [likedPostsMap, setLikedPostsMap] = useState<{[key: number]: boolean}>({})
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState('')
+  const [isFollowing, setIsFollowing] = useState(false)
+  const [followersCount, setFollowersCount] = useState(0)
+  const [followingCount, setFollowingCount] = useState(0)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [followSuccess, setFollowSuccess] = useState<string | null>(null)
 
   useEffect(() => {
     if (username) {
@@ -62,6 +69,35 @@ const UserProfile = () => {
         likedMap[post.id] = post.liked || false
       })
       setLikedPostsMap(likedMap)
+
+      // Load followers and following counts
+      try {
+        const [followersData, followingData] = await Promise.all([
+          apiClient.getFollowers(username),
+          apiClient.getFollowing(username)
+        ])
+        
+        console.log('[UserProfile] Followers data:', followersData)
+        console.log('[UserProfile] Current user:', currentUser?.username)
+        
+        // The API returns an array directly, not an object with followers property
+        const followers = Array.isArray(followersData) ? followersData : (followersData.followers || [])
+        const following = Array.isArray(followingData) ? followingData : (followingData.following || [])
+        
+        setFollowersCount(followers.length)
+        setFollowingCount(following.length)
+
+        // Check if current user is following this user
+        if (currentUser && followers.length > 0) {
+          const isCurrentUserFollowing = followers.some(
+            (follower: any) => follower.username === currentUser.username
+          )
+          console.log('[UserProfile] Is following:', isCurrentUserFollowing)
+          setIsFollowing(isCurrentUserFollowing)
+        }
+      } catch (err) {
+        console.error('Error loading follow data:', err)
+      }
     } catch (err: any) {
       console.error('Error loading user profile:', err)
       setError('Failed to load user profile. User may not exist.')
@@ -105,6 +141,48 @@ const UserProfile = () => {
       notifyLikeChange(postId, isLiked, newLikeCount, 'post')
     } catch (err: any) {
       console.error('Error toggling like:', err)
+    }
+  }
+
+  const handleFollowToggle = async () => {
+    if (!username || !currentUser) return
+
+    setFollowLoading(true)
+    setFollowSuccess(null)
+    console.log('[UserProfile] Toggling follow for:', username, 'Current state:', isFollowing)
+    
+    try {
+      const response = await apiClient.toggleFollowUser(username)
+      console.log('[UserProfile] Follow response:', response)
+      
+      // The backend returns a message, not a following boolean
+      // We need to determine the new state based on the message or toggle the current state
+      const newFollowingState = !isFollowing
+      setIsFollowing(newFollowingState)
+      
+      // Update followers count and show success message
+      if (newFollowingState) {
+        setFollowersCount(prev => prev + 1)
+        setFollowSuccess(`You are now following @${username}`)
+        console.log('[UserProfile] Now following', username)
+      } else {
+        setFollowersCount(prev => Math.max(0, prev - 1))
+        setFollowSuccess(`You unfollowed @${username}`)
+        console.log('[UserProfile] Unfollowed', username)
+      }
+      
+      // Set flag to refresh personalized feed (for both follow and unfollow)
+      localStorage.setItem('nutriHub_feedNeedsRefresh', 'true')
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setFollowSuccess(null)
+      }, 3000)
+    } catch (err) {
+      console.error('[UserProfile] Error toggling follow:', err)
+      alert('Failed to update follow status. Please try again.')
+    } finally {
+      setFollowLoading(false)
     }
   }
 
@@ -187,15 +265,68 @@ const UserProfile = () => {
                   )}
                 </div>
 
+                {/* Follow Button (only show if not viewing own profile) */}
+                {currentUser && currentUser.username !== userProfile.username && (
+                  <div className="mt-4 space-y-2">
+                    <button
+                      onClick={handleFollowToggle}
+                      disabled={followLoading}
+                      className={`w-full flex items-center justify-center gap-2 px-4 py-3 rounded-lg font-medium transition-all shadow-sm hover:shadow ${
+                        followLoading ? 'opacity-50 cursor-not-allowed' : ''
+                      } ${
+                        isFollowing
+                          ? 'bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600'
+                          : 'nh-button nh-button-primary'
+                      }`}
+                      style={followLoading ? { pointerEvents: 'none' } : {}}
+                    >
+                      {followLoading ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
+                          <span>{isFollowing ? 'Unfollowing...' : 'Following...'}</span>
+                        </>
+                      ) : isFollowing ? (
+                        <>
+                          <UserMinus size={18} weight="fill" />
+                          <span>Following</span>
+                        </>
+                      ) : (
+                        <>
+                          <UserPlus size={18} weight="fill" />
+                          <span>Follow</span>
+                        </>
+                      )}
+                    </button>
+                    
+                    {/* Success Message */}
+                    {followSuccess && (
+                      <div className="px-3 py-2 rounded-lg text-sm text-center animate-fade-in" style={{
+                        backgroundColor: 'var(--color-success)',
+                        color: 'white'
+                      }}>
+                        {followSuccess}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Stats */}
-                <div className="mt-6 pt-4 flex gap-4 text-center" style={{
+                <div className="mt-6 pt-4 grid grid-cols-2 gap-4 text-center" style={{
                   borderTop: '1px solid var(--forum-search-border)'
                 }}>
-                  <div className="flex-1">
+                  <div>
+                    <div className="text-2xl font-bold text-primary">{followersCount}</div>
+                    <div className="nh-text text-sm">Followers</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-primary">{followingCount}</div>
+                    <div className="nh-text text-sm">Following</div>
+                  </div>
+                  <div>
                     <div className="text-2xl font-bold text-primary">{userPosts.length}</div>
                     <div className="nh-text text-sm">Posts</div>
                   </div>
-                  <div className="flex-1">
+                  <div>
                     <div className="text-2xl font-bold text-primary">{professionTags.length}</div>
                     <div className="nh-text text-sm">Tags</div>
                   </div>

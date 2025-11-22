@@ -8,8 +8,8 @@ This document provides a comprehensive overview of **all 16 Selenium E2E test fi
 
 ## 📊 Test Suite Statistics
 
-- **Total Test Files:** 16
-- **Total Test Cases:** ~167
+- **Total Test Files:** 17
+- **Total Test Cases:** ~177
 - **Execution Time:** ~3-5 minutes (full suite)
 - **Browser:** Chrome (headless by default)
 - **Test Framework:** Vitest + Selenium WebDriver
@@ -18,9 +18,29 @@ This document provides a comprehensive overview of **all 16 Selenium E2E test fi
 
 ## 🧪 All Test Files
 
+### **Social Features Tests**
+
+#### 1. **FollowSystem.selenium.test.ts** ✅
+**Location:** `src/test/selenium/FollowSystem.selenium.test.ts`
+
+Tests user follow/unfollow functionality:
+- Follow button displays on other user profiles
+- Toggle follow status when clicking button
+- Success message after following/unfollowing
+- Followers count updates after following
+- Loading state while following
+- Followers and following counts display
+- No follow button on own profile
+- Unfollowing a user works correctly
+- Navigation to user profile from post author link
+
+**Test Count:** 10 tests
+
+---
+
 ### **Authentication Tests**
 
-#### 1. **Login.selenium.test.ts** ✅
+#### 3. **Login.selenium.test.ts** ✅
 **Location:** `src/test/selenium/Login.selenium.test.ts`
 
 Tests login page functionality:
@@ -34,7 +54,7 @@ Tests login page functionality:
 
 ---
 
-#### 2. **Signup.selenium.test.ts** ✅
+#### 4. **Signup.selenium.test.ts** ✅
 **Location:** `src/test/selenium/Signup.selenium.test.ts`
 
 Tests registration page:
@@ -51,7 +71,7 @@ Tests registration page:
 
 ### **Forum Tests**
 
-#### 3. **Forum.selenium.test.ts** ✅
+#### 5. **Forum.selenium.test.ts** ✅
 **Location:** `src/test/selenium/Forum.selenium.test.ts`
 
 Tests forum browsing:
@@ -66,7 +86,7 @@ Tests forum browsing:
 
 ---
 
-#### 4. **CreatePost.selenium.test.ts** ✅
+#### 6. **CreatePost.selenium.test.ts** ✅
 **Location:** `src/test/selenium/CreatePost.selenium.test.ts`
 
 Tests post creation (protected route):
@@ -80,7 +100,7 @@ Tests post creation (protected route):
 
 ---
 
-#### 5. **PostDetail.selenium.test.ts** ✅
+#### 7. **PostDetail.selenium.test.ts** ✅
 **Location:** `src/test/selenium/PostDetail.selenium.test.ts`
 
 Tests post detail page with comments:
@@ -103,7 +123,7 @@ Tests post detail page with comments:
 
 ---
 
-#### 6. **PostInteraction.selenium.test.ts** ✅
+#### 8. **PostInteraction.selenium.test.ts** ✅
 **Location:** `src/test/selenium/PostInteraction.selenium.test.ts`
 
 Tests liking posts and interactions:
@@ -124,7 +144,7 @@ Tests liking posts and interactions:
 
 ---
 
-#### 7. **RecipeCreation.selenium.test.ts** ✅
+#### 9. **RecipeCreation.selenium.test.ts** ✅
 **Location:** `src/test/selenium/RecipeCreation.selenium.test.ts`
 
 Tests recipe creation with ingredients:
@@ -148,7 +168,7 @@ Tests recipe creation with ingredients:
 
 ### **Foods Tests**
 
-#### 8. **Foods.selenium.test.ts** ✅
+#### 10. **Foods.selenium.test.ts** ✅
 **Location:** `src/test/selenium/Foods.selenium.test.ts`
 
 Tests food browsing:
@@ -164,7 +184,7 @@ Tests food browsing:
 
 ---
 
-#### 9. **FoodDetail.selenium.test.ts** ✅
+#### 11. **FoodDetail.selenium.test.ts** ✅
 **Location:** `src/test/selenium/FoodDetail.selenium.test.ts`
 
 Tests food detail page comprehensively:
@@ -187,7 +207,7 @@ Tests food detail page comprehensively:
 
 ---
 
-#### 10. **FoodProposal.selenium.test.ts** ✅
+#### 12. **FoodProposal.selenium.test.ts** ✅
 **Location:** `src/test/selenium/FoodProposal.selenium.test.ts`
 
 Tests food proposal submission:
@@ -215,7 +235,7 @@ Tests food proposal submission:
 
 ### **Meal Planner Tests**
 
-#### 11. **MealPlanner.selenium.test.ts** ✅
+#### 13. **MealPlanner.selenium.test.ts** ✅
 **Location:** `src/test/selenium/MealPlanner.selenium.test.ts`
 
 Tests meal planner page features:
@@ -237,7 +257,7 @@ Tests meal planner page features:
 
 ---
 
-#### 12. **MealPlannerActions.selenium.test.ts** ✅
+#### 14. **MealPlannerActions.selenium.test.ts** ✅
 **Location:** `src/test/selenium/MealPlannerActions.selenium.test.ts`
 
 Tests adding meals to planner:
@@ -265,7 +285,7 @@ Tests adding meals to planner:
 
 ### **Profile Tests**
 
-#### 13. **Profile.selenium.test.ts** ✅
+#### 15. **Profile.selenium.test.ts** ✅
 **Location:** `src/test/selenium/Profile.selenium.test.ts`
 
 Tests profile page functionality:
@@ -285,7 +305,7 @@ Tests profile page functionality:
 
 ### **Navigation & UI Tests**
 
-#### 14. **Navigation.selenium.test.ts** ✅
+#### 16. **Navigation.selenium.test.ts** ✅
 **Location:** `src/test/selenium/Navigation.selenium.test.ts`
 
 Tests app navigation:
@@ -302,7 +322,7 @@ Tests app navigation:
 
 ---
 
-#### 15. **ThemeToggle.selenium.test.ts** ✅
+#### 17. **ThemeToggle.selenium.test.ts** ✅
 **Location:** `src/test/selenium/ThemeToggle.selenium.test.ts`
 
 Tests theme switching:
@@ -318,7 +338,7 @@ Tests theme switching:
 
 ### **User Flow Tests**
 
-#### 16. **UserFlow.selenium.test.ts** ✅
+#### 18. **UserFlow.selenium.test.ts** ✅
 **Location:** `src/test/selenium/UserFlow.selenium.test.ts`
 
 Tests multi-page user flows:
@@ -578,6 +598,7 @@ if (loginForm.length === 0) {
 
 | Feature Area | Test Files | Test Cases | Coverage |
 |--------------|------------|------------|----------|
+| Social Features | 1 | 10 | ✅ Complete |
 | Authentication | 2 | 10 | ✅ Complete |
 | Forum & Posts | 5 | 58 | ✅ Complete |
 | Foods | 3 | 38 | ✅ Complete |
@@ -585,7 +606,7 @@ if (loginForm.length === 0) {
 | Profile | 1 | 10 | ✅ Complete |
 | Navigation & UI | 2 | 13 | ✅ Complete |
 | User Flows | 1 | 14 | ✅ Complete |
-| **Total** | **16** | **~167** | **✅ Complete** |
+| **Total** | **17** | **~177** | **✅ Complete** |
 
 ---
 
@@ -646,8 +667,8 @@ When adding new tests:
 
 ---
 
-**Last Updated:** November 11, 2025  
+**Last Updated:** November 22, 2025  
 **Maintained By:** Development Team  
-**Status:** ✅ Complete - All 16 test files operational  
-**Coverage:** ~167 test cases across all major features
+**Status:** ✅ Complete - All 17 test files operational  
+**Coverage:** ~177 test cases across all major features including social features
 

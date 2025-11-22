@@ -739,6 +739,38 @@ export const apiClient = {
     });
   },
   
+  // Follow system
+  toggleFollowUser: (username: string) => {
+    console.log(`[API] Toggling follow for user: ${username}`);
+    return fetchJson<{ message: string }>("/users/follow/", {
+      method: "POST",
+      body: JSON.stringify({ username })
+    }, true).then(response => {
+      console.log(`[API] Toggle follow response:`, response);
+      return response;
+    });
+  },
+
+  getFollowers: (username: string) => {
+    console.log(`[API] Fetching followers for user: ${username}`);
+    return fetchJson<{ followers: Array<{ id: number; username: string; profile_image?: string }> }>(`/users/followers/${username}/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received followers:`, response);
+      return response;
+    });
+  },
+
+  getFollowing: (username: string) => {
+    console.log(`[API] Fetching following for user: ${username}`);
+    return fetchJson<{ following: Array<{ id: number; username: string; profile_image?: string }> }>(`/users/following/${username}/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received following:`, response);
+      return response;
+    });
+  },
+
   // logout endpoint
   logout: (refreshToken: string) => {
     console.log('[API] Logging out on the server');
