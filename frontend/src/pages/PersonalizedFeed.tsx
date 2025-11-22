@@ -272,8 +272,17 @@ const PersonalizedFeed = () => {
 
     // Check if user is following the post author or has liked the post
     const getPostBadge = (post: ForumPost) => {
-        // You can extend this logic based on additional data from backend
-        // For now, we'll show badges based on liked status
+        // Check if this is the user's own post
+        if (post.author.username === username) {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
+                    <Sparkle size={12} weight="fill" />
+                    <span>Posts from you</span>
+                </div>
+            );
+        }
+        
+        // Check if user has liked this post
         if (likedPosts[post.id]) {
             return (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
@@ -286,7 +295,7 @@ const PersonalizedFeed = () => {
         // If the post is in the feed, it means either:
         // 1. It's from someone the user follows
         // 2. The user has liked it
-        // Since we already checked for liked, this must be from a followed user
+        // Since we already checked for liked and own posts, this must be from a followed user
         return (
             <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
                 <UserCircle size={12} weight="fill" />
