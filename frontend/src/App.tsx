@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import MainLayout from './components/MainLayout'
 import Home from './pages/Home'
+import PersonalizedFeed from './pages/PersonalizedFeed'
 import Login from './pages/auth/Login'
 import Signup from './pages/auth/Signup'
 import Foods from './pages/foods/Foods'
@@ -33,7 +34,8 @@ function App() {
             
             {/* Protected Routes - all other routes including home */}
             <Route element={<ProtectedRoute />}>
-              <Route index element={<Home />} />
+              <Route index element={<PersonalizedFeed />} />
+              <Route path="home" element={<Home />} />
               <Route path="foods" element={<Foods />} />
               <Route path="foods/propose" element={<ProposeNewFood />} />
               <Route path="foods/compare" element={<FoodCompare />} />
