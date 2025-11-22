@@ -297,6 +297,19 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       throw error;
     }
 
+    // Handle empty responses (like 204 No Content for DELETE requests)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      console.log(`Response from ${options?.method || 'GET'} ${url}: No content`);
+      return undefined as T;
+    }
+
+    // Check if response has content before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log(`Response from ${options?.method || 'GET'} ${url}: Non-JSON content`);
+      return undefined as T;
+    }
+
     const data = await response.json();
     console.log(`Response from ${options?.method || 'GET'} ${url}:`, data);
     return data as T;
