@@ -76,14 +76,23 @@ const UserProfile = () => {
           apiClient.getFollowers(username),
           apiClient.getFollowing(username)
         ])
-        setFollowersCount(followersData.followers?.length || 0)
-        setFollowingCount(followingData.following?.length || 0)
+        
+        console.log('[UserProfile] Followers data:', followersData)
+        console.log('[UserProfile] Current user:', currentUser?.username)
+        
+        // The API returns an array directly, not an object with followers property
+        const followers = Array.isArray(followersData) ? followersData : (followersData.followers || [])
+        const following = Array.isArray(followingData) ? followingData : (followingData.following || [])
+        
+        setFollowersCount(followers.length)
+        setFollowingCount(following.length)
 
         // Check if current user is following this user
-        if (currentUser && followersData.followers) {
-          const isCurrentUserFollowing = followersData.followers.some(
+        if (currentUser && followers.length > 0) {
+          const isCurrentUserFollowing = followers.some(
             (follower: any) => follower.username === currentUser.username
           )
+          console.log('[UserProfile] Is following:', isCurrentUserFollowing)
           setIsFollowing(isCurrentUserFollowing)
         }
       } catch (err) {
@@ -155,14 +164,15 @@ const UserProfile = () => {
       if (newFollowingState) {
         setFollowersCount(prev => prev + 1)
         setFollowSuccess(`You are now following @${username}`)
-        // Set flag to refresh personalized feed
-        localStorage.setItem('nutriHub_feedNeedsRefresh', 'true')
         console.log('[UserProfile] Now following', username)
       } else {
         setFollowersCount(prev => Math.max(0, prev - 1))
         setFollowSuccess(`You unfollowed @${username}`)
         console.log('[UserProfile] Unfollowed', username)
       }
+      
+      // Set flag to refresh personalized feed (for both follow and unfollow)
+      localStorage.setItem('nutriHub_feedNeedsRefresh', 'true')
 
       // Clear success message after 3 seconds
       setTimeout(() => {
