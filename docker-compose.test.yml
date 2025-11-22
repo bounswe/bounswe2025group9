@@ -1,0 +1,31 @@
+version: '3.8'
+
+services:
+  # Selenium Chrome for testing
+  selenium-chrome:
+    image: selenium/standalone-chrome:latest
+    container_name: selenium-chrome
+    ports:
+      - "4444:4444"
+      - "7900:7900"  # VNC port to watch tests
+    shm_size: 2gb
+    environment:
+      - SE_NODE_MAX_SESSIONS=5
+      - SE_NODE_SESSION_TIMEOUT=300
+
+  # Frontend test runner
+  frontend-tests:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.test
+    container_name: frontend-tests
+    depends_on:
+      - selenium-chrome
+      - frontend
+    environment:
+      - SELENIUM_REMOTE_URL=http://selenium-chrome:4444
+      - BASE_URL=http://frontend:80
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm test -- src/test/selenium/PersonalizedFeed.selenium.test.ts
