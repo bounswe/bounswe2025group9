@@ -345,21 +345,34 @@ class FoodLoader:
         serving_size = self.extract_serving_size(food_data)
         nutrients = self.extract_nutrients(food_data)
 
+        # IMPORTANT: Nutrients in the JSON are per 100g, but our database stores per serving.
+        # Normalize nutrient values from per 100g to per serving.
+        normalization_factor = serving_size / 100.0
+        normalized_calories = round(nutrients["calories"] * normalization_factor, 1)
+        normalized_protein = round(nutrients["protein"] * normalization_factor, 1)
+        normalized_fat = round(nutrients["fat"] * normalization_factor, 1)
+        normalized_carbs = round(nutrients["carbs"] * normalization_factor, 1)
+
+        # Normalize micronutrients as well
+        normalized_micronutrients = {}
+        for key, value in nutrients["micronutrients"].items():
+            normalized_micronutrients[key] = round(value * normalization_factor, 1)
+
         # Infer dietary options and allergens
         dietary_options = self.infer_dietary_options(name)
         allergen_names = self.infer_allergens(name)
 
-        # Create or update the FoodEntry
+        # Create or update the FoodEntry with normalized nutritional values
         food_entry, created = FoodEntry.objects.update_or_create(
             name=name,
             defaults={
                 "category": category,
                 "servingSize": serving_size,
-                "caloriesPerServing": nutrients["calories"],
-                "proteinContent": nutrients["protein"],
-                "fatContent": nutrients["fat"],
-                "carbohydrateContent": nutrients["carbs"],
-                "micronutrients": nutrients["micronutrients"],
+                "caloriesPerServing": normalized_calories,
+                "proteinContent": normalized_protein,
+                "fatContent": normalized_fat,
+                "carbohydrateContent": normalized_carbs,
+                "micronutrients": normalized_micronutrients,
                 "dietaryOptions": dietary_options,
                 "nutritionScore": 0.0,  # Temporary, will recalculate below
                 "imageUrl": "",
