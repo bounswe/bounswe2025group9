@@ -2,27 +2,58 @@
 
 from django.db import migrations
 import os
-import sys
+import zipfile
 from api.db_initialization.load_food_from_json import FoodLoader
 
 
 def load_food_data(apps, schema_editor):
     """
     Load USDA FDC food data using the standalone FoodLoader script.
+    Checks if JSON file is already unzipped, otherwise unzips the zip file.
     """
 
-    # Path to your JSON file
-    json_path = os.path.join(
-        os.path.dirname(__file__), "../../api/db_initialization/NewFoodDatabase.json"
-    )
+    # Path to the JSON file and zip file
+    db_init_dir = os.path.join(os.path.dirname(__file__), "../../api/db_initialization")
+    json_path = os.path.join(db_init_dir, "NewFoodDatabase.json")
+    zip_path = os.path.join(db_init_dir, "NewFoodDatabase.json.zip")
 
+    json_path = os.path.abspath(json_path)
+    zip_path = os.path.abspath(zip_path)
+
+    # Check if JSON file already exists (already unzipped)
+    if os.path.exists(json_path):
+        print(f"Found existing JSON file at: {json_path}")
+        print("Using existing JSON file (already unzipped)")
+    else:
+        # JSON file doesn't exist, check for zip file and unzip it
+        if not os.path.exists(zip_path):
+            print(
+                f"⚠️  Neither JSON file nor ZIP file found. "
+                f"JSON: {json_path}, ZIP: {zip_path}. Skipping data load."
+            )
+            return
+
+        print(f"JSON file not found, found ZIP file at: {zip_path}")
+        print(f"Extracting ZIP file to: {os.path.dirname(json_path)}")
+
+        # Extract the zip file to the same directory as the zip file
+        try:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(os.path.dirname(json_path))
+        except zipfile.BadZipFile:
+            raise ValueError(f"Invalid or corrupted ZIP file: {zip_path}")
+
+        # Verify the JSON file was extracted
+        if not os.path.exists(json_path):
+            raise FileNotFoundError(
+                f"ZIP file extracted but JSON file not found at: {json_path}"
+            )
+
+        print(f"✓ Successfully extracted JSON file: {json_path}")
+
+    # Verify the JSON file exists and is readable
     if not os.path.exists(json_path):
-        print(
-            f"⚠️  JSON fil for FNDDS DB was not found at {json_path}, skipping data load"
-        )
-        return
-
-    print(f"Running FoodLoader migration with file: {json_path}")
+        raise FileNotFoundError(f"JSON file not found: {json_path}")
 
     # Create loader instance and load foods
     # Use skip_errors=True to continue even if some items fail
