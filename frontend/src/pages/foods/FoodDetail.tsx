@@ -12,9 +12,10 @@ interface FoodDetailProps {
 const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
   if (!food) return null;
 
-  // Helper function to extract unit from nutrient name
+  // Helper function to extract unit from nutrient name (last parentheses only)
   const extractUnit = (nutrientName: string): string => {
-    const match = nutrientName.match(/\((.*?)\)$/);
+    // Match the last set of parentheses at the end of the string
+    const match = nutrientName.match(/\(([^()]+)\)$/);
     return match ? match[1] : '';
   };
 
@@ -27,15 +28,48 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     return amount; // fallback for unknown units
   };
 
-  // Sort micronutrients by normalized amount and take top 2 for better presentation
-  const topMicronutrients = food.micronutrients 
-    ? Object.entries(food.micronutrients).sort((a, b) => {
-        const unitA = extractUnit(a[0]);
-        const unitB = extractUnit(b[0]);
-        const normalizedA = normalizeAmount(a[1], unitA);
-        const normalizedB = normalizeAmount(b[1], unitB);
-        return normalizedB - normalizedA;
-      }).slice(0, 12)
+  // Define priority micronutrients to display
+  const priorityMicronutrients = [
+    "Water (g)",
+    "Niacin (mg)",
+    "Thiamin (mg)",
+    "Retinol (g)",
+    "Zinc, Zn (mg)",
+    "Copper, Cu (mg)",
+    "Riboflavin (mg)",
+    "Sodium, Na (mg)",
+    "Calcium, Ca (mg)",
+    "Cholesterol (mg)",
+    "Total Sugars (g)",
+    "Vitamin B-6 (mg)",
+    "Potassium, K (mg)",
+    "Magnesium, Mg (mg)",
+    "Phosphorus, P (mg)",
+    "Selenium, Se (g)",
+    "Vitamin B-12 (g)",
+    "Choline, total (mg)",
+    "Carotene, beta (g)",
+    "Vitamin A, RAE (g)",
+    "Vitamin D (D2 + D3) (g)",
+    "Vitamin K (phylloquinone) (g)",
+    "Fatty acids, total saturated (g)",
+    "Vitamin E (alpha-tocopherol) (mg)",
+    "Fatty acids, total monounsaturated (g)",
+    "Fatty acids, total polyunsaturated (g)"
+  ];
+
+  // Filter and display only priority micronutrients that exist in the food data, sorted by normalized amount
+  const displayedMicronutrients = food.micronutrients 
+    ? priorityMicronutrients
+        .filter(nutrient => food.micronutrients && nutrient in food.micronutrients)
+        .map(nutrient => [nutrient, food.micronutrients![nutrient]] as [string, number])
+        .sort((a, b) => {
+          const unitA = extractUnit(a[0]);
+          const unitB = extractUnit(b[0]);
+          const normalizedA = normalizeAmount(a[1], unitA);
+          const normalizedB = normalizeAmount(b[1], unitB);
+          return normalizedB - normalizedA;
+        })
     : [];
 
   return (
@@ -211,17 +245,18 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
           </div>
 
           {/* Micronutrients Section */}
-          {topMicronutrients.length > 0 && (
+          {displayedMicronutrients.length > 0 && (
             <div className="mb-8">
               <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
                 <Pill size={20} weight="fill" className="text-[var(--color-accent)]" />
-                Top Micronutrients (per {food.servingSize}g serving)
+                Micronutrients (per {food.servingSize}g serving)
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {topMicronutrients.map(([nutrient, amount]) => {
+                {displayedMicronutrients.map(([nutrient, amount]) => {
                   const unit = extractUnit(nutrient);
-                  const nutrientName = nutrient.replace(/\s*\(.*?\)\s*$/, '').trim();
+                  // Remove only the unit part (last parentheses) from the name
+                  const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
                   
                   return (
                     <div 
