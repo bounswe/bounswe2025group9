@@ -801,48 +801,33 @@ export const apiClient = {
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
-    return fetchJson<MealPlan>(`/meal-planner/`, {
+    headers["Content-Type"] = "application/json";
+
+    return fetch(`${BACKEND_API_URL}/meal-planner/plans/`, {
       method: "POST",
       headers,
-      body: JSON.stringify(mealPlanData)
-    }, true).then(response => {
-      console.log(`[API] Meal plan created:`, response);
-      return response;
-    }).catch(error => {
-      console.error(`[API] Error creating meal plan:`, error);
-      throw error;
+      body: JSON.stringify(mealPlanData),
+      credentials: 'include' as RequestCredentials,
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
     });
   },
 
   getMealPlans: () => {
-    console.log(`[API] Fetching meal plans`);
-    return fetchJson<PaginatedResponse<MealPlan>>(`/meal-planner/`, {
+    console.log('[API] Fetching meal plans');
+    return fetchJson<PaginatedResponse<MealPlan>>("/meal-planner/plans/", {
       method: "GET"
-    }, true).then(response => {
-      console.log(`[API] Received meal plans:`, response);
-      return response;
-    }).catch(error => {
-      console.error(`[API] Error fetching meal plans:`, error);
-      throw error;
-    });
+    }, true);
   },
 
-  setCurrentMealPlan: (mealPlanId: number) => {
-    console.log(`[API] Setting current meal plan: ${mealPlanId}`);
-    const headers: HeadersInit = {};
-    if (accessToken) {
-      headers["Authorization"] = `Bearer ${accessToken}`;
-    }
-    return fetchJson<any>(`/meal-planner/${mealPlanId}/set-current/`, {
-      method: "POST",
-      headers,
-    }, true).then(response => {
-      console.log(`[API] Meal plan set as current:`, response);
-      return response;
-    }).catch(error => {
-      console.error(`[API] Error setting current meal plan:`, error);
-      throw error;
-    });
+  setCurrentMealPlan: (planId: number) => {
+    console.log(`[API] Setting current meal plan to ID: ${planId}`);
+    return fetchJson<MealPlan>(`/meal-planner/plans/${planId}/set_current/`, {
+      method: "POST"
+    }, true);
   },
 
   getCurrentMealPlan: () => {
@@ -857,6 +842,94 @@ export const apiClient = {
       throw error;
     });
   },
+
+  // Nutrition Tracking API
+
+  // User Metrics
+  getUserMetrics: () =>
+    fetchJson<import('../types/nutrition').UserMetrics>("/users/metrics/", {
+      method: "GET"
+    }, true),
+
+  createUserMetrics: (metrics: import('../types/nutrition').UserMetrics) =>
+    fetchJson<import('../types/nutrition').UserMetrics>("/users/metrics/", {
+      method: "POST",
+      body: JSON.stringify(metrics)
+    }, true),
+
+  // Nutrition Targets
+  getNutritionTargets: () =>
+    fetchJson<import('../types/nutrition').NutritionTargets>("/users/nutrition-targets/", {
+      method: "GET"
+    }, true),
+
+  updateNutritionTargets: (targets: Partial<import('../types/nutrition').NutritionTargets>) =>
+    fetchJson<import('../types/nutrition').NutritionTargets>("/users/nutrition-targets/", {
+      method: "PUT",
+      body: JSON.stringify(targets)
+    }, true),
+
+  resetNutritionTargets: () =>
+    fetchJson<import('../types/nutrition').NutritionTargets>("/users/nutrition-targets/reset/", {
+      method: "POST"
+    }, true),
+
+  // Daily Nutrition Log
+  getDailyLog: (date?: string) => {
+    let url = "/meal-planner/daily-log/";
+    if (date) {
+      url += `?date=${date}`;
+    }
+    return fetchJson<import('../types/nutrition').DailyNutritionLog>(url, {
+      method: "GET"
+    }, true);
+  },
+
+  getDailyLogHistory: (startDate?: string, endDate?: string) => {
+    let url = "/meal-planner/daily-log/history/";
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+    
+    return fetchJson<import('../types/nutrition').DailyNutritionLog[]>(url, {
+      method: "GET"
+    }, true);
+  },
+
+  // Food Log Entries
+  addFoodEntry: (entry: {
+    food_id: number;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+    date?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').FoodLogEntry>("/meal-planner/daily-log/entries/", {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }, true),
+
+  updateFoodEntry: (id: number, update: {
+    serving_size?: number;
+    meal_type?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').FoodLogEntry>(`/meal-planner/daily-log/entries/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(update)
+    }, true),
+
+  deleteFoodEntry: (id: number) =>
+    fetchJson<void>(`/meal-planner/daily-log/entries/${id}/`, {
+      method: "DELETE"
+    }, true),
+
+  // Nutrition Statistics
+  getNutritionStatistics: (period: 'week' | 'month' = 'week') =>
+    fetchJson<import('../types/nutrition').NutritionStatistics>(`/meal-planner/nutrition-statistics/?period=${period}`, {
+      method: "GET"
+    }, true),
 
   // Moderation endpoints
   moderation: {
