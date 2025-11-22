@@ -43,7 +43,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
     return (
       <div 
         key={nutrient.name} 
-        className="p-3 rounded-lg hover:shadow-sm transition-all"
+        className="p-3 rounded-lg hover:shadow-sm transition-all cursor-pointer nutrient-row-hover"
         style={{ backgroundColor: 'var(--dietary-option-bg)' }}
       >
         <div className="flex items-center justify-between mb-2">
@@ -117,7 +117,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
       <div className="mb-6">
         <button
           onClick={() => setExpandedCategory(expandedCategory === 'vitamin' ? null : 'vitamin')}
-          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors nutrient-row-hover"
         >
           <h4 className="font-semibold text-lg">Vitamins</h4>
           <div className="flex items-center gap-2">
@@ -152,7 +152,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
       <div>
         <button
           onClick={() => setExpandedCategory(expandedCategory === 'mineral' ? null : 'mineral')}
-          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors nutrient-row-hover"
         >
           <h4 className="font-semibold text-lg">Minerals</h4>
           <div className="flex items-center gap-2">
