@@ -21,6 +21,7 @@ export interface Food {
   dietaryOptions: string[];
   nutritionScore: number;
   imageUrl: string;
+  micronutrients?: Record<string, number>;
 }
 
 export interface FoodProposal {
