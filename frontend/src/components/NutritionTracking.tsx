@@ -13,7 +13,8 @@ import {
   ForkKnife,
   Coffee,
   Hamburger,
-  X
+  X,
+  ArrowClockwise
 } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
@@ -33,6 +34,7 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
   const [servingSize, setServingSize] = useState<number | string>(100);
   const [servingUnit, setServingUnit] = useState('g');
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null);
+  const [editingFoodData, setEditingFoodData] = useState<Food | null>(null);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
 
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
@@ -89,7 +91,7 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
       onDateChange(selectedDate);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedDate]);
+  }, [selectedDate, viewMode]);
 
   // Fetch missing food data when entries change
   useEffect(() => {
@@ -125,43 +127,127 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
     setError(null);
     setMetricsMissing(false);
     try {
-      const dateStr = selectedDate.toISOString().split('T')[0];
-
-      // Fetch daily log
-      const log = await apiClient.getDailyLog(dateStr);
-      setTodayLog(log);
-
-      // Fetch and cache food data for all entries
-      if (log.entries) {
-        // Create map of food_id to food_name for better searching
-        const foodIdToName = new Map<number, string>();
-        log.entries.forEach(entry => {
-          if (!foodIdToName.has(entry.food_id)) {
-            foodIdToName.set(entry.food_id, entry.food_name);
-          }
-        });
-        
-        const uniqueFoodIds = [...new Set(log.entries.map(e => e.food_id))];
-        const foodPromises = uniqueFoodIds.map(foodId => 
-          fetchFoodData(foodId, foodIdToName.get(foodId))
-        );
-        await Promise.all(foodPromises);
-      }
-
-      // Fetch targets if not already loaded (or refresh them)
+      // Fetch targets first (needed for both views)
       const targetsData = await apiClient.getNutritionTargets();
       setTargets(targetsData);
 
-      // Fetch history if in weekly view
+      // Fetch data based on view mode
       if (viewMode === 'weekly') {
-        const endDate = new Date();
-        const startDate = new Date();
-        startDate.setDate(endDate.getDate() - 7);
+        // In weekly view, fetch all logs for the week
+        // Get Monday to Sunday for the week containing selectedDate
+        const getMondayOfWeek = (date: Date) => {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+          return new Date(d.setDate(diff));
+        };
+        const monday = getMondayOfWeek(new Date(selectedDate));
+        const sunday = new Date(monday);
+        sunday.setDate(monday.getDate() + 6); // Sunday is 6 days after Monday
+        
         const history = await apiClient.getDailyLogHistory(
-          startDate.toISOString().split('T')[0],
-          endDate.toISOString().split('T')[0]
+          monday.toISOString().split('T')[0],
+          sunday.toISOString().split('T')[0]
         );
-        setHistoryLogs(history);
+        let historyArray = Array.isArray(history) ? history : [];
+        
+        // Helper to normalize date strings for comparison
+        const normalizeDateStr = (dateStr: string): string => {
+          return dateStr.split('T')[0];
+        };
+        
+        // Get all date strings for the week
+        const weekDateStrings: string[] = [];
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(monday);
+          date.setDate(monday.getDate() + i);
+          weekDateStrings.push(date.toISOString().split('T')[0]);
+        }
+        
+        // Create a map of existing logs by date
+        const existingLogsMap = new Map<string, DailyNutritionLog>();
+        historyArray.forEach(log => {
+          if (log.date) {
+            const normalizedDate = normalizeDateStr(log.date);
+            existingLogsMap.set(normalizedDate, log);
+          }
+        });
+        
+        // Fetch logs for any missing days in the week (this ensures we have logs for all 7 days)
+        const missingDates = weekDateStrings.filter(dateStr => !existingLogsMap.has(dateStr));
+        const missingLogsPromises = missingDates.map(async (dateStr) => {
+          try {
+            const log = await apiClient.getDailyLog(dateStr);
+            return log;
+          } catch (err) {
+            console.error(`Error fetching log for ${dateStr}:`, err);
+            return null;
+          }
+        });
+        
+        const missingLogs = await Promise.all(missingLogsPromises);
+        const validMissingLogs = missingLogs.filter(log => log !== null) as DailyNutritionLog[];
+        
+        // Combine all logs
+        historyArray = [...historyArray, ...validMissingLogs];
+        
+        // Sort by date to ensure consistent order
+        historyArray.sort((a, b) => {
+          if (!a.date || !b.date) return 0;
+          const dateA = normalizeDateStr(a.date);
+          const dateB = normalizeDateStr(b.date);
+          return dateA.localeCompare(dateB);
+        });
+        
+        // Ensure history is always an array
+        setHistoryLogs(historyArray);
+        
+        // In weekly view, set todayLog to the log for selectedDate (if it exists in history)
+        // This allows the daily view to have data when switching from weekly
+        const dateStr = selectedDate.toISOString().split('T')[0];
+        const selectedDateLog = historyArray.find(h => {
+          if (!h.date) return false;
+          const normalizeDateStr = (dateStr: string): string => {
+            return dateStr.split('T')[0];
+          };
+          return normalizeDateStr(h.date) === dateStr;
+        });
+        if (selectedDateLog) {
+          setTodayLog(selectedDateLog);
+        } else {
+          // If no log exists for selectedDate, fetch it separately (creates empty log if needed)
+          try {
+            const log = await apiClient.getDailyLog(dateStr);
+            setTodayLog(log);
+          } catch (err) {
+            console.error('Error fetching selected date log:', err);
+          }
+        }
+      } else {
+        // In daily view, fetch the daily log for selectedDate
+        const dateStr = selectedDate.toISOString().split('T')[0];
+        const log = await apiClient.getDailyLog(dateStr);
+        setTodayLog(log);
+
+        // Fetch and cache food data for all entries
+        if (log.entries) {
+          // Create map of food_id to food_name for better searching
+          const foodIdToName = new Map<number, string>();
+          log.entries.forEach(entry => {
+            if (!foodIdToName.has(entry.food_id)) {
+              foodIdToName.set(entry.food_id, entry.food_name);
+            }
+          });
+          
+          const uniqueFoodIds = [...new Set(log.entries.map(e => e.food_id))];
+          const foodPromises = uniqueFoodIds.map(foodId => 
+            fetchFoodData(foodId, foodIdToName.get(foodId))
+          );
+          await Promise.all(foodPromises);
+        }
+        
+        // Clear history logs when not in weekly view
+        setHistoryLogs([]);
       }
 
     } catch (err: any) {
@@ -228,7 +314,7 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
         date: dateStr
       });
 
-      // Refresh data
+      // Refresh daily log and targets to update totals after adding entry
       await fetchData();
       setShowServingDialog(false);
       setSelectedFood(null);
@@ -250,6 +336,17 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
       if (fetchedFoodData) {
         foodData = fetchedFoodData;
       }
+    }
+    
+    // Fetch full food object for nutrition calculations
+    try {
+      const foodsResponse = await apiClient.getFoods({ page: 1, search: entry.food_name });
+      const food = foodsResponse.results?.find(f => f.id === entry.food_id);
+      if (food) {
+        setEditingFoodData(food);
+      }
+    } catch (err) {
+      console.error('Error fetching food for edit:', err);
     }
     
     // Convert serving_size (multiplier) back to display value
@@ -307,10 +404,11 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
         meal_type: selectedMeal
       });
 
-      // Refresh data
+      // Refresh daily log and targets to update totals after updating entry
       await fetchData();
       setShowServingDialog(false);
       setEditingEntry(null);
+      setEditingFoodData(null);
     } catch (err) {
       console.error('Error updating entry:', err);
       setError('Failed to update entry');
@@ -322,13 +420,22 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
   const handleDeleteEntry = async (id: number) => {
     if (!confirm('Are you sure you want to delete this entry?')) return;
     try {
+      setLoading(true);
       await apiClient.deleteFoodEntry(id);
-      await fetchData(); // Refresh data
+      // Refresh daily log and targets to update totals
+      await fetchData();
     } catch (err: any) {
       console.error('Error deleting entry:', err);
       const errorMessage = err?.data?.error || err?.data?.detail || err?.message || 'Failed to delete entry';
       alert(errorMessage);
-      // Don't navigate or redirect - stay on current page
+      // Still try to refresh data even if delete failed, in case the entry was partially deleted
+      try {
+        await fetchData();
+      } catch (refreshErr) {
+        console.error('Error refreshing data after delete:', refreshErr);
+      }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -372,7 +479,13 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
 
   const changeDate = (days: number) => {
     const newDate = new Date(selectedDate);
-    newDate.setDate(newDate.getDate() + days);
+    if (viewMode === 'weekly') {
+      // In weekly mode, change by 7 days (one week)
+      newDate.setDate(newDate.getDate() + (days * 7));
+    } else {
+      // In daily mode, change by 1 day
+      newDate.setDate(newDate.getDate() + days);
+    }
     setSelectedDate(newDate);
   };
 
@@ -594,22 +707,97 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setViewMode('daily')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'daily'
-                ? 'bg-primary-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
+              style={{
+                backgroundColor: viewMode === 'daily' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
+                color: viewMode === 'daily' ? 'white' : 'var(--color-light)'
+              }}
             >
               Daily
             </button>
             <button
               onClick={() => setViewMode('weekly')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${viewMode === 'weekly'
-                ? 'bg-primary-500 text-white'
-                : 'bg-gray-200 dark:bg-gray-700'
-                }`}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
+              style={{
+                backgroundColor: viewMode === 'weekly' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
+                color: viewMode === 'weekly' ? 'white' : 'var(--color-light)'
+              }}
             >
               Weekly
             </button>
+            {/* Reset icon - show if viewing a different day/week than current */}
+            {(() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              
+              if (viewMode === 'daily') {
+                // Show reset icon if not viewing today
+                const selectedDateNormalized = new Date(selectedDate);
+                selectedDateNormalized.setHours(0, 0, 0, 0);
+                if (selectedDateNormalized.getTime() !== today.getTime()) {
+                  return (
+                    <button
+                      onClick={() => {
+                        setSelectedDate(new Date());
+                      }}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{
+                        backgroundColor: 'var(--color-bg-tertiary)',
+                        color: 'var(--color-light)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                      }}
+                      title="Reset to today"
+                    >
+                      <ArrowClockwise size={20} weight="bold" />
+                    </button>
+                  );
+                }
+              } else {
+                // Weekly view - show reset icon if not viewing current week
+                const getMondayOfWeek = (date: Date) => {
+                  const d = new Date(date);
+                  const day = d.getDay();
+                  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+                  return new Date(d.setDate(diff));
+                };
+                
+                const selectedMonday = getMondayOfWeek(new Date(selectedDate));
+                const todayMonday = getMondayOfWeek(today);
+                
+                selectedMonday.setHours(0, 0, 0, 0);
+                todayMonday.setHours(0, 0, 0, 0);
+                
+                if (selectedMonday.getTime() !== todayMonday.getTime()) {
+                  return (
+                    <button
+                      onClick={() => {
+                        setSelectedDate(new Date());
+                      }}
+                      className="p-2 rounded-lg transition-colors"
+                      style={{
+                        backgroundColor: 'var(--color-bg-tertiary)',
+                        color: 'var(--color-light)'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                      }}
+                      title="Reset to current week"
+                    >
+                      <ArrowClockwise size={20} weight="bold" />
+                    </button>
+                  );
+                }
+              }
+              return null;
+            })()}
           </div>
         </div>
 
@@ -622,22 +810,47 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
             <CaretLeft size={24} weight="bold" />
           </button>
 
-          <div className="text-center">
-            <p className="text-xl font-bold text-primary">{formatDate(selectedDate)}</p>
-            {isToday && (
-              <span className="text-xs px-2 py-1 rounded mt-1 inline-block" style={{
-                backgroundColor: 'var(--color-success)',
-                color: 'white'
-              }}>
-                Today
-              </span>
+          <div className="text-center flex-1">
+            {viewMode === 'daily' ? (
+              <>
+                <p className="text-xl font-bold text-primary">{formatDate(selectedDate)}</p>
+                {isToday && (
+                  <span className="text-xs px-2 py-1 rounded mt-1 inline-block" style={{
+                    backgroundColor: 'var(--color-success)',
+                    color: 'white'
+                  }}>
+                    Today
+                  </span>
+                )}
+              </>
+            ) : (
+              <div>
+                {(() => {
+                  const getMondayOfWeek = (date: Date) => {
+                    const d = new Date(date);
+                    const day = d.getDay();
+                    const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+                    return new Date(d.setDate(diff));
+                  };
+                  const monday = getMondayOfWeek(new Date(selectedDate));
+                  const sunday = new Date(monday);
+                  sunday.setDate(monday.getDate() + 6);
+                  return (
+                    <div>
+                      <p className="text-lg font-bold text-primary">
+                        {monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </p>
+                    </div>
+                  );
+                })()}
+              </div>
             )}
           </div>
 
           <button
             onClick={() => changeDate(1)}
-            disabled={isToday}
-            className={`p-2 rounded-lg transition-colors ${isToday
+            disabled={isToday && viewMode === 'daily'}
+            className={`p-2 rounded-lg transition-colors ${isToday && viewMode === 'daily'
               ? 'opacity-30 cursor-not-allowed'
               : 'hover:bg-gray-200 dark:hover:bg-gray-700'
               }`}
@@ -647,89 +860,376 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
         </div>
       </div>
 
-      {/* Meals Section */}
-      <div>
-        <div className="flex items-center gap-2 mb-4">
-          <ForkKnife size={28} weight="fill" className="text-primary" />
-          <h3 className="nh-subtitle">Today's Meals</h3>
-        </div>
-
-        <div className="space-y-4">
-          {renderMealSection('breakfast', breakfastEntries)}
-          {renderMealSection('lunch', lunchEntries)}
-          {renderMealSection('dinner', dinnerEntries)}
-          {renderMealSection('snack', snackEntries)}
-        </div>
-      </div>
-
-      {/* Weekly Summary (if weekly view is selected) */}
-      {viewMode === 'weekly' && targets && (
-        <div className="nh-card">
-          <div className="flex items-center gap-2 mb-6">
-            <ChartLine size={28} weight="fill" className="text-primary" />
-            <h3 className="nh-subtitle">Weekly Summary</h3>
+      {/* Meals Section (Daily View) */}
+      {viewMode === 'daily' && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <ForkKnife size={28} weight="fill" className="text-primary" />
+            <h3 className="nh-subtitle">Today's Meals</h3>
           </div>
 
           <div className="space-y-4">
-            {historyLogs.map((log) => {
-              const date = new Date(log.date);
-              const caloriePercent = Math.round((log.total_calories / targets.calories) * 100);
-
-              return (
-                <div
-                  key={log.date}
-                  className="p-4 rounded-lg"
-                  style={{ backgroundColor: 'var(--dietary-option-bg)' }}
-                >
-                  <div className="flex items-center justify-between mb-3">
-                    <div>
-                      <p className="font-medium">
-                        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                      </p>
-                      <p className="text-xs nh-text opacity-70">
-                        {log.total_calories} / {targets.calories} kcal
-                      </p>
-                    </div>
-                    <span
-                      className="text-sm font-medium"
-                      style={{
-                        color: caloriePercent > 100 ? 'var(--color-error)' : caloriePercent >= 90 ? 'var(--color-success)' : 'var(--color-warning)'
-                      }}
-                    >
-                      {caloriePercent}%
-                    </span>
-                  </div>
-
-                  <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                    <div
-                      className="h-2 rounded-full transition-all"
-                      style={{
-                        width: `${Math.min(caloriePercent, 100)}%`,
-                        backgroundColor: caloriePercent > 100 ? 'var(--color-error)' : 'var(--color-success)'
-                      }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2 mt-3 text-xs text-center">
-                    <div>
-                      <p className="nh-text opacity-70">Protein</p>
-                      <p className="font-semibold">{log.total_protein}g</p>
-                    </div>
-                    <div>
-                      <p className="nh-text opacity-70">Carbs</p>
-                      <p className="font-semibold">{log.total_carbohydrates}g</p>
-                    </div>
-                    <div>
-                      <p className="nh-text opacity-70">Fat</p>
-                      <p className="font-semibold">{log.total_fat}g</p>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+            {renderMealSection('breakfast', breakfastEntries)}
+            {renderMealSection('lunch', lunchEntries)}
+            {renderMealSection('dinner', dinnerEntries)}
+            {renderMealSection('snack', snackEntries)}
           </div>
         </div>
       )}
+
+      {/* Weekly Calendar View */}
+      {viewMode === 'weekly' && targets && (() => {
+        // Generate 7 days from Monday to Sunday for the week containing selectedDate
+        const getMondayOfWeek = (date: Date) => {
+          const d = new Date(date);
+          const day = d.getDay();
+          const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+          return new Date(d.setDate(diff));
+        };
+        
+        const monday = getMondayOfWeek(new Date(selectedDate));
+        const weekDays: Date[] = [];
+        for (let i = 0; i < 7; i++) {
+          const date = new Date(monday);
+          date.setDate(monday.getDate() + i);
+          weekDays.push(date);
+        }
+
+        // Helper function to normalize date strings (YYYY-MM-DD format)
+        const normalizeDateStr = (date: Date | string): string => {
+          if (typeof date === 'string') {
+            // If it's already a string, extract just the date part (YYYY-MM-DD)
+            return date.split('T')[0];
+          }
+          // Convert Date to YYYY-MM-DD string
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, '0');
+          const day = String(date.getDate()).padStart(2, '0');
+          return `${year}-${month}-${day}`;
+        };
+
+        // Create a map of date strings to logs for quick lookup
+        const logMap = new Map<string, DailyNutritionLog>();
+        // Ensure historyLogs is an array before iterating
+        if (Array.isArray(historyLogs)) {
+          historyLogs.forEach(log => {
+            if (log.date) {
+              const normalizedDate = normalizeDateStr(log.date);
+              logMap.set(normalizedDate, log);
+            }
+          });
+        }
+        // Also include todayLog if it exists, is actually for today, and is in the current week
+        if (todayLog && todayLog.date) {
+          const todayLogDateStr = normalizeDateStr(todayLog.date);
+          const actualToday = new Date();
+          const actualTodayStr = normalizeDateStr(actualToday);
+          
+          // Only use todayLog if it's actually for today (not selectedDate from daily view)
+          if (todayLogDateStr === actualTodayStr) {
+            // Check if today is in the current week
+            const todayDate = new Date(actualTodayStr);
+            const weekStart = new Date(monday);
+            weekStart.setHours(0, 0, 0, 0);
+            const weekEnd = new Date(monday);
+            weekEnd.setDate(monday.getDate() + 6);
+            weekEnd.setHours(23, 59, 59, 999);
+            todayDate.setHours(0, 0, 0, 0);
+            if (todayDate >= weekStart && todayDate <= weekEnd) {
+              logMap.set(actualTodayStr, todayLog);
+            }
+          }
+        }
+
+        return (
+          <div className="nh-card">
+            <div className="flex items-center gap-2 mb-6">
+              <ChartLine size={28} weight="fill" className="text-primary" />
+              <h3 className="nh-subtitle">Weekly Overview</h3>
+            </div>
+
+            {/* Calendar Grid - 7 days in 2 rows with equal width cards */}
+            <div className="space-y-3">
+              {/* First row - 4 days */}
+              <div className="grid grid-cols-4 gap-3">
+                {weekDays.slice(0, 4).map((date) => {
+                const dateStr = normalizeDateStr(date);
+                const log = logMap.get(dateStr);
+                const isToday = date.toDateString() === new Date().toDateString();
+                // Only highlight today in weekly view, not selectedDate
+                const isSelected = isToday;
+                
+                const caloriePercent = log ? Math.round((log.total_calories / targets.calories) * 100) : 0;
+                const proteinPercent = log ? Math.round((log.total_protein / targets.protein) * 100) : 0;
+                const carbsPercent = log ? Math.round((log.total_carbohydrates / targets.carbohydrates) * 100) : 0;
+                const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
+
+                const getDayName = (date: Date) => {
+                  return date.toLocaleDateString('en-US', { weekday: 'short' });
+                };
+
+                const getDayNumber = (date: Date) => {
+                  return date.getDate();
+                };
+
+                return (
+                  <div
+                    key={dateStr}
+                    onClick={() => {
+                      setSelectedDate(new Date(date));
+                      setViewMode('daily');
+                    }}
+                    className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${
+                      isSelected 
+                        ? 'border-primary bg-primary-50 dark:bg-primary-900' 
+                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                    }`}
+                    style={{
+                      backgroundColor: isSelected 
+                        ? 'var(--color-primary)' + '20' 
+                        : 'var(--dietary-option-bg)'
+                    }}
+                  >
+                    {/* Day Header */}
+                    <div className="text-center mb-3">
+                      <p className={`text-xs font-medium mb-1 ${isToday ? 'text-primary font-bold' : 'nh-text opacity-70'}`}>
+                        {getDayName(date)}
+                      </p>
+                      <p className={`text-lg font-bold ${isToday ? 'text-primary' : 'nh-text'}`}>
+                        {getDayNumber(date)}
+                      </p>
+                      {isToday && (
+                        <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
+                          backgroundColor: 'var(--color-primary)' + '20'
+                        }}>
+                          Today
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Calorie Progress */}
+                    <div className="space-y-2">
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs nh-text opacity-70">Cal</span>
+                          <span className="text-xs font-semibold" style={{
+                            color: caloriePercent > 100 
+                              ? 'var(--color-error)' 
+                              : caloriePercent >= 90 
+                                ? '#f97316' // orange-500
+                                : '#f97316' // orange-500
+                          }}>
+                            {caloriePercent}%
+                          </span>
+                        </div>
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                          <div
+                            className="h-1.5 rounded-full transition-all"
+                            style={{
+                              width: `${Math.min(caloriePercent, 100)}%`,
+                              backgroundColor: caloriePercent > 100 
+                                ? 'var(--color-error)' 
+                                : '#f97316' // orange-500
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* Protein, Carbs, Fat */}
+                      <div className="space-y-1.5">
+                        <div>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs nh-text opacity-60">P</span>
+                            <span className="text-xs font-semibold">
+                              {proteinPercent}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                            <div
+                              className="bg-blue-500 h-1 rounded-full transition-all"
+                              style={{ width: `${Math.min(proteinPercent, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs nh-text opacity-60">C</span>
+                            <span className="text-xs font-semibold">
+                              {carbsPercent}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                            <div
+                              className="bg-green-500 h-1 rounded-full transition-all"
+                              style={{ width: `${Math.min(carbsPercent, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="flex items-center justify-between mb-0.5">
+                            <span className="text-xs nh-text opacity-60">F</span>
+                            <span className="text-xs font-semibold">
+                              {fatPercent}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                            <div
+                              className="bg-yellow-500 h-1 rounded-full transition-all"
+                              style={{ width: `${Math.min(fatPercent, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      
+                    </div>
+                  </div>
+                );
+                })}
+              </div>
+              
+              {/* Second row - 3 days (centered equally) */}
+              <div className="flex justify-center gap-3">
+                {weekDays.slice(4, 7).map((date) => {
+                  const dateStr = normalizeDateStr(date);
+                  const log = logMap.get(dateStr);
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  // Only highlight today in weekly view, not selectedDate
+                  const isSelected = isToday;
+                  
+                  const caloriePercent = log ? Math.round((log.total_calories / targets.calories) * 100) : 0;
+                  const proteinPercent = log ? Math.round((log.total_protein / targets.protein) * 100) : 0;
+                  const carbsPercent = log ? Math.round((log.total_carbohydrates / targets.carbohydrates) * 100) : 0;
+                  const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
+
+                  const getDayName = (date: Date) => {
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                  };
+
+                  const getDayNumber = (date: Date) => {
+                    return date.getDate();
+                  };
+
+                  return (
+                    <div
+                      key={dateStr}
+                      className={`w-[calc((100%-0.75rem*3)/4)] p-3 rounded-lg cursor-pointer transition-all border-2 ${
+                        isSelected 
+                          ? 'border-primary bg-primary-50 dark:bg-primary-900' 
+                          : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
+                      }`}
+                      style={{
+                        backgroundColor: isSelected 
+                          ? 'var(--color-primary)' + '20' 
+                          : 'var(--dietary-option-bg)'
+                      }}
+                      onClick={() => {
+                        setSelectedDate(new Date(date));
+                        setViewMode('daily');
+                      }}
+                    >
+                      {/* Day Header */}
+                      <div className="text-center mb-3">
+                        <p className={`text-xs font-medium mb-1 ${isToday ? 'text-primary font-bold' : 'nh-text opacity-70'}`}>
+                          {getDayName(date)}
+                        </p>
+                        <p className={`text-lg font-bold ${isToday ? 'text-primary' : 'nh-text'}`}>
+                          {getDayNumber(date)}
+                        </p>
+                        {isToday && (
+                          <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
+                            backgroundColor: 'var(--color-primary)' + '20'
+                          }}>
+                            Today
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Calorie Progress */}
+                      <div className="space-y-2">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs nh-text opacity-70">Cal</span>
+                            <span className="text-xs font-semibold" style={{
+                              color: caloriePercent > 100 
+                                ? 'var(--color-error)' 
+                                : caloriePercent >= 90 
+                                  ? '#f97316' // orange-500
+                                  : '#f97316' // orange-500
+                            }}>
+                              {caloriePercent}%
+                            </span>
+                          </div>
+                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                            <div
+                              className="h-1.5 rounded-full transition-all"
+                              style={{
+                                width: `${Math.min(caloriePercent, 100)}%`,
+                                backgroundColor: caloriePercent > 100 
+                                  ? 'var(--color-error)' 
+                                  : '#f97316' // orange-500
+                              }}
+                            />
+                          </div>
+                       
+                        </div>
+
+                        {/* Protein, Carbs, Fat */}
+                        <div className="space-y-1.5">
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs nh-text opacity-60">P</span>
+                              <span className="text-xs font-semibold">
+                                {proteinPercent}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                              <div
+                                className="bg-blue-500 h-1 rounded-full transition-all"
+                                style={{ width: `${Math.min(proteinPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs nh-text opacity-60">C</span>
+                              <span className="text-xs font-semibold">
+                                {carbsPercent}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                              <div
+                                className="bg-green-500 h-1 rounded-full transition-all"
+                                style={{ width: `${Math.min(carbsPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs nh-text opacity-60">F</span>
+                              <span className="text-xs font-semibold">
+                                {fatPercent}%
+                              </span>
+                            </div>
+                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                              <div
+                                className="bg-yellow-500 h-1 rounded-full transition-all"
+                                style={{ width: `${Math.min(fatPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+                        
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       {/* Add Food Modal */}
       {showAddFood && (
@@ -745,6 +1245,7 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
         setShowServingDialog(false);
         setSelectedFood(null);
         setEditingEntry(null);
+        setEditingFoodData(null);
       }} className="relative z-50">
         <div 
           className="fixed inset-0" 
@@ -787,10 +1288,28 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
 
             {selectedFood && !editingEntry && (
               <div className="mb-4">
-                <p className="nh-text font-medium">{selectedFood.name}</p>
-                <p className="text-xs nh-text opacity-70">
-                  {selectedFood.caloriesPerServing} kcal per {selectedFood.servingSize}g
-                </p>
+                <div className="flex items-center gap-3 mb-2">
+                  {selectedFood.imageUrl ? (
+                    <img
+                      src={selectedFood.imageUrl}
+                      alt={selectedFood.name}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--forum-search-border)' }}
+                    >
+                      <Hamburger size={20} weight="fill" className="opacity-50" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="nh-text font-medium">{selectedFood.name}</p>
+                    <p className="text-xs nh-text opacity-70">
+                      {selectedFood.caloriesPerServing} kcal per {selectedFood.servingSize}g
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -850,17 +1369,40 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
                 />
                 <select
                   value={servingUnit}
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const newUnit = e.target.value;
                     const oldUnit = servingUnit;
+                    const currentSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
                     
-                    // When switching from grams to serving, set serving size to 1
-                    if (oldUnit === 'g' && newUnit === 'serving') {
-                      setServingSize(1);
-                    }
-                    // When switching from serving to grams, set serving size to food's servingSize
-                    else if (oldUnit === 'serving' && newUnit === 'g' && selectedFood) {
-                      setServingSize(selectedFood.servingSize);
+                    if (editingEntry) {
+                      // When editing, convert the current serving size based on unit change
+                      // Get food data for servingSize
+                      let foodServingSize = 100; // default fallback
+                      const foodData = foodCache.get(editingEntry.food_id);
+                      if (foodData?.servingSize) {
+                        foodServingSize = foodData.servingSize;
+                      } else {
+                        // Try to fetch if not in cache
+                        const fetchedFoodData = await fetchFoodData(editingEntry.food_id, editingEntry.food_name);
+                        if (fetchedFoodData?.servingSize) {
+                          foodServingSize = fetchedFoodData.servingSize;
+                        }
+                      }
+                      
+                      if (oldUnit === 'g' && newUnit === 'serving') {
+                        // Convert grams to servings: currentGrams / servingSize
+                        setServingSize(currentSize / foodServingSize);
+                      } else if (oldUnit === 'serving' && newUnit === 'g') {
+                        // Convert servings to grams: currentServings * servingSize
+                        setServingSize(currentSize * foodServingSize);
+                      }
+                    } else if (selectedFood) {
+                      // When adding new entry
+                      if (oldUnit === 'g' && newUnit === 'serving') {
+                        setServingSize(1);
+                      } else if (oldUnit === 'serving' && newUnit === 'g') {
+                        setServingSize(selectedFood.servingSize);
+                      }
                     }
                     
                     setServingUnit(newUnit);
@@ -871,13 +1413,66 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
                     borderColor: 'var(--dietary-option-border)',
                     color: 'var(--color-text)'
                   }}
-                  disabled={editingEntry !== null}
                 >
                   <option value="g">grams (g)</option>
                   <option value="serving">serving</option>
                 </select>
               </div>
             </div>
+
+            {/* Calculated Nutrition (for edit entries) */}
+            {editingEntry && editingFoodData && (() => {
+              const numServingSize = typeof servingSize === 'string' ? (servingSize === '' ? 0 : Number(servingSize)) : servingSize;
+              const calculateNutrition = (valuePerServing: number) => {
+                if (numServingSize <= 0 || isNaN(numServingSize)) {
+                  return 0;
+                }
+                if (servingUnit === 'serving') {
+                  // If serving unit, multiply directly (e.g., 2 servings = 2 * valuePerServing)
+                  return valuePerServing * numServingSize;
+                } else {
+                  // If gram unit, convert: (value per servingSize grams / servingSize) * entered grams
+                  return (valuePerServing / editingFoodData.servingSize) * numServingSize;
+                }
+              };
+
+              // Calculate total grams
+              const totalGrams = servingUnit === 'g' 
+                ? numServingSize 
+                : numServingSize * editingFoodData.servingSize;
+
+              return (
+                <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
+                  <p className="text-xs nh-text opacity-70 mb-2">{Math.round(totalGrams)}g of {editingEntry.food_name}</p>
+                  <div className="grid grid-cols-4 gap-2 text-xs text-center">
+                    <div>
+                      <p className="nh-text opacity-70">Calories</p>
+                      <p className="font-semibold">
+                        {Math.round(calculateNutrition(editingFoodData.caloriesPerServing))}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="nh-text opacity-70">Protein</p>
+                      <p className="font-semibold">
+                        {Math.round(calculateNutrition(editingFoodData.proteinContent))}g
+                      </p>
+                    </div>
+                    <div>
+                      <p className="nh-text opacity-70">Carbs</p>
+                      <p className="font-semibold">
+                        {Math.round(calculateNutrition(editingFoodData.carbohydrateContent))}g
+                      </p>
+                    </div>
+                    <div>
+                      <p className="nh-text opacity-70">Fat</p>
+                      <p className="font-semibold">
+                        {Math.round(calculateNutrition(editingFoodData.fatContent))}g
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Calculated Nutrition (for new entries) */}
             {selectedFood && !editingEntry && (() => {
@@ -900,9 +1495,14 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
                 }
               };
 
+              // Calculate total grams
+              const totalGrams = servingUnit === 'g' 
+                ? numServingSize 
+                : numServingSize * selectedFood.servingSize;
+
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                  <p className="text-xs nh-text opacity-70 mb-2">Estimated Nutrition:</p>
+                  <p className="text-xs nh-text opacity-70 mb-2">{Math.round(totalGrams)}g of {selectedFood.name}</p>
                   <div className="grid grid-cols-4 gap-2 text-xs text-center">
                     <div>
                       <p className="nh-text opacity-70">Calories</p>
@@ -941,6 +1541,7 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
                   setShowServingDialog(false);
                   setSelectedFood(null);
                   setEditingEntry(null);
+                  setEditingFoodData(null);
                 }}
                 className="flex-1 px-4 py-2 rounded-lg border transition-colors"
                 style={{

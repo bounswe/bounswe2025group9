@@ -756,6 +756,23 @@ const Profile = () => {
                   <span className="flex-grow text-center">Overview</span>
                 </button>
 
+                {/* Nutrition Tracking Tab */}
+                <button
+                  onClick={() => setActiveTab('nutrition')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'nutrition'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'nutrition'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <ChartLineUp size={18} weight="fill" />
+                  <span className="flex-grow text-center">Nutrition Tracking</span>
+                </button>
+
                 <button
                   onClick={() => setActiveTab('allergens')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
@@ -847,23 +864,6 @@ const Profile = () => {
                 >
                   <BookmarkSimple size={18} weight="fill" />
                   <span className="flex-grow text-center">Saved Meal Plans</span>
-                </button>
-
-                {/* Nutrition Tracking Tab */}
-                <button
-                  onClick={() => setActiveTab('nutrition')}
-                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                  style={{
-                    backgroundColor: activeTab === 'nutrition'
-                      ? 'var(--forum-default-active-bg)'
-                      : 'var(--forum-default-bg)',
-                    color: activeTab === 'nutrition'
-                      ? 'var(--forum-default-active-text)'
-                      : 'var(--forum-default-text)',
-                  }}
-                >
-                  <ChartLineUp size={18} weight="fill" />
-                  <span className="flex-grow text-center">Nutrition Tracking</span>
                 </button>
 
               </div>
@@ -978,7 +978,10 @@ const Profile = () => {
                               type="number"
                               value={metrics.height}
                               onChange={(e) => setMetrics({ ...metrics, height: Number(e.target.value) })}
-                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                              style={{
+                                border: '2px solid var(--dietary-option-border)'
+                              }}
                             />
                           </div>
 
@@ -988,7 +991,10 @@ const Profile = () => {
                               type="number"
                               value={metrics.weight}
                               onChange={(e) => setMetrics({ ...metrics, weight: Number(e.target.value) })}
-                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                              style={{
+                                border: '2px solid var(--dietary-option-border)'
+                              }}
                             />
                           </div>
 
@@ -998,7 +1004,10 @@ const Profile = () => {
                               type="number"
                               value={metrics.age}
                               onChange={(e) => setMetrics({ ...metrics, age: Number(e.target.value) })}
-                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                              style={{
+                                border: '2px solid var(--dietary-option-border)'
+                              }}
                             />
                           </div>
 
@@ -1007,7 +1016,10 @@ const Profile = () => {
                             <select
                               value={metrics.gender}
                               onChange={(e) => setMetrics({ ...metrics, gender: e.target.value as 'M' | 'F' })}
-                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                              style={{
+                                border: '2px solid var(--dietary-option-border)'
+                              }}
                             >
                               <option value="M">Male</option>
                               <option value="F">Female</option>
@@ -1019,7 +1031,10 @@ const Profile = () => {
                             <select
                               value={metrics.activity_level}
                               onChange={(e) => setMetrics({ ...metrics, activity_level: e.target.value as any })}
-                              className="w-full px-3 py-2 text-sm rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                              className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                              style={{
+                                border: '2px solid var(--dietary-option-border)'
+                              }}
                             >
                               <option value="sedentary">Sedentary (little or no exercise)</option>
                               <option value="light">Lightly active (light exercise/sports 1-3 days/week)</option>
@@ -1086,7 +1101,10 @@ const Profile = () => {
                       onChange={(e) => setCustomAllergen(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addCustomAllergen()}
                       placeholder="Enter custom allergen name"
-                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      className="flex-1 px-4 py-2 rounded-lg border input-white-bg"
+                      style={{
+                        borderColor: 'var(--color-bg-tertiary)'
+                      }}
                     />
                     <button
                       onClick={addCustomAllergen}
@@ -1195,7 +1213,10 @@ const Profile = () => {
                     <select
                       value={selectedProfession}
                       onChange={(e) => setSelectedProfession(e.target.value)}
-                      className="flex-1 px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      className="flex-1 px-4 py-2 rounded-lg border input-white-bg"
+                      style={{
+                        borderColor: 'var(--color-bg-tertiary)'
+                      }}
                     >
                       <option value="">Select a profession</option>
                       {PROFESSION_TAGS.map(tag => (
@@ -1290,7 +1311,10 @@ const Profile = () => {
                       value={reportUserId}
                       onChange={(e) => setReportUserId(e.target.value)}
                       placeholder="Enter user ID or username to report"
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      className="w-full px-4 py-2 rounded-lg border input-white-bg"
+                      style={{
+                        borderColor: 'var(--color-bg-tertiary)'
+                      }}
                     />
                   </div>
 
@@ -1299,7 +1323,10 @@ const Profile = () => {
                     <select
                       value={reportReason}
                       onChange={(e) => setReportReason(e.target.value)}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      className="w-full px-4 py-2 rounded-lg border input-white-bg"
+                      style={{
+                        borderColor: 'var(--color-bg-tertiary)'
+                      }}
                     >
                       <option value="">Select a reason</option>
                       {REPORT_OPTIONS.map(option => (
@@ -1317,7 +1344,10 @@ const Profile = () => {
                       onChange={(e) => setReportDescription(e.target.value)}
                       placeholder="Provide details about why you're reporting this user..."
                       rows={6}
-                      className="w-full px-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700"
+                      className="w-full px-4 py-2 rounded-lg border input-white-bg"
+                      style={{
+                        borderColor: 'var(--color-bg-tertiary)'
+                      }}
                     />
                   </div>
 
@@ -1443,7 +1473,10 @@ const Profile = () => {
                             {nutritionData.todayLog?.total_calories || 0} / {nutritionData.targets?.calories || 0}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                        <div 
+                          className="w-full rounded-full h-1.5"
+                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                        >
                           <div
                             className="bg-orange-500 h-1.5 rounded-full transition-all"
                             style={{
@@ -1464,7 +1497,10 @@ const Profile = () => {
                             {nutritionData.todayLog?.total_protein || 0}g / {nutritionData.targets?.protein || 0}g
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                        <div 
+                          className="w-full rounded-full h-1.5"
+                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                        >
                           <div
                             className="bg-blue-500 h-1.5 rounded-full transition-all"
                             style={{
@@ -1485,7 +1521,10 @@ const Profile = () => {
                             {nutritionData.todayLog?.total_carbohydrates || 0}g / {nutritionData.targets?.carbohydrates || 0}g
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                        <div 
+                          className="w-full rounded-full h-1.5"
+                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                        >
                           <div
                             className="bg-green-500 h-1.5 rounded-full transition-all"
                             style={{
@@ -1506,7 +1545,10 @@ const Profile = () => {
                             {nutritionData.todayLog?.total_fat || 0}g / {nutritionData.targets?.fat || 0}g
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                        <div 
+                          className="w-full rounded-full h-1.5"
+                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                        >
                           <div
                             className="bg-yellow-500 h-1.5 rounded-full transition-all"
                             style={{
@@ -1527,7 +1569,13 @@ const Profile = () => {
                         <div className="mb-2">
                           <button
                             onClick={() => setShowVitamins(!showVitamins)}
-                            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                            className="w-full flex items-center justify-between p-2 rounded transition-colors"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
                           >
                             <span className="text-xs font-semibold">Vitamins</span>
                             {showVitamins ? <CaretDown size={14} /> : <CaretRight size={14} />}
@@ -1546,7 +1594,10 @@ const Profile = () => {
                                         <span className="capitalize">{name.replace('_', ' ')}</span>
                                         <span className="font-medium">{current?.toFixed(1) || 0} / {target?.toFixed(1) || 0}</span>
                                       </div>
-                                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                                      <div 
+                                        className="w-full rounded-full h-1"
+                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                      >
                                         <div
                                           className="bg-purple-500 h-1 rounded-full transition-all"
                                           style={{ width: `${Math.min(((current || 0) / (target || 1)) * 100, 100)}%` }}
@@ -1564,7 +1615,13 @@ const Profile = () => {
                         <div>
                           <button
                             onClick={() => setShowMinerals(!showMinerals)}
-                            className="w-full flex items-center justify-between p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+                            className="w-full flex items-center justify-between p-2 rounded transition-colors"
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
                           >
                             <span className="text-xs font-semibold">Minerals</span>
                             {showMinerals ? <CaretDown size={14} /> : <CaretRight size={14} />}
@@ -1583,7 +1640,10 @@ const Profile = () => {
                                         <span className="capitalize">{name}</span>
                                         <span className="font-medium">{current?.toFixed(1) || 0} / {target?.toFixed(1) || 0}</span>
                                       </div>
-                                      <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                                      <div 
+                                        className="w-full rounded-full h-1"
+                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                      >
                                         <div
                                           className="bg-teal-500 h-1 rounded-full transition-all"
                                           style={{ width: `${Math.min(((current || 0) / (target || 1)) * 100, 100)}%` }}

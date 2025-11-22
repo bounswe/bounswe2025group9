@@ -40,11 +40,23 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
   if (loading) {
     return (
       <div className="nh-card animate-pulse">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/3 mb-4"></div>
+        <div 
+          className="h-6 rounded w-1/3 mb-4"
+          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+        ></div>
         <div className="space-y-3">
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
-          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full"></div>
+          <div 
+            className="h-4 rounded w-full"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          ></div>
+          <div 
+            className="h-4 rounded w-full"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          ></div>
+          <div 
+            className="h-4 rounded w-full"
+            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+          ></div>
         </div>
       </div>
     );
@@ -98,7 +110,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
                 <span className="text-2xl font-bold text-primary">{todayLog.total_calories}</span>
                 <span className="text-sm nh-text opacity-70">/ {targets.calories}</span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div 
+                className="w-full rounded-full h-2"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)'
+                }}
+              >
                 <div
                   className="h-2 rounded-full transition-all"
                   style={{
@@ -119,7 +136,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
                 <span className="text-2xl font-bold text-primary">{todayLog.total_protein}g</span>
                 <span className="text-sm nh-text opacity-70">/ {targets.protein}g</span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div 
+                className="w-full rounded-full h-2"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)'
+                }}
+              >
                 <div
                   className="bg-blue-500 h-2 rounded-full transition-all"
                   style={{ width: `${Math.min(proteinPercent, 100)}%` }}
@@ -134,7 +156,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
                 <span className="text-xl font-bold text-primary">{todayLog.total_carbohydrates}g</span>
                 <span className="text-xs nh-text opacity-70">/ {targets.carbohydrates}g</span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div 
+                className="w-full rounded-full h-2"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)'
+                }}
+              >
                 <div
                   className="bg-green-500 h-2 rounded-full transition-all"
                   style={{ width: `${Math.min(carbsPercent, 100)}%` }}
@@ -149,7 +176,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
                 <span className="text-xl font-bold text-primary">{todayLog.total_fat}g</span>
                 <span className="text-xs nh-text opacity-70">/ {targets.fat}g</span>
               </div>
-              <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+              <div 
+                className="w-full rounded-full h-2"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)'
+                }}
+              >
                 <div
                   className="bg-yellow-500 h-2 rounded-full transition-all"
                   style={{ width: `${Math.min(fatPercent, 100)}%` }}
@@ -190,7 +222,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
             <span className="text-3xl font-bold text-primary">{todayLog.total_calories}</span>
             <span className="text-lg nh-text opacity-70">/ {targets.calories} kcal</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+          <div 
+            className="w-full rounded-full h-3"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)'
+            }}
+          >
             <div
               className="h-3 rounded-full transition-all"
               style={{
@@ -205,8 +242,14 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded flex items-center justify-center bg-blue-100 dark:bg-blue-900">
-                <span className="text-xs font-bold text-blue-600 dark:text-blue-300">P</span>
+              <div 
+                className="w-6 h-6 rounded flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-primary-light)' }}
+              >
+                <span 
+                  className="text-xs font-bold"
+                  style={{ color: 'var(--color-primary)' }}
+                >P</span>
               </div>
               <span className="font-semibold">Protein</span>
             </div>
@@ -220,7 +263,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
             <span className="text-3xl font-bold text-primary">{todayLog.total_protein}g</span>
             <span className="text-lg nh-text opacity-70">/ {targets.protein}g</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+          <div 
+            className="w-full rounded-full h-3"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)'
+            }}
+          >
             <div
               className="bg-blue-500 h-3 rounded-full transition-all"
               style={{ width: `${Math.min(proteinPercent, 100)}%` }}
@@ -232,8 +280,14 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded flex items-center justify-center bg-green-100 dark:bg-green-900">
-                <span className="text-xs font-bold text-green-600 dark:text-green-300">C</span>
+              <div 
+                className="w-6 h-6 rounded flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-primary-light)' }}
+              >
+                <span 
+                  className="text-xs font-bold"
+                  style={{ color: 'var(--color-success)' }}
+                >C</span>
               </div>
               <span className="font-semibold">Carbohydrates</span>
             </div>
@@ -247,7 +301,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
             <span className="text-3xl font-bold text-primary">{todayLog.total_carbohydrates}g</span>
             <span className="text-lg nh-text opacity-70">/ {targets.carbohydrates}g</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+          <div 
+            className="w-full rounded-full h-3"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)'
+            }}
+          >
             <div
               className="bg-green-500 h-3 rounded-full transition-all"
               style={{ width: `${Math.min(carbsPercent, 100)}%` }}
@@ -259,8 +318,14 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <div className="w-6 h-6 rounded flex items-center justify-center bg-yellow-100 dark:bg-yellow-900">
-                <span className="text-xs font-bold text-yellow-600 dark:text-yellow-300">F</span>
+              <div 
+                className="w-6 h-6 rounded flex items-center justify-center"
+                style={{ backgroundColor: 'var(--color-primary-light)' }}
+              >
+                <span 
+                  className="text-xs font-bold"
+                  style={{ color: 'var(--color-warning)' }}
+                >F</span>
               </div>
               <span className="font-semibold">Fat</span>
             </div>
@@ -274,7 +339,12 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
             <span className="text-3xl font-bold text-primary">{todayLog.total_fat}g</span>
             <span className="text-lg nh-text opacity-70">/ {targets.fat}g</span>
           </div>
-          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+          <div 
+            className="w-full rounded-full h-3"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)'
+            }}
+          >
             <div
               className="bg-yellow-500 h-3 rounded-full transition-all"
               style={{ width: `${Math.min(fatPercent, 100)}%` }}
