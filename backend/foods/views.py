@@ -26,7 +26,7 @@ sys.path.append(
 )
 
 from scraper import make_request, extract_food_info, get_fatsecret_image_url
-from nutrition_score import calculate_nutrition_score
+from api.db_initialization.nutrition_score import calculate_nutrition_score
 
 # Global thread pool for background image caching (max 5 concurrent downloads)
 _image_cache_executor = ThreadPoolExecutor(

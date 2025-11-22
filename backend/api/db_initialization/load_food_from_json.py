@@ -13,7 +13,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
 django.setup()
 
 from foods.models import FoodEntry, Allergen
-from nutrition_score import calculate_nutrition_score
+from api.db_initialization.nutrition_score import calculate_nutrition_score
 
 
 class FoodLoader:
@@ -318,6 +318,7 @@ class FoodLoader:
         return allergens
 
     def create_food_entry(self, food_data):
+
         """Create or update a FoodEntry from JSON food data."""
 
         # Extract basic information
