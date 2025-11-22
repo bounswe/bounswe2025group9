@@ -8,8 +8,8 @@ This document provides a comprehensive overview of **all 16 Selenium E2E test fi
 
 ## 📊 Test Suite Statistics
 
-- **Total Test Files:** 17
-- **Total Test Cases:** ~177
+- **Total Test Files:** 18
+- **Total Test Cases:** ~203
 - **Execution Time:** ~3-5 minutes (full suite)
 - **Browser:** Chrome (headless by default)
 - **Test Framework:** Vitest + Selenium WebDriver
@@ -37,6 +37,41 @@ Tests user follow/unfollow functionality:
 **Test Count:** 10 tests
 
 ---
+
+#### 2. **PersonalizedFeed.selenium.test.ts** ✅
+**Location:** `src/test/selenium/PersonalizedFeed.selenium.test.ts`
+
+Tests personalized feed functionality:
+- Personalized feed displays on home page
+- Feed information sidebar displays
+- Refresh button functionality
+- New post button displays
+- Feed refreshes when clicking refresh button
+- Post badges display for different post types
+- "Posts from you" badge on own posts
+- "You liked this" badge on liked posts
+- "From followed user" badge on followed user posts
+- Liking posts from the feed
+- Navigation to post detail from feed
+- Navigation to user profile from author name
+
+- Quick action links in sidebar
+- Navigation to forum from Browse All Posts
+- Navigation to create post page
+- Infinite scroll pagination
+- Loading indicator when loading more posts
+- End of feed message when no more posts
+- Feed updates after liking a post from forum
+- Scroll position maintenance when navigating back
+- Post metadata display (likes, comments, date)
+- Network error handling
+- Correct badge colors for different post types
+
+**Test Count:** 26 tests
+
+---
+
+### **Authentication Tests**
 
 ### **Authentication Tests**
 
@@ -598,7 +633,7 @@ if (loginForm.length === 0) {
 
 | Feature Area | Test Files | Test Cases | Coverage |
 |--------------|------------|------------|----------|
-| Social Features | 1 | 10 | ✅ Complete |
+| Social Features | 2 | 36 | ✅ Complete |
 | Authentication | 2 | 10 | ✅ Complete |
 | Forum & Posts | 5 | 58 | ✅ Complete |
 | Foods | 3 | 38 | ✅ Complete |
@@ -606,7 +641,7 @@ if (loginForm.length === 0) {
 | Profile | 1 | 10 | ✅ Complete |
 | Navigation & UI | 2 | 13 | ✅ Complete |
 | User Flows | 1 | 14 | ✅ Complete |
-| **Total** | **17** | **~177** | **✅ Complete** |
+| **Total** | **18** | **~203** | **✅ Complete** |
 
 ---
 
@@ -669,6 +704,6 @@ When adding new tests:
 
 **Last Updated:** November 22, 2025  
 **Maintained By:** Development Team  
-**Status:** ✅ Complete - All 17 test files operational  
-**Coverage:** ~177 test cases across all major features including social features
+**Status:** ✅ Complete - All 18 test files operational  
+**Coverage:** ~203 test cases across all major features including social features and personalized feed
 
