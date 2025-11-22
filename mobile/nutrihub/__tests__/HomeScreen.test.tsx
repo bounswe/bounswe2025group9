@@ -4,11 +4,16 @@ import HomeScreen from '../src/screens/HomeScreen';
 import * as NavigationHooks from '@react-navigation/native';
 import { View, Text } from 'react-native';
 
-// Mock the useNavigation hook
+// Mock the useNavigation hook and useFocusEffect
 jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(() => ({
     navigate: jest.fn(),
   })),
+  useFocusEffect: jest.fn((callback) => {
+    // Don't call the callback immediately to avoid infinite loops
+    // The callback will be called when the screen actually comes into focus
+    // In tests, we just need to register it without executing
+  }),
 }));
 
 // Mock the SafeAreaView component
@@ -19,6 +24,16 @@ jest.mock('react-native-safe-area-context', () => {
       <View style={style} testID="safe-area-view">
         {children}
       </View>
+    ),
+  };
+});
+
+// Mock MaterialCommunityIcons
+jest.mock('@expo/vector-icons', () => {
+  const { Text } = require('react-native');
+  return {
+    MaterialCommunityIcons: ({ name, size, color }: { name: string; size: number; color: string }) => (
+      <Text testID={`icon-${name}`}>{name}</Text>
     ),
   };
 });
@@ -64,6 +79,22 @@ jest.mock('../src/components/common/FeatureCard', () => {
     );
   };
 });
+
+// Mock the ForumPost component
+jest.mock('../src/components/forum/ForumPost', () => {
+  const { View } = require('react-native');
+  return function MockForumPost() {
+    return <View testID="forum-post" />;
+  };
+});
+
+// Mock the forum service
+jest.mock('../src/services/api/forum.service', () => ({
+  forumService: {
+    getFeed: jest.fn(() => Promise.resolve([])),
+    toggleLike: jest.fn(() => Promise.resolve({ liked: false })),
+  },
+}));
 
 describe('HomeScreen', () => {
   beforeEach(() => {
