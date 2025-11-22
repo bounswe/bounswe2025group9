@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger } from '@phosphor-icons/react'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, ChartLineUp } from '@phosphor-icons/react'
 import { apiClient, ForumPost, MealPlan} from '../lib/apiClient'
+import NutritionSummary from '../components/NutritionSummary'
+import NutritionTracking from '../components/NutritionTracking'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -56,7 +58,7 @@ const REPORT_OPTIONS: ReportOption[] = [
 const Profile = () => {
   const { user, fetchUserProfile } = useAuth()  
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'nutrition'>('overview')
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
@@ -739,6 +741,23 @@ const Profile = () => {
                   <BookmarkSimple size={18} weight="fill" />
                   <span className="flex-grow text-center">Saved Meal Plans</span>
                 </button>
+
+                {/* Nutrition Tracking Tab */}
+                <button
+                  onClick={() => setActiveTab('nutrition')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'nutrition' 
+                      ? 'var(--forum-default-active-bg)' 
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'nutrition' 
+                      ? 'var(--forum-default-active-text)' 
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <ChartLineUp size={18} weight="fill" />
+                  <span className="flex-grow text-center">Nutrition Tracking</span>
+                </button>
               </div>
             </div>
           </div>
@@ -834,6 +853,9 @@ const Profile = () => {
                     )}
                   </div>
                 </div>
+
+                {/* Nutrition Summary */}
+                <NutritionSummary compact={true} />
               </div>
             )}
 
@@ -1203,6 +1225,13 @@ const Profile = () => {
                     <p className="nh-text">You haven't saved any meal plan yet</p>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* Nutrition Tracking Tab */}
+            {activeTab === 'nutrition' && (
+              <div>
+                <NutritionTracking />
               </div>
             )}
           </div>

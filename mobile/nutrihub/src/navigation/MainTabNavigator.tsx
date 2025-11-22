@@ -31,6 +31,9 @@ import ReportUserScreen from '../screens/user/ReportUserScreen';
 import FollowersListScreen from '../screens/user/FollowersListScreen';
 import FollowingListScreen from '../screens/user/FollowingListScreen';
 
+// Nutrition screens
+import NutritionTrackingScreen from '../screens/nutrition/NutritionTrackingScreen';
+
 import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
@@ -143,6 +146,7 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen name="ProfessionTags" component={ProfessionTagsScreen} />
       <ProfileStack.Screen name="AccountWarnings" component={AccountWarningsScreen} />
       <ProfileStack.Screen name="ReportUser" component={ReportUserScreen} />
+      <ProfileStack.Screen name="NutritionTracking" component={NutritionTrackingScreen} />
     </ProfileStack.Navigator>
   );
 };
