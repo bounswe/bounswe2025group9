@@ -27,7 +27,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     return amount; // fallback for unknown units
   };
 
-  // Sort micronutrients by normalized amount and take top 10 for better presentation
+  // Sort micronutrients by normalized amount and take top 2 for better presentation
   const topMicronutrients = food.micronutrients 
     ? Object.entries(food.micronutrients).sort((a, b) => {
         const unitA = extractUnit(a[0]);
@@ -35,7 +35,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
         const normalizedA = normalizeAmount(a[1], unitA);
         const normalizedB = normalizeAmount(b[1], unitB);
         return normalizedB - normalizedA;
-      }).slice(0, 10)
+      }).slice(0, 12)
     : [];
 
   return (
@@ -210,23 +210,31 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
             </div>
           </div>
 
+          {/* Micronutrients Section */}
           {topMicronutrients.length > 0 && (
             <div className="mb-8">
               <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
                 <Pill size={20} weight="fill" className="text-[var(--color-accent)]" />
-                Micronutrients (per {food.servingSize}g serving)
+                Top Micronutrients (per {food.servingSize}g serving)
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {topMicronutrients.map(([nutrient, amount]) => (
-                  <div 
-                    key={nutrient}
-                    className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center"
-                  >
-                    <span className="text-[var(--color-text-secondary)] text-sm">{nutrient}</span>
-                    <span className="font-semibold text-[var(--color-text-primary)] ml-2">{amount}</span>
-                  </div>
-                ))}
+                {topMicronutrients.map(([nutrient, amount]) => {
+                  const unit = extractUnit(nutrient);
+                  const nutrientName = nutrient.replace(/\s*\(.*?\)\s*$/, '').trim();
+                  
+                  return (
+                    <div 
+                      key={nutrient}
+                      className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center"
+                    >
+                      <span className="text-[var(--color-text-secondary)] text-sm">{nutrientName}</span>
+                      <span className="font-semibold text-[var(--color-text-primary)] ml-2">
+                        {amount}{unit}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}
