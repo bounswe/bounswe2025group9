@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
-import { WebDriver, By, until } from 'selenium-webdriver';
+import { WebDriver, By } from 'selenium-webdriver';
 import { getDriver, quitDriver, defaultConfig, loginWithTestCredentials } from './selenium.config';
 
 describe('Follow System - Selenium E2E Tests', () => {
@@ -207,7 +207,7 @@ describe('Follow System - Selenium E2E Tests', () => {
         // Immediately check for loading state (spinner or "Following..." text)
         await driver.sleep(100);
         
-        const loadingElements = await driver.findElements(
+        await driver.findElements(
           By.xpath("//*[contains(text(), 'Following...') or contains(text(), 'Unfollowing...')]")
         );
 
@@ -304,7 +304,6 @@ describe('Follow System - Selenium E2E Tests', () => {
     );
 
     if (authorLinks.length > 0) {
-      const authorHref = await authorLinks[0].getAttribute('href');
       await authorLinks[0].click();
       await driver.sleep(2000);
 
