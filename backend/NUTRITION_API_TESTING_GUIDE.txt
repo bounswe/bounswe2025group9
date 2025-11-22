@@ -1,0 +1,546 @@
+====================================================================================================
+NUTRITION TRACKING API - TERMINAL TESTING GUIDE
+====================================================================================================
+
+This guide provides ready-to-use curl commands to test all nutrition tracking endpoints.
+
+====================================================================================================
+SETUP - RUN THESE FIRST
+====================================================================================================
+
+# 1. Apply database migrations
+cd /Users/berkay/bounswe2025group9/backend
+source venv/bin/activate
+python manage.py migrate accounts
+python manage.py migrate foods
+python manage.py migrate meal_planner
+
+# 2. Set base URL (adjust if needed)
+export BASE_URL="http://localhost:8000"
+
+# 3. Get authentication token (replace with your credentials)
+curl -X POST $BASE_URL/api/users/token/ \
+  -H "Content-Type: application/json" \
+  -d '{
+    "username": "your_username",
+    "password": "your_password"
+  }'
+
+# 4. Save the access token as environment variable
+# Copy the "access" token from the response above and run:
+export TOKEN="paste_your_access_token_here"
+
+# Example: export TOKEN="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+
+====================================================================================================
+TEST 1: CREATE USER METRICS
+====================================================================================================
+
+POST /api/users/metrics/
+
+curl -X POST $BASE_URL/api/users/metrics/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "height": 175,
+    "weight": 70,
+    "age": 30,
+    "gender": "M",
+    "activity_level": "moderate"
+  }'
+
+Expected Response:
+{
+  "height": "175.00",
+  "weight": "70.00",
+  "age": 30,
+  "gender": "M",
+  "activity_level": "moderate",
+  "bmr": 1662.5,
+  "tdee": 2576.88,
+  "created_at": "2025-11-20T...",
+  "updated_at": "2025-11-20T..."
+}
+
+Notes:
+- BMR calculated using Mifflin-St Jeor equation
+- TDEE = BMR × 1.55 (moderate activity)
+- This auto-creates nutrition targets
+
+====================================================================================================
+TEST 2: GET USER METRICS
+====================================================================================================
+
+GET /api/users/metrics/
+
+curl -X GET $BASE_URL/api/users/metrics/ \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected: Same as Test 1 response
+
+====================================================================================================
+TEST 3: GET NUTRITION TARGETS (Auto-Calculated)
+====================================================================================================
+
+GET /api/users/nutrition-targets/
+
+curl -X GET $BASE_URL/api/users/nutrition-targets/ \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected Response:
+{
+  "calories": "2576.88",
+  "protein": "193.27",        // 30% of calories ÷ 4 kcal/g
+  "carbohydrates": "257.69",  // 40% of calories ÷ 4 kcal/g
+  "fat": "85.90",             // 30% of calories ÷ 9 kcal/g
+  "micronutrients": {},
+  "is_custom": false,
+  "bmr": 1662.5,
+  "tdee": 2576.88,
+  "created_at": "2025-11-20T...",
+  "updated_at": "2025-11-20T..."
+}
+
+Notes:
+- Auto-generated from user metrics
+- Default macro ratio: 40% carbs, 30% protein, 30% fat
+
+====================================================================================================
+TEST 4: UPDATE CUSTOM NUTRITION TARGETS
+====================================================================================================
+
+PUT /api/users/nutrition-targets/
+
+curl -X PUT $BASE_URL/api/users/nutrition-targets/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "calories": 2000,
+    "protein": 150,
+    "carbohydrates": 200,
+    "fat": 67
+  }'
+
+Expected Response:
+{
+  "calories": "2000.00",
+  "protein": "150.00",
+  "carbohydrates": "200.00",
+  "fat": "67.00",
+  "micronutrients": {},
+  "is_custom": true,           // Changed to true
+  "bmr": 1662.5,
+  "tdee": 2576.88,
+  "created_at": "2025-11-20T...",
+  "updated_at": "2025-11-20T..."
+}
+
+Notes:
+- Sets is_custom=true automatically
+- Validates macro calories don't exceed total
+
+====================================================================================================
+TEST 5: RESET TARGETS TO AUTO-CALCULATED
+====================================================================================================
+
+POST /api/users/nutrition-targets/reset/
+
+curl -X POST $BASE_URL/api/users/nutrition-targets/reset/ \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected Response:
+{
+  "calories": "2576.88",
+  "protein": "193.27",
+  "carbohydrates": "257.69",
+  "fat": "85.90",
+  "micronutrients": {},
+  "is_custom": false,          // Back to false
+  "bmr": 1662.5,
+  "tdee": 2576.88,
+  "created_at": "2025-11-20T...",
+  "updated_at": "2025-11-20T..."
+}
+
+Notes:
+- Recalculates from current user metrics
+- Requires metrics to exist (400 error if not)
+
+====================================================================================================
+TEST 6: ADD FOOD ENTRY TO TODAY'S LOG
+====================================================================================================
+
+POST /api/meal-planner/daily-log/entries/
+
+# First entry - Breakfast
+curl -X POST $BASE_URL/api/meal-planner/daily-log/entries/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "food_id": 1,
+    "serving_size": 2,
+    "serving_unit": "serving",
+    "meal_type": "breakfast"
+  }'
+
+Expected Response:
+{
+  "id": 1,
+  "food_id": 1,
+  "food_name": "Chicken Breast",
+  "serving_size": "2.00",
+  "serving_unit": "serving",
+  "meal_type": "breakfast",
+  "calories": "330.00",
+  "protein": "62.00",
+  "carbohydrates": "0.00",
+  "fat": "7.00",
+  "micronutrients": {},
+  "logged_at": "2025-11-20T..."
+}
+
+Notes:
+- Creates DailyNutritionLog for today if doesn't exist
+- Nutrition auto-calculated from food × serving_size
+- Daily totals updated automatically
+
+----------------------------------------------------------------------------------------------------
+
+# Add another entry - Lunch
+curl -X POST $BASE_URL/api/meal-planner/daily-log/entries/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "food_id": 5,
+    "serving_size": 1.5,
+    "serving_unit": "cup",
+    "meal_type": "lunch"
+  }'
+
+----------------------------------------------------------------------------------------------------
+
+# Add entry for specific date (optional)
+curl -X POST $BASE_URL/api/meal-planner/daily-log/entries/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "food_id": 3,
+    "serving_size": 1,
+    "serving_unit": "serving",
+    "meal_type": "dinner",
+    "date": "2025-11-19"
+  }'
+
+====================================================================================================
+TEST 7: GET TODAY'S DAILY LOG
+====================================================================================================
+
+GET /api/meal-planner/daily-log/
+
+curl -X GET $BASE_URL/api/meal-planner/daily-log/ \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected Response:
+{
+  "date": "2025-11-20",
+  "total_calories": "550.00",
+  "total_protein": "85.00",
+  "total_carbohydrates": "45.00",
+  "total_fat": "12.00",
+  "micronutrients_summary": {},
+  "entries": [
+    {
+      "id": 1,
+      "food_id": 1,
+      "food_name": "Chicken Breast",
+      "serving_size": "2.00",
+      "serving_unit": "serving",
+      "meal_type": "breakfast",
+      "calories": "330.00",
+      "protein": "62.00",
+      "carbohydrates": "0.00",
+      "fat": "7.00",
+      "micronutrients": {},
+      "logged_at": "2025-11-20T..."
+    },
+    {
+      "id": 2,
+      "food_id": 5,
+      "food_name": "Brown Rice",
+      ...
+    }
+  ],
+  "targets": {
+    "calories": 2000,
+    "protein": 150,
+    "carbohydrates": 200,
+    "fat": 67
+  },
+  "adherence": {
+    "calories": 27.5,
+    "protein": 56.7,
+    "carbohydrates": 22.5,
+    "fat": 17.9
+  },
+  "created_at": "2025-11-20T...",
+  "updated_at": "2025-11-20T..."
+}
+
+Notes:
+- Totals auto-calculated from all entries
+- Adherence = (consumed / target) × 100
+
+----------------------------------------------------------------------------------------------------
+
+# Get log for specific date
+curl -X GET "$BASE_URL/api/meal-planner/daily-log/?date=2025-11-19" \
+  -H "Authorization: Bearer $TOKEN"
+
+====================================================================================================
+TEST 8: GET NUTRITION HISTORY (DATE RANGE)
+====================================================================================================
+
+GET /api/meal-planner/daily-log/history/
+
+# Get last 7 days (default)
+curl -X GET $BASE_URL/api/meal-planner/daily-log/history/ \
+  -H "Authorization: Bearer $TOKEN"
+
+----------------------------------------------------------------------------------------------------
+
+# Get specific date range
+curl -X GET "$BASE_URL/api/meal-planner/daily-log/history/?start_date=2025-11-01&end_date=2025-11-20" \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected Response:
+[
+  {
+    "date": "2025-11-20",
+    "total_calories": "550.00",
+    "total_protein": "85.00",
+    "total_carbohydrates": "45.00",
+    "total_fat": "12.00",
+    "micronutrients_summary": {}
+  },
+  {
+    "date": "2025-11-19",
+    "total_calories": "320.00",
+    "total_protein": "40.00",
+    "total_carbohydrates": "25.00",
+    "total_fat": "8.00",
+    "micronutrients_summary": {}
+  }
+]
+
+Notes:
+- Simplified format (no nested entries)
+- Max 90 days range
+- Ordered by date descending
+
+====================================================================================================
+TEST 9: UPDATE FOOD ENTRY
+====================================================================================================
+
+PUT /api/meal-planner/daily-log/entries/{id}/
+
+# Replace {id} with actual entry ID from Test 6
+export ENTRY_ID=1
+
+curl -X PUT $BASE_URL/api/meal-planner/daily-log/entries/$ENTRY_ID/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "serving_size": 3,
+    "meal_type": "dinner"
+  }'
+
+Expected Response:
+{
+  "id": 1,
+  "food_id": 1,
+  "food_name": "Chicken Breast",
+  "serving_size": "3.00",        // Updated
+  "serving_unit": "serving",
+  "meal_type": "dinner",         // Updated
+  "calories": "495.00",          // Recalculated
+  "protein": "93.00",
+  "carbohydrates": "0.00",
+  "fat": "10.50",
+  "micronutrients": {},
+  "logged_at": "2025-11-20T..."
+}
+
+Notes:
+- Partial update supported
+- Nutrition auto-recalculated
+- Daily totals updated automatically
+- Only owner can update (403 if not)
+
+====================================================================================================
+TEST 10: DELETE FOOD ENTRY
+====================================================================================================
+
+DELETE /api/meal-planner/daily-log/entries/{id}/
+
+# Replace {id} with actual entry ID
+export ENTRY_ID=2
+
+curl -X DELETE $BASE_URL/api/meal-planner/daily-log/entries/$ENTRY_ID/ \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected Response: 204 No Content (empty body)
+
+Notes:
+- Entry deleted
+- Daily totals auto-recalculated
+- Only owner can delete (403 if not)
+
+====================================================================================================
+TEST 11: GET NUTRITION STATISTICS
+====================================================================================================
+
+GET /api/meal-planner/nutrition-statistics/
+
+# Weekly statistics (default)
+curl -X GET "$BASE_URL/api/meal-planner/nutrition-statistics/?period=week" \
+  -H "Authorization: Bearer $TOKEN"
+
+----------------------------------------------------------------------------------------------------
+
+# Monthly statistics
+curl -X GET "$BASE_URL/api/meal-planner/nutrition-statistics/?period=month" \
+  -H "Authorization: Bearer $TOKEN"
+
+Expected Response:
+{
+  "period": "week",
+  "start_date": "2025-11-13",
+  "end_date": "2025-11-20",
+  "statistics": {
+    "avg_calories": 650.5,
+    "avg_protein": 95.2,
+    "avg_carbohydrates": 45.0,
+    "avg_fat": 12.3,
+    "days_logged": 5,
+    "streak_days": 3,
+    "adherence": {
+      "calories": 32.5,
+      "protein": 63.5,
+      "carbohydrates": 22.5,
+      "fat": 18.4
+    }
+  }
+}
+
+Notes:
+- period: "week" (7 days) or "month" (30 days)
+- streak_days = consecutive days with logs (from today back)
+- adherence = average % of targets met
+
+====================================================================================================
+QUICK TESTING SEQUENCE
+====================================================================================================
+
+# Run all tests in order:
+
+# Setup
+export BASE_URL="http://localhost:8000"
+export TOKEN="your_token_here"
+
+# 1. Create metrics → auto-generates targets
+curl -X POST $BASE_URL/api/users/metrics/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"height":175,"weight":70,"age":30,"gender":"M","activity_level":"moderate"}'
+
+# 2. Get targets
+curl -X GET $BASE_URL/api/users/nutrition-targets/ -H "Authorization: Bearer $TOKEN"
+
+# 3. Add food entry
+curl -X POST $BASE_URL/api/meal-planner/daily-log/entries/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"food_id":1,"serving_size":2,"meal_type":"breakfast"}'
+
+# 4. Get today's log with totals
+curl -X GET $BASE_URL/api/meal-planner/daily-log/ -H "Authorization: Bearer $TOKEN"
+
+# 5. Get statistics
+curl -X GET "$BASE_URL/api/meal-planner/nutrition-statistics/?period=week" \
+  -H "Authorization: Bearer $TOKEN"
+
+====================================================================================================
+ERROR TESTING
+====================================================================================================
+
+# 1. Unauthorized access (without token)
+curl -X GET $BASE_URL/api/users/metrics/
+# Expected: 401 Unauthorized
+
+# 2. Invalid date format
+curl -X GET "$BASE_URL/api/meal-planner/daily-log/?date=20-11-2025" \
+  -H "Authorization: Bearer $TOKEN"
+# Expected: 400 Bad Request
+
+# 3. Negative serving size
+curl -X POST $BASE_URL/api/meal-planner/daily-log/entries/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"food_id":1,"serving_size":-1,"meal_type":"lunch"}'
+# Expected: 400 Bad Request
+
+# 4. Get targets without metrics
+# First delete metrics, then:
+curl -X GET $BASE_URL/api/users/nutrition-targets/ -H "Authorization: Bearer $TOKEN"
+# Expected: 404 Not Found
+
+# 5. Invalid macro ratios (calories from macros exceed total)
+curl -X PUT $BASE_URL/api/users/nutrition-targets/ \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"calories":1000,"protein":300,"carbohydrates":300,"fat":100}'
+# Expected: 400 Bad Request (3300 kcal from macros > 1000 target)
+
+====================================================================================================
+USEFUL TIPS
+====================================================================================================
+
+# Pretty print JSON responses with jq (install with: brew install jq)
+curl -X GET $BASE_URL/api/users/metrics/ \
+  -H "Authorization: Bearer $TOKEN" | jq
+
+# Save response to file
+curl -X GET $BASE_URL/api/meal-planner/daily-log/ \
+  -H "Authorization: Bearer $TOKEN" > daily_log.json
+
+# Show response headers
+curl -i -X GET $BASE_URL/api/users/metrics/ \
+  -H "Authorization: Bearer $TOKEN"
+
+# Silent mode (only show response)
+curl -s -X GET $BASE_URL/api/users/metrics/ \
+  -H "Authorization: Bearer $TOKEN"
+
+====================================================================================================
+COMPLETE API ENDPOINT LIST
+====================================================================================================
+
+User Metrics & Targets (/api/users/):
+  POST   /metrics/                     - Create/update physical metrics
+  GET    /metrics/                     - Get user metrics
+  GET    /nutrition-targets/           - Get nutrition targets
+  PUT    /nutrition-targets/           - Update custom targets
+  POST   /nutrition-targets/reset/     - Reset to auto-calculated
+
+Daily Nutrition Logging (/api/meal-planner/):
+  GET    /daily-log/                   - Get today's log
+  GET    /daily-log/?date=YYYY-MM-DD   - Get specific date log
+  GET    /daily-log/history/           - Get date range logs
+  POST   /daily-log/entries/           - Add food entry
+  PUT    /daily-log/entries/{id}/      - Update entry
+  DELETE /daily-log/entries/{id}/      - Delete entry
+  GET    /nutrition-statistics/        - Get statistics & streaks
+
+====================================================================================================
+END OF TESTING GUIDE
+====================================================================================================
