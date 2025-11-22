@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, Hamburger, Tag, Fire, Scales } from '@phosphor-icons/react';
+import { X, Hamburger, Tag, Fire, Scales, Pill } from '@phosphor-icons/react';
 import { Food } from '../../lib/apiClient';
 import NutritionScore from '../../components/NutritionScore';
 
@@ -11,6 +11,32 @@ interface FoodDetailProps {
 
 const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
   if (!food) return null;
+
+  // Helper function to extract unit from nutrient name
+  const extractUnit = (nutrientName: string): string => {
+    const match = nutrientName.match(/\((.*?)\)$/);
+    return match ? match[1] : '';
+  };
+
+  // Helper function to convert amount to comparable value (in micrograms)
+  const normalizeAmount = (amount: number, unit: string): number => {
+    const unitLower = unit.toLowerCase();
+    if (unitLower === 'g') return amount * 1_000_000; // g to µg
+    if (unitLower === 'mg') return amount * 1_000;    // mg to µg
+    if (unitLower === 'µg' || unitLower === 'ug') return amount; // already in µg
+    return amount; // fallback for unknown units
+  };
+
+  // Sort micronutrients by normalized amount and take top 10 for better presentation
+  const topMicronutrients = food.micronutrients 
+    ? Object.entries(food.micronutrients).sort((a, b) => {
+        const unitA = extractUnit(a[0]);
+        const unitB = extractUnit(b[0]);
+        const normalizedA = normalizeAmount(a[1], unitA);
+        const normalizedB = normalizeAmount(b[1], unitB);
+        return normalizedB - normalizedA;
+      }).slice(0, 10)
+    : [];
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${open ? 'visible' : 'invisible'}`}>
@@ -183,6 +209,27 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
               </div>
             </div>
           </div>
+
+          {topMicronutrients.length > 0 && (
+            <div className="mb-8">
+              <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
+                <Pill size={20} weight="fill" className="text-[var(--color-accent)]" />
+                Micronutrients (per {food.servingSize}g serving)
+              </h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {topMicronutrients.map(([nutrient, amount]) => (
+                  <div 
+                    key={nutrient}
+                    className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center"
+                  >
+                    <span className="text-[var(--color-text-secondary)] text-sm">{nutrient}</span>
+                    <span className="font-semibold text-[var(--color-text-primary)] ml-2">{amount}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
             
           {/* Dietary Tags */}
           <div>
