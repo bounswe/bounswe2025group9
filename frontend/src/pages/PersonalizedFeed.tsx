@@ -20,7 +20,9 @@ const PersonalizedFeed = () => {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [showFollowingOnly, setShowFollowingOnly] = useState(false);
+    const [followingUsernames, setFollowingUsernames] = useState<Set<string>>(new Set());
     const observerTarget = useRef<HTMLDivElement>(null);
+    const lastLocationKey = useRef<string | undefined>(undefined);
 
     // Helper to get liked posts from local storage
     const getUserLikedPostsFromStorage = useCallback((): {[key: number]: boolean} => {
@@ -72,10 +74,19 @@ const PersonalizedFeed = () => {
                 setLoadingMore(true);
             }
 
-            // Sync liked posts from backend first (only on initial load, not on pagination)
-            let userLikedPosts = getUserLikedPostsFromStorage();
-            if (!append) {
-                userLikedPosts = await syncLikedPostsFromBackend();
+            // ALWAYS sync liked posts from backend to get the latest state
+            const userLikedPosts = await syncLikedPostsFromBackend();
+
+            // Fetch list of users we're following (only on initial load)
+            if (!append && user) {
+                try {
+                    const followingData = await apiClient.getFollowing(username);
+                    const followingList = Array.isArray(followingData) ? followingData : (followingData.following || []);
+                    const followingNames = new Set(followingList.map((u: any) => u.username));
+                    setFollowingUsernames(followingNames);
+                } catch (error) {
+                    console.error('[PersonalizedFeed] Failed to fetch following list:', error);
+                }
             }
 
             const response = await apiClient.getPersonalizedFeed({
@@ -97,6 +108,15 @@ const PersonalizedFeed = () => {
 
             setHasMore(response.next !== null);
             setLikedPosts(userLikedPosts);
+            
+            // Force update posts with correct liked status after a short delay
+            // This handles cases where the backend feed doesn't include liked status
+            setTimeout(() => {
+                setPosts(prev => prev.map(post => ({
+                    ...post,
+                    liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : post.liked
+                })));
+            }, 100);
         } catch (error) {
             console.error('Error fetching personalized feed:', error);
             setPosts([]);
@@ -104,24 +124,39 @@ const PersonalizedFeed = () => {
             setLoading(false);
             setLoadingMore(false);
         }
-    }, [getUserLikedPostsFromStorage, syncLikedPostsFromBackend, user, username]);
+    }, [getUserLikedPostsFromStorage, syncLikedPostsFromBackend]);
 
-    // Initial load and refresh on every navigation to this page
+    // Initial load
+    useEffect(() => {
+        if (user && posts.length === 0) {
+            console.log('[PersonalizedFeed] Initial load');
+            fetchFeed(1, false);
+        }
+    }, [user, fetchFeed, posts.length]);
+
+    // Refresh on navigation back to this page or if feed needs refresh
     useEffect(() => {
         if (!user) return;
 
-        console.log('[PersonalizedFeed] Component mounted or location changed, loading feed');
+        // Check if feed needs refresh (set by follow/unfollow actions)
+        const needsRefresh = localStorage.getItem(FEED_NEEDS_REFRESH_KEY) === 'true';
         
-        // Reset state to force fresh load
-        setPosts([]);
-        setPage(1);
-        setHasMore(true);
+        // Check if we're navigating back to this page (location key changed)
+        const isNavigatingBack = lastLocationKey.current !== undefined && 
+                                 lastLocationKey.current !== location.key;
         
-        // Fetch fresh data
-        fetchFeed(1, false);
+        console.log('[PersonalizedFeed] Refresh check:', { needsRefresh, isNavigatingBack, locationKey: location.key });
         
-        // Clear any refresh flags
-        localStorage.removeItem(FEED_NEEDS_REFRESH_KEY);
+        if (isNavigatingBack || needsRefresh) {
+            console.log('[PersonalizedFeed] Refreshing feed due to navigation or flag');
+            setPosts([]); // Clear posts to force fresh load
+            setPage(1);
+            fetchFeed(1, false);
+            // Clear the refresh flag
+            localStorage.removeItem(FEED_NEEDS_REFRESH_KEY);
+        }
+        
+        lastLocationKey.current = location.key;
     }, [user, location.key, fetchFeed]);
 
     // Subscribe to cross-tab like changes
@@ -258,10 +293,21 @@ const PersonalizedFeed = () => {
         }
     };
 
+    // Filter posts based on user preference
+    const filteredPosts = showFollowingOnly 
+        ? posts.filter(post => followingUsernames.has(post.author.username)) // Only show posts from followed users
+        : posts; // Show all posts (followed + liked)
+
     // Check if user is following the post author or has liked the post
     const getPostBadge = (post: ForumPost) => {
-        // Check if user has liked this post (takes priority)
-        if (likedPosts[post.id]) {
+        // Check if user has liked this post
+        const isLiked = likedPosts[post.id] || post.liked;
+        
+        // Check if user is following the post author
+        const isFollowingAuthor = followingUsernames.has(post.author.username);
+        
+        // If liked, show liked badge (takes priority)
+        if (isLiked) {
             return (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
                     <Heart size={12} weight="fill" />
@@ -270,19 +316,25 @@ const PersonalizedFeed = () => {
             );
         }
         
-        // If the post is in the feed and not liked, it must be from a followed user
+        // If following the author, show followed badge
+        if (isFollowingAuthor) {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    <UserCircle size={12} weight="fill" />
+                    <span>From followed user</span>
+                </div>
+            );
+        }
+        
+        // If neither liked nor following, but post is in feed, it must be liked
+        // (backend bug: feed includes liked posts but doesn't set liked=true)
         return (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                <UserCircle size={12} weight="fill" />
-                <span>From followed user</span>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
+                <Heart size={12} weight="fill" />
+                <span>You liked this</span>
             </div>
         );
     };
-
-    // Filter posts based on user preference
-    const filteredPosts = showFollowingOnly 
-        ? posts.filter(post => !likedPosts[post.id]) // Only show posts from followed users (exclude liked posts)
-        : posts; // Show all posts (followed + liked)
 
     if (!user) {
         return (
