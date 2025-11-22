@@ -19,6 +19,8 @@ const PersonalizedFeed = () => {
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [showFollowingOnly, setShowFollowingOnly] = useState(false);
+    const [followingUsernames, setFollowingUsernames] = useState<Set<string>>(new Set());
     const observerTarget = useRef<HTMLDivElement>(null);
     const lastLocationKey = useRef<string | undefined>(undefined);
 
@@ -72,10 +74,19 @@ const PersonalizedFeed = () => {
                 setLoadingMore(true);
             }
 
-            // Sync liked posts from backend first (only on initial load, not on pagination)
-            let userLikedPosts = getUserLikedPostsFromStorage();
-            if (!append) {
-                userLikedPosts = await syncLikedPostsFromBackend();
+            // ALWAYS sync liked posts from backend to get the latest state
+            const userLikedPosts = await syncLikedPostsFromBackend();
+
+            // Fetch list of users we're following (only on initial load)
+            if (!append && user) {
+                try {
+                    const followingData = await apiClient.getFollowing(username);
+                    const followingList = Array.isArray(followingData) ? followingData : (followingData.following || []);
+                    const followingNames = new Set(followingList.map((u: any) => u.username));
+                    setFollowingUsernames(followingNames);
+                } catch (error) {
+                    console.error('[PersonalizedFeed] Failed to fetch following list:', error);
+                }
             }
 
             const response = await apiClient.getPersonalizedFeed({
@@ -97,6 +108,15 @@ const PersonalizedFeed = () => {
 
             setHasMore(response.next !== null);
             setLikedPosts(userLikedPosts);
+            
+            // Force update posts with correct liked status after a short delay
+            // This handles cases where the backend feed doesn't include liked status
+            setTimeout(() => {
+                setPosts(prev => prev.map(post => ({
+                    ...post,
+                    liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : post.liked
+                })));
+            }, 100);
         } catch (error) {
             console.error('Error fetching personalized feed:', error);
             setPosts([]);
@@ -118,15 +138,18 @@ const PersonalizedFeed = () => {
     useEffect(() => {
         if (!user) return;
 
-        // Check if feed needs refresh (set by like actions on other pages)
+        // Check if feed needs refresh (set by follow/unfollow actions)
         const needsRefresh = localStorage.getItem(FEED_NEEDS_REFRESH_KEY) === 'true';
         
         // Check if we're navigating back to this page (location key changed)
         const isNavigatingBack = lastLocationKey.current !== undefined && 
                                  lastLocationKey.current !== location.key;
         
+        console.log('[PersonalizedFeed] Refresh check:', { needsRefresh, isNavigatingBack, locationKey: location.key });
+        
         if (isNavigatingBack || needsRefresh) {
-            console.log('[PersonalizedFeed] Navigation or refresh flag detected, refreshing feed');
+            console.log('[PersonalizedFeed] Refreshing feed due to navigation or flag');
+            setPosts([]); // Clear posts to force fresh load
             setPage(1);
             fetchFeed(1, false);
             // Clear the refresh flag
@@ -270,20 +293,21 @@ const PersonalizedFeed = () => {
         }
     };
 
+    // Filter posts based on user preference
+    const filteredPosts = showFollowingOnly 
+        ? posts.filter(post => followingUsernames.has(post.author.username)) // Only show posts from followed users
+        : posts; // Show all posts (followed + liked)
+
     // Check if user is following the post author or has liked the post
     const getPostBadge = (post: ForumPost) => {
-        // Check if this is the user's own post
-        if (post.author.username === username) {
-            return (
-                <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30">
-                    <Sparkle size={12} weight="fill" />
-                    <span>Posts from you</span>
-                </div>
-            );
-        }
-        
         // Check if user has liked this post
-        if (likedPosts[post.id]) {
+        const isLiked = likedPosts[post.id] || post.liked;
+        
+        // Check if user is following the post author
+        const isFollowingAuthor = followingUsernames.has(post.author.username);
+        
+        // If liked, show liked badge (takes priority)
+        if (isLiked) {
             return (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
                     <Heart size={12} weight="fill" />
@@ -292,14 +316,22 @@ const PersonalizedFeed = () => {
             );
         }
         
-        // If the post is in the feed, it means either:
-        // 1. It's from someone the user follows
-        // 2. The user has liked it
-        // Since we already checked for liked and own posts, this must be from a followed user
+        // If following the author, show followed badge
+        if (isFollowingAuthor) {
+            return (
+                <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                    <UserCircle size={12} weight="fill" />
+                    <span>From followed user</span>
+                </div>
+            );
+        }
+        
+        // If neither liked nor following, but post is in feed, it must be liked
+        // (backend bug: feed includes liked posts but doesn't set liked=true)
         return (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
-                <UserCircle size={12} weight="fill" />
-                <span>From followed user</span>
+            <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
+                <Heart size={12} weight="fill" />
+                <span>You liked this</span>
             </div>
         );
     };
@@ -351,28 +383,55 @@ const PersonalizedFeed = () => {
 
                     {/* Main content */}
                     <div className="w-full md:w-3/5">
-                        <div className="flex justify-between items-center mb-6">
-                            <h2 className="nh-title">Your Personalized Feed</h2>
-                            <div className="flex gap-2">
+                        <div className="flex flex-col gap-4 mb-6">
+                            <div className="flex justify-between items-center">
+                                <h2 className="nh-title">Your Personalized Feed</h2>
+                                <div className="flex gap-2">
+                                    <button
+                                        onClick={() => {
+                                            setPage(1);
+                                            fetchFeed(1, false);
+                                        }}
+                                        className="nh-button nh-button-secondary flex items-center gap-2"
+                                        disabled={loading}
+                                        title="Refresh feed"
+                                    >
+                                        <ArrowClockwise size={20} weight="bold" />
+                                        Refresh
+                                    </button>
+                                    <Link 
+                                        to="/forum/create" 
+                                        className="nh-button nh-button-primary flex items-center gap-2"
+                                    >
+                                        <PlusCircle size={20} weight="fill" />
+                                        New Post
+                                    </Link>
+                                </div>
+                            </div>
+                            
+                            {/* Filter toggle */}
+                            <div className="flex items-center gap-3">
+                                <span className="nh-text text-sm">Show:</span>
                                 <button
-                                    onClick={() => {
-                                        setPage(1);
-                                        fetchFeed(1, false);
-                                    }}
-                                    className="nh-button nh-button-secondary flex items-center gap-2"
-                                    disabled={loading}
-                                    title="Refresh feed"
+                                    onClick={() => setShowFollowingOnly(false)}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                        !showFollowingOnly
+                                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                    }`}
                                 >
-                                    <ArrowClockwise size={20} weight="bold" />
-                                    Refresh
+                                    All Posts
                                 </button>
-                                <Link 
-                                    to="/forum/create" 
-                                    className="nh-button nh-button-primary flex items-center gap-2"
+                                <button
+                                    onClick={() => setShowFollowingOnly(true)}
+                                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                                        showFollowingOnly
+                                            ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                            : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                                    }`}
                                 >
-                                    <PlusCircle size={20} weight="fill" />
-                                    New Post
-                                </Link>
+                                    Following Only
+                                </button>
                             </div>
                         </div>
 
@@ -380,7 +439,7 @@ const PersonalizedFeed = () => {
                             <div className="text-center py-12">
                                 <p className="nh-text">Loading your feed...</p>
                             </div>
-                        ) : posts.length === 0 ? (
+                        ) : filteredPosts.length === 0 ? (
                             <div className="nh-card p-12 text-center">
                                 <Sparkle size={48} className="mx-auto mb-4 text-gray-400" />
                                 <h3 className="nh-subtitle mb-2">Your feed is empty</h3>
@@ -394,7 +453,7 @@ const PersonalizedFeed = () => {
                         ) : (
                             <>
                                 <div className="space-y-6">
-                                    {posts.map(post => (
+                                    {filteredPosts.map(post => (
                                         <div key={post.id} className="relative">
                                             {/* Badge overlay */}
                                             <div className="absolute top-4 right-4 z-30">
@@ -418,7 +477,7 @@ const PersonalizedFeed = () => {
                                     </div>
                                 )}
 
-                                {!hasMore && posts.length > 0 && (
+                                {!hasMore && filteredPosts.length > 0 && (
                                     <div className="py-8 text-center">
                                         <p className="nh-text text-gray-500">You've reached the end of your feed</p>
                                     </div>

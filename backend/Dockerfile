@@ -13,7 +13,9 @@ COPY requirements.txt ./
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 COPY . .
-COPY entrypoint.sh /entrypoint.sh
+
+# Create and set up entrypoint script
+RUN printf '#!/bin/sh\nset -e\necho "Running Django setup..."\npython manage.py collectstatic --noinput\npython manage.py migrate\necho "Starting server..."\nexec "$@"\n' > /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 ENTRYPOINT ["/entrypoint.sh"]
