@@ -1,11 +1,16 @@
+from decimal import Decimal
 from typing import cast
+
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework.test import APIClient
 from rest_framework.views import Response
+
 from forum.models import Post, Recipe, RecipeIngredient
-from foods.models import FoodEntry
+from foods.constants import DEFAULT_CURRENCY, PriceUnit
+from foods.models import FoodEntry, PriceAudit
+from foods.services import recalculate_recipes_for_food, update_food_price
 
 User = get_user_model()
 
@@ -209,3 +214,50 @@ class RecipeTests(TestCase):
 
         self.assertEqual(response.status_code, 204)
         self.assertEqual(Recipe.objects.count(), 0)
+
+    def test_recipe_cost_updates_when_food_price_changes(self):
+        update_food_price(
+            self.food1,
+            base_price=Decimal("50.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            changed_by=self.user1,
+        )
+        update_food_price(
+            self.food2,
+            base_price=Decimal("20.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            changed_by=self.user1,
+        )
+
+        recipe = Recipe.objects.create(
+            post=self.post, instructions="Pricing integration"
+        )
+        RecipeIngredient.objects.create(recipe=recipe, food=self.food1, amount=200)
+        RecipeIngredient.objects.create(recipe=recipe, food=self.food2, amount=100)
+
+        recalculate_recipes_for_food(self.food1)
+        recalculate_recipes_for_food(self.food2)
+        recipe.refresh_from_db()
+
+        self.assertEqual(recipe.total_cost, Decimal("120.00"))
+        self.assertIsNotNone(recipe.price_category)
+
+        update_food_price(
+            self.food1,
+            base_price=Decimal("70.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            changed_by=self.user1,
+        )
+        recipe.refresh_from_db()
+
+        self.assertEqual(recipe.total_cost, Decimal("160.00"))
+        self.assertIsNotNone(recipe.price_category)
+        self.assertTrue(
+            PriceAudit.objects.filter(
+                change_type=PriceAudit.ChangeType.RECIPE_RECALC,
+                metadata__recipe_id=recipe.id,
+            ).exists()
+        )

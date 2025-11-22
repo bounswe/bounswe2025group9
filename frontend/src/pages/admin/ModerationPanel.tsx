@@ -1,12 +1,13 @@
 import { useState } from 'react';
-import { 
-  Users, 
-  Article, 
-  Flag, 
+import {
+  Users,
+  Article,
+  Flag,
   ForkKnife,
   ShieldCheck,
   ChartBar,
-  Funnel
+  Funnel,
+  Coins,
 } from '@phosphor-icons/react';
 import UserManagement from './tabs/UserManagement';
 import ContentModeration from './tabs/ContentModeration';
@@ -14,6 +15,7 @@ import ReportsQueue from './tabs/ReportsQueue';
 import FoodProposals from './tabs/FoodProposals';
 import CertificateVerification from './tabs/CertificateVerification';
 import ModerationStats from './tabs/ModerationStats';
+import PriceModeration from './tabs/PriceModeration';
 
 const ModerationPanel = () => {
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -48,6 +50,12 @@ const ModerationPanel = () => {
       icon: ForkKnife,
       component: FoodProposals,
       description: 'Review and approve food item submissions'
+    },
+    {
+      name: 'Price Controls',
+      icon: Coins,
+      component: PriceModeration,
+      description: 'Manage food prices, thresholds, and reports'
     },
     {
       name: 'Statistics',

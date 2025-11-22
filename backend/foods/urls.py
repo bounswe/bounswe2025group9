@@ -11,6 +11,12 @@ from .views import (
     get_random_meal,
     food_nutrition_info,
     image_proxy,
+    FoodPriceUpdateView,
+    PriceThresholdListView,
+    PriceThresholdRecalculateView,
+    PriceAuditListView,
+    PriceReportListCreateView,
+    PriceReportDetailView,
 )
 from .admin import FoodProposalModerationViewSet
 
@@ -35,5 +41,31 @@ urlpatterns = [
     path("catalog/", FoodCatalog.as_view(), name="food-catalog"),
     path("food/nutrition-info/", food_nutrition_info, name="food_nutrition_info"),
     path("image-proxy/", image_proxy, name="image_proxy"),
+    path(
+        "<int:pk>/price/",
+        FoodPriceUpdateView.as_view(),
+        name="food_price_update",
+    ),
+    path(
+        "price-thresholds/",
+        PriceThresholdListView.as_view(),
+        name="price_thresholds",
+    ),
+    path(
+        "price-thresholds/recalculate/",
+        PriceThresholdRecalculateView.as_view(),
+        name="price_thresholds_recalculate",
+    ),
+    path("price-audits/", PriceAuditListView.as_view(), name="price_audits"),
+    path(
+        "price-reports/",
+        PriceReportListCreateView.as_view(),
+        name="price_reports",
+    ),
+    path(
+        "price-reports/<int:pk>/",
+        PriceReportDetailView.as_view(),
+        name="price_report_detail",
+    ),
     path("moderation/", include(moderation_router.urls), name="moderation"),
 ]

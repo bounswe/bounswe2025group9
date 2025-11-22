@@ -3,6 +3,10 @@ from django.db import models
 from django.conf import settings
 from django.db.models import Sum
 
+from decimal import Decimal
+
+from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
+
 
 class Tag(models.Model):
     objects: Any
@@ -76,6 +80,21 @@ class RecipeIngredient(models.Model):
     def calorie_content(self):
         return (self.amount / self.food.servingSize) * self.food.caloriesPerServing
 
+    @property
+    def estimated_cost(self):
+        if not self.food.base_price:
+            return Decimal("0.00")
+
+        amount = Decimal(str(self.amount))
+        base_price = Decimal(self.food.base_price)
+        if self.food.price_unit == PriceUnit.PER_100G:
+            return (amount / Decimal("100")) * base_price
+
+        reference = Decimal(str(self.food.servingSize or 1))
+        if reference == 0:
+            reference = Decimal("1")
+        return (amount / reference) * base_price
+
 
 class Recipe(models.Model):
     objects: Any
@@ -83,6 +102,13 @@ class Recipe(models.Model):
     instructions = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    total_cost = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    currency = models.CharField(max_length=3, default=DEFAULT_CURRENCY)
+    price_category = models.CharField(
+        max_length=8, choices=PriceCategory.choices, blank=True, null=True
+    )
 
     def __str__(self):
         return f"Recipe for {self.post.title}"

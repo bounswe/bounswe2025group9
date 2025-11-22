@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import { ForkKnife, Check, X, Eye } from '@phosphor-icons/react';
-import { apiClient } from '../../../lib/apiClient';
+import { apiClient, PriceUnit } from '../../../lib/apiClient';
+
+const PRICE_UNIT_LABELS: Record<PriceUnit, string> = {
+  per_100g: 'Per 100g',
+  per_unit: 'Per Unit',
+};
 
 interface FoodProposal {
   id: number;
@@ -21,6 +26,9 @@ interface FoodProposal {
   createdAt: string;
   allergens?: string[];
   dietaryOptions?: string[];
+  base_price?: string | number | null;
+  price_unit?: PriceUnit | null;
+  currency?: string | null;
 }
 
 const FoodProposals = () => {
@@ -186,6 +194,23 @@ const FoodProposals = () => {
                 </div>
               )}
 
+              <div className="mt-3 text-sm">
+                {proposal.base_price ? (
+                  <div className="px-3 py-2 rounded-md bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-200">
+                    <span className="font-semibold">
+                      {proposal.base_price} {proposal.currency || 'TRY'}
+                    </span>
+                    <span className="ml-1 text-xs text-blue-600 dark:text-blue-300">
+                      {PRICE_UNIT_LABELS[(proposal.price_unit as PriceUnit) || 'per_100g']}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="px-3 py-2 rounded-md bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-100 text-xs">
+                    No pricing information submitted with this proposal.
+                  </div>
+                )}
+              </div>
+
               {/* Actions */}
               {proposal.isApproved === null && (
                 <div className="mt-4 flex gap-2">
@@ -271,6 +296,26 @@ const FoodProposals = () => {
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.carbohydrateContent}g</span>
                   </div>
                 </div>
+              </div>
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Pricing Details</h4>
+                {selectedProposal.base_price ? (
+                  <div className="p-3 rounded-md border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-sm">
+                    <div>
+                      <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
+                      <span className="ml-2 font-semibold text-gray-900 dark:text-white">
+                        {selectedProposal.base_price} {selectedProposal.currency || 'TRY'}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-gray-600 dark:text-gray-400">
+                      Unit: {PRICE_UNIT_LABELS[(selectedProposal.price_unit as PriceUnit) || 'per_100g']}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-100 text-sm">
+                    This proposal does not include pricing data.
+                  </div>
+                )}
               </div>
               <div className="flex gap-2 pt-4">
                 <button
