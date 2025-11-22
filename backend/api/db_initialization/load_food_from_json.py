@@ -3,6 +3,7 @@ import os
 import sys
 import django
 import argparse
+import traceback
 from pathlib import Path
 
 # Django setup
@@ -22,6 +23,8 @@ class FoodLoader:
         self.skip_errors = skip_errors
         self.count = 0
         self.failed = 0
+        # Collect failures as dicts: {index, name, error, trace}
+        self.failures = []
 
     def load_foods(self, json_file, limit=None):
         """Main entry point: load foods from JSON file."""
@@ -35,19 +38,50 @@ class FoodLoader:
         foods = self.load_json_file(json_file)
         print(f"Loaded {len(foods)} foods from JSON")
 
-        for food_data in foods[:limit] if limit else foods:
+        iterable = foods[:limit] if limit else foods
+        for idx, food_data in enumerate(iterable, start=1):
             try:
                 self.create_food_entry(food_data)
                 self.count += 1
             except Exception as e:
-                error_msg = f"Failed to load food '{food_data.get('description', 'Unknown')}': {str(e)}"
+                name = (
+                    food_data.get("description", "Unknown")
+                    if isinstance(food_data, dict)
+                    else str(food_data)
+                )
+                error_msg = f"Failed to load food '{name}': {str(e)}"
+                trace = traceback.format_exc()
+                # Record the failure
+                self.failed += 1
+                self.failures.append(
+                    {
+                        "index": idx,
+                        "name": name,
+                        "error": str(e),
+                        "trace": trace,
+                    }
+                )
+                # Always continue; respect --skip-errors only for verbosity
                 if self.skip_errors:
                     print(f"⚠️  {error_msg}")
-                    self.failed += 1
                 else:
-                    raise Exception(error_msg)
+                    # Print a short warning but do not raise to allow processing to continue
+                    print(f"⚠️  {error_msg} (continuing)")
 
         print(f"✓ Successfully loaded {self.count} foods. Failed: {self.failed}")
+
+        # If there were failures, print a brief report (with limited detail)
+        if self.failures:
+            print("\nFailed items summary:")
+            for fail in self.failures:
+                print(f" - #{fail['index']}: {fail['name']} -> {fail['error']}")
+
+            # Optionally, show full tracebacks for debugging if skip_errors is enabled
+            if self.skip_errors:
+                print("\nFull tracebacks for failures:")
+                for fail in self.failures:
+                    print(f"--- #{fail['index']} {fail['name']} ---")
+                    print(fail["trace"])
 
     def load_json_file(self, filepath):
         """Load JSON file and return list of food items.
@@ -183,56 +217,6 @@ class FoodLoader:
         """Extract category from wweiaFoodCategory."""
         wweia_category = food_data.get("wweiaFoodCategory", {})
         return wweia_category.get("wweiaFoodCategoryDescription", "Uncategorized")
-
-    # def calculate_nutrition_score(self, calories, protein, fat, carbs):
-    #     """
-    #     Calculate a nutrition score (0-100 scale).
-    #     Higher score = more nutritious per calorie.
-
-    #     Factors considered:
-    #     - Protein ratio (higher is better)
-    #     - Fat ratio (lower is better, but some fat is needed)
-    #     - Carb ratio (moderate is better)
-    #     - Overall calorie density
-    #     """
-    #     score = 50  # Start at neutral 50
-
-    #     # Protein efficiency (aim for 20%+ of calories from protein)
-    #     # Each gram of protein = 4 calories
-    #     if calories > 0:
-    #         protein_calories = protein * 4
-    #         protein_ratio = (protein_calories / calories) * 100
-
-    #         if protein_ratio >= 20:
-    #             score += min((protein_ratio - 20) / 10, 15)  # Up to +15
-    #         else:
-    #             score -= (20 - protein_ratio) / 5  # Penalize low protein
-
-    #         # Fat ratio (aim for 25-35% of calories from fat)
-    #         fat_calories = fat * 9
-    #         fat_ratio = (fat_calories / calories) * 100
-
-    #         if 25 <= fat_ratio <= 35:
-    #             score += 10
-    #         elif fat_ratio < 25:
-    #             score -= (25 - fat_ratio) / 10
-    #         else:
-    #             score -= min((fat_ratio - 35) / 20, 10)
-
-    #         # Carb ratio (aim for 45-65% of calories from carbs)
-    #         carb_calories = carbs * 4
-    #         carb_ratio = (carb_calories / calories) * 100
-
-    #         if 45 <= carb_ratio <= 65:
-    #             score += 10
-    #         else:
-    #             score -= abs(55 - carb_ratio) / 15
-    #     else:
-    #         # No calories, low score
-    #         score = 20
-
-    #     # Clamp score between 0 and 100
-    #     return max(0, min(100, round(score, 2)))
 
     def infer_dietary_options(self, description):
         """Infer dietary options from food description."""

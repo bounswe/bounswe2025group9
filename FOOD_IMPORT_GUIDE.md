@@ -20,14 +20,11 @@ The script is located at `backend/api/db_initialization/load_food_from_json.py` 
 ### Basic Usage
 
 ```bash
-# From the backend directory
+# Import the whole USDA Database from the backend directory
 python api/db_initialization/load_food_from_json.py api/db_initialization/NewFoodDatabase.json
 
 # Load with limit (e.g., first 10 items for testing)
 python api/db_initialization/load_food_from_json.py api/db_initialization/NewFoodDatabase.json --limit 10
-
-# Skip errors and continue loading
-python api/db_initialization/load_food_from_json.py api/db_initialization/NewFoodDatabase.json --skip-errors
 ```
 
 ### From Docker
@@ -64,17 +61,11 @@ All other nutrients with amounts > 0 are stored in `micronutrients` as a JSON di
 
 ### Inferred Fields
 
-#### `nutritionScore` (0-100 scale)
+#### `nutritionScore`
 
-Calculated based on macronutrient composition:
-- **Protein ratio**: Aims for 20%+ of calories (target increases score)
-- **Fat ratio**: Aims for 25-35% of calories (optimal range gets +10)
-- **Carb ratio**: Aims for 45-65% of calories (optimal range gets +10)
-- **Calorie density**: Lower density gets slight bonus
+Calculated using the `calculate_nutrition_score` function in `nutrition_score.py`.
 
-Formula is designed to favor balanced, nutrient-dense foods.
-
-#### `dietaryOptions` (inferred from description)
+#### `dietaryOptions` (EXPERIMENTARY) (inferred from description)
 
 ```python
 # Examples:
@@ -85,7 +76,7 @@ Formula is designed to favor balanced, nutrient-dense foods.
 "contains-gluten"                          # Gluten status
 ```
 
-#### `allergens` (inferred from description)
+#### `allergens` (EXPERIMENTARY) (inferred from description)
 
 Automatically creates `Allergen` objects and associates them:
 
@@ -185,7 +176,7 @@ Foods are matched by `name` (the `description` field). If a food with the same n
 - Skips zero-amount micronutrients to keep JSON clean
 - Supports both nutrient IDs and numbers for flexibility
 
-### Intelligent Dietary Inference
+### Experimentary Intelligent Dietary Preference and Allergen Inference
 
 The script uses regex-based keyword matching on descriptions:
 
@@ -196,133 +187,8 @@ The script uses regex-based keyword matching on descriptions:
 "Milk, lactose free, low fat (1%)" → ["lactose-free", "low-fat"]
 ```
 
+WARNING: This method is experimantary and might need improvement in next PRs.
+
 ### Error Handling
 
-- **Strict mode (default)**: Stops on first error with detailed message
-- **Skip errors mode**: Continues loading remaining items, logs warnings
-- All exceptions are caught with context about which food failed
-
----
-
-## Example Workflow
-
-### 1. Prepare Your JSON File
-
-Extract food items from `surveyDownload.json` (first 100 items):
-
-```bash
-# Using jq (Unix/Linux/Mac)
-cat NewFoodDatabase/surveyDownload.json | head -100 > foods_sample.json
-
-# Or use Python
-python -c "import json; f=json.load(open('NewFoodDatabase/surveyDownload.json')); json.dump(f['SurveyFoods'][:100], open('foods_sample.json','w'))"
-```
-
-### 2. Run the Import
-
-```bash
-python api/db_initialization/load_food_from_json.py foods_sample.json --limit 50
-```
-
-Output:
-```
-Loading foods from foods_sample.json...
-Loaded 50 foods from JSON
-  Created: Milk, NFS (244.0g, 52kcal, score: 58.45)
-  Created: Yogurt, plain (227.0g, 150kcal, score: 71.23)
-  Updated: Cheese (28.0g, 110kcal, score: 45.67)
-...
-✓ Successfully loaded 42 foods. Failed: 0
-```
-
-### 3. Verify in Admin
-
-Visit Django admin (`/admin/foods/foodentry/`) to verify:
-- ✓ Foods are created with correct names and categories
-- ✓ Nutritional values are populated
-- ✓ Nutrition scores are calculated
-- ✓ Allergens are associated
-- ✓ Dietary options are set
-- ✓ Micronutrients are in JSON format
-
----
-
-## Troubleshooting
-
-
-### Issue: "Food description is missing"
-
-Some items in the JSON don't have a `description` field. These are skipped. To see which ones:
-
-```bash
-python api/db_initialization/load_food_from_json.py file.json 2>&1 | grep "description is missing"
-```
-
-### Issue: Memory issues with large files
-
-Use `--limit` to import in batches:
-
-```bash
-# Import first 1000
-python api/db_initialization/load_food_from_json.py file.json --limit 1000
-
-# Then import next 1000 (modify the extraction script or manually)
-```
-
-### Issue: Import fails with JSON parse errors
-
-The script robustly handles three JSON formats. If you still see parse errors:
-
-1. Verify your JSON file is valid:
-   ```bash
-   python -m json.tool surveyDownload.json > /dev/null
-   ```
-
-2. If it's a very large file with floating-point precision issues (like `0.800000000000000710...`), the bracket-matching fallback will extract the array safely.
-
-### Issue: Duplicate allergens
-
-Allergens are unique by name. If you re-run the script, allergens won't be duplicated — they'll be reused.
-
----
-
-## Performance Considerations
-
-- **File I/O**: Loads entire file into memory. For files >500MB, consider splitting or using JSONL format (streams line-by-line).
-- **Database**: Uses `update_or_create()` which does a lookup per item. For 10,000+ items, consider batch operations.
-- **Allergen Creation**: Creates allergens on-demand (one query per unique allergen found).
-- **Nutrition Score**: Calculated via `nutrition_score.py` — uses the `calculate_nutrition_score()` function which analyzes macronutrient ratios and food category.
-
-Typical speed: **100-500 items/minute** depending on server and database load.
-
----
-
-## Script Architecture
-
-The script is organized as follows:
-
-- **`load_food_from_json.py`** - Standalone utility in `backend/api/db_initialization/`
-  - `FoodLoader` class handles all food import logic
-  - Django ORM setup at the top (same pattern as `load_food_data.py`)
-  - `argparse` for command-line arguments
-  - Can be run directly with `python load_food_from_json.py <file> [--limit N] [--skip-errors]`
-
-- **`nutrition_score.py`** - Located in same directory
-  - `calculate_nutrition_score(food_item)` function
-  - Takes a `FoodEntry` instance and returns a 0-10 score
-  - Considers protein, carb quality, and nutrient balance
-
----
-
-## Future Enhancements
-
-Possible improvements:
-
-1. **Batch operations**: Use `bulk_create()` for faster inserts
-2. **Streaming JSON parser**: For very large files (>1GB), use streaming parser to avoid loading entire file
-3. **Progress bar**: Add `tqdm` for visual feedback during long imports
-4. **Dry-run mode**: Preview changes before committing to DB
-5. **Image download**: Fetch images from external sources and store locally
-6. **Allergen mapping database**: Load allergen definitions from a configurable source
-7. **Nutrition score customization**: Make scoring formula configurable via config file
-
+In case of erros, continues loading remaining items, logs warnings
