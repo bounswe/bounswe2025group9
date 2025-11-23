@@ -1,5 +1,23 @@
 /* component styles */
 
+/* white input background - adapts to theme */
+.light-theme .input-white-bg {
+  background-color: #ffffff !important;
+}
+
+.dark-theme .input-white-bg {
+  background-color: var(--color-bg-secondary) !important;
+}
+
+/* nutrient row hover - yellowish in light mode, dark in dark mode */
+.light-theme .nutrient-row-hover:hover {
+  background-color: #fef9c3 !important; /* amber-100 - yellowish */
+}
+
+.dark-theme .nutrient-row-hover:hover {
+  background-color: var(--color-bg-tertiary) !important;
+}
+
 /* card component */
 .nh-card {
   background-color: var(--color-bg-secondary);

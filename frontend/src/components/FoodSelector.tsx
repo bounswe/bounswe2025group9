@@ -66,10 +66,12 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
             
             <div className="fixed inset-0 flex items-center justify-center p-4">
                 <Dialog.Panel 
-                    className="mx-auto max-w-4xl w-full rounded-xl shadow-lg p-6"
+                    className="mx-auto max-w-2xl w-full rounded-xl shadow-lg p-6"
                     style={{
                         backgroundColor: 'var(--color-bg-secondary)',
-                        border: '1px solid var(--dietary-option-border)'
+                        border: '1px solid var(--dietary-option-border)',
+                        maxHeight: '90vh',
+                        overflowY: 'auto'
                     }}
                 >
                     <div className="flex justify-between items-center mb-4">

@@ -148,8 +148,8 @@ class FoodLogEntry(models.Model):
         related_name='log_entries'
     )
     serving_size = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
+        max_digits=10,
+        decimal_places=6,
         help_text="Serving size multiplier (e.g., 2 for two servings)"
     )
     serving_unit = models.CharField(

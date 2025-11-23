@@ -98,6 +98,15 @@ class MealPlanSerializer(serializers.ModelSerializer):
 class FoodLogEntrySerializer(serializers.ModelSerializer):
     """Serializer for individual food log entries."""
     food_name = serializers.CharField(source='food.name', read_only=True)
+    food_serving_size = serializers.DecimalField(
+        source='food.servingSize',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        allow_null=False,
+        help_text="Original serving size of the food (for display calculations)"
+    )
+    image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
     food_id = serializers.PrimaryKeyRelatedField(
         source='food',
         queryset=FoodEntry.objects.all(),
@@ -108,12 +117,12 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         from .models import FoodLogEntry
         model = FoodLogEntry
         fields = [
-            'id', 'food_id', 'food_name', 'serving_size', 'serving_unit',
-            'meal_type', 'calories', 'protein', 'carbohydrates', 'fat',
-            'micronutrients', 'logged_at'
+            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
+            'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
+            'carbohydrates', 'fat', 'micronutrients', 'logged_at'
         ]
-        read_only_fields = ['id', 'calories', 'protein', 'carbohydrates', 
-                           'fat', 'micronutrients', 'logged_at']
+        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
+                           'protein', 'carbohydrates', 'fat', 'micronutrients', 'logged_at']
 
     def validate_serving_size(self, value):
         """Validate serving size is positive."""
