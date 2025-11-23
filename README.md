@@ -45,6 +45,7 @@ cd bounswe2025group9
 ```
 
 2. Environment Variables:
+   
 See the `.env.example` file in the root directory for required environment variables. Create a `.env` file and add your configurations.
 ```bash
 cp .env.example .env
@@ -70,10 +71,10 @@ This will start:
 The basic difference is that the production config uses https and redirects http traffic to https, while the dev config only serves http traffic.
 - Set `PORT=80` for production web hosting, it will allow http traffic to be redirected to https. (see `nginx.conf` for details)
 - Make sure to set strong passwords for `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` and `DJANGO_SECRET_KEY`.
-- FatSecret API credentials are required only if db initialization scripts is invoked.
+- FatSecret API credentials are required only if db initialization scripts are invoked.
 
 2. SSL Certificates:
-- For production, you need to set up SSL certificates for secure https connections. Use services Let's Encrypt to obtain free SSL certificates.
+- For production, you need to set up SSL certificates for secure https connections. Use Let's Encrypt service to obtain free SSL certificates.
 - Start the app in development mode to expose port 80, then use Certbot to obtain and install the certificates.
 ```bash
 docker-compose up --build -d # with BUILD=DEV and PORT=80
@@ -99,7 +100,7 @@ After obtaining the certificates, you can restart the application with productio
 #   BUILD=PROD 
 #   PORT=80
 docker-compose up --build -d
-``
+```
  
 ## FatSecret API Integration
 
@@ -121,6 +122,7 @@ Note: The API credentials are required for:
 ## Manual Setup
 
 ### Backend Setup
+> !! We assume that `mysql` database is available and running with `django`@`localhost` user and `mydb` database. !!
 
 1. Navigate to the backend directory:
 ```bash
