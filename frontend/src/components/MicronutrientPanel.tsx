@@ -18,6 +18,11 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
   const displayedMinerals = showAllMinerals ? minerals : minerals.slice(0, 5);
 
   const getNutrientStatus = (nutrient: MicroNutrient) => {
+    // If no target is set, just show the current value without status
+    if (!nutrient.target || nutrient.target === 0) {
+      return { status: 'no-target', color: 'var(--color-text)', label: 'No target set' };
+    }
+    
     const percentage = (nutrient.current / nutrient.target) * 100;
     
     if (nutrient.maximum && nutrient.current > nutrient.maximum) {
@@ -36,14 +41,15 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
   };
 
   const renderNutrientRow = (nutrient: MicroNutrient) => {
-    const percentage = Math.min((nutrient.current / nutrient.target) * 100, 100);
+    const hasTarget = nutrient.target && nutrient.target > 0;
+    const percentage = hasTarget ? Math.min((nutrient.current / nutrient.target) * 100, 100) : 0;
     const { status, color, label } = getNutrientStatus(nutrient);
     const isOverMax = nutrient.maximum && nutrient.current > nutrient.maximum;
 
     return (
       <div 
         key={nutrient.name} 
-        className="p-3 rounded-lg hover:shadow-sm transition-all"
+        className="p-3 rounded-lg hover:shadow-sm transition-all cursor-pointer nutrient-row-hover"
         style={{ backgroundColor: 'var(--dietary-option-bg)' }}
       >
         <div className="flex items-center justify-between mb-2">
@@ -66,11 +72,18 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
 
         <div className="flex items-baseline gap-2 mb-2">
           <span className="text-sm font-bold text-primary">
-            {nutrient.current}{nutrient.unit}
+            {nutrient.current.toFixed(1)}{nutrient.unit}
           </span>
-          <span className="text-xs nh-text opacity-70">
-            / {nutrient.target}{nutrient.unit}
-          </span>
+          {hasTarget && (
+            <span className="text-xs nh-text opacity-70">
+              / {nutrient.target}{nutrient.unit}
+            </span>
+          )}
+          {!hasTarget && (
+            <span className="text-xs nh-text opacity-50">
+              (no target set)
+            </span>
+          )}
           {nutrient.maximum && (
             <span className="text-xs nh-text opacity-50">
               (max: {nutrient.maximum}{nutrient.unit})
@@ -78,23 +91,25 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
           )}
         </div>
 
-        {/* Progress bar */}
-        <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-          <div 
-            className="h-2 rounded-full transition-all"
-            style={{
-              width: `${percentage}%`,
-              backgroundColor: color
-            }}
-          />
-          {/* Warning indicator if over maximum */}
-          {isOverMax && (
+        {/* Progress bar - only show if target is set */}
+        {hasTarget && (
+          <div className="relative w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
             <div 
-              className="absolute top-0 right-0 h-2 w-1 rounded-r-full"
-              style={{ backgroundColor: 'var(--color-error)' }}
+              className="h-2 rounded-full transition-all"
+              style={{
+                width: `${percentage}%`,
+                backgroundColor: color
+              }}
             />
-          )}
-        </div>
+            {/* Warning indicator if over maximum */}
+            {isOverMax && (
+              <div 
+                className="absolute top-0 right-0 h-2 w-1 rounded-r-full"
+                style={{ backgroundColor: 'var(--color-error)' }}
+              />
+            )}
+          </div>
+        )}
 
         {/* Warning message if over maximum */}
         {isOverMax && (
@@ -117,12 +132,12 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
       <div className="mb-6">
         <button
           onClick={() => setExpandedCategory(expandedCategory === 'vitamin' ? null : 'vitamin')}
-          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors nutrient-row-hover"
         >
           <h4 className="font-semibold text-lg">Vitamins</h4>
           <div className="flex items-center gap-2">
             <span className="text-sm nh-text opacity-70">
-              {vitamins.filter(v => (v.current / v.target) * 100 >= 100).length} / {vitamins.length} met
+              {vitamins.filter(v => v.target && v.target > 0 && (v.current / v.target) * 100 >= 100).length} / {vitamins.filter(v => v.target && v.target > 0).length} met
             </span>
             {expandedCategory === 'vitamin' ? (
               <CaretUp size={20} weight="bold" />
@@ -152,12 +167,12 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
       <div>
         <button
           onClick={() => setExpandedCategory(expandedCategory === 'mineral' ? null : 'mineral')}
-          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-gray-100 dark:hover:bg-gray-800"
+          className="w-full flex items-center justify-between p-3 rounded-lg transition-colors nutrient-row-hover"
         >
           <h4 className="font-semibold text-lg">Minerals</h4>
           <div className="flex items-center gap-2">
             <span className="text-sm nh-text opacity-70">
-              {minerals.filter(m => (m.current / m.target) * 100 >= 100).length} / {minerals.length} met
+              {minerals.filter(m => m.target && m.target > 0 && (m.current / m.target) * 100 >= 100).length} / {minerals.filter(m => m.target && m.target > 0).length} met
             </span>
             {expandedCategory === 'mineral' ? (
               <CaretUp size={20} weight="bold" />
