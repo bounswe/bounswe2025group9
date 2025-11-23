@@ -63,7 +63,7 @@ export interface NutritionTargets {
   carbohydrates: number; // in grams
   fat: number; // in grams
   micronutrients: {
-    [key: string]: number;
+    [key: string]: number | { target: number; maximum: number };
   };
   is_custom: boolean;
   bmr: number;
