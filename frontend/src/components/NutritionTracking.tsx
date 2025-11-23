@@ -27,7 +27,15 @@ interface NutritionTrackingProps {
 }
 
 const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  // Helper function to normalize date to midnight local time (avoids timezone issues)
+  const normalizeToMidnight = (date: Date): Date => {
+    const normalized = new Date(date);
+    normalized.setHours(0, 0, 0, 0);
+    return normalized;
+  };
+
+  // Initialize with today's date at midnight local time to avoid timezone issues
+  const [selectedDate, setSelectedDate] = useState(() => normalizeToMidnight(new Date()));
   const [showAddFood, setShowAddFood] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [showServingDialog, setShowServingDialog] = useState(false);
@@ -74,8 +82,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         sunday.setDate(monday.getDate() + 6); // Sunday is 6 days after Monday
 
         const history = await apiClient.getDailyLogHistory(
-          monday.toISOString().split('T')[0],
-          sunday.toISOString().split('T')[0]
+          formatDateString(monday),
+          formatDateString(sunday)
         );
         let historyArray = Array.isArray(history) ? history : [];
 
@@ -89,7 +97,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         for (let i = 0; i < 7; i++) {
           const date = new Date(monday);
           date.setDate(monday.getDate() + i);
-          weekDateStrings.push(date.toISOString().split('T')[0]);
+          weekDateStrings.push(formatDateString(date));
         }
 
         // Create a map of existing logs by date
@@ -132,7 +140,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
         // In weekly view, set todayLog to the log for selectedDate (if it exists in history)
         // This allows the daily view to have data when switching from weekly
-        const dateStr = selectedDate.toISOString().split('T')[0];
+        const dateStr = formatDateString(selectedDate);
         const selectedDateLog = historyArray.find(h => {
           if (!h.date) return false;
           const normalizeDateStr = (dateStr: string): string => {
@@ -196,13 +204,54 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         }
       } else {
         // In daily view, fetch the daily log for selectedDate
-        const dateStr = selectedDate.toISOString().split('T')[0];
-
+        const dateStr = formatDateString(selectedDate);
+        
         // Fetch daily log and full targets in parallel for efficiency
         const [log, fullTargets] = await Promise.all([
           apiClient.getDailyLog(dateStr),
           apiClient.getNutritionTargets().catch(() => null) // Don't fail if targets fetch fails
         ]);
+
+        // Verify the log date matches what we requested (handle both date string formats)
+        // If there's a mismatch, the backend returned data for a different date
+        const logDateStr = log.date ? log.date.split('T')[0] : null;
+        if (logDateStr && logDateStr !== dateStr) {
+          console.warn(`Date mismatch detected! Requested: ${dateStr}, Received: ${logDateStr}. Re-fetching with correct date.`);
+          // Re-fetch with the date we actually want (user's local date)
+          // Don't update selectedDate - we want to use the user's local date, not the backend's date
+          try {
+            const retryLog = await apiClient.getDailyLog(dateStr);
+            const retryLogDateStr = retryLog.date ? retryLog.date.split('T')[0] : null;
+            if (retryLogDateStr === dateStr) {
+              // Successfully got log for the correct date
+              setTodayLog(retryLog);
+              // Update targets with the correct log
+              if (retryLog.targets && fullTargets) {
+                setTargets({
+                  ...fullTargets,
+                  calories: retryLog.targets.calories,
+                  protein: retryLog.targets.protein,
+                  carbohydrates: retryLog.targets.carbohydrates,
+                  fat: retryLog.targets.fat,
+                });
+              } else if (fullTargets) {
+                setTargets(fullTargets);
+              }
+              return; // Exit early - we've handled the corrected log
+            } else {
+              // Even retry returned wrong date - use general targets only
+              console.warn(`Retry also returned wrong date. Using general targets.`);
+              setTodayLog(retryLog); // Still set the log, but use general targets
+              if (fullTargets) {
+                setTargets(fullTargets);
+              }
+              return;
+            }
+          } catch (retryErr) {
+            console.error('Error re-fetching log with correct date:', retryErr);
+            // Fall through to use the original log
+          }
+        }
 
         setTodayLog(log);
 
@@ -291,7 +340,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
     try {
       setLoading(true);
-      const dateStr = selectedDate.toISOString().split('T')[0];
+      const dateStr = formatDateString(selectedDate);
 
       // Convert serving size based on unit
       // Backend expects serving_size as a multiplier
@@ -505,6 +554,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     };
   };
 
+  // Helper function to format date as YYYY-MM-DD in local timezone (not UTC)
+  const formatDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', {
       weekday: 'short',
@@ -523,7 +580,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       // In daily mode, change by 1 day
       newDate.setDate(newDate.getDate() + days);
     }
-    setSelectedDate(newDate);
+    setSelectedDate(normalizeToMidnight(newDate));
   };
 
   const isToday = selectedDate.toDateString() === new Date().toDateString();
@@ -771,7 +828,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   return (
                     <button
                       onClick={() => {
-                        setSelectedDate(new Date());
+                        setSelectedDate(normalizeToMidnight(new Date()));
                       }}
                       className="p-2 rounded-lg transition-colors"
                       style={{
@@ -809,7 +866,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   return (
                     <button
                       onClick={() => {
-                        setSelectedDate(new Date());
+                        setSelectedDate(normalizeToMidnight(new Date()));
                       }}
                       className="p-2 rounded-lg transition-colors"
                       style={{
@@ -1011,7 +1068,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     <div
                       key={dateStr}
                       onClick={() => {
-                        setSelectedDate(new Date(date));
+                        setSelectedDate(normalizeToMidnight(new Date(date)));
                         setViewMode('daily');
                       }}
                       className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${isSelected
@@ -1157,7 +1214,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           : 'var(--dietary-option-bg)'
                       }}
                       onClick={() => {
-                        setSelectedDate(new Date(date));
+                        setSelectedDate(normalizeToMidnight(new Date(date)));
                         setViewMode('daily');
                       }}
                     >
