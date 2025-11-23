@@ -80,6 +80,10 @@ class FoodProposal(models.Model):
     isApproved = models.BooleanField(
         null=True, blank=True, default=None
     )  # null=pending, True=approved, False=rejected
+    is_private = models.BooleanField(
+        default=False,
+        help_text="If True, this rejected proposal is kept as a private food for the user"
+    )
     createdAt = models.DateTimeField(default=django.utils.timezone.now)
     proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 

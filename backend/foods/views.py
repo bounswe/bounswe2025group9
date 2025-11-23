@@ -329,6 +329,19 @@ class FoodProposalSubmitView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class UserFoodProposalListView(ListAPIView):
+    """
+    List all food proposals created by the authenticated user.
+    This includes pending, approved, and rejected (private) proposals.
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = FoodProposalSerializer
+    
+    def get_queryset(self):
+        # Return all proposals by the user, ordered by creation date (newest first)
+        return FoodProposal.objects.filter(proposedBy=self.request.user).order_by('-createdAt')
+
+
 @api_view(["GET"])
 def food_nutrition_info(request):
     """

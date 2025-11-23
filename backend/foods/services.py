@@ -472,5 +472,6 @@ def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
 @transaction.atomic
 def reject_food_proposal(proposal: FoodProposal):
     proposal.isApproved = False
-    proposal.save(update_fields=["isApproved"])
+    proposal.is_private = True  # Automatically mark as private for user
+    proposal.save(update_fields=["isApproved", "is_private"])
     return proposal

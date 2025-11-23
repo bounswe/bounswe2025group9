@@ -1,20 +1,55 @@
 from rest_framework import serializers
 from .models import MealPlan
-from foods.models import FoodEntry
+from foods.models import FoodEntry, FoodProposal
 from foods.serializers import FoodEntrySerializer
 
 
 class MealSerializer(serializers.Serializer):
     """Serializer for individual meal items in the meals array"""
-    food_id = serializers.IntegerField()
+    food_id = serializers.IntegerField(required=False, allow_null=True)
+    private_food_id = serializers.IntegerField(required=False, allow_null=True)
     serving_size = serializers.FloatField(default=1.0)
     meal_type = serializers.CharField(max_length=50, default='meal')
     
-    def validate_food_id(self, value):
-        """Validate that the food entry exists"""
-        if not FoodEntry.objects.filter(id=value).exists():
-            raise serializers.ValidationError("Food entry with this ID does not exist.")
-        return value
+    def validate(self, data):
+        """Validate that exactly one of food_id or private_food_id is provided."""
+        from foods.models import FoodProposal
+        
+        food_id = data.get('food_id')
+        private_food_id = data.get('private_food_id')
+        
+        if not food_id and not private_food_id:
+            raise serializers.ValidationError(
+                "Either food_id or private_food_id must be provided."
+            )
+        if food_id and private_food_id:
+            raise serializers.ValidationError(
+                "Only one of food_id or private_food_id can be provided."
+            )
+        
+        # Validate food_id existence
+        if food_id and not FoodEntry.objects.filter(id=food_id).exists():
+            raise serializers.ValidationError({"food_id": "Food entry with this ID does not exist."})
+        
+        # Validate private_food_id existence and ownership
+        if private_food_id:
+            # Get user from request in context
+            request = self.context.get('request')
+            if not request or not request.user:
+                raise serializers.ValidationError("User context is required for private foods.")
+            
+            user = request.user
+            
+            if not FoodProposal.objects.filter(
+                id=private_food_id,
+                proposedBy=user,
+                is_private=True
+            ).exists():
+                raise serializers.ValidationError(
+                    {"private_food_id": "Private food with this ID does not exist or is not accessible."}
+                )
+        
+        return data
 
 
 class MealPlanCreateSerializer(serializers.ModelSerializer):
@@ -24,6 +59,14 @@ class MealPlanCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = MealPlan
         fields = ['name', 'meals']
+    
+    def validate_meals(self, value):
+        """Validate meals with user context."""
+        # Pass the entire serializer context (which includes 'request')
+        for meal_data in value:
+            meal_serializer = MealSerializer(data=meal_data, context=self.context)
+            meal_serializer.is_valid(raise_exception=True)
+        return value
     
     def create(self, validated_data):
         meals_data = validated_data.pop('meals', [])
@@ -73,31 +116,49 @@ class MealPlanSerializer(serializers.ModelSerializer):
     
     def get_meals_details(self, obj):
         """Get detailed food information for each meal"""
+        from foods.serializers import FoodProposalSerializer
+        
         meals_details = []
         for meal in obj.meals:
+            food_id = meal.get('food_id')
+            private_food_id = meal.get('private_food_id')
+            
+            food_source = None
+            food_data = None
+            is_private = False
+            
             try:
-                food_entry = FoodEntry.objects.get(id=meal.get('food_id'))
-                food_serializer = FoodEntrySerializer(food_entry)
+                if food_id:
+                    food_source = FoodEntry.objects.get(id=food_id)
+                    food_data = FoodEntrySerializer(food_source, context=self.context).data
+                elif private_food_id:
+                    food_source = FoodProposal.objects.get(id=private_food_id)
+                    food_data = FoodProposalSerializer(food_source).data
+                    is_private = True
+            except (FoodEntry.DoesNotExist, FoodProposal.DoesNotExist):
+                continue
+            
+            if food_source:
                 meal_detail = {
-                    'food': food_serializer.data,
+                    'food': food_data,
+                    'is_private': is_private,
                     'serving_size': meal.get('serving_size', 1.0),
                     'meal_type': meal.get('meal_type', 'meal'),
                     'calculated_nutrition': {
-                        'calories': food_entry.caloriesPerServing * meal.get('serving_size', 1.0),
-                        'protein': food_entry.proteinContent * meal.get('serving_size', 1.0),
-                        'fat': food_entry.fatContent * meal.get('serving_size', 1.0),
-                        'carbohydrates': food_entry.carbohydrateContent * meal.get('serving_size', 1.0),
+                        'calories': food_source.caloriesPerServing * meal.get('serving_size', 1.0),
+                        'protein': food_source.proteinContent * meal.get('serving_size', 1.0),
+                        'fat': food_source.fatContent * meal.get('serving_size', 1.0),
+                        'carbohydrates': food_source.carbohydrateContent * meal.get('serving_size', 1.0),
                     }
                 }
                 meals_details.append(meal_detail)
-            except FoodEntry.DoesNotExist:
-                continue
+        
         return meals_details
 
 
 class FoodLogEntrySerializer(serializers.ModelSerializer):
     """Serializer for individual food log entries."""
-    food_name = serializers.CharField(source='food.name', read_only=True)
+    food_name = serializers.SerializerMethodField()
     food_serving_size = serializers.DecimalField(
         source='food.servingSize',
         max_digits=10,
@@ -110,6 +171,15 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
     food_id = serializers.PrimaryKeyRelatedField(
         source='food',
         queryset=FoodEntry.objects.all(),
+        required=False,
+        allow_null=True,
+        write_only=True
+    )
+    private_food_id = serializers.PrimaryKeyRelatedField(
+        source='private_food',
+        queryset=FoodProposal.objects.filter(is_private=True),
+        required=False,
+        allow_null=True,
         write_only=True
     )
 
@@ -117,18 +187,50 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         from .models import FoodLogEntry
         model = FoodLogEntry
         fields = [
-            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
+            'id', 'food_id',  'private_food_id','food_name', 'food_serving_size', 'image_url',
             'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
             'carbohydrates', 'fat', 'micronutrients', 'logged_at'
         ]
         read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
                            'protein', 'carbohydrates', 'fat', 'micronutrients', 'logged_at']
+    
+    def get_food_name(self, obj):
+        """Get food name from either food or private_food."""
+        if obj.food:
+            return obj.food.name
+        elif obj.private_food:
+            return obj.private_food.name
+        return None
 
     def validate_serving_size(self, value):
         """Validate serving size is positive."""
         if value <= 0:
             raise serializers.ValidationError("Serving size must be greater than 0.")
         return value
+    
+    def validate(self, data):
+        """Validate that exactly one of food or private_food is set."""
+        food = data.get('food')
+        private_food = data.get('private_food')
+        
+        if not food and not private_food:
+            raise serializers.ValidationError(
+                "Either food_id or private_food_id must be provided."
+            )
+        if food and private_food:
+            raise serializers.ValidationError(
+                "Only one of food_id or private_food_id can be provided."
+            )
+        
+        # Validate private food ownership
+        if private_food:
+            request = self.context.get('request')
+            if request and private_food.proposedBy != request.user:
+                raise serializers.ValidationError(
+                    "You do not have access to this private food."
+                )
+        
+        return data
 
 
 class DailyNutritionLogSerializer(serializers.ModelSerializer):
