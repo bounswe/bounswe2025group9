@@ -1,0 +1,44 @@
+export default {
+  expo: {
+    name: "nutrihub",
+    slug: "nutrihub",
+    version: "1.0.0",
+    orientation: "portrait",
+    icon: "./assets/icon.png",
+    userInterfaceStyle: "light",
+    splash: {
+      image: "./assets/splash-icon.png",
+      resizeMode: "contain",
+      backgroundColor: "#0d7c5f",
+    },
+    ios: {
+      supportsTablet: true,
+      bundleIdentifier: "com.y4z1c1.nutrihub",
+      infoPlist: {
+        NSCameraUsageDescription: "This app needs access to camera to take profile photos.",
+        NSPhotoLibraryUsageDescription: "This app needs access to photo library to select profile photos.",
+      },
+    },
+    android: {
+      adaptiveIcon: {
+        foregroundImage: "./assets/adaptive-icon.png",
+        backgroundColor: "#0d7c5f",
+      },
+      package: "com.y4z1c1.nutrihub",
+      permissions: [
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+      ],
+    },
+    web: {
+      favicon: "./assets/favicon.png",
+    },
+    extra: {
+      eas: {
+        projectId: "082f0add-9ca4-42a3-9133-e8b160fa4c7f",
+      },
+      apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL || "http://10.0.2.2:8080/api",
+    },
+  },
+};
