@@ -20,6 +20,8 @@ export interface FoodLogEntry {
   id: number;
   food_id: number;
   food_name: string;
+  food_serving_size: number; // Original serving size of the food (e.g., 100g)
+  image_url: string; // Image URL from the food
   serving_size: number;
   serving_unit: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -28,7 +30,6 @@ export interface FoodLogEntry {
   carbohydrates: number;
   fat: number;
   micronutrients?: { [key: string]: number };
-  image_url?: string;
   logged_at: string;
 }
 

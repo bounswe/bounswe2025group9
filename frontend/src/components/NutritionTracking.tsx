@@ -44,46 +44,6 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metricsMissing, setMetricsMissing] = useState(false);
-  
-  // Cache for food data (servingSize, imageUrl) by food_id
-  const [foodCache, setFoodCache] = useState<Map<number, { servingSize: number; imageUrl: string }>>(new Map());
-
-  // Fetch and cache food data for entries
-  const fetchFoodData = async (foodId: number, foodName?: string): Promise<{ servingSize: number; imageUrl: string } | null> => {
-    // Check cache first
-    if (foodCache.has(foodId)) {
-      return foodCache.get(foodId)!;
-    }
-
-    try {
-      // Search by food name (more efficient than pagination)
-      if (foodName) {
-        // Use first few characters of food name for search
-        const searchTerm = foodName.substring(0, 10).toLowerCase();
-        const searchResponse = await apiClient.getFoods({ page: 1, search: searchTerm });
-        
-        // Try to find exact match by ID first, then by name
-        let food = searchResponse.results?.find(f => f.id === foodId);
-        if (!food) {
-          food = searchResponse.results?.find(f => f.name.toLowerCase() === foodName.toLowerCase());
-        }
-        
-        if (food) {
-          const foodData = {
-            servingSize: food.servingSize,
-            imageUrl: food.imageUrl
-          };
-          // Update cache
-          setFoodCache(prev => new Map(prev).set(foodId, foodData));
-          return foodData;
-        }
-      }
-    } catch (err) {
-      console.error('Error fetching food data:', err);
-    }
-    
-    return null;
-  };
 
   useEffect(() => {
     fetchData();
@@ -93,35 +53,6 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, viewMode]);
-
-  // Fetch missing food data when entries change
-  useEffect(() => {
-    if (todayLog?.entries && todayLog.entries.length > 0) {
-      const fetchMissingFoodData = async () => {
-        const foodIdToName = new Map<number, string>();
-        todayLog.entries!.forEach(entry => {
-          if (!foodIdToName.has(entry.food_id)) {
-            foodIdToName.set(entry.food_id, entry.food_name);
-          }
-        });
-        
-        const missingFoodIds = todayLog.entries!
-          .filter(entry => !foodCache.has(entry.food_id))
-          .map(entry => entry.food_id);
-        
-        const uniqueMissingIds = [...new Set(missingFoodIds)];
-        if (uniqueMissingIds.length > 0) {
-          const foodPromises = uniqueMissingIds.map(foodId => 
-            fetchFoodData(foodId, foodIdToName.get(foodId))
-          );
-          await Promise.all(foodPromises);
-        }
-      };
-      
-      fetchMissingFoodData();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [todayLog?.entries]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -141,18 +72,18 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         const monday = getMondayOfWeek(new Date(selectedDate));
         const sunday = new Date(monday);
         sunday.setDate(monday.getDate() + 6); // Sunday is 6 days after Monday
-        
+
         const history = await apiClient.getDailyLogHistory(
           monday.toISOString().split('T')[0],
           sunday.toISOString().split('T')[0]
         );
         let historyArray = Array.isArray(history) ? history : [];
-        
+
         // Helper to normalize date strings for comparison
         const normalizeDateStr = (dateStr: string): string => {
           return dateStr.split('T')[0];
         };
-        
+
         // Get all date strings for the week
         const weekDateStrings: string[] = [];
         for (let i = 0; i < 7; i++) {
@@ -160,7 +91,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           date.setDate(monday.getDate() + i);
           weekDateStrings.push(date.toISOString().split('T')[0]);
         }
-        
+
         // Create a map of existing logs by date
         const existingLogsMap = new Map<string, DailyNutritionLog>();
         historyArray.forEach(log => {
@@ -169,7 +100,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             existingLogsMap.set(normalizedDate, log);
           }
         });
-        
+
         // Fetch logs for any missing days in the week (this ensures we have logs for all 7 days)
         const missingDates = weekDateStrings.filter(dateStr => !existingLogsMap.has(dateStr));
         const missingLogsPromises = missingDates.map(async (dateStr) => {
@@ -181,13 +112,13 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             return null;
           }
         });
-        
+
         const missingLogs = await Promise.all(missingLogsPromises);
         const validMissingLogs = missingLogs.filter(log => log !== null) as DailyNutritionLog[];
-        
+
         // Combine all logs
         historyArray = [...historyArray, ...validMissingLogs];
-        
+
         // Sort by date to ensure consistent order
         historyArray.sort((a, b) => {
           if (!a.date || !b.date) return 0;
@@ -195,10 +126,10 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           const dateB = normalizeDateStr(b.date);
           return dateA.localeCompare(dateB);
         });
-        
+
         // Ensure history is always an array
         setHistoryLogs(historyArray);
-        
+
         // In weekly view, set todayLog to the log for selectedDate (if it exists in history)
         // This allows the daily view to have data when switching from weekly
         const dateStr = selectedDate.toISOString().split('T')[0];
@@ -266,13 +197,13 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       } else {
         // In daily view, fetch the daily log for selectedDate
         const dateStr = selectedDate.toISOString().split('T')[0];
-        
+
         // Fetch daily log and full targets in parallel for efficiency
         const [log, fullTargets] = await Promise.all([
           apiClient.getDailyLog(dateStr),
           apiClient.getNutritionTargets().catch(() => null) // Don't fail if targets fetch fails
         ]);
-        
+
         setTodayLog(log);
 
         // Update targets - prioritize values from daily log response (most up-to-date)
@@ -312,23 +243,6 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           }
         }
 
-        // Fetch and cache food data for all entries
-        if (log.entries) {
-          // Create map of food_id to food_name for better searching
-          const foodIdToName = new Map<number, string>();
-          log.entries.forEach(entry => {
-            if (!foodIdToName.has(entry.food_id)) {
-              foodIdToName.set(entry.food_id, entry.food_name);
-            }
-          });
-          
-          const uniqueFoodIds = [...new Set(log.entries.map(e => e.food_id))];
-          const foodPromises = uniqueFoodIds.map(foodId => 
-            fetchFoodData(foodId, foodIdToName.get(foodId))
-          );
-          await Promise.all(foodPromises);
-        }
-        
         // Clear history logs when not in weekly view
         setHistoryLogs([]);
       }
@@ -417,11 +331,11 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       setSelectedFood(null);
     } catch (err: any) {
       console.error('Error adding food:', err);
-      const errorMessage = err?.data?.serving_size?.[0] || 
-                          err?.data?.error || 
-                          err?.data?.detail || 
-                          err?.message || 
-                          'Failed to add food entry';
+      const errorMessage = err?.data?.serving_size?.[0] ||
+        err?.data?.error ||
+        err?.data?.detail ||
+        err?.message ||
+        'Failed to add food entry';
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -430,33 +344,27 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
   const handleEditEntry = async (entry: FoodLogEntry) => {
     setEditingEntry(entry);
-    
-    // Fetch food data if not in cache
-    let foodData = foodCache.get(entry.food_id);
-    if (!foodData) {
-      const fetchedFoodData = await fetchFoodData(entry.food_id);
-      if (fetchedFoodData) {
-        foodData = fetchedFoodData;
-      }
-    }
-    
-    // Fetch full food object for nutrition calculations
+
+    // Fetch full food object for editing
+    let foodForEdit: Food | null = null;
     try {
       const foodsResponse = await apiClient.getFoods({ page: 1, search: entry.food_name });
-      const food = foodsResponse.results?.find(f => f.id === entry.food_id);
-      if (food) {
-        setEditingFoodData(food);
+      foodForEdit = foodsResponse.results?.find(f => f.id === entry.food_id) || null;
+      if (foodForEdit) {
+        setEditingFoodData(foodForEdit);
       }
     } catch (err) {
       console.error('Error fetching food for edit:', err);
     }
-    
+
     // Convert serving_size (multiplier) back to display value
-    // If unit is "g", convert multiplier back to grams: multiplier * food.servingSize
+    // If unit is "g", convert multiplier back to grams: multiplier * food_serving_size
     // If unit is "serving", use multiplier directly
     let displaySize = entry.serving_size;
-    if (entry.serving_unit === 'g' && foodData?.servingSize) {
-      displaySize = entry.serving_size * foodData.servingSize;
+    const foodServingSize = entry.food_serving_size || 100; // Fallback to 100g if missing
+
+    if (entry.serving_unit === 'g') {
+      displaySize = entry.serving_size * foodServingSize;
     }
     setServingSize(displaySize);
     setServingUnit(entry.serving_unit);
@@ -480,29 +388,28 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       // Convert serving size based on unit
       // Backend expects serving_size as a multiplier
       let multiplier = numServingSize;
-      
+
       if (servingUnit === 'g') {
         // If unit is "g", we need to convert grams to multiplier
-        // Get the food's servingSize to do the conversion
-        try {
-          // Fetch the food to get its servingSize
-          const foodsResponse = await apiClient.getFoods({ page: 1, search: editingEntry.food_name });
-          const food = foodsResponse.results?.find(f => f.id === editingEntry.food_id);
-          
-          if (food) {
-            // Convert grams to multiplier (e.g., 200g / 100g = 2.0 servings)
-            multiplier = numServingSize / food.servingSize;
-          }
-          // If food not found, use servingSize as-is (fallback)
-        } catch (err) {
-          console.error('Error fetching food for conversion:', err);
-          // If conversion fails, use servingSize as-is (fallback)
+        // Use editingFoodData if available, otherwise use the entry's food_serving_size
+        let foodServingSize = editingEntry.food_serving_size || 100; // Fallback to 100g
+        if (editingFoodData?.servingSize) {
+          foodServingSize = editingFoodData.servingSize;
         }
+        // Convert grams to multiplier (e.g., 100g / 100g = 1.0 servings)
+        multiplier = numServingSize / foodServingSize;
       }
       // If unit is "serving", multiplier is already correct (servingSize = number of servings)
 
       // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
       multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+      // Validate multiplier is a valid number
+      if (isNaN(multiplier) || !isFinite(multiplier)) {
+        alert('Invalid serving size calculation. Please check your input.');
+        setLoading(false);
+        return;
+      }
 
       // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
       if (multiplier > 9999.999999) {
@@ -511,11 +418,15 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         return;
       }
 
-      await apiClient.updateFoodEntry(editingEntry.id, {
+      const updateData = {
         serving_size: multiplier,
         serving_unit: servingUnit,
         meal_type: selectedMeal
-      });
+      };
+
+      console.log('Updating entry with data:', updateData);
+
+      await apiClient.updateFoodEntry(editingEntry.id, updateData);
 
       // Refresh daily log and targets to update totals after updating entry
       await fetchData();
@@ -528,11 +439,11 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       setEditingFoodData(null);
     } catch (err: any) {
       console.error('Error updating entry:', err);
-      const errorMessage = err?.data?.serving_size?.[0] || 
-                          err?.data?.error || 
-                          err?.data?.detail || 
-                          err?.message || 
-                          'Failed to update entry';
+      const errorMessage = err?.data?.serving_size?.[0] ||
+        err?.data?.error ||
+        err?.data?.detail ||
+        err?.message ||
+        'Failed to update entry';
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -665,25 +576,20 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 style={{ backgroundColor: 'var(--dietary-option-bg)' }}
               >
                 {/* Food Image */}
-                {(() => {
-                  const foodData = foodCache.get(entry.food_id);
-                  const imageUrl = foodData?.imageUrl || entry.image_url;
-                  
-                  return imageUrl ? (
-                    <img
-                      src={imageUrl}
-                      alt={entry.food_name}
-                      className="w-16 h-16 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div
-                      className="w-16 h-16 rounded-lg flex items-center justify-center"
-                      style={{ backgroundColor: 'var(--forum-search-border)' }}
-                    >
-                      <Hamburger size={28} weight="fill" className="opacity-50" />
-                    </div>
-                  );
-                })()}
+                {entry.image_url ? (
+                  <img
+                    src={entry.image_url}
+                    alt={entry.food_name}
+                    className="w-16 h-16 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div
+                    className="w-16 h-16 rounded-lg flex items-center justify-center"
+                    style={{ backgroundColor: 'var(--forum-search-border)' }}
+                  >
+                    <Hamburger size={28} weight="fill" className="opacity-50" />
+                  </div>
+                )}
 
                 {/* Food Info */}
                 <div className="flex-1">
@@ -691,20 +597,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <p className="text-xs nh-text opacity-70">
                     {(() => {
                       // Convert serving_size (multiplier) back to display value
-                      // If unit is "g", convert multiplier back to grams: multiplier * food.servingSize
-                      // If unit is "serving", display multiplier directly
+                      // ALWAYS show grams when unit is 'g'
                       const servingSizeNum = Number(entry.serving_size);
-                      const foodData = foodCache.get(entry.food_id);
-                      
+                      const foodServingSize = entry.food_serving_size || 100; // Fallback to 100g if missing
+
                       if (entry.serving_unit === 'g') {
-                        if (foodData?.servingSize) {
-                          // Multiply multiplier by food's serving size to get grams
-                          const grams = servingSizeNum * foodData.servingSize;
-                          return `${Math.round(grams)} ${entry.serving_unit}`;
-                        } else {
-                          // Food data not loaded yet, show multiplier (will update when food data loads)
-                          return `${Math.round(servingSizeNum)} ${entry.serving_unit}`;
-                        }
+                        // Multiply multiplier by food's serving size to get grams
+                        const grams = servingSizeNum * foodServingSize;
+                        return `${Math.round(grams)}g`;
                       } else {
                         // For "serving" unit, show multiplier directly
                         return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
@@ -725,7 +625,9 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 <div className="flex gap-1">
                   <button
                     type="button"
-                    className="p-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+                    className="p-2 rounded transition-colors"
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     title="Edit"
                     onClick={(e) => {
                       e.preventDefault();
@@ -737,7 +639,9 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   </button>
                   <button
                     type="button"
-                    className="p-2 rounded hover:bg-red-100 dark:hover:bg-red-900 transition-colors text-red-600"
+                    className="p-2 rounded transition-colors text-red-600"
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                     title="Delete"
                     onClick={(e) => {
                       e.preventDefault();
@@ -749,8 +653,9 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
+            ))
+            }
+          </div >
         ) : (
           <div className="text-center py-8 nh-text opacity-50">
             <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
@@ -759,29 +664,31 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         )}
 
         {/* Meal Totals */}
-        {entries.length > 0 && (
-          <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
-            <div className="grid grid-cols-4 gap-4 text-center text-sm">
-              <div>
-                <p className="nh-text opacity-70">Calories</p>
-                <p className="font-bold">{Math.round(Number(totals.calories))}</p>
-              </div>
-              <div>
-                <p className="nh-text opacity-70">Protein</p>
-                <p className="font-bold">{Number(totals.protein).toFixed(2)}g</p>
-              </div>
-              <div>
-                <p className="nh-text opacity-70">Carbs</p>
-                <p className="font-bold">{Number(totals.carbs).toFixed(2)}g</p>
-              </div>
-              <div>
-                <p className="nh-text opacity-70">Fat</p>
-                <p className="font-bold">{Number(totals.fat).toFixed(2)}g</p>
+        {
+          entries.length > 0 && (
+            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
+              <div className="grid grid-cols-4 gap-4 text-center text-sm">
+                <div>
+                  <p className="nh-text opacity-70">Calories</p>
+                  <p className="font-bold">{Math.round(Number(totals.calories))}</p>
+                </div>
+                <div>
+                  <p className="nh-text opacity-70">Protein</p>
+                  <p className="font-bold">{Number(totals.protein).toFixed(2)}g</p>
+                </div>
+                <div>
+                  <p className="nh-text opacity-70">Carbs</p>
+                  <p className="font-bold">{Number(totals.carbs).toFixed(2)}g</p>
+                </div>
+                <div>
+                  <p className="nh-text opacity-70">Fat</p>
+                  <p className="font-bold">{Number(totals.fat).toFixed(2)}g</p>
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )
+        }
+      </div >
     );
   };
 
@@ -796,7 +703,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   if (metricsMissing) {
     return (
       <div className="nh-card text-center p-12">
-        <div className="w-16 h-16 bg-primary-100 dark:bg-primary-900 rounded-full flex items-center justify-center mx-auto mb-6">
+        <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'var(--color-primary-light)' }}>
           <ChartLine size={32} className="text-primary" weight="fill" />
         </div>
         <h3 className="nh-subtitle mb-3 text-xl">Setup Nutrition Tracking</h3>
@@ -855,7 +762,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             {(() => {
               const today = new Date();
               today.setHours(0, 0, 0, 0);
-              
+
               if (viewMode === 'daily') {
                 // Show reset icon if not viewing today
                 const selectedDateNormalized = new Date(selectedDate);
@@ -891,13 +798,13 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   const diff = d.getDate() - day + (day === 0 ? -6 : 1);
                   return new Date(d.setDate(diff));
                 };
-                
+
                 const selectedMonday = getMondayOfWeek(new Date(selectedDate));
                 const todayMonday = getMondayOfWeek(today);
-                
+
                 selectedMonday.setHours(0, 0, 0, 0);
                 todayMonday.setHours(0, 0, 0, 0);
-                
+
                 if (selectedMonday.getTime() !== todayMonday.getTime()) {
                   return (
                     <button
@@ -931,7 +838,9 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         <div className="flex items-center justify-between mt-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
           <button
             onClick={() => changeDate(-1)}
-            className="p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
+            className="p-2 rounded-lg transition-colors"
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
           >
             <CaretLeft size={24} weight="bold" />
           </button>
@@ -978,7 +887,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             disabled={isToday && viewMode === 'daily'}
             className={`p-2 rounded-lg transition-colors ${isToday && viewMode === 'daily'
               ? 'opacity-30 cursor-not-allowed'
-              : 'hover:bg-gray-200 dark:hover:bg-gray-700'
+              : ''
               }`}
           >
             <CaretRight size={24} weight="bold" />
@@ -1012,7 +921,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
           return new Date(d.setDate(diff));
         };
-        
+
         const monday = getMondayOfWeek(new Date(selectedDate));
         const weekDays: Date[] = [];
         for (let i = 0; i < 7; i++) {
@@ -1050,7 +959,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           const todayLogDateStr = normalizeDateStr(todayLog.date);
           const actualToday = new Date();
           const actualTodayStr = normalizeDateStr(actualToday);
-          
+
           // Only use todayLog if it's actually for today (not selectedDate from daily view)
           if (todayLogDateStr === actualTodayStr) {
             // Check if today is in the current week
@@ -1079,150 +988,12 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               {/* First row - 4 days */}
               <div className="grid grid-cols-4 gap-3">
                 {weekDays.slice(0, 4).map((date) => {
-                const dateStr = normalizeDateStr(date);
-                const log = logMap.get(dateStr);
-                const isToday = date.toDateString() === new Date().toDateString();
-                // Only highlight today in weekly view, not selectedDate
-                const isSelected = isToday;
-                
-                const caloriePercent = log ? Math.round((log.total_calories / targets.calories) * 100) : 0;
-                const proteinPercent = log ? Math.round((log.total_protein / targets.protein) * 100) : 0;
-                const carbsPercent = log ? Math.round((log.total_carbohydrates / targets.carbohydrates) * 100) : 0;
-                const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
-
-                const getDayName = (date: Date) => {
-                  return date.toLocaleDateString('en-US', { weekday: 'short' });
-                };
-
-                const getDayNumber = (date: Date) => {
-                  return date.getDate();
-                };
-
-                return (
-                  <div
-                    key={dateStr}
-                    onClick={() => {
-                      setSelectedDate(new Date(date));
-                      setViewMode('daily');
-                    }}
-                    className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${
-                      isSelected 
-                        ? 'border-primary bg-primary-50 dark:bg-primary-900' 
-                        : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                    }`}
-                    style={{
-                      backgroundColor: isSelected 
-                        ? 'var(--color-primary)' + '20' 
-                        : 'var(--dietary-option-bg)'
-                    }}
-                  >
-                    {/* Day Header */}
-                    <div className="text-center mb-3">
-                      <p className={`text-xs font-medium mb-1 ${isToday ? 'text-primary font-bold' : 'nh-text opacity-70'}`}>
-                        {getDayName(date)}
-                      </p>
-                      <p className={`text-lg font-bold ${isToday ? 'text-primary' : 'nh-text'}`}>
-                        {getDayNumber(date)}
-                      </p>
-                      {isToday && (
-                        <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
-                          backgroundColor: 'var(--color-primary)' + '20'
-                        }}>
-                          Today
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Calorie Progress */}
-                    <div className="space-y-2">
-                      <div>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs nh-text opacity-70">Cal</span>
-                          <span className="text-xs font-semibold" style={{
-                            color: caloriePercent > 100 
-                              ? 'var(--color-error)' 
-                              : caloriePercent >= 90 
-                                ? '#f97316' // orange-500
-                                : '#f97316' // orange-500
-                          }}>
-                            {caloriePercent}%
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
-                          <div
-                            className="h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(caloriePercent, 100)}%`,
-                              backgroundColor: caloriePercent > 100 
-                                ? 'var(--color-error)' 
-                                : '#f97316' // orange-500
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* Protein, Carbs, Fat */}
-                      <div className="space-y-1.5">
-                        <div>
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-xs nh-text opacity-60">P</span>
-                            <span className="text-xs font-semibold">
-                              {proteinPercent}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                            <div
-                              className="bg-blue-500 h-1 rounded-full transition-all"
-                              style={{ width: `${Math.min(proteinPercent, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-xs nh-text opacity-60">C</span>
-                            <span className="text-xs font-semibold">
-                              {carbsPercent}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                            <div
-                              className="bg-green-500 h-1 rounded-full transition-all"
-                              style={{ width: `${Math.min(carbsPercent, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <div className="flex items-center justify-between mb-0.5">
-                            <span className="text-xs nh-text opacity-60">F</span>
-                            <span className="text-xs font-semibold">
-                              {fatPercent}%
-                            </span>
-                          </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
-                            <div
-                              className="bg-yellow-500 h-1 rounded-full transition-all"
-                              style={{ width: `${Math.min(fatPercent, 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-
-                      
-                    </div>
-                  </div>
-                );
-                })}
-              </div>
-              
-              {/* Second row - 3 days (centered equally) */}
-              <div className="flex justify-center gap-3">
-                {weekDays.slice(4, 7).map((date) => {
                   const dateStr = normalizeDateStr(date);
                   const log = logMap.get(dateStr);
                   const isToday = date.toDateString() === new Date().toDateString();
                   // Only highlight today in weekly view, not selectedDate
                   const isSelected = isToday;
-                  
+
                   const caloriePercent = log ? Math.round((log.total_calories / targets.calories) * 100) : 0;
                   const proteinPercent = log ? Math.round((log.total_protein / targets.protein) * 100) : 0;
                   const carbsPercent = log ? Math.round((log.total_carbohydrates / targets.carbohydrates) * 100) : 0;
@@ -1239,14 +1010,150 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   return (
                     <div
                       key={dateStr}
-                      className={`w-[calc((100%-0.75rem*3)/4)] p-3 rounded-lg cursor-pointer transition-all border-2 ${
-                        isSelected 
-                          ? 'border-primary bg-primary-50 dark:bg-primary-900' 
-                          : 'border-transparent hover:border-gray-300 dark:hover:border-gray-600'
-                      }`}
+                      onClick={() => {
+                        setSelectedDate(new Date(date));
+                        setViewMode('daily');
+                      }}
+                      className={`p-3 rounded-lg cursor-pointer transition-all border-2 ${isSelected
+                        ? 'border-primary'
+                        : 'border-transparent'
+                        }`}
                       style={{
-                        backgroundColor: isSelected 
-                          ? 'var(--color-primary)' + '20' 
+                        backgroundColor: isSelected
+                          ? 'var(--color-primary)' + '20'
+                          : 'var(--dietary-option-bg)'
+                      }}
+                    >
+                      {/* Day Header */}
+                      <div className="text-center mb-3">
+                        <p className={`text-xs font-medium mb-1 ${isToday ? 'text-primary font-bold' : 'nh-text opacity-70'}`}>
+                          {getDayName(date)}
+                        </p>
+                        <p className={`text-lg font-bold ${isToday ? 'text-primary' : 'nh-text'}`}>
+                          {getDayNumber(date)}
+                        </p>
+                        {isToday && (
+                          <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
+                            backgroundColor: 'var(--color-primary)' + '20'
+                          }}>
+                            Today
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Calorie Progress */}
+                      <div className="space-y-2">
+                        <div>
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="text-xs nh-text opacity-70">Cal</span>
+                            <span className="text-xs font-semibold" style={{
+                              color: caloriePercent > 100
+                                ? 'var(--color-error)'
+                                : caloriePercent >= 90
+                                  ? '#f97316' // orange-500
+                                  : '#f97316' // orange-500
+                            }}>
+                              {caloriePercent}%
+                            </span>
+                          </div>
+                          <div className="w-full rounded-full h-1.5" style={{ backgroundColor: 'var(--forum-search-border)' }}>
+                            <div
+                              className="h-1.5 rounded-full transition-all"
+                              style={{
+                                width: `${Math.min(caloriePercent, 100)}%`,
+                                backgroundColor: caloriePercent > 100
+                                  ? 'var(--color-error)'
+                                  : '#f97316' // orange-500
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {/* Protein, Carbs, Fat */}
+                        <div className="space-y-1.5">
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs nh-text opacity-60">P</span>
+                              <span className="text-xs font-semibold">
+                                {proteinPercent}%
+                              </span>
+                            </div>
+                            <div className="w-full rounded-full h-1" style={{ backgroundColor: 'var(--forum-search-border)' }}>
+                              <div
+                                className="bg-blue-500 h-1 rounded-full transition-all"
+                                style={{ width: `${Math.min(proteinPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs nh-text opacity-60">C</span>
+                              <span className="text-xs font-semibold">
+                                {carbsPercent}%
+                              </span>
+                            </div>
+                            <div className="w-full rounded-full h-1" style={{ backgroundColor: 'var(--forum-search-border)' }}>
+                              <div
+                                className="bg-green-500 h-1 rounded-full transition-all"
+                                style={{ width: `${Math.min(carbsPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex items-center justify-between mb-0.5">
+                              <span className="text-xs nh-text opacity-60">F</span>
+                              <span className="text-xs font-semibold">
+                                {fatPercent}%
+                              </span>
+                            </div>
+                            <div className="w-full rounded-full h-1" style={{ backgroundColor: 'var(--forum-search-border)' }}>
+                              <div
+                                className="bg-yellow-500 h-1 rounded-full transition-all"
+                                style={{ width: `${Math.min(fatPercent, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        </div>
+
+
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Second row - 3 days (centered equally) */}
+              <div className="flex justify-center gap-3">
+                {weekDays.slice(4, 7).map((date) => {
+                  const dateStr = normalizeDateStr(date);
+                  const log = logMap.get(dateStr);
+                  const isToday = date.toDateString() === new Date().toDateString();
+                  // Only highlight today in weekly view, not selectedDate
+                  const isSelected = isToday;
+
+                  const caloriePercent = log ? Math.round((log.total_calories / targets.calories) * 100) : 0;
+                  const proteinPercent = log ? Math.round((log.total_protein / targets.protein) * 100) : 0;
+                  const carbsPercent = log ? Math.round((log.total_carbohydrates / targets.carbohydrates) * 100) : 0;
+                  const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
+
+                  const getDayName = (date: Date) => {
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                  };
+
+                  const getDayNumber = (date: Date) => {
+                    return date.getDate();
+                  };
+
+                  return (
+                    <div
+                      key={dateStr}
+                      className={`w-[calc((100%-0.75rem*3)/4)] p-3 rounded-lg cursor-pointer transition-all border-2 ${isSelected
+                        ? 'border-primary'
+                        : 'border-transparent'
+                        }`}
+                      style={{
+                        backgroundColor: isSelected
+                          ? 'var(--color-primary)' + '20'
                           : 'var(--dietary-option-bg)'
                       }}
                       onClick={() => {
@@ -1277,27 +1184,27 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-xs nh-text opacity-70">Cal</span>
                             <span className="text-xs font-semibold" style={{
-                              color: caloriePercent > 100 
-                                ? 'var(--color-error)' 
-                                : caloriePercent >= 90 
+                              color: caloriePercent > 100
+                                ? 'var(--color-error)'
+                                : caloriePercent >= 90
                                   ? '#f97316' // orange-500
                                   : '#f97316' // orange-500
                             }}>
                               {caloriePercent}%
                             </span>
                           </div>
-                          <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1.5">
+                          <div className="w-full rounded-full h-1.5" style={{ backgroundColor: 'var(--forum-search-border)' }}>
                             <div
                               className="h-1.5 rounded-full transition-all"
                               style={{
                                 width: `${Math.min(caloriePercent, 100)}%`,
-                                backgroundColor: caloriePercent > 100 
-                                  ? 'var(--color-error)' 
+                                backgroundColor: caloriePercent > 100
+                                  ? 'var(--color-error)'
                                   : '#f97316' // orange-500
                               }}
                             />
                           </div>
-                       
+
                         </div>
 
                         {/* Protein, Carbs, Fat */}
@@ -1309,7 +1216,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                                 {proteinPercent}%
                               </span>
                             </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                            <div className="w-full rounded-full h-1" style={{ backgroundColor: 'var(--forum-search-border)' }}>
                               <div
                                 className="bg-blue-500 h-1 rounded-full transition-all"
                                 style={{ width: `${Math.min(proteinPercent, 100)}%` }}
@@ -1323,7 +1230,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                                 {carbsPercent}%
                               </span>
                             </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                            <div className="w-full rounded-full h-1" style={{ backgroundColor: 'var(--forum-search-border)' }}>
                               <div
                                 className="bg-green-500 h-1 rounded-full transition-all"
                                 style={{ width: `${Math.min(carbsPercent, 100)}%` }}
@@ -1337,7 +1244,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                                 {fatPercent}%
                               </span>
                             </div>
-                            <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1">
+                            <div className="w-full rounded-full h-1" style={{ backgroundColor: 'var(--forum-search-border)' }}>
                               <div
                                 className="bg-yellow-500 h-1 rounded-full transition-all"
                                 style={{ width: `${Math.min(fatPercent, 100)}%` }}
@@ -1346,7 +1253,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           </div>
                         </div>
 
-                        
+
                       </div>
                     </div>
                   );
@@ -1373,25 +1280,27 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         setEditingEntry(null);
         setEditingFoodData(null);
       }} className="relative z-50">
-        <div 
-          className="fixed inset-0" 
+        <div
+          className="fixed inset-0"
           style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-          aria-hidden="true" 
+          aria-hidden="true"
         />
-        
+
         <div className="fixed inset-0 flex items-center justify-center p-4">
-          <Dialog.Panel 
-            className="mx-auto max-w-md w-full rounded-xl shadow-lg p-6"
+          <Dialog.Panel
+            className="mx-auto max-w-2xl w-full rounded-xl shadow-lg p-6"
             style={{
               backgroundColor: 'var(--color-bg-secondary)',
-              border: '1px solid var(--dietary-option-border)'
+              border: '1px solid var(--dietary-option-border)',
+              maxHeight: '90vh',
+              overflowY: 'auto'
             }}
           >
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="nh-subtitle">
                 {editingEntry ? 'Edit Food Entry' : 'Set Serving Size'}
               </Dialog.Title>
-              <button 
+              <button
                 onClick={() => {
                   setShowServingDialog(false);
                   setSelectedFood(null);
@@ -1439,9 +1348,30 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               </div>
             )}
 
-            {editingEntry && (
+            {editingEntry && editingFoodData && (
               <div className="mb-4">
-                <p className="nh-text font-medium">{editingEntry.food_name}</p>
+                <div className="flex items-center gap-3 mb-2">
+                  {editingEntry.image_url ? (
+                    <img
+                      src={editingEntry.image_url}
+                      alt={editingEntry.food_name}
+                      className="w-12 h-12 rounded-lg object-cover"
+                    />
+                  ) : (
+                    <div
+                      className="w-12 h-12 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--forum-search-border)' }}
+                    >
+                      <Hamburger size={20} weight="fill" className="opacity-50" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="nh-text font-medium">{editingEntry.food_name}</p>
+                    <p className="text-xs nh-text opacity-70">
+                      {editingFoodData.caloriesPerServing} kcal per {editingFoodData.servingSize}g
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
 
@@ -1467,11 +1397,26 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
             {/* Serving Size Input */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Serving Size</label>
+              <label className="block text-sm font-medium mb-2">
+                Serving Size
+                {editingEntry && editingEntry.food_serving_size && servingUnit === 'g' && (
+                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / editingEntry.food_serving_size * 100) / 100} servings)
+                  </span>
+                )}
+                {!editingEntry && selectedFood && servingUnit === 'g' && (
+                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize * 100) / 100} servings)
+                  </span>
+                )}
+              </label>
               <div className="flex gap-2">
                 <input
                   type="number"
-                  value={servingSize === '' ? '' : servingSize}
+                  step="0.01"
+                  value={servingSize === '' ? '' : (typeof servingSize === 'number'
+                    ? (isNaN(servingSize) ? '' : parseFloat(servingSize.toFixed(2)))
+                    : (servingSize === '' ? '' : parseFloat(Number(servingSize).toFixed(2))))}
                   onChange={(e) => {
                     const value = e.target.value;
                     // Allow empty string for clearing the input
@@ -1483,6 +1428,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                       if (!isNaN(numValue) && numValue >= 0) {
                         setServingSize(numValue);
                       }
+                    }
+                  }}
+                  onBlur={(e) => {
+                    // Round to 2 decimals when user leaves the field
+                    const value = e.target.value;
+                    if (value !== '' && !isNaN(Number(value))) {
+                      const rounded = parseFloat(Number(value).toFixed(2));
+                      setServingSize(rounded);
                     }
                   }}
                   className="flex-1 px-4 py-2 rounded-lg border focus:ring-primary focus:border-primary"
@@ -1499,45 +1452,32 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     const newUnit = e.target.value;
                     const oldUnit = servingUnit;
                     const currentSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
-                    
+
+                    // Get the food's serving size (with fallback)
+                    let foodServingSize = 100; // Default fallback
                     if (editingEntry) {
-                      // When editing, convert the current serving size based on unit change
-                      // Get food data for servingSize
-                      let foodServingSize = 100; // default fallback
-                      const foodData = foodCache.get(editingEntry.food_id);
-                      if (foodData?.servingSize) {
-                        foodServingSize = foodData.servingSize;
-                      } else {
-                        // Try to fetch if not in cache
-                        const fetchedFoodData = await fetchFoodData(editingEntry.food_id, editingEntry.food_name);
-                        if (fetchedFoodData?.servingSize) {
-                          foodServingSize = fetchedFoodData.servingSize;
-                        }
-                      }
-                      
-                      if (oldUnit === 'g' && newUnit === 'serving') {
-                        // Convert grams to servings: currentGrams / servingSize
-                        setServingSize(currentSize / foodServingSize);
-                      } else if (oldUnit === 'serving' && newUnit === 'g') {
-                        // Convert servings to grams: currentServings * servingSize
-                        setServingSize(currentSize * foodServingSize);
-                      }
+                      foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
                     } else if (selectedFood) {
-                      // When adding new entry
-                      if (oldUnit === 'g' && newUnit === 'serving') {
-                        setServingSize(1);
-                      } else if (oldUnit === 'serving' && newUnit === 'g') {
-                        setServingSize(selectedFood.servingSize);
-                      }
+                      foodServingSize = selectedFood.servingSize;
                     }
-                    
+
+                    // Convert the current value based on unit change
+                    if (oldUnit === 'g' && newUnit === 'serving') {
+                      // Convert grams to servings: currentGrams / servingSize
+                      setServingSize(currentSize / foodServingSize);
+                    } else if (oldUnit === 'serving' && newUnit === 'g') {
+                      // Convert servings to grams: currentServings * servingSize
+                      setServingSize(currentSize * foodServingSize);
+                    }
+
                     setServingUnit(newUnit);
                   }}
-                  className="px-4 py-2 rounded-lg border focus:ring-primary focus:border-primary"
+                  className="px-4 py-2 rounded-lg border focus:ring-primary focus:border-primary min-w-[140px]"
                   style={{
                     backgroundColor: 'var(--color-bg-secondary)',
                     borderColor: 'var(--dietary-option-border)',
-                    color: 'var(--color-text)'
+                    color: 'var(--color-text)',
+                    appearance: 'auto'
                   }}
                 >
                   <option value="g">grams (g)</option>
@@ -1563,8 +1503,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               };
 
               // Calculate total grams
-              const totalGrams = servingUnit === 'g' 
-                ? numServingSize 
+              const totalGrams = servingUnit === 'g'
+                ? numServingSize
                 : numServingSize * editingFoodData.servingSize;
 
               return (
@@ -1622,8 +1562,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               };
 
               // Calculate total grams
-              const totalGrams = servingUnit === 'g' 
-                ? numServingSize 
+              const totalGrams = servingUnit === 'g'
+                ? numServingSize
                 : numServingSize * selectedFood.servingSize;
 
               return (
