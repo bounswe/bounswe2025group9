@@ -43,17 +43,12 @@ class FoodEntrySerializer(serializers.ModelSerializer):
             return obj.imageUrl
 
         # Use proxy for external URLs
-        request = self.context.get("request")
-        if request:
-            # Build absolute proxy URL
-            encoded_url = quote(obj.imageUrl, safe="")
-            return request.build_absolute_uri(
-                f"/api/foods/image-proxy/?url={encoded_url}"
-            )
-        else:
-            # Fallback to relative URL if no request context
-            encoded_url = quote(obj.imageUrl, safe="")
-            return f"/api/foods/image-proxy/?url={encoded_url}"
+        # Always return relative URLs - the browser will resolve them against
+        # the current page origin (e.g., http://localhost:8080)
+        # This fixes issues in Docker where build_absolute_uri() creates URLs
+        # without the correct port (http://localhost instead of http://localhost:8080)
+        encoded_url = quote(obj.imageUrl, safe="")
+        return f"/api/foods/image-proxy/?url={encoded_url}"
 
 
 class FoodProposalSerializer(serializers.ModelSerializer):
