@@ -1,14 +1,15 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ChartLineUp, Flame, TrendUp } from '@phosphor-icons/react';
+import { ChartLineUp, Flame, TrendUp, Cookie, Drop } from '@phosphor-icons/react';
 import { apiClient } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition';
 
 interface NutritionSummaryProps {
   compact?: boolean;
+  onNavigateToNutrition?: () => void;
 }
 
-const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
+const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionSummaryProps) => {
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [loading, setLoading] = useState(true);
@@ -68,7 +69,16 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
         <div className="nh-card flex flex-col items-center justify-center p-6 text-center">
           <ChartLineUp size={32} className="text-primary mb-2" weight="fill" />
           <p className="text-sm font-medium mb-3">Setup Nutrition</p>
-          <Link to="/profile" className="text-xs text-primary hover:underline">Set Metrics →</Link>
+          {onNavigateToNutrition ? (
+            <button 
+              onClick={onNavigateToNutrition}
+              className="text-xs text-primary hover:underline"
+            >
+              Set Metrics →
+            </button>
+          ) : (
+            <Link to="/profile?tab=nutrition" className="text-xs text-primary hover:underline">Set Metrics →</Link>
+          )}
         </div>
       );
     }
@@ -76,7 +86,16 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
       <div className="nh-card text-center p-8">
         <h3 className="nh-subtitle mb-4">Nutrition Summary</h3>
         <p className="nh-text mb-4 text-sm">Set up your metrics to see your daily nutrition summary.</p>
-        <Link to="/profile" className="nh-button nh-button-primary text-sm">Set Up Metrics</Link>
+        {onNavigateToNutrition ? (
+          <button 
+            onClick={onNavigateToNutrition}
+            className="nh-button nh-button-primary text-sm"
+          >
+            Set Up Metrics
+          </button>
+        ) : (
+          <Link to="/profile?tab=nutrition" className="nh-button nh-button-primary text-sm">Set Up Metrics</Link>
+        )}
       </div>
     );
   }
@@ -91,111 +110,128 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
   const fatPercent = Math.round((todayLog.total_fat / targets.fat) * 100);
 
   if (compact) {
-    return (
-      <Link to="/profile?tab=nutrition" className="block">
-        <div className="nh-card hover:shadow-lg transition-shadow cursor-pointer">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold">Today's Nutrition</h3>
-            <ChartLineUp size={24} weight="fill" className="text-primary" />
+    const cardContent = (
+      <div className="nh-card hover:shadow-lg transition-shadow cursor-pointer">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold">Today's Nutrition</h3>
+          <ChartLineUp size={24} weight="fill" className="text-primary" />
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          {/* Calories */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Flame size={18} weight="fill" className="text-orange-500" />
+              <span className="text-sm font-medium">Calories</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-primary">{todayLog.total_calories}</span>
+              <span className="text-sm nh-text opacity-70">/ {targets.calories}</span>
+            </div>
+            <div 
+              className="w-full rounded-full h-2"
+              style={{
+                backgroundColor: 'var(--color-bg-secondary)'
+              }}
+            >
+              <div
+                className="bg-orange-500 h-2 rounded-full transition-all"
+                style={{
+                  width: `${Math.min(caloriesPercent, 100)}%`
+                }}
+              />
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            {/* Calories */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <Flame size={18} weight="fill" className="text-orange-500" />
-                <span className="text-sm font-medium">Calories</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-primary">{todayLog.total_calories}</span>
-                <span className="text-sm nh-text opacity-70">/ {targets.calories}</span>
-              </div>
-              <div 
-                className="w-full rounded-full h-2"
-                style={{
-                  backgroundColor: 'var(--color-bg-secondary)'
-                }}
-              >
-                <div
-                  className="h-2 rounded-full transition-all"
-                  style={{
-                    width: `${Math.min(caloriesPercent, 100)}%`,
-                    backgroundColor: caloriesPercent > 100 ? 'var(--color-error)' : 'var(--color-primary)'
-                  }}
-                />
-              </div>
+          {/* Protein */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <TrendUp size={18} weight="fill" className="text-blue-500" />
+              <span className="text-sm font-medium">Protein</span>
             </div>
-
-            {/* Protein */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2">
-                <TrendUp size={18} weight="fill" className="text-blue-500" />
-                <span className="text-sm font-medium">Protein</span>
-              </div>
-              <div className="flex items-baseline gap-2">
-                <span className="text-2xl font-bold text-primary">{todayLog.total_protein}g</span>
-                <span className="text-sm nh-text opacity-70">/ {targets.protein}g</span>
-              </div>
-              <div 
-                className="w-full rounded-full h-2"
-                style={{
-                  backgroundColor: 'var(--color-bg-secondary)'
-                }}
-              >
-                <div
-                  className="bg-blue-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min(proteinPercent, 100)}%` }}
-                />
-              </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl font-bold text-primary">{todayLog.total_protein}g</span>
+              <span className="text-sm nh-text opacity-70">/ {targets.protein}g</span>
             </div>
+            <div 
+              className="w-full rounded-full h-2"
+              style={{
+                backgroundColor: 'var(--color-bg-secondary)'
+              }}
+            >
+              <div
+                className="bg-blue-500 h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(proteinPercent, 100)}%` }}
+              />
+            </div>
+          </div>
 
-            {/* Carbs */}
-            <div className="space-y-2">
+          {/* Carbs */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Cookie size={18} weight="fill" className="text-green-500" />
               <span className="text-sm font-medium">Carbs</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-primary">{todayLog.total_carbohydrates}g</span>
-                <span className="text-xs nh-text opacity-70">/ {targets.carbohydrates}g</span>
-              </div>
-              <div 
-                className="w-full rounded-full h-2"
-                style={{
-                  backgroundColor: 'var(--color-bg-secondary)'
-                }}
-              >
-                <div
-                  className="bg-green-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min(carbsPercent, 100)}%` }}
-                />
-              </div>
             </div>
-
-            {/* Fat */}
-            <div className="space-y-2">
-              <span className="text-sm font-medium">Fat</span>
-              <div className="flex items-baseline gap-2">
-                <span className="text-xl font-bold text-primary">{todayLog.total_fat}g</span>
-                <span className="text-xs nh-text opacity-70">/ {targets.fat}g</span>
-              </div>
-              <div 
-                className="w-full rounded-full h-2"
-                style={{
-                  backgroundColor: 'var(--color-bg-secondary)'
-                }}
-              >
-                <div
-                  className="bg-yellow-500 h-2 rounded-full transition-all"
-                  style={{ width: `${Math.min(fatPercent, 100)}%` }}
-                />
-              </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-primary">{todayLog.total_carbohydrates}g</span>
+              <span className="text-xs nh-text opacity-70">/ {targets.carbohydrates}g</span>
+            </div>
+            <div 
+              className="w-full rounded-full h-2"
+              style={{
+                backgroundColor: 'var(--color-bg-secondary)'
+              }}
+            >
+              <div
+                className="bg-green-500 h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(carbsPercent, 100)}%` }}
+              />
             </div>
           </div>
 
-          <div className="mt-4 text-xs text-center nh-text opacity-70">
-            Click to view details →
+          {/* Fat */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <Drop size={18} weight="fill" className="text-yellow-500" />
+              <span className="text-sm font-medium">Fat</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-xl font-bold text-primary">{todayLog.total_fat}g</span>
+              <span className="text-xs nh-text opacity-70">/ {targets.fat}g</span>
+            </div>
+            <div 
+              className="w-full rounded-full h-2"
+              style={{
+                backgroundColor: 'var(--color-bg-secondary)'
+              }}
+            >
+              <div
+                className="bg-yellow-500 h-2 rounded-full transition-all"
+                style={{ width: `${Math.min(fatPercent, 100)}%` }}
+              />
+            </div>
           </div>
         </div>
-      </Link>
+
+        <div className="mt-4 text-xs text-center nh-text opacity-70">
+          Click to view details →
+        </div>
+      </div>
     );
+
+    if (onNavigateToNutrition) {
+      return (
+        <div onClick={onNavigateToNutrition} className="block">
+          {cardContent}
+        </div>
+      );
+    } else {
+      return (
+        <Link to="/profile?tab=nutrition" className="block">
+          {cardContent}
+        </Link>
+      );
+    }
   }
 
   // Full version (not compact)
@@ -229,10 +265,9 @@ const NutritionSummary = ({ compact = false }: NutritionSummaryProps) => {
             }}
           >
             <div
-              className="h-3 rounded-full transition-all"
+              className="bg-orange-500 h-3 rounded-full transition-all"
               style={{
-                width: `${Math.min(caloriesPercent, 100)}%`,
-                backgroundColor: caloriesPercent > 100 ? 'var(--color-error)' : '#f97316'
+                width: `${Math.min(caloriesPercent, 100)}%`
               }}
             />
           </div>

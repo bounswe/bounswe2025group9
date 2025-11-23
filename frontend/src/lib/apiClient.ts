@@ -1066,6 +1066,7 @@ export const apiClient = {
 
   updateFoodEntry: (id: number, update: {
     serving_size?: number;
+    serving_unit?: string;
     meal_type?: string;
   }) =>
     fetchJson<import('../types/nutrition').FoodLogEntry>(`/meal-planner/daily-log/entries/${id}/`, {

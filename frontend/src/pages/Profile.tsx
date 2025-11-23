@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
@@ -99,6 +98,8 @@ const Profile = () => {
     gender: 'M',
     activity_level: 'moderate'
   })
+  const [hasMetrics, setHasMetrics] = useState(false)
+  const [metricsUpdateKey, setMetricsUpdateKey] = useState(0) // Key to force NutritionTracking refresh
 
   // Nutrition data for Daily Targets sidebar
   const [nutritionData, setNutritionData] = useState<{
@@ -118,21 +119,11 @@ const Profile = () => {
     loadUserData()
   }, [user])
 
-  // Handle URL parameters for tab switching
-  const [searchParams] = useSearchParams()
-  useEffect(() => {
-    const tab = searchParams.get('tab')
-    if (tab === 'nutrition') {
-      setActiveTab('nutrition')
-      // Fetch nutrition data when switching to nutrition tab
-      fetchNutritionData()
-    }
-  }, [searchParams])
-
   // Fetch nutrition data for sidebar
-  const fetchNutritionData = async (date?: Date) => {
+  const fetchNutritionData = useCallback(async (date?: Date) => {
     try {
-      const dateToUse = date || selectedNutritionDate
+      // If no date provided, use selectedNutritionDate, or default to today
+      const dateToUse = date || selectedNutritionDate || new Date()
       const dateStr = dateToUse.toISOString().split('T')[0]
       const [log, targets] = await Promise.all([
         apiClient.getDailyLog(dateStr),
@@ -142,20 +133,27 @@ const Profile = () => {
     } catch (error) {
       console.error('Error fetching nutrition data:', error)
     }
-  }
+  }, [selectedNutritionDate])
 
   // Handle date change from NutritionTracking component
   const handleNutritionDateChange = useCallback((date: Date) => {
     setSelectedNutritionDate(date)
     fetchNutritionData(date)
-  }, [fetchNutritionData]) // Empty deps since fetchNutritionData is stable
+  }, [fetchNutritionData])
 
-  // Refetch nutrition data when tab changes to nutrition
+  // Function to handle tab change
+  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'nutrition' | 'metrics') => {
+    setActiveTab(tab)
+  }
+
+  // Fetch nutrition data for sidebar only when needed (not on every tab switch)
+  // NutritionTracking component will fetch its own data
   useEffect(() => {
-    if (activeTab === 'nutrition') {
+    // Only fetch sidebar data if we're on nutrition tab and data hasn't been loaded yet
+    if (activeTab === 'nutrition' && hasMetrics && !nutritionData.todayLog && !nutritionData.targets) {
       fetchNutritionData()
     }
-  }, [activeTab])
+  }, [activeTab, hasMetrics, nutritionData.todayLog, nutritionData.targets, fetchNutritionData])
 
   // Set up cross-tab like listener
   useEffect(() => {
@@ -179,6 +177,9 @@ const Profile = () => {
 
     setIsLoading(true)
     try {
+      // Load metrics first (needed for nutrition tracking)
+      await loadUserMetrics()
+      
       // Load allergens
       if (user.allergens && user.allergens.length > 0) {
         setSelectedAllergens(user.allergens.map((a: any) => ({
@@ -678,9 +679,40 @@ const Profile = () => {
       if (data) {
         setMetrics(data)
         setOriginalMetrics(data)
+        setHasMetrics(true)
+      } else {
+        setHasMetrics(false)
       }
-    } catch (error) {
-      console.error('Error loading metrics:', error)
+    } catch (error: any) {
+      // If getUserMetrics fails, check nutrition targets endpoint
+      // If targets exist, metrics must exist (targets are auto-created from metrics)
+      try {
+        const targets = await apiClient.getNutritionTargets()
+        if (targets) {
+          // Targets exist, so metrics must exist too
+          setHasMetrics(true)
+          // Try to load metrics again (might have been a transient error)
+          try {
+            const metricsData = await apiClient.getUserMetrics()
+            if (metricsData) {
+              setMetrics(metricsData)
+              setOriginalMetrics(metricsData)
+            }
+          } catch {
+            // If still fails, that's okay - we know metrics exist from targets
+          }
+        } else {
+          setHasMetrics(false)
+        }
+      } catch (targetsError: any) {
+        // Check if it's a 404 (no targets/metrics) vs other error
+        if (targetsError?.status === 404) {
+          setHasMetrics(false)
+        } else {
+          // Other error - don't change hasMetrics state, might be network issue
+          console.error('Error checking nutrition targets:', targetsError)
+        }
+      }
       // Don't show error here as user might not have metrics yet
     }
   }
@@ -688,10 +720,23 @@ const Profile = () => {
   const saveMetrics = async () => {
     setIsLoading(true)
     try {
-      await apiClient.createUserMetrics(metrics)
+      const savedMetrics = await apiClient.createUserMetrics(metrics)
+      // Immediately update state with saved metrics
+      if (savedMetrics) {
+        setMetrics(savedMetrics)
+        setOriginalMetrics(savedMetrics)
+        setHasMetrics(true)
+      }
       showSuccess('Metrics saved successfully')
-      // Refresh targets implicitly by reloading metrics
-      await loadUserMetrics()
+      // Refresh targets and nutrition data after saving metrics
+      // This will update the Daily Targets sidebar immediately
+      await Promise.all([
+        loadUserMetrics(),
+        fetchNutritionData()
+      ])
+      // Force NutritionTracking and NutritionSummary to refresh by updating the key
+      // This ensures today's nutrition values are updated immediately with new targets
+      setMetricsUpdateKey(prev => prev + 1)
     } catch (error) {
       console.error('Error saving metrics:', error)
       showError('Failed to save metrics')
@@ -741,7 +786,7 @@ const Profile = () => {
               </h3>
               <div className="flex flex-col gap-3">
                 <button
-                  onClick={() => setActiveTab('overview')}
+                  onClick={() => handleTabChange('overview')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'overview'
@@ -758,7 +803,7 @@ const Profile = () => {
 
                 {/* Nutrition Tracking Tab */}
                 <button
-                  onClick={() => setActiveTab('nutrition')}
+                  onClick={() => handleTabChange('nutrition')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'nutrition'
@@ -774,7 +819,7 @@ const Profile = () => {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('allergens')}
+                  onClick={() => handleTabChange('allergens')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'allergens'
@@ -790,7 +835,7 @@ const Profile = () => {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('posts')}
+                  onClick={() => handleTabChange('posts')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'posts'
@@ -806,7 +851,7 @@ const Profile = () => {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('recipes')}
+                  onClick={() => handleTabChange('recipes')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'recipes'
@@ -822,7 +867,7 @@ const Profile = () => {
                 </button>
 
                 <button
-                  onClick={() => setActiveTab('tags')}
+                  onClick={() => handleTabChange('tags')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'tags'
@@ -851,7 +896,7 @@ const Profile = () => {
 
                 {/* New button for Saved Meal Plans */}
                 <button
-                  onClick={() => setActiveTab('mealPlans')}
+                  onClick={() => handleTabChange('mealPlans')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
                     backgroundColor: activeTab === 'mealPlans'
@@ -1045,7 +1090,7 @@ const Profile = () => {
                           </div>
                         </div>
 
-                        {metricsChanged() && (
+                        {(metricsChanged() || !hasMetrics) && (
                           <div className="mt-4 flex justify-end">
                             <button
                               onClick={saveMetrics}
@@ -1062,7 +1107,11 @@ const Profile = () => {
                 </div>
 
                 {/* Nutrition Summary */}
-                <NutritionSummary compact={true} />
+                <NutritionSummary 
+                  key={metricsUpdateKey} 
+                  compact={true} 
+                  onNavigateToNutrition={() => handleTabChange('nutrition')}
+                />
               </div>
             )}
 
@@ -1450,8 +1499,112 @@ const Profile = () => {
 
             {/* Nutrition Tracking Tab */}
             {activeTab === 'nutrition' && (
-              <div>
-                <NutritionTracking onDateChange={handleNutritionDateChange} />
+              <div className="space-y-6">
+                {/* Body Metrics Form - Only show if metrics are not set */}
+                {!hasMetrics && (
+                  <div className="nh-card">
+                    <h3 className="nh-subtitle mb-2">Body Metrics</h3>
+                    <p className="nh-text mb-4 text-sm">
+                      Set your body metrics to get personalized nutrition targets.
+                    </p>
+
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Height (cm)</label>
+                        <input
+                          type="number"
+                          value={metrics.height}
+                          onChange={(e) => setMetrics({ ...metrics, height: Number(e.target.value) })}
+                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                          style={{
+                            border: '2px solid var(--dietary-option-border)'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Weight (kg)</label>
+                        <input
+                          type="number"
+                          value={metrics.weight}
+                          onChange={(e) => setMetrics({ ...metrics, weight: Number(e.target.value) })}
+                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                          style={{
+                            border: '2px solid var(--dietary-option-border)'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Age</label>
+                        <input
+                          type="number"
+                          value={metrics.age}
+                          onChange={(e) => setMetrics({ ...metrics, age: Number(e.target.value) })}
+                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                          style={{
+                            border: '2px solid var(--dietary-option-border)'
+                          }}
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium mb-1">Gender</label>
+                        <select
+                          value={metrics.gender}
+                          onChange={(e) => setMetrics({ ...metrics, gender: e.target.value as 'M' | 'F' })}
+                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                          style={{
+                            border: '2px solid var(--dietary-option-border)'
+                          }}
+                        >
+                          <option value="M">Male</option>
+                          <option value="F">Female</option>
+                        </select>
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="block text-xs font-medium mb-1">Activity Level</label>
+                        <select
+                          value={metrics.activity_level}
+                          onChange={(e) => setMetrics({ ...metrics, activity_level: e.target.value as any })}
+                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
+                          style={{
+                            border: '2px solid var(--dietary-option-border)'
+                          }}
+                        >
+                          <option value="sedentary">Sedentary (little or no exercise)</option>
+                          <option value="light">Lightly active (light exercise/sports 1-3 days/week)</option>
+                          <option value="moderate">Moderately active (moderate exercise/sports 3-5 days/week)</option>
+                          <option value="active">Active (hard exercise/sports 6-7 days/week)</option>
+                          <option value="very_active">Very active (very hard exercise/sports & physical job)</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        onClick={saveMetrics}
+                        className="nh-button nh-button-primary text-sm"
+                        disabled={isLoading}
+                      >
+                        {isLoading ? 'Saving...' : 'Save Metrics'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Only show NutritionTracking when metrics are set */}
+                {hasMetrics && (
+                  <NutritionTracking 
+                    key={metricsUpdateKey} // Force remount when metrics are updated
+                    onDateChange={handleNutritionDateChange}
+                    onDataChange={() => {
+                      // Only fetch sidebar data when nutrition data changes (after add/edit/delete)
+                      fetchNutritionData()
+                    }}
+                  />
+                )}
               </div>
             )}
 
@@ -1462,8 +1615,9 @@ const Profile = () => {
               {/* Profile Info / Daily Targets */}
               <div className="nh-card rounded-lg shadow-md">
                 {activeTab === 'nutrition' ? (
-                  <>
-                    <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
+                  hasMetrics ? (
+                    <>
+                      <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
                     <div className="space-y-2">
                       {/* Calories */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
@@ -1563,102 +1717,202 @@ const Profile = () => {
                     </div>
 
                     {/* Micronutrients Section */}
-                    {nutritionData.todayLog && (
+                    {nutritionData.targets?.micronutrients && Object.keys(nutritionData.targets.micronutrients).length > 0 && (
                       <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
-                        {/* Vitamins */}
-                        <div className="mb-2">
-                          <button
-                            onClick={() => setShowVitamins(!showVitamins)}
-                            className="w-full flex items-center justify-between p-2 rounded transition-colors"
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                          >
-                            <span className="text-xs font-semibold">Vitamins</span>
-                            {showVitamins ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                          </button>
-                          {showVitamins && (
-                            <div className="mt-2 space-y-1.5 pl-2">
-                              {Object.entries(nutritionData.todayLog.micronutrients_summary || {})
-                                .filter(([name]) =>
-                                  ['vitamin_a', 'vitamin_c', 'vitamin_d', 'vitamin_e', 'vitamin_k', 'vitamin_b6', 'vitamin_b12', 'folate', 'thiamin', 'riboflavin', 'niacin'].includes(name)
-                                )
-                                .map(([name, current]) => {
-                                  const target = nutritionData.targets?.micronutrients?.[name] || 0
-                                  return (
-                                    <div key={name} className="text-xs">
-                                      <div className="flex items-center justify-between mb-0.5">
-                                        <span className="capitalize">{name.replace('_', ' ')}</span>
-                                        <span className="font-medium">{current?.toFixed(1) || 0} / {target?.toFixed(1) || 0}</span>
-                                      </div>
-                                      <div 
-                                        className="w-full rounded-full h-1"
-                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                      >
-                                        <div
-                                          className="bg-purple-500 h-1 rounded-full transition-all"
-                                          style={{ width: `${Math.min(((current || 0) / (target || 1)) * 100, 100)}%` }}
-                                        ></div>
-                                      </div>
+                        {/* Helper function to categorize and format micronutrients */}
+                        {(() => {
+                          // Get all micronutrients from targets (not just from log)
+                          const targetMicronutrients = nutritionData.targets.micronutrients || {};
+                          // Get current values from log (if available)
+                          const logMicronutrients = nutritionData.todayLog?.micronutrients_summary || {};
+                          
+                          // Extract unit from key name (e.g., "Vitamin A, RAE (µg)" -> "µg")
+                          const extractUnit = (key: string): string => {
+                            const match = key.match(/\(([^)]+)\)$/);
+                            return match ? match[1] : '';
+                          };
+                          
+                          // Extract name without unit (e.g., "Vitamin A, RAE (µg)" -> "Vitamin A, RAE")
+                          const extractName = (key: string): string => {
+                            return key.replace(/\s*\([^)]+\)$/, '');
+                          };
+                          
+                          // Categorize micronutrients
+                          const isVitamin = (name: string): boolean => {
+                            const lowerName = name.toLowerCase();
+                            return lowerName.includes('vitamin') || 
+                                   lowerName.includes('thiamin') || 
+                                   lowerName.includes('riboflavin') || 
+                                   lowerName.includes('niacin') || 
+                                   lowerName.includes('folate') || 
+                                   lowerName.includes('folic acid') ||
+                                   lowerName.includes('choline') ||
+                                   lowerName.includes('carotene') ||
+                                   lowerName.includes('lycopene') ||
+                                   lowerName.includes('lutein');
+                          };
+                          
+                          const isMineral = (name: string): boolean => {
+                            const lowerName = name.toLowerCase();
+                            return lowerName.includes('calcium') || 
+                                   lowerName.includes('iron') || 
+                                   lowerName.includes('magnesium') || 
+                                   lowerName.includes('phosphorus') || 
+                                   lowerName.includes('potassium') || 
+                                   lowerName.includes('sodium') || 
+                                   lowerName.includes('zinc') || 
+                                   lowerName.includes('copper') || 
+                                   lowerName.includes('manganese') || 
+                                   lowerName.includes('selenium');
+                          };
+                          
+                          // Get all vitamins from targets
+                          const vitamins = Object.entries(targetMicronutrients)
+                            .filter(([name]) => isVitamin(name))
+                            .sort(([a], [b]) => a.localeCompare(b));
+                          
+                          // Get all minerals from targets
+                          const minerals = Object.entries(targetMicronutrients)
+                            .filter(([name]) => isMineral(name))
+                            .sort(([a], [b]) => a.localeCompare(b));
+                          
+                          return (
+                            <>
+                              {/* Vitamins */}
+                              {vitamins.length > 0 && (
+                                <div className="mb-2">
+                                  <button
+                                    onClick={() => setShowVitamins(!showVitamins)}
+                                    className="w-full flex items-center justify-between p-2 rounded transition-colors"
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
+                                  >
+                                    <span className="text-xs font-semibold">Vitamins</span>
+                                    {showVitamins ? <CaretDown size={14} /> : <CaretRight size={14} />}
+                                  </button>
+                                  {showVitamins && (
+                                    <div className="mt-2 space-y-1.5 pl-2">
+                                      {vitamins.map(([key, target]) => {
+                                        const name = extractName(key);
+                                        const unit = extractUnit(key);
+                                        // Get current value from log (if available), otherwise 0
+                                        const currentValue = typeof logMicronutrients[key] === 'number' 
+                                          ? logMicronutrients[key] 
+                                          : 0;
+                                        // Get target value
+                                        let targetValue = 0;
+                                        if (typeof target === 'number') {
+                                          targetValue = target;
+                                        } else if (target && typeof target === 'object' && 'target' in target) {
+                                          targetValue = (target as { target: number }).target;
+                                        }
+                                        
+                                        return (
+                                          <div key={key} className="p-2 rounded text-xs" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
+                                            <div className="flex items-center justify-between mb-0.5">
+                                              <span className="capitalize">{name}</span>
+                                              <span className="font-medium">
+                                                {currentValue.toFixed(1)}{unit ? ` ${unit}` : ''} 
+                                                {targetValue > 0 ? ` / ${targetValue.toFixed(1)}${unit ? ` ${unit}` : ''}` : ''}
+                                              </span>
+                                            </div>
+                                            {targetValue > 0 && (
+                                              <div 
+                                                className="w-full rounded-full h-1"
+                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                              >
+                                                <div
+                                                  className="bg-purple-500 h-1 rounded-full transition-all"
+                                                  style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
+                                                ></div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
-                                  )
-                                })
-                              }
-                            </div>
-                          )}
-                        </div>
+                                  )}
+                                </div>
+                              )}
 
-                        {/* Minerals */}
-                        <div>
-                          <button
-                            onClick={() => setShowMinerals(!showMinerals)}
-                            className="w-full flex items-center justify-between p-2 rounded transition-colors"
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.backgroundColor = 'transparent';
-                            }}
-                          >
-                            <span className="text-xs font-semibold">Minerals</span>
-                            {showMinerals ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                          </button>
-                          {showMinerals && (
-                            <div className="mt-2 space-y-1.5 pl-2">
-                              {Object.entries(nutritionData.todayLog.micronutrients_summary || {})
-                                .filter(([name]) =>
-                                  ['calcium', 'iron', 'magnesium', 'phosphorus', 'potassium', 'sodium', 'zinc', 'copper', 'manganese', 'selenium'].includes(name)
-                                )
-                                .map(([name, current]) => {
-                                  const target = nutritionData.targets?.micronutrients?.[name] || 0
-                                  return (
-                                    <div key={name} className="text-xs">
-                                      <div className="flex items-center justify-between mb-0.5">
-                                        <span className="capitalize">{name}</span>
-                                        <span className="font-medium">{current?.toFixed(1) || 0} / {target?.toFixed(1) || 0}</span>
-                                      </div>
-                                      <div 
-                                        className="w-full rounded-full h-1"
-                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                      >
-                                        <div
-                                          className="bg-teal-500 h-1 rounded-full transition-all"
-                                          style={{ width: `${Math.min(((current || 0) / (target || 1)) * 100, 100)}%` }}
-                                        ></div>
-                                      </div>
+                              {/* Minerals */}
+                              {minerals.length > 0 && (
+                                <div>
+                                  <button
+                                    onClick={() => setShowMinerals(!showMinerals)}
+                                    className="w-full flex items-center justify-between p-2 rounded transition-colors"
+                                    onMouseEnter={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                                    }}
+                                    onMouseLeave={(e) => {
+                                      e.currentTarget.style.backgroundColor = 'transparent';
+                                    }}
+                                  >
+                                    <span className="text-xs font-semibold">Minerals</span>
+                                    {showMinerals ? <CaretDown size={14} /> : <CaretRight size={14} />}
+                                  </button>
+                                  {showMinerals && (
+                                    <div className="mt-2 space-y-1.5 pl-2">
+                                      {minerals.map(([key, target]) => {
+                                        const name = extractName(key);
+                                        const unit = extractUnit(key);
+                                        // Get current value from log (if available), otherwise 0
+                                        const currentValue = typeof logMicronutrients[key] === 'number' 
+                                          ? logMicronutrients[key] 
+                                          : 0;
+                                        // Get target value
+                                        let targetValue = 0;
+                                        if (typeof target === 'number') {
+                                          targetValue = target;
+                                        } else if (target && typeof target === 'object' && 'target' in target) {
+                                          targetValue = (target as { target: number }).target;
+                                        }
+                                        
+                                        return (
+                                          <div key={key} className="p-2 rounded text-xs" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
+                                            <div className="flex items-center justify-between mb-0.5">
+                                              <span className="capitalize">{name}</span>
+                                              <span className="font-medium">
+                                                {currentValue.toFixed(1)}{unit ? ` ${unit}` : ''} 
+                                                {targetValue > 0 ? ` / ${targetValue.toFixed(1)}${unit ? ` ${unit}` : ''}` : ''}
+                                              </span>
+                                            </div>
+                                            {targetValue > 0 && (
+                                              <div 
+                                                className="w-full rounded-full h-1"
+                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                              >
+                                                <div
+                                                  className="bg-teal-500 h-1 rounded-full transition-all"
+                                                  style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
+                                                ></div>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      })}
                                     </div>
-                                  )
-                                })
-                              }
-                            </div>
-                          )}
-                        </div>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          );
+                        })()}
                       </div>
                     )}
                   </>
+                  ) : (
+                    <>
+                      <h3 className="nh-subtitle mb-3 text-sm">Setup Required</h3>
+                      <p className="nh-text text-xs mb-3">
+                        Set your body metrics above to see your daily nutrition targets and start tracking your nutrition.
+                      </p>
+                    </>
+                  )
                 ) : (
                   <>
                     <h3 className="nh-subtitle mb-3 text-sm">Profile Tips</h3>

@@ -23,9 +23,10 @@ import { DailyNutritionLog, NutritionTargets, FoodLogEntry } from '../types/nutr
 
 interface NutritionTrackingProps {
   onDateChange?: (date: Date) => void;
+  onDataChange?: () => void; // Callback to notify parent when data changes (add/edit/delete)
 }
 
-const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
+const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [showAddFood, setShowAddFood] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
@@ -127,10 +128,6 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
     setError(null);
     setMetricsMissing(false);
     try {
-      // Fetch targets first (needed for both views)
-      const targetsData = await apiClient.getNutritionTargets();
-      setTargets(targetsData);
-
       // Fetch data based on view mode
       if (viewMode === 'weekly') {
         // In weekly view, fetch all logs for the week
@@ -212,22 +209,108 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
           };
           return normalizeDateStr(h.date) === dateStr;
         });
+        // Update targets from the selected date log or fetch fresh
+        const updateTargetsFromLog = async (log: DailyNutritionLog) => {
+          if (log.targets) {
+            // Fetch full targets to get micronutrients and other fields, then merge with log targets
+            try {
+              const fullTargets = await apiClient.getNutritionTargets();
+              setTargets({
+                ...fullTargets,
+                calories: log.targets.calories,
+                protein: log.targets.protein,
+                carbohydrates: log.targets.carbohydrates,
+                fat: log.targets.fat,
+              });
+            } catch (err) {
+              console.error('Error fetching full targets:', err);
+              // Fallback: fetch targets separately
+              try {
+                const targetsData = await apiClient.getNutritionTargets();
+                setTargets(targetsData);
+              } catch (fallbackErr) {
+                console.error('Error fetching targets fallback:', fallbackErr);
+              }
+            }
+          } else {
+            // Fallback: fetch targets separately if not in log response
+            try {
+              const targetsData = await apiClient.getNutritionTargets();
+              setTargets(targetsData);
+            } catch (err) {
+              console.error('Error fetching targets:', err);
+            }
+          }
+        };
+
         if (selectedDateLog) {
           setTodayLog(selectedDateLog);
+          await updateTargetsFromLog(selectedDateLog);
         } else {
           // If no log exists for selectedDate, fetch it separately (creates empty log if needed)
           try {
             const log = await apiClient.getDailyLog(dateStr);
             setTodayLog(log);
+            await updateTargetsFromLog(log);
           } catch (err) {
             console.error('Error fetching selected date log:', err);
+            // Still try to fetch targets even if log fetch fails
+            try {
+              const targetsData = await apiClient.getNutritionTargets();
+              setTargets(targetsData);
+            } catch (targetsErr) {
+              console.error('Error fetching targets:', targetsErr);
+            }
           }
         }
       } else {
         // In daily view, fetch the daily log for selectedDate
         const dateStr = selectedDate.toISOString().split('T')[0];
-        const log = await apiClient.getDailyLog(dateStr);
+        
+        // Fetch daily log and full targets in parallel for efficiency
+        const [log, fullTargets] = await Promise.all([
+          apiClient.getDailyLog(dateStr),
+          apiClient.getNutritionTargets().catch(() => null) // Don't fail if targets fetch fails
+        ]);
+        
         setTodayLog(log);
+
+        // Update targets - prioritize values from daily log response (most up-to-date)
+        // Merge with full targets to preserve micronutrients and other fields
+        if (log.targets && fullTargets) {
+          setTargets({
+            ...fullTargets,
+            calories: log.targets.calories,
+            protein: log.targets.protein,
+            carbohydrates: log.targets.carbohydrates,
+            fat: log.targets.fat,
+          });
+        } else if (log.targets) {
+          // If we have log targets but no full targets, fetch full targets and merge
+          try {
+            const fetchedTargets = await apiClient.getNutritionTargets();
+            setTargets({
+              ...fetchedTargets,
+              calories: log.targets.calories,
+              protein: log.targets.protein,
+              carbohydrates: log.targets.carbohydrates,
+              fat: log.targets.fat,
+            });
+          } catch (err) {
+            console.error('Error fetching full targets:', err);
+          }
+        } else if (fullTargets) {
+          // If we have full targets but no log targets, use full targets
+          setTargets(fullTargets);
+        } else {
+          // Last resort: fetch targets separately
+          try {
+            const targetsData = await apiClient.getNutritionTargets();
+            setTargets(targetsData);
+          } catch (err) {
+            console.error('Error fetching targets:', err);
+          }
+        }
 
         // Fetch and cache food data for all entries
         if (log.entries) {
@@ -306,6 +389,16 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
         multiplier = numServingSize / selectedFood.servingSize;
       }
 
+      // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
+      multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+      // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
+      if (multiplier > 9999.999999) {
+        alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+        setLoading(false);
+        return;
+      }
+
       await apiClient.addFoodEntry({
         food_id: selectedFood.id,
         serving_size: multiplier,
@@ -316,11 +409,20 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
 
       // Refresh daily log and targets to update totals after adding entry
       await fetchData();
+      // Notify parent component (Profile) to refresh its nutrition data
+      if (onDataChange) {
+        onDataChange();
+      }
       setShowServingDialog(false);
       setSelectedFood(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error adding food:', err);
-      setError('Failed to add food entry');
+      const errorMessage = err?.data?.serving_size?.[0] || 
+                          err?.data?.error || 
+                          err?.data?.detail || 
+                          err?.message || 
+                          'Failed to add food entry';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -399,19 +501,39 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
       }
       // If unit is "serving", multiplier is already correct (servingSize = number of servings)
 
+      // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
+      multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+      // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
+      if (multiplier > 9999.999999) {
+        alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+        setLoading(false);
+        return;
+      }
+
       await apiClient.updateFoodEntry(editingEntry.id, {
         serving_size: multiplier,
+        serving_unit: servingUnit,
         meal_type: selectedMeal
       });
 
       // Refresh daily log and targets to update totals after updating entry
       await fetchData();
+      // Notify parent component (Profile) to refresh its nutrition data
+      if (onDataChange) {
+        onDataChange();
+      }
       setShowServingDialog(false);
       setEditingEntry(null);
       setEditingFoodData(null);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating entry:', err);
-      setError('Failed to update entry');
+      const errorMessage = err?.data?.serving_size?.[0] || 
+                          err?.data?.error || 
+                          err?.data?.detail || 
+                          err?.message || 
+                          'Failed to update entry';
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -424,6 +546,10 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
       await apiClient.deleteFoodEntry(id);
       // Refresh daily log and targets to update totals
       await fetchData();
+      // Notify parent component (Profile) to refresh its nutrition data
+      if (onDataChange) {
+        onDataChange();
+      }
     } catch (err: any) {
       console.error('Error deleting entry:', err);
       const errorMessage = err?.data?.error || err?.data?.detail || err?.message || 'Failed to delete entry';
@@ -574,10 +700,10 @@ const NutritionTracking = ({ onDateChange }: NutritionTrackingProps = {}) => {
                         if (foodData?.servingSize) {
                           // Multiply multiplier by food's serving size to get grams
                           const grams = servingSizeNum * foodData.servingSize;
-                          return `${grams.toFixed(2)} ${entry.serving_unit}`;
+                          return `${Math.round(grams)} ${entry.serving_unit}`;
                         } else {
                           // Food data not loaded yet, show multiplier (will update when food data loads)
-                          return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}`;
+                          return `${Math.round(servingSizeNum)} ${entry.serving_unit}`;
                         }
                       } else {
                         // For "serving" unit, show multiplier directly
