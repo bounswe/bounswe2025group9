@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from decimal import Decimal, ROUND_HALF_UP
 
 
 
@@ -224,11 +225,22 @@ class FoodLogEntry(models.Model):
             food_source = None
         
         if food_source:
-            # Calculate nutrition based on serving size
-            self.calories = food_source.caloriesPerServing * float(self.serving_size)
-            self.protein = food_source.proteinContent * float(self.serving_size)
-            self.fat = food_source.fatContent * float(self.serving_size)
-            self.carbohydrates = food_source.carbohydrateContent * float(self.serving_size)
+            # Calculate nutrition based on serving size and round to 2 decimal places
+            serving_size_float = float(self.serving_size)
+            
+            # Round to 2 decimal places using Decimal for precision
+            self.calories = Decimal(str(food_source.caloriesPerServing * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.protein = Decimal(str(food_source.proteinContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.fat = Decimal(str(food_source.fatContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.carbohydrates = Decimal(str(food_source.carbohydrateContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
             
             # Handle micronutrients if they exist
             if hasattr(food_source, 'micronutrients') and food_source.micronutrients:
