@@ -331,6 +331,8 @@ class FoodLoader:
 
         # Extract basic information
         name = food_data.get("description", "").strip()
+        if len(name) > 100:
+            name = name[:100]  # Truncate to max length
         if not name:
             raise ValueError("Food description is missing")
 
@@ -404,7 +406,7 @@ class FoodLoader:
 
         action = "Created" if created else "Updated"
         print(
-            f"  {action}: {name} ({serving_size}g, {normalized_calories}kcal, score: {score})"
+            f"  {action:<10}: {name[:20]:<20} ({serving_size:>5.1f}g, {normalized_calories:>6.1f}kcal, score: {score:>5.1f})", end="\r"
         )
 
 
