@@ -44,7 +44,17 @@ git clone https://github.com/bounswe/bounswe2025group9.git
 cd bounswe2025group9
 ```
 
-2. Start all services:
+2. Environment Variables:
+See the `.env.example` file in the root directory for required environment variables. Create a `.env` file and add your configurations.
+```bash
+cp .env.example .env
+# edit .env to add your configurations
+source .env
+```
+
+The given `.env.example` is sufficient for local development as is.
+
+3. Start all services:
 ```bash
 docker-compose up --build -d
 ```
@@ -54,6 +64,43 @@ This will start:
 - Backend API at http://localhost:8080/api/
 - MySQL database
 
+### Production Deployment
+1. Environment Variables:
+- Use `BUILD=PROD` in your `.env` file for production settings. This switches the frontend build to use `frontend/nginx.conf` instead of `frontend/nginx-dev.conf`. 
+The basic difference is that the production config uses https and redirects http traffic to https, while the dev config only serves http traffic.
+- Set `PORT=80` for production web hosting, it will allow http traffic to be redirected to https. (see `nginx.conf` for details)
+- Make sure to set strong passwords for `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD` and `DJANGO_SECRET_KEY`.
+- FatSecret API credentials are required only if db initialization scripts is invoked.
+
+2. SSL Certificates:
+- For production, you need to set up SSL certificates for secure https connections. Use services Let's Encrypt to obtain free SSL certificates.
+- Start the app in development mode to expose port 80, then use Certbot to obtain and install the certificates.
+```bash
+docker-compose up --build -d # with BUILD=DEV and PORT=80
+```
+- Following command will create a docker container to run certbot and obtain the certificates. Make sure to replace `<email>` with your email address and set the correct domain names.
+```
+sudo docker run --rm\
+    -v $(pwd)/certbot/www:/var/www/certbot\
+    -v $(pwd)/certbot/conf:/etc/letsencrypt\
+    certbot/certbot certonly\
+    --webroot\
+    --webroot-path=/var/www/certbot\
+    --email <email> # your email here\
+    --agree-tos\
+    --no-eff-email\
+    -d nutrihub.fit\   # domain to deploy
+    -d www.nutrihub.fit
+```
+This will store the obtained certificates under `certbot/` directory.
+After obtaining the certificates, you can restart the application with production settings:
+```bash
+# from .env file, set:
+#   BUILD=PROD 
+#   PORT=80
+docker-compose up --build -d
+``
+ 
 ## FatSecret API Integration
 
 To use the food data features, you need to set up FatSecret API credentials:
@@ -123,6 +170,8 @@ npm install
 ```bash
 npm start
 ```
+
+4. If frontend cannot reach the backend, make sure to set the correct API base URL in the environment variables. You can set backend path with `VITE_API_BASE_URL="http://localhost:8080/api"` environment variable, where 8080 is the port where your backend is running.
 
 ### Mobile App Setup
 
