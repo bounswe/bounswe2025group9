@@ -84,6 +84,14 @@ const ProfileSettingsScreen: React.FC = () => {
       screen: 'MyPosts'
     },
     {
+      id: 'nutrition-tracking',
+      title: 'Nutrition Tracking',
+      description: 'Track daily food intake and nutrients',
+      icon: 'food-apple',
+      screen: 'NutritionTracking',
+      badgeColor: theme.success
+    },
+    {
       id: 'allergens',
       title: 'Allergens',
       description: 'Manage your food allergies and sensitivities',

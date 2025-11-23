@@ -8,6 +8,9 @@ export interface PaginatedResponseWithStatus<T> {
   warning?: string;
 }
 // types
+export type PriceUnit = 'per_100g' | 'per_unit';
+export type PriceCategory = '₺' | '₺ ₺' | '₺ ₺₺';
+
 export interface Food {
   id: number;
   name: string;
@@ -21,6 +24,13 @@ export interface Food {
   dietaryOptions: string[];
   nutritionScore: number;
   imageUrl: string;
+  base_price?: string | number | null;
+  price_unit?: PriceUnit;
+  price_category?: PriceCategory | null;
+  currency?: string;
+  category_overridden_by?: number | null;
+  category_override_reason?: string | null;
+  category_overridden_at?: string | null;
 }
 
 export interface FoodProposal {
@@ -35,6 +45,9 @@ export interface FoodProposal {
   dietaryOptions?: string[];
   nutritionScore: number;
   imageUrl?: string;
+  base_price?: string | number | null;
+  price_unit?: PriceUnit;
+  currency?: string;
 }
 
 export interface FoodProposalResponse {
@@ -200,6 +213,53 @@ export interface MealPlan {
   updated_at: string;
   is_active: boolean;
 };
+
+export interface PriceCategoryThreshold {
+  id: number;
+  price_unit: PriceUnit;
+  price_unit_display?: string;
+  currency: string;
+  lower_threshold: string | null;
+  upper_threshold: string | null;
+  updates_since_recalculation: number;
+  last_recalculated_at: string | null;
+}
+
+export interface PriceAudit {
+  id: number;
+  food?: number | null;
+  food_name?: string | null;
+  price_unit: PriceUnit;
+  currency: string;
+  old_base_price?: string | null;
+  new_base_price?: string | null;
+  old_price_category?: PriceCategory | null;
+  new_price_category?: PriceCategory | null;
+  change_type: string;
+  changed_by?: number | null;
+  changed_by_username?: string | null;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
+export type PriceReportStatus = 'open' | 'in_review' | 'resolved';
+
+export interface PriceReport {
+  id: number;
+  food: number;
+  food_name?: string;
+  reported_by: number;
+  reported_by_username?: string;
+  description: string;
+  status: PriceReportStatus;
+  resolution_notes?: string;
+  resolved_by?: number | null;
+  resolved_by_username?: string | null;
+  resolved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 
 
@@ -692,6 +752,54 @@ export const apiClient = {
     }, true),
 
   
+  // Get personalized feed
+  getPersonalizedFeed: (params?: PaginationParams) => {
+    let url = "/users/feed/";
+    
+    if (params) {
+      const queryParams = new URLSearchParams();
+      
+      if (params.page !== undefined) {
+        queryParams.append('page', params.page.toString());
+      }
+      
+      if (params.page_size !== undefined) {
+        queryParams.append('page_size', params.page_size.toString());
+      }
+      
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    
+    console.log('[API] Fetching personalized feed');
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received personalized feed:`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          // Ensure likes is always a non-negative number
+          if (typeof postObj.likes !== 'number' || postObj.likes < 0) {
+            console.log('[API] Ensuring non-negative like count for post', postObj.id, 'current:', postObj.likes);
+            postObj.likes = Math.max(0, postObj.likes || 0);
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    });
+  },
+
   toggleLikePost: (postId: number) => {
     console.log(`[API] Toggling like for post ID: ${postId}`);
     return fetchJson<{ liked: boolean, like_count?: number }>(`/forum/posts/${postId}/like/`, {
@@ -739,6 +847,38 @@ export const apiClient = {
     });
   },
   
+  // Follow system
+  toggleFollowUser: (username: string) => {
+    console.log(`[API] Toggling follow for user: ${username}`);
+    return fetchJson<{ message: string }>("/users/follow/", {
+      method: "POST",
+      body: JSON.stringify({ username })
+    }, true).then(response => {
+      console.log(`[API] Toggle follow response:`, response);
+      return response;
+    });
+  },
+
+  getFollowers: (username: string) => {
+    console.log(`[API] Fetching followers for user: ${username}`);
+    return fetchJson<{ followers: Array<{ id: number; username: string; profile_image?: string }> }>(`/users/followers/${username}/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received followers:`, response);
+      return response;
+    });
+  },
+
+  getFollowing: (username: string) => {
+    console.log(`[API] Fetching following for user: ${username}`);
+    return fetchJson<{ following: Array<{ id: number; username: string; profile_image?: string }> }>(`/users/following/${username}/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received following:`, response);
+      return response;
+    });
+  },
+
   // logout endpoint
   logout: (refreshToken: string) => {
     console.log('[API] Logging out on the server');
@@ -918,6 +1058,79 @@ export const apiClient = {
       fetchJson<{ message: string }>(`/foods/moderation/food-proposals/${proposalId}/approve/`, {
         method: "POST",
         body: JSON.stringify({ approved }),
+      }, true),
+
+    // Price moderation
+    getPriceThresholds: (params?: { currency?: string }) => {
+      let url = "/foods/price-thresholds/";
+      if (params?.currency) {
+        url += `?currency=${params.currency}`;
+      }
+      return fetchJson<
+        PriceCategoryThreshold[] | PaginatedResponse<PriceCategoryThreshold>
+      >(url, { method: "GET" }, true);
+    },
+
+    recalculatePriceThreshold: (data: { price_unit: PriceUnit; currency?: string }) =>
+      fetchJson<PriceCategoryThreshold>("/foods/price-thresholds/recalculate/", {
+        method: "POST",
+        body: JSON.stringify({
+          price_unit: data.price_unit,
+          currency: data.currency,
+        }),
+      }, true),
+
+    updateFoodPrice: (
+      foodId: number,
+      payload: {
+        base_price: string | number;
+        price_unit: PriceUnit;
+        currency: string;
+        reason?: string;
+        override_category?: PriceCategory | null;
+        override_reason?: string;
+        clear_override?: boolean;
+      }
+    ) =>
+      fetchJson<Food>(`/foods/${foodId}/price/`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }, true),
+
+    getPriceAudits: (params?: { food?: number; change_type?: string; price_unit?: PriceUnit }) => {
+      let url = "/foods/price-audits/";
+      const query = new URLSearchParams();
+      if (params?.food) {
+        query.append("food", params.food.toString());
+      }
+      if (params?.change_type) {
+        query.append("change_type", params.change_type);
+      }
+      if (params?.price_unit) {
+        query.append("price_unit", params.price_unit);
+      }
+      const queryString = query.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+      return fetchJson<PaginatedResponse<PriceAudit> | PriceAudit[]>(url, { method: "GET" }, true);
+    },
+
+    getPriceReports: (params?: { status?: PriceReportStatus }) => {
+      let url = "/foods/price-reports/";
+      if (params?.status) {
+        url += `?status=${params.status}`;
+      }
+      return fetchJson<PaginatedResponse<PriceReport> | PriceReport[]>(url, { method: "GET" }, true);
+    },
+
+    updatePriceReport: (
+      reportId: number,
+      data: { status?: PriceReportStatus; resolution_notes?: string }
+    ) =>
+      fetchJson<PriceReport>(`/foods/price-reports/${reportId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
       }, true),
 
     // Certificate verification

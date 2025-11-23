@@ -315,6 +315,11 @@ const PostDetail = () => {
             // Notify other tabs with ACTUAL server values
             notifyLikeChange(post.id, finalLiked, finalLikeCount, 'post');
             
+            // Set flag to refresh personalized feed when user navigates back
+            if (finalLiked) {
+                localStorage.setItem('nutriHub_feedNeedsRefresh', 'true');
+            }
+            
         } catch (error) {
             console.error('[PostDetail] Error toggling post like:', error);
             // On error, revert to previous state
