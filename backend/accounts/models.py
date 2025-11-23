@@ -258,11 +258,16 @@ class NutritionTargets(models.Model):
         """
         Create or update nutrition targets based on user metrics.
         Uses default macro ratios: 40% carbs, 30% protein, 30% fat.
+        Also calculates micronutrient targets based on RDA values for age and gender.
         """
-        from project.utils.nutrition_calculator import calculate_macro_targets
+        from project.utils.nutrition_calculator import calculate_macro_targets, calculate_micronutrient_targets
         
         tdee = user_metrics.calculate_tdee()
         macro_targets = calculate_macro_targets(tdee)
+        micronutrient_targets = calculate_micronutrient_targets(
+            user_metrics.age,
+            user_metrics.gender
+        )
         
         targets, created = cls.objects.update_or_create(
             user=user_metrics.user,
@@ -271,6 +276,7 @@ class NutritionTargets(models.Model):
                 'protein': macro_targets['protein_g'],
                 'carbohydrates': macro_targets['carbohydrates_g'],
                 'fat': macro_targets['fat_g'],
+                'micronutrients': micronutrient_targets,
                 'is_custom': False,
             }
         )
