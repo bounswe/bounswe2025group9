@@ -18,7 +18,8 @@ export interface MicroNutrient {
 
 export interface FoodLogEntry {
   id: number;
-  food_id: number;
+  food_id?: number | null;
+  private_food_id?: number | null;
   food_name: string;
   food_serving_size: number; // Original serving size of the food (e.g., 100g)
   image_url: string; // Image URL from the food
