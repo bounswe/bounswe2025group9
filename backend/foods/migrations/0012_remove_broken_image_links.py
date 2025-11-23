@@ -37,7 +37,7 @@ def reverse_remove_broken_links(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('foods', '0010_load_FNDDS_foods'),
+        ('foods', '0011_foodproposal_is_private'),
     ]
 
     operations = [
