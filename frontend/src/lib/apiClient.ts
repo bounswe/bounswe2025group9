@@ -412,6 +412,17 @@ export const apiClient = {
       body: JSON.stringify(proposal),
     }, true),
 
+  // Get personalized daily intake recommendations (deprecated - use getNutritionTargets instead)
+  getDailyIntakeRecommendations: () =>
+    fetchJson<{
+      calories: number;
+      protein: number;
+      fat: number;
+      carbohydrates: number;
+    }>("/users/nutrition-targets/", {
+      method: "GET",
+    }, true),
+
   // auth - use real backend
   login: (username: string, password: string) =>
     fetchJson<JwtResponse>("/users/token/", {
