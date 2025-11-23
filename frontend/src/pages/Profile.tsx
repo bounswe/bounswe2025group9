@@ -1021,8 +1021,11 @@ const Profile = () => {
                             <label className="block text-xs font-medium mb-1">Height (cm)</label>
                             <input
                               type="number"
-                              value={metrics.height}
-                              onChange={(e) => setMetrics({ ...metrics, height: Number(e.target.value) })}
+                              value={metrics.height || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setMetrics({ ...metrics, height: value === '' ? 0 : Number(value) });
+                              }}
                               className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
                               style={{
                                 border: '2px solid var(--dietary-option-border)'
@@ -1034,8 +1037,11 @@ const Profile = () => {
                             <label className="block text-xs font-medium mb-1">Weight (kg)</label>
                             <input
                               type="number"
-                              value={metrics.weight}
-                              onChange={(e) => setMetrics({ ...metrics, weight: Number(e.target.value) })}
+                              value={metrics.weight || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setMetrics({ ...metrics, weight: value === '' ? 0 : Number(value) });
+                              }}
                               className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
                               style={{
                                 border: '2px solid var(--dietary-option-border)'
@@ -1047,8 +1053,11 @@ const Profile = () => {
                             <label className="block text-xs font-medium mb-1">Age</label>
                             <input
                               type="number"
-                              value={metrics.age}
-                              onChange={(e) => setMetrics({ ...metrics, age: Number(e.target.value) })}
+                              value={metrics.age || ''}
+                              onChange={(e) => {
+                                const value = e.target.value;
+                                setMetrics({ ...metrics, age: value === '' ? 0 : Number(value) });
+                              }}
                               className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
                               style={{
                                 border: '2px solid var(--dietary-option-border)'
@@ -1513,8 +1522,11 @@ const Profile = () => {
                         <label className="block text-xs font-medium mb-1">Height (cm)</label>
                         <input
                           type="number"
-                          value={metrics.height}
-                          onChange={(e) => setMetrics({ ...metrics, height: Number(e.target.value) })}
+                          value={metrics.height || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setMetrics({ ...metrics, height: value === '' ? 0 : Number(value) });
+                          }}
                           className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
                           style={{
                             border: '2px solid var(--dietary-option-border)'
@@ -1526,8 +1538,11 @@ const Profile = () => {
                         <label className="block text-xs font-medium mb-1">Weight (kg)</label>
                         <input
                           type="number"
-                          value={metrics.weight}
-                          onChange={(e) => setMetrics({ ...metrics, weight: Number(e.target.value) })}
+                          value={metrics.weight || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setMetrics({ ...metrics, weight: value === '' ? 0 : Number(value) });
+                          }}
                           className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
                           style={{
                             border: '2px solid var(--dietary-option-border)'
@@ -1539,8 +1554,11 @@ const Profile = () => {
                         <label className="block text-xs font-medium mb-1">Age</label>
                         <input
                           type="number"
-                          value={metrics.age}
-                          onChange={(e) => setMetrics({ ...metrics, age: Number(e.target.value) })}
+                          value={metrics.age || ''}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setMetrics({ ...metrics, age: value === '' ? 0 : Number(value) });
+                          }}
                           className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
                           style={{
                             border: '2px solid var(--dietary-option-border)'
