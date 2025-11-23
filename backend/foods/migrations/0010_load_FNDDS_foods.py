@@ -90,7 +90,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("foods", "0008_foodentry_micronutrients_foodproposal_micronutrients"),
+        ("foods", "0009_foodentry_base_price_and_more"),
     ]
 
     operations = [
