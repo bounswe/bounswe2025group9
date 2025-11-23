@@ -1,6 +1,9 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 from .models import Post, Tag, Comment, Recipe, RecipeIngredient
 from foods.models import FoodEntry
+from foods.services import recalculate_recipes_for_food
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -97,6 +100,7 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     fat = serializers.FloatField(source="fat_content", read_only=True)
     carbs = serializers.FloatField(source="carbohydrate_content", read_only=True)
     calories = serializers.FloatField(source="calorie_content", read_only=True)
+    cost = serializers.SerializerMethodField()
 
     class Meta:
         model = RecipeIngredient
@@ -109,8 +113,20 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
             "fat",
             "carbs",
             "calories",
+            "cost",
         ]
-        read_only_fields = ["id", "food_name", "protein", "fat", "carbs", "calories"]
+        read_only_fields = [
+            "id",
+            "food_name",
+            "protein",
+            "fat",
+            "carbs",
+            "calories",
+            "cost",
+        ]
+
+    def get_cost(self, obj):
+        return float(obj.estimated_cost.quantize(Decimal("0.01")))
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -124,6 +140,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     total_fat = serializers.FloatField(read_only=True)
     total_carbohydrates = serializers.FloatField(read_only=True)
     total_calories = serializers.FloatField(read_only=True)
+    total_cost = serializers.DecimalField(
+        max_digits=10, decimal_places=2, read_only=True, allow_null=True
+    )
+    currency = serializers.CharField(read_only=True)
+    price_category = serializers.CharField(read_only=True, allow_null=True)
 
     class Meta:
         model = Recipe
@@ -138,6 +159,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             "total_fat",
             "total_carbohydrates",
             "total_calories",
+            "total_cost",
+            "currency",
+            "price_category",
             "created_at",
             "updated_at",
         ]
@@ -149,6 +173,9 @@ class RecipeSerializer(serializers.ModelSerializer):
             "total_fat",
             "total_carbohydrates",
             "total_calories",
+            "total_cost",
+            "currency",
+            "price_category",
             "created_at",
             "updated_at",
         ]
@@ -160,6 +187,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient_data in ingredients_data:
             RecipeIngredient.objects.create(recipe=recipe, **ingredient_data)
 
+        self._refresh_recipe_cost(recipe)
         return recipe
 
     def get_author(self, obj):
@@ -196,4 +224,14 @@ class RecipeSerializer(serializers.ModelSerializer):
         for ingredient_data in ingredients_data:
             RecipeIngredient.objects.create(recipe=instance, **ingredient_data)
 
+        self._refresh_recipe_cost(instance)
         return instance
+
+    def _refresh_recipe_cost(self, recipe):
+        foods = [ingredient.food for ingredient in recipe.ingredients.all()]
+        user = None
+        request = self.context.get("request")
+        if request:
+            user = getattr(request, "user", None)
+        for food in set(foods):
+            recalculate_recipes_for_food(food, changed_by=user)
