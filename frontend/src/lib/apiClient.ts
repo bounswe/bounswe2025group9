@@ -31,6 +31,7 @@ export interface Food {
   category_overridden_by?: number | null;
   category_override_reason?: string | null;
   category_overridden_at?: string | null;
+  micronutrients?: { [key: string]: number };
 }
 
 export interface FoodProposal {
