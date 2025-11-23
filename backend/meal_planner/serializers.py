@@ -29,7 +29,7 @@ class MealSerializer(serializers.Serializer):
         
         # Validate food_id existence
         if food_id and not FoodEntry.objects.filter(id=food_id).exists():
-            raise serializers.ValidationError("Food entry with this ID does not exist.")
+            raise serializers.ValidationError({"food_id": "Food entry with this ID does not exist."})
         
         # Validate private_food_id existence and ownership
         if private_food_id:
@@ -46,7 +46,7 @@ class MealSerializer(serializers.Serializer):
                 is_private=True
             ).exists():
                 raise serializers.ValidationError(
-                    "Private food with this ID does not exist or is not accessible."
+                    {"private_food_id": "Private food with this ID does not exist or is not accessible."}
                 )
         
         return data
