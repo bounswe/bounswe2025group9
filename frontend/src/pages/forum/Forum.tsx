@@ -712,6 +712,11 @@ const Forum = () => {
             
             // 7. Notify other tabs with ACTUAL server values
             notifyLikeChange(postId, finalLiked, finalLikeCount, 'post');
+            
+            // 8. Set flag to refresh personalized feed when user navigates back
+            if (finalLiked) {
+                localStorage.setItem('nutriHub_feedNeedsRefresh', 'true');
+            }
 
         } catch (error) {
             console.error('[Forum] Error toggling post like:', error);

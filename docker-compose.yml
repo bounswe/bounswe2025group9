@@ -1,8 +1,8 @@
 x-db-env: &db-env
   MYSQL_DATABASE: "mydb"
   MYSQL_USER: "django"
-  MYSQL_PASSWORD: "djangopass"
-  MYSQL_ROOT_PASSWORD: "rootpass"
+  MYSQL_PASSWORD: "${MYSQL_PASSWORD:-djangopass}"
+  MYSQL_ROOT_PASSWORD: "${MYSQL_ROOT_PASSWORD:-rootpass}"
 
 services:
   db:
@@ -30,7 +30,9 @@ services:
         condition: service_healthy
     environment:
       <<: *db-env
-      DJANGO_SECRET_KEY: "super-secret-key"
+      DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-super-secret-key}"
+      FATSECRET_CONSUMER_KEY:  "${FATSECRET_CONSUMER_KEY}"
+      FATSECRET_CONSUMER_SECRET: "${FATSECRET_CONSUMER_SECRET}"
     volumes:
       - static_volume:/project/staticfiles
       - media_volume:/project/media
