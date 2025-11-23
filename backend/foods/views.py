@@ -44,7 +44,7 @@ sys.path.append(
 )
 
 from scraper import make_request, extract_food_info, get_fatsecret_image_url
-from nutrition_score import calculate_nutrition_score
+from api.db_initialization.nutrition_score import calculate_nutrition_score
 from foods.permissions import IsPriceModerator
 from foods.services import (
     update_food_price,
