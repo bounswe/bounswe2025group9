@@ -16,8 +16,15 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
   const [selectedNutrient, setSelectedNutrient] = useState<MicroNutrient | null>(null);
 
   // Format numbers to 1 decimal place
-  const formatNumber = (num: number): string => {
-    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
+  const formatNumber = (num: number | string | undefined | null): string => {
+    if (num === undefined || num === null) {
+      return '0';
+    }
+    const val = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(val)) {
+      return '0';
+    }
+    return Number.isInteger(val) ? val.toString() : val.toFixed(1);
   };
 
   const vitamins = micronutrients.filter(m => m.category === 'vitamin');
@@ -25,7 +32,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
 
   const getNutrientStatus = (nutrient: MicroNutrient) => {
     const percentage = (nutrient.current / nutrient.target) * 100;
-    
+
     if (nutrient.maximum && nutrient.current > nutrient.maximum) {
       return { status: 'danger', color: theme.error, label: 'Over Maximum' };
     }
@@ -44,7 +51,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
   const getDetailedMicronutrientInfo = (nutrient: MicroNutrient) => {
     const percentage = Math.round((nutrient.current / nutrient.target) * 100);
     const isOverMax = nutrient.maximum && nutrient.current > nutrient.maximum;
-    
+
     if (isOverMax && nutrient.maximum) {
       const overAmount = (nutrient.current - nutrient.maximum).toFixed(1);
       const overPercentage = Math.round(((nutrient.current - nutrient.maximum) / nutrient.maximum) * 100);
@@ -56,7 +63,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
         color: theme.error,
       };
     }
-    
+
     if (percentage >= 100) {
       return {
         title: `${nutrient.name} - Target Met! 🎉`,
@@ -66,7 +73,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
         color: theme.success,
       };
     }
-    
+
     if (percentage >= 75) {
       const remaining = (nutrient.target - nutrient.current).toFixed(1);
       return {
@@ -77,7 +84,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
         color: '#22c55e',
       };
     }
-    
+
     if (percentage >= 50) {
       const remaining = (nutrient.target - nutrient.current).toFixed(1);
       return {
@@ -88,7 +95,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
         color: theme.warning,
       };
     }
-    
+
     const remaining = (nutrient.target - nutrient.current).toFixed(1);
     return {
       title: `${nutrient.name} - Low (${percentage}%)`,
@@ -105,8 +112,8 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
     const isOverMax = nutrient.maximum && nutrient.current > nutrient.maximum;
 
     return (
-      <View 
-        key={nutrient.name} 
+      <View
+        key={nutrient.name}
         style={[styles.nutrientRow, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border }]}
       >
         <View style={styles.nutrientHeader}>
@@ -114,7 +121,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <View style={[styles.iconContainer, { backgroundColor: theme.surface, borderColor: `${theme.primary}40`, borderWidth: 1, width: 28, height: 28, borderRadius: BORDER_RADIUS.sm, marginRight: SPACING.sm }]}>
               <Icon name="pill" size={14} color={theme.primary} />
             </View>
-            <Text 
+            <Text
               style={[textStyles.body, { color: theme.text, fontWeight: '500' }]}
               numberOfLines={1}
               ellipsizeMode="tail"
@@ -122,7 +129,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
               {nutrient.name}
             </Text>
           </View>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={[styles.statusBadge, { flexDirection: 'row', alignItems: 'center', flexShrink: 0 }]}
             onPress={() => setSelectedNutrient(nutrient)}
             activeOpacity={0.7}
@@ -133,7 +140,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             {isOverMax && (
               <Icon name="alert-circle" size={16} color={color} style={{ marginRight: 4 }} />
             )}
-            <Text 
+            <Text
               style={[textStyles.caption, { color, fontWeight: '700' }]}
               numberOfLines={1}
             >
@@ -159,7 +166,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
 
         {/* Progress bar */}
         <View style={[styles.progressBarContainer, { backgroundColor: `${theme.primary}10` }]}>
-          <View 
+          <View
             style={[
               styles.progressBar,
               {
@@ -170,7 +177,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
           />
           {/* Warning indicator if over maximum */}
           {isOverMax && (
-            <View 
+            <View
               style={[
                 styles.warningIndicator,
                 { backgroundColor: theme.error }
@@ -211,22 +218,22 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             </View>
             <Text style={[textStyles.heading4, { color: theme.text }]}>Vitamins</Text>
           </View>
-          
+
           <View style={styles.sectionHeaderRight}>
             <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
               {vitamins.filter(v => (v.current / v.target) * 100 >= 100).length} / {vitamins.length} met
             </Text>
-            <Icon 
-              name={isVitaminsExpanded ? 'chevron-up' : 'chevron-down'} 
-              size={20} 
-              color={theme.text} 
+            <Icon
+              name={isVitaminsExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={theme.text}
             />
           </View>
         </TouchableOpacity>
 
         {isVitaminsExpanded && (
           <View style={styles.nutrientList}>
-             {vitamins.map(renderNutrientRow)}
+            {vitamins.map(renderNutrientRow)}
           </View>
         )}
       </View>
@@ -249,17 +256,17 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
               {minerals.filter(m => (m.current / m.target) * 100 >= 100).length} / {minerals.length} met
             </Text>
-            <Icon 
-              name={isMineralsExpanded ? 'chevron-up' : 'chevron-down'} 
-              size={20} 
-              color={theme.text} 
+            <Icon
+              name={isMineralsExpanded ? 'chevron-up' : 'chevron-down'}
+              size={20}
+              color={theme.text}
             />
           </View>
         </TouchableOpacity>
 
         {isMineralsExpanded && (
           <View style={styles.nutrientList}>
-             {minerals.map(renderNutrientRow)}
+            {minerals.map(renderNutrientRow)}
           </View>
         )}
       </View>
@@ -274,7 +281,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             Important Note
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary, lineHeight: 18 }]}>
-            Some micronutrients have maximum safe limits. Exceeding these limits may be harmful to your health. 
+            Some micronutrients have maximum safe limits. Exceeding these limits may be harmful to your health.
             Consult with a healthcare professional if you consistently exceed maximum thresholds.
           </Text>
         </View>
@@ -292,28 +299,28 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
               <View style={styles.modalHeader}>
                 <View style={[
-                  styles.modalIconContainer, 
-                  { 
+                  styles.modalIconContainer,
+                  {
                     backgroundColor: theme.surface,
                     borderColor: `${getDetailedMicronutrientInfo(selectedNutrient).color}50`,
                     borderWidth: 1,
                   }
                 ]}>
-                  <Icon 
-                    name={getDetailedMicronutrientInfo(selectedNutrient).icon} 
-                    size={24} 
-                    color={getDetailedMicronutrientInfo(selectedNutrient).color} 
+                  <Icon
+                    name={getDetailedMicronutrientInfo(selectedNutrient).icon}
+                    size={24}
+                    color={getDetailedMicronutrientInfo(selectedNutrient).color}
                   />
                 </View>
                 <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.md, flex: 1 }]}>
                   {getDetailedMicronutrientInfo(selectedNutrient).title}
                 </Text>
               </View>
-              
+
               <Text style={[textStyles.body, { color: theme.textSecondary, lineHeight: 22, marginTop: SPACING.md }]}>
                 {getDetailedMicronutrientInfo(selectedNutrient).message}
               </Text>
-              
+
               {getDetailedMicronutrientInfo(selectedNutrient).recommendation && (
                 <View style={[styles.recommendationBox, { backgroundColor: theme.background, borderColor: theme.border }]}>
                   <Icon name="information" size={16} color={theme.primary} style={{ marginRight: SPACING.xs }} />
