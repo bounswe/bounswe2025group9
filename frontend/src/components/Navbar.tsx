@@ -232,7 +232,7 @@ const Navbar = () => {
                                     <SignIn size={16} weight="fill" className="inline-block mr-2" />
                                     Login
                                 </Link>
-                                <Link to="/signup" className="nh-button nh-button-outline flex items-center gap-1 w-30">
+                                <Link to="/signup" className="nh-button nh-button-outline flex items-center gap-1 w-30" style={{ display: 'inline-block' }}>
                                     <UserPlus size={16} weight="fill" className="inline-block mr-2" />
                                     Sign Up
                                 </Link>
@@ -335,6 +335,7 @@ const Navbar = () => {
                                 to="/signup" 
                                 className="nh-button nh-button-outline flex items-center justify-center gap-1 w-full"
                                 onClick={() => setIsMobileMenuOpen(false)}
+                                style={{ display: 'inline-block' }}
                             >
                                 <UserPlus size={16} weight="fill" className="inline-block mr-2" />
                                 Sign Up
