@@ -85,6 +85,7 @@ const FoodCompare: React.FC = () => {
                                     onClick={handleAddFood}
                                     disabled={selectedFoods.length >= 3}
                                     className={`w-full nh-button nh-button-primary py-3 rounded-lg shadow-md transition-all text-base font-medium flex items-center justify-center gap-2 ${selectedFoods.length >= 3 ? 'opacity-50 cursor-not-allowed' : 'hover:shadow-lg'}`}
+                                    style={{ display: 'flex' }}
                                 >
                                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
