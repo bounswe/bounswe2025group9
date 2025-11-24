@@ -24,8 +24,8 @@ from foods.serializers import (
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework import status, generics
 from django.db import transaction
-from django.db.models import Q, Case, When, Value, IntegerField
-from django.db.models.functions import Length
+from django.db.models import Q, F, Case, When, FloatField, Value, ExpressionWrapper, IntegerField
+from django.db.models.functions import Cast, Length
 import requests
 import sys
 import os
@@ -95,6 +95,7 @@ class FoodCatalog(ListAPIView):
             if queryset.count() == 0:
                 self.warning = f'No records found for search term: "{search_term}"'
 
+        # --- Category filtering ---
         categories_param = self.request.query_params.get("category", None)
         if categories_param is None:
             categories_param = self.request.query_params.get("categories", "")
@@ -122,24 +123,81 @@ class FoodCatalog(ListAPIView):
             if not categories:
                 self.empty = True
                 return FoodEntry.objects.none()
-        # --- Sorting support ---
-        sort_by = self.request.query_params.get("sort_by", "").strip()
-        order = self.request.query_params.get("order", "desc").strip().lower()
-
-        valid_sort_fields = {
-            "nutritionscore": "nutritionScore",
-            "carbohydratecontent": "carbohydrateContent",
-            "proteincontent": "proteinContent",
-            "fatcontent": "fatContent",
-        }
-
+        
         # Apply category filter
         queryset = queryset.filter(category__in=categories)
 
+        # --- Sorting support ---
+        # Support both separate parameters (sort_by + order) and combined format (sort_by="name-asc")
+        sort_by = self.request.query_params.get("sort_by", "").strip()
+        order = self.request.query_params.get("order", "").strip().lower()
+        
+        # Check if sort_by contains combined format (e.g., "name-asc", "price-desc")
+        if "-" in sort_by and not order:
+            parts = sort_by.split("-", 1)
+            if len(parts) == 2:
+                sort_by = parts[0].strip()
+                order = parts[1].strip().lower()
+        
+        # If no order specified, default to desc
+        if not order:
+            order = "desc"
+        
+        # Normalize order value
+        order = order.lower()
+        if order not in ["asc", "desc"]:
+            order = "desc"
+
+        valid_sort_fields = {
+            "nutritionscore": "nutritionScore",
+            "nutrition-score": "nutritionScore",  # Alternative format for mobile
+            "nutrition": "nutritionScore",  # Shorthand
+            "carbohydratecontent": "carbohydrateContent",
+            "carbohydrate": "carbohydrateContent",  # Shorthand
+            "proteincontent": "proteinContent",
+            "protein": "proteinContent",  # Shorthand
+            "fatcontent": "fatContent",
+            "fat": "fatContent",  # Shorthand
+            "name": "name",
+            "price": "base_price",  # Price sorting by base_price field
+            "cost-nutrition-ratio": "cost_nutrition_ratio",  # Special calculated field
+            "costnutritionratio": "cost_nutrition_ratio",  # Alternative format
+        }
+
+        sort_by_lower = sort_by.lower() if sort_by else ""
+        
+        # Handle cost-nutrition-ratio as a special calculated field
+        if sort_by_lower in valid_sort_fields:
+            sort_field = valid_sort_fields[sort_by_lower]
+            
+            if sort_field == "cost_nutrition_ratio":
+                # Calculate price / nutritionScore ratio
+                # Handle None and zero cases properly
+                # Use ExpressionWrapper for proper type handling
+                queryset = queryset.annotate(
+                    cost_nutrition_ratio=Case(
+                        When(
+                            base_price__isnull=False,
+                            nutritionScore__gt=0,
+                            then=ExpressionWrapper(
+                                Cast(F('base_price'), FloatField()) / Cast(F('nutritionScore'), FloatField()),
+                                output_field=FloatField()
+                            )
+                        ),
+                        When(
+                            base_price__isnull=False,
+                            nutritionScore__lte=0,
+                            then=Value(999999.0, output_field=FloatField())  # Use large number instead of inf
+                        ),
+                        default=Value(999999.0, output_field=FloatField()),  # Use large number instead of inf
+                        output_field=FloatField()
+                    )
+                )
+                sort_field = "cost_nutrition_ratio"
+        
         # If search term is present, prioritize relevance in ordering
         if search_term:
-            if sort_by.lower() in valid_sort_fields:
-                sort_field = valid_sort_fields[sort_by.lower()]
+            if sort_by_lower in valid_sort_fields:
                 if order == "asc":
                     # Order by relevance first, then custom field, then name length
                     queryset = queryset.order_by("relevance", sort_field, Length("name"))
@@ -151,8 +209,7 @@ class FoodCatalog(ListAPIView):
                 queryset = queryset.order_by("relevance", Length("name"), "name")
         else:
             # No search term - use normal sorting
-            if sort_by.lower() in valid_sort_fields:
-                sort_field = valid_sort_fields[sort_by.lower()]
+            if sort_by_lower in valid_sort_fields:
                 if order == "asc":
                     queryset = queryset.order_by(sort_field)
                 else:

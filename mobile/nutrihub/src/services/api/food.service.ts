@@ -96,24 +96,28 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
 };
 
 /**
- * Get food catalog with optional filtering and pagination
+ * Get food catalog with optional filtering, sorting, and pagination
  * @param limit Maximum number of items to return per page (default: 20)
  * @param offset Number of items to skip (for pagination)
  * @param categories Optional array of categories to filter by
  * @param search Optional search term to filter by name
+ * @param sortBy Optional sort field (e.g., 'name', 'price', 'nutritionscore', 'proteincontent', 'carbohydratecontent', 'fatcontent')
+ * @param sortOrder Optional sort order ('asc' or 'desc', default: 'desc')
  * @returns Promise with food items and pagination info
  */
 export const getFoodCatalog = async (
   limit: number = 20,
   offset: number = 0,
   categories?: string[],
-  search?: string
-): Promise<{
-  data?: FoodItem[];
-  error?: string;
-  status: number;
-  hasMore: boolean;
-  total: number
+  search?: string,
+  sortBy?: string,
+  sortOrder?: 'asc' | 'desc'
+): Promise<{ 
+  data?: FoodItem[]; 
+  error?: string; 
+  status: number; 
+  hasMore: boolean; 
+  total: number 
 }> => {
   try {
     // Build query parameters
@@ -134,12 +138,20 @@ export const getFoodCatalog = async (
     if (search && search.trim() !== '') {
       params.append('search', search.trim());
     }
+    
+    // Add optional sorting parameters
+    if (sortBy && sortBy.trim() !== '') {
+      params.append('sort_by', sortBy.trim());
+      if (sortOrder) {
+        params.append('order', sortOrder);
+      }
+    }
 
     // Log the request details
     const fullUrl = `/foods?${params.toString()}`;
     console.log(`Requesting food catalog: ${fullUrl}`);
-    console.log('Request params:', { page, page_size: limit, categories, search, originalOffset: offset });
-
+    console.log('Request params:', { page, page_size: limit, categories, search, sortBy, sortOrder, originalOffset: offset });
+    
     // Make the API request
     const response = await apiClient.get<ApiPaginatedResponse<ApiFoodItem>>(fullUrl);
 
