@@ -260,9 +260,6 @@ const UserProfile = () => {
                     {userProfile.name} {userProfile.surname}
                   </h1>
                   <p className="nh-text mb-1">@{userProfile.username}</p>
-                  {userProfile.email && (
-                    <p className="nh-text text-sm opacity-70">{userProfile.email}</p>
-                  )}
                 </div>
 
                 {/* Follow Button (only show if not viewing own profile) */}
