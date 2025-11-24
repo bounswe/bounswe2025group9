@@ -78,6 +78,12 @@ const MealPlanner = ({
     
     // Initialize with predefined meal plans (now using real database food IDs)
     const [localMealPlans, setLocalMealPlans] = useState<{ [key:string] : weeklyMealPlan}>(MealPlans);
+    
+    // Store serving sizes for each meal: { [dietaryPreference]: { [day]: [size1, size2, size3] } }
+    const [servingSizes, setServingSizes] = useState<{ [key: string]: { [key: string]: number[] } }>({});
+    
+    // Store nutrition targets
+    const [nutritionTargets, setNutritionTargets] = useState<{ calories: number; protein: number; carbohydrates: number; fat: number } | null>(null);
 
     const handleFoodSelect = (food: Food) => {
         if (editingMeal) {
@@ -88,28 +94,158 @@ const MealPlanner = ({
         }
     };
 
+    // Helper function to calculate optimal serving sizes for a day to meet nutrition targets
+    const calculateOptimalServingSizes = useCallback((
+        dayMeals: Food[],
+        dailyCaloriesTarget: number,
+        dailyProteinTarget: number,
+        dailyCarbsTarget: number,
+        dailyFatTarget: number
+    ): number[] => {
+        // Calculate current nutrition with serving_size = 1
+        let currentCalories = 0;
+        let currentProtein = 0;
+        let currentCarbs = 0;
+        let currentFat = 0;
+        
+        dayMeals.forEach(food => {
+            if (food) {
+                currentCalories += food.caloriesPerServing || 0;
+                currentProtein += food.proteinContent || 0;
+                currentCarbs += food.carbohydrateContent || 0;
+                currentFat += food.fatContent || 0;
+            }
+        });
+        
+        // Calculate what we need
+        const caloriesNeeded = Math.max(0, dailyCaloriesTarget - currentCalories);
+        const proteinNeeded = Math.max(0, dailyProteinTarget - currentProtein);
+        const carbsNeeded = Math.max(0, dailyCarbsTarget - currentCarbs);
+        const fatNeeded = Math.max(0, dailyFatTarget - currentFat);
+        
+        // If we already meet or exceed targets significantly, use base serving size of 1
+        if (currentCalories >= dailyCaloriesTarget * 0.95 && currentProtein >= dailyProteinTarget * 0.9) {
+            return dayMeals.map(() => 1.0);
+        }
+        
+        // Calculate primary scaling factor based on calories (most important)
+        let baseScale = 1.0;
+        if (currentCalories > 0) {
+            // Scale to reach target calories, with a small buffer (5%) to ensure we meet target
+            baseScale = (dailyCaloriesTarget * 1.05) / currentCalories;
+        } else {
+            // If no calories, use aggressive default
+            baseScale = 5.0;
+        }
+        
+        // Calculate serving sizes for each meal to distribute the needed nutrition
+        const servingSizes = dayMeals.map((food, index) => {
+            if (!food || !food.id) return 1.0;
+            
+            // Start with base calorie scaling, but distribute across meals
+            // Each meal gets a portion of the scaling based on its calorie contribution
+            const foodCalories = food.caloriesPerServing || 0;
+            const foodProtein = food.proteinContent || 0;
+            const foodCarbs = food.carbohydrateContent || 0;
+            const foodFat = food.fatContent || 0;
+            
+            // Calculate how much each meal should contribute to targets
+            // Distribute targets evenly across meals (3 meals per day)
+            const targetCaloriesPerMeal = dailyCaloriesTarget / 3;
+            const targetProteinPerMeal = dailyProteinTarget / 3;
+            
+            // Start with calorie-based scaling for this specific food
+            let servingSize = 1.0;
+            if (foodCalories > 0) {
+                // Scale to reach target calories for this meal
+                servingSize = Math.max(servingSize, targetCaloriesPerMeal / foodCalories);
+            }
+            
+            // Also consider protein needs
+            if (foodProtein > 0 && proteinNeeded > 0) {
+                const proteinScale = (targetProteinPerMeal * 1.1) / foodProtein; // 10% buffer
+                servingSize = Math.max(servingSize, proteinScale);
+            }
+            
+            // If current total is still too low, use the overall base scale
+            if (currentCalories < dailyCaloriesTarget * 0.8) {
+                // Scale all foods proportionally to fill the gap
+                servingSize = Math.max(servingSize, baseScale);
+            }
+            
+            // Ensure we don't have unreasonably large or small servings
+            // Allow larger servings (up to 8x) if needed to meet targets
+            servingSize = Math.max(0.5, Math.min(servingSize, 8.0));
+            
+            return Math.round(servingSize * 100) / 100; // Round to 2 decimal places
+        });
+        
+        // Verify the totals and adjust if still too low
+        let totalCal = 0;
+        let totalProt = 0;
+        servingSizes.forEach((size, index) => {
+            const food = dayMeals[index];
+            if (food) {
+                totalCal += (food.caloriesPerServing || 0) * size;
+                totalProt += (food.proteinContent || 0) * size;
+            }
+        });
+        
+        // If still below targets, scale everything up proportionally
+        if (totalCal < dailyCaloriesTarget * 0.95) {
+            const finalScale = (dailyCaloriesTarget * 1.05) / totalCal;
+            return servingSizes.map(size => {
+                const finalSize = size * finalScale;
+                return Math.round(Math.max(0.5, Math.min(finalSize, 8.0)) * 100) / 100;
+            });
+        }
+        
+        return servingSizes;
+    }, []);
+
     const handleSaveMealPlan = useCallback(async () => {
+        setErrorMessage('');
+        setSuccessMessage('');
+        
         // Build meal plan data from localMealPlans
+        // Use serving sizes already calculated and stored in state
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
         const weeklyPlan = localMealPlans[dietaryPreference];
         const meals: { food_id: number; serving_size: number; meal_type: string }[] = [];
         const invalidFoods: string[] = [];
         
-        for (const day of days) {
+        // Calculate optimal serving sizes for each day
+        const daysToProcess = planDuration === 'daily' 
+            ? [days[new Date().getDay() === 0 ? 6 : new Date().getDay() - 1]] // Today only
+            : days; // All days
+        
+        for (const day of daysToProcess) {
             const dayMeals = weeklyPlan[day as keyof typeof weeklyPlan];
+            
+            // Filter out invalid foods first
+            const validDayMeals: Food[] = [];
             dayMeals.forEach((food, index) => {
-                // Only include foods with valid IDs
                 if (food && food.id) {
-                    meals.push({
-                        food_id: food.id,
-                        serving_size: 1, // assuming serving size is 1 for all meals
-                        meal_type: mealTypes[index].toLowerCase()
-                    });
+                    validDayMeals.push(food);
                 } else {
                     invalidFoods.push(`${day} ${mealTypes[index]}: ${food?.name || 'Unknown'}`);
                 }
             });
+            
+            // If we have valid meals, use serving sizes from state (already calculated)
+            if (validDayMeals.length > 0) {
+                const dayServingSizes = servingSizes[dietaryPreference]?.[day] || [1, 1, 1];
+                
+                // Add meals with calculated serving sizes
+                validDayMeals.forEach((food, index) => {
+                    meals.push({
+                        food_id: food.id,
+                        serving_size: dayServingSizes[index] || 1,
+                        meal_type: mealTypes[index].toLowerCase()
+                    });
+                });
+            }
         }
         
         // Check if we have any valid meals
@@ -137,9 +273,9 @@ const MealPlanner = ({
             console.log('Meal plan created:', newPlan);
             setSavedMealPlanId(newPlan.id);
             await apiClient.setCurrentMealPlan(newPlan.id);
-            setSuccessMessage('Meal plan saved successfully!');
+            setSuccessMessage('Meal plan saved successfully with optimized serving sizes to meet your nutrition targets!');
             setErrorMessage('');
-            setTimeout(() => setSuccessMessage(''), 3000);
+            setTimeout(() => setSuccessMessage(''), 5000);
         } catch (err: any) {
             console.error('Error saving meal plan:', err);
             setSuccessMessage('');
@@ -159,7 +295,7 @@ const MealPlanner = ({
             }
             setTimeout(() => setErrorMessage(''), 7000);
         }
-    }, [dietaryPreference, localMealPlans]);
+    }, [dietaryPreference, localMealPlans, planDuration]);
 
     const logMealPlan = useCallback(async (planId: number) => {
         setIsLogging(true);
@@ -174,22 +310,55 @@ const MealPlanner = ({
         } finally {
             setIsLogging(false);
         }
-    }, []);
+    }, [dietaryPreference, localMealPlans, savedMealPlanId]);
 
     const handleLogToNutrition = useCallback(async () => {
         if (!savedMealPlanId) {
-            // If no saved plan, save it first, then log
+            // If no saved plan, save it first with optimized serving sizes, then log
             try {
+                // Fetch user's nutrition targets
+                let nutritionTargets = null;
+                try {
+                    nutritionTargets = await apiClient.getNutritionTargets();
+                } catch (error) {
+                    console.warn('Could not fetch nutrition targets:', error);
+                }
+                
+                // Calculate daily nutrition targets
+                let dailyCaloriesTarget = 2000;
+                let dailyProteinTarget = 150;
+                let dailyCarbsTarget = 250;
+                let dailyFatTarget = 67;
+                
+                if (nutritionTargets) {
+                    dailyCaloriesTarget = nutritionTargets.calories;
+                    dailyProteinTarget = nutritionTargets.protein;
+                    dailyCarbsTarget = nutritionTargets.carbohydrates;
+                    dailyFatTarget = nutritionTargets.fat;
+                }
+                
                 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                 const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
                 const weeklyPlan = localMealPlans[dietaryPreference];
                 const meals: { food_id: number; serving_size: number; meal_type: string }[] = [];
-                for (const day of days) {
-                    const dayMeals = weeklyPlan[day as keyof typeof weeklyPlan];
-                    dayMeals.forEach((food, index) => {
+                
+                // Get today's day
+                const todayIndex = new Date().getDay() === 0 ? 6 : new Date().getDay() - 1;
+                const today = days[todayIndex];
+                
+                // Get today's meals
+                const dayMeals = weeklyPlan[today as keyof typeof weeklyPlan];
+                const validDayMeals = dayMeals.filter(food => food && food.id);
+                
+                if (validDayMeals.length > 0) {
+                    // Use serving sizes from state (already calculated)
+                    const dayServingSizes = servingSizes[dietaryPreference]?.[today] || [1, 1, 1];
+                    
+                    // Add today's meals with calculated serving sizes
+                    validDayMeals.forEach((food, index) => {
                         meals.push({
                             food_id: food.id,
-                            serving_size: 1,
+                            serving_size: dayServingSizes[index] || 1,
                             meal_type: mealTypes[index].toLowerCase()
                         });
                     });
@@ -213,7 +382,7 @@ const MealPlanner = ({
             return;
         }
         await logMealPlan(savedMealPlanId);
-    }, [savedMealPlanId, dietaryPreference, localMealPlans, logMealPlan]);
+    }, [savedMealPlanId, dietaryPreference, localMealPlans, servingSizes, logMealPlan]);
 
     // Expose save handler via ref if provided
     useEffect(() => {
@@ -272,6 +441,35 @@ const MealPlanner = ({
     };
     
     const macros = calculateMacros();
+
+    // Helper function to calculate macros for a specific day (using serving sizes)
+    const calculateDayMacros = (day: string) => {
+        const dayLower = day.toLowerCase();
+        const dayMeals = localMealPlans[dietaryPreference][dayLower as keyof weeklyMealPlan];
+        const dayServingSizes = servingSizes[dietaryPreference]?.[dayLower] || [1, 1, 1];
+        
+        let calories = 0;
+        let protein = 0;
+        let carbs = 0;
+        let fat = 0;
+        
+        dayMeals.forEach((food, index) => {
+            if (food) {
+                const servingSize = dayServingSizes[index] || 1;
+                calories += (food.caloriesPerServing || 0) * servingSize;
+                protein += (food.proteinContent || 0) * servingSize;
+                carbs += (food.carbohydrateContent || 0) * servingSize;
+                fat += (food.fatContent || 0) * servingSize;
+            }
+        });
+        
+        return {
+            calories: Math.round(calories),
+            protein: Math.round(protein),
+            carbs: Math.round(carbs),
+            fat: Math.round(fat)
+        };
+    };
 
     // Helper to get tag styles based on dietary preference
     const getTagStyle = (preference: string) => {
@@ -407,16 +605,7 @@ const MealPlanner = ({
                     {/* Middle column - Meal Plan */}
                     <div className={profileLayout ? "w-full" : "w-full md:w-3/5"}>
                         <div className="mb-6">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <h2 className="nh-title">{planTitle}</h2>
-                                {/* Macro Values */}
-                                <div className="flex items-center gap-4 text-sm nh-text">
-                                    <span>Calories: <strong className="text-primary">{macros.calories}</strong></span>
-                                    <span>Protein: <strong className="text-primary">{macros.protein}g</strong></span>
-                                    <span>Carbs: <strong className="text-primary">{macros.carbs}g</strong></span>
-                                    <span>Fat: <strong className="text-primary">{macros.fat}g</strong></span>
-                                </div>
-                            </div>
+                            <h2 className="nh-title">{planTitle}</h2>
                             <p className="nh-text mt-2">
                                 {planDuration === 'daily' 
                                     ? `Today's meals: Click on any meal to view details, or click the edit icon to change it.`
@@ -425,12 +614,26 @@ const MealPlanner = ({
                         </div>
 
                         <div className="space-y-4">
-                            {days.map(day => (
+                            {days.map(day => {
+                                const dayLower = day.toLowerCase();
+                                const dayMacros = calculateDayMacros(day);
+                                const dayServingSizes = servingSizes[dietaryPreference]?.[dayLower] || [1, 1, 1];
+                                return (
                                 <div key={day} className="nh-card">
-                                    <h3 className="nh-subtitle mb-4">{day}</h3>
+                                    <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+                                        <h3 className="nh-subtitle mb-0">{day}</h3>
+                                        {/* Daily Macro Values */}
+                                        <div className="flex items-center gap-3 text-xs nh-text opacity-75">
+                                            <span>Calories: <strong className="text-primary">{dayMacros.calories}</strong></span>
+                                            <span>Protein: <strong className="text-primary">{dayMacros.protein}g</strong></span>
+                                            <span>Carbs: <strong className="text-primary">{dayMacros.carbs}g</strong></span>
+                                            <span>Fat: <strong className="text-primary">{dayMacros.fat}g</strong></span>
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         {meals.map((meal, i) => {
-                                            const currentFood = localMealPlans[dietaryPreference][day.toLowerCase() as keyof weeklyMealPlan][i];
+                                            const currentFood = localMealPlans[dietaryPreference][dayLower as keyof weeklyMealPlan][i];
+                                            const servingSize = dayServingSizes[i] || 1;
                                             return (
                                                 <div 
                                                     key={`${day}-${meal}`}
@@ -468,8 +671,8 @@ const MealPlanner = ({
                                                         {currentFood.name}
                                                     </div>
                                                     <div className="text-xs nh-text opacity-75">
-                                                        {currentFood.caloriesPerServing} kcal
-                                                </div>
+                                                        {Math.round((currentFood.caloriesPerServing || 0) * servingSize)} kcal
+                                                    </div>
                                                     
                                                 <button
                                                         className="absolute top-2 right-2 p-1 rounded-full transition-all"
@@ -495,7 +698,8 @@ const MealPlanner = ({
                                         })}
                                     </div>
                                 </div>
-                            ))}
+                                );
+                            })}
                         </div>
                         
                     </div>

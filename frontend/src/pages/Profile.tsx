@@ -473,9 +473,33 @@ const Profile = () => {
       // Get meals in order: breakfast, lunch, dinner
       const orderedMeals = mealTypesOrder.map(mealType => mealsByType[mealType] || null).filter(Boolean);
       
+      // Calculate daily macros from meals_details
+      let dayCalories = 0;
+      let dayProtein = 0;
+      let dayCarbs = 0;
+      let dayFat = 0;
+      
+      dayMealsArray.forEach((meal: any) => {
+        if (meal && meal.calculated_nutrition) {
+          dayCalories += meal.calculated_nutrition.calories || 0;
+          dayProtein += meal.calculated_nutrition.protein || 0;
+          dayCarbs += meal.calculated_nutrition.carbohydrates || 0;
+          dayFat += meal.calculated_nutrition.fat || 0;
+        }
+      });
+      
       return (
         <div key={day} className="nh-card">
-          <h3 className="nh-subtitle mb-4">{day}</h3>
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h3 className="nh-subtitle mb-0">{day}</h3>
+            {/* Daily Macro Values */}
+            <div className="flex items-center gap-3 text-xs nh-text opacity-75">
+              <span>Calories: <strong className="text-primary">{Math.round(dayCalories)}</strong></span>
+              <span>Protein: <strong className="text-primary">{Math.round(dayProtein)}g</strong></span>
+              <span>Carbs: <strong className="text-primary">{Math.round(dayCarbs)}g</strong></span>
+              <span>Fat: <strong className="text-primary">{Math.round(dayFat)}g</strong></span>
+            </div>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {orderedMeals.length > 0 ? (
               mealTypesOrder.map((mealType) => {
@@ -1631,16 +1655,7 @@ const Profile = () => {
                                   </button>
                                 </div>
                               ) : (
-                                <div className="flex items-center gap-4 flex-1 flex-wrap">
-                                  <h3 className="nh-subtitle mb-0">{mealPlan.name}</h3>
-                                  {/* Macro Values */}
-                                  <div className="flex items-center gap-3 text-xs nh-text opacity-75">
-                                    <span>Calories: <strong>{Math.round(mealPlan.total_calories || 0)}</strong></span>
-                                    <span>Protein: <strong>{Math.round(mealPlan.total_protein || 0)}g</strong></span>
-                                    <span>Carbs: <strong>{Math.round(mealPlan.total_carbohydrates || 0)}g</strong></span>
-                                    <span>Fat: <strong>{Math.round(mealPlan.total_fat || 0)}g</strong></span>
-                                  </div>
-                                </div>
+                                <h3 className="nh-subtitle mb-0">{mealPlan.name}</h3>
                               )}
                             </div>
                             
