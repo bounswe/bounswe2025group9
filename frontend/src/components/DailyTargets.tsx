@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { CaretDown, CaretRight } from '@phosphor-icons/react';
+import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition';
 
@@ -48,7 +49,7 @@ const DailyTargets = () => {
 
   if (loading) {
     return (
-      <div className="nh-card rounded-lg shadow-md animate-pulse">
+      <Link to="/nutrition" className="nh-card rounded-lg shadow-md animate-pulse block cursor-pointer hover:shadow-lg transition-shadow">
         <div className="h-5 w-24 rounded mb-3" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}></div>
         <div className="space-y-2">
           {[...Array(4)].map((_, i) => (
@@ -58,15 +59,15 @@ const DailyTargets = () => {
             </div>
           ))}
         </div>
-      </div>
+      </Link>
     );
   }
 
   if (metricsMissing || !todayLog || !targets) {
     return (
-      <div className="nh-card rounded-lg shadow-md text-center p-4">
+      <Link to="/nutrition" className="nh-card rounded-lg shadow-md text-center p-4 block cursor-pointer hover:shadow-lg transition-shadow">
         <p className="text-xs nh-text opacity-70">Setup nutrition tracking to see daily targets</p>
-      </div>
+      </Link>
     );
   }
 
@@ -88,7 +89,7 @@ const DailyTargets = () => {
   );
 
   return (
-    <div className="nh-card rounded-lg shadow-md">
+    <Link to="/nutrition" className="nh-card rounded-lg shadow-md block cursor-pointer hover:shadow-lg transition-shadow">
       <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
       <div className="space-y-2">
         {/* Calories */}
@@ -242,7 +243,11 @@ const DailyTargets = () => {
                 {vitamins.length > 0 && (
                   <div className="mb-2">
                     <button
-                      onClick={() => setShowVitamins(!showVitamins)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowVitamins(!showVitamins);
+                      }}
                       className="w-full flex items-center justify-between p-2 rounded transition-colors"
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
@@ -303,7 +308,11 @@ const DailyTargets = () => {
                 {minerals.length > 0 && (
                   <div>
                     <button
-                      onClick={() => setShowMinerals(!showMinerals)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setShowMinerals(!showMinerals);
+                      }}
                       className="w-full flex items-center justify-between p-2 rounded transition-colors"
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
@@ -364,7 +373,7 @@ const DailyTargets = () => {
           })()}
         </div>
       )}
-    </div>
+    </Link>
   );
 };
 
