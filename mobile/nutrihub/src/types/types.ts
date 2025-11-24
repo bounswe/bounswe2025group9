@@ -32,6 +32,7 @@ export interface FoodItem {
     fiber?: number;
     sugar?: number;
   };
+  micronutrients?: Record<string, number>;
   dietaryOptions?: DietaryOptionType[];
   allergens?: AllergenType[];
   price?: number;
