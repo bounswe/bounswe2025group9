@@ -9,7 +9,7 @@ import {
   View,
   Text,
   StyleSheet,
-  ScrollView,
+  FlatList,
   ActivityIndicator,
   TouchableOpacity,
   Alert,
@@ -23,7 +23,6 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
-import FeatureCard from '../components/common/FeatureCard';
 import ForumPost from '../components/forum/ForumPost';
 import { MainTabParamList, ForumStackParamList } from '../navigation/types';
 import { ForumTopic } from '../types/types';
@@ -42,53 +41,80 @@ const HomeScreen: React.FC = () => {
   const [feedPosts, setFeedPosts] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
-  // Get user's display name
-  const getUserDisplayName = () => {
-    if (!user) return '';
-    if (user.name || user.surname) {
-      return `${user.name || ''} ${user.surname || ''}`.trim();
-    }
-    return user.username;
-  };
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   /**
-   * Fetch feed posts
+   * Fetch feed posts with pagination
    */
-  const fetchFeed = async (isRefreshing: boolean = false) => {
-    if (!isRefreshing) {
+  const fetchFeed = async (pageNum: number = 1, isRefreshing: boolean = false) => {
+    if (isRefreshing) {
+      setRefreshing(true);
+    } else if (pageNum === 1) {
       setLoading(true);
+    } else {
+      setLoadingMore(true);
     }
 
     try {
       const posts = await forumService.getFeed();
-      setFeedPosts(posts.slice(0, 5)); // Show only first 5 posts
+      
+      if (pageNum === 1) {
+        setFeedPosts(posts);
+      } else {
+        setFeedPosts(prev => [...prev, ...posts]);
+      }
+      
+      // For now, we don't have pagination info from backend
+      // So we'll assume there are no more posts if we get less than expected
+      setHasMore(posts.length >= 10);
     } catch (err) {
       console.error('Error fetching feed:', err);
+      if (pageNum === 1) {
+        setFeedPosts([]);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
+      setLoadingMore(false);
     }
   };
 
   // Fetch feed on mount
   useEffect(() => {
-    fetchFeed();
-  }, []);
+    if (user) {
+      fetchFeed(1);
+    }
+  }, [user]);
 
   // Refresh feed when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchFeed();
-    }, [])
+      if (user) {
+        setPage(1);
+        fetchFeed(1);
+      }
+    }, [user])
   );
 
   /**
    * Handle pull-to-refresh
    */
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchFeed(true);
+    setPage(1);
+    fetchFeed(1, true);
+  };
+
+  /**
+   * Handle load more posts
+   */
+  const handleLoadMore = () => {
+    if (!loadingMore && hasMore && !loading) {
+      const nextPage = page + 1;
+      setPage(nextPage);
+      fetchFeed(nextPage);
+    }
   };
 
   /**
@@ -133,10 +159,105 @@ const HomeScreen: React.FC = () => {
   };
 
 
+  /**
+   * Render header
+   */
+  const renderHeader = () => (
+    <View style={styles.header}>
+      <View style={styles.headerTitleRow}>
+        <Icon name="rss" size={28} color={theme.primary} />
+        <Text style={[styles.feedTitle, textStyles.heading2, { color: theme.text }]}>
+          Your NutriFeed
+        </Text>
+      </View>
+      <TouchableOpacity onPress={handleRefresh} disabled={loading || refreshing}>
+        <Icon name="refresh" size={24} color={theme.primary} />
+      </TouchableOpacity>
+    </View>
+  );
+
+  /**
+   * Render empty state
+   */
+  const renderEmpty = () => {
+    if (loading) return null;
+    
+    return (
+      <View style={styles.emptyFeed}>
+        <Icon name="rss-off" size={64} color={theme.textSecondary} />
+        <Text style={[styles.emptyTitle, textStyles.heading3, { color: theme.text }]}>
+          Your NutriFeed is Empty
+        </Text>
+        <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
+          Follow users and like posts to see them here!
+        </Text>
+        <TouchableOpacity
+          style={[styles.exploreButton, { backgroundColor: theme.primary }]}
+          onPress={() => (navigation as any).navigate('Forum')}
+        >
+          <Text style={[textStyles.buttonText, { color: theme.buttonText }]}>
+            Explore Forum
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  /**
+   * Render footer (loading more indicator)
+   */
+  const renderFooter = () => {
+    if (!loadingMore) return null;
+    
+    return (
+      <View style={styles.footerLoading}>
+        <ActivityIndicator size="small" color={theme.primary} />
+        <Text style={[styles.loadingText, textStyles.caption, { color: theme.textSecondary }]}>
+          Loading more posts...
+        </Text>
+      </View>
+    );
+  };
+
+  /**
+   * Render post item
+   */
+  const renderPost = ({ item }: { item: ForumTopic }) => (
+    <ForumPost
+      post={item}
+      onPress={() => handlePostPress(item.id)}
+      onLike={() => handleLike(item.id)}
+      onAuthorPress={() => handleAuthorPress(item.author, item.authorId)}
+    />
+  );
+
+  if (!user) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
+        <View style={styles.loginPrompt}>
+          <Icon name="account-circle" size={64} color={theme.textSecondary} />
+          <Text style={[styles.emptyTitle, textStyles.heading3, { color: theme.text }]}>
+            Welcome to NutriHub
+          </Text>
+          <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
+            Please log in to see your personalized NutriFeed
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
+      <FlatList
+        data={feedPosts}
+        renderItem={renderPost}
+        keyExtractor={(item) => `post-${item.id}`}
+        ListHeaderComponent={renderHeader}
+        ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        onEndReached={handleLoadMore}
+        onEndReachedThreshold={0.5}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -145,82 +266,18 @@ const HomeScreen: React.FC = () => {
             colors={[theme.primary]}
           />
         }
-      >
-        {/* Hero Section */}
-        <Text style={[styles.welcomeTitle, textStyles.heading1]}>
-          Welcome{user ? `, ${getUserDisplayName()}` : ''} to NutriHub
-        </Text>
-        <Text style={[styles.welcomeDescription, textStyles.body]}>
-          Your complete nutrition platform for discovering healthy foods, sharing recipes, 
-          and joining a community of health enthusiasts.
-        </Text>
-
-        {/* Feature Cards Section */}
-        <View style={styles.featuresContainer}>
-          <FeatureCard
-            iconName="food-apple"
-            title="Track Nutrition"
-            description="Access detailed nutritional information for thousands of foods."
-          />
-          <FeatureCard
-            iconName="notebook"
-            title="Share Recipes"
-            description="Discover and share healthy recipes with the community."
-          />
-          <FeatureCard
-            iconName="account-group"
-            title="Get Support"
-            description="Connect with others on your journey to better nutrition."
-          />
+        contentContainerStyle={[
+          styles.listContent,
+          feedPosts.length === 0 && styles.emptyListContent,
+        ]}
+        showsVerticalScrollIndicator={true}
+      />
+      
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color={theme.primary} />
         </View>
-
-        {/* Feed Section */}
-        <View style={styles.feedSection}>
-          <View style={styles.feedHeader}>
-            <Text style={[styles.feedTitle, textStyles.heading2, { color: theme.text }]}>
-              Your Feed
-            </Text>
-            <TouchableOpacity onPress={() => (navigation as any).navigate('Feed')}>
-              <Text style={[styles.seeAllText, { color: theme.primary }]}>
-                See All
-              </Text>
-            </TouchableOpacity>
-          </View>
-
-          {loading ? (
-            <View style={styles.feedLoading}>
-              <ActivityIndicator size="large" color={theme.primary} />
-            </View>
-          ) : feedPosts.length === 0 ? (
-            <View style={styles.emptyFeed}>
-              <Icon name="rss-off" size={48} color={theme.textSecondary} />
-              <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
-                Follow users to see their posts here
-              </Text>
-              <TouchableOpacity
-                style={[styles.exploreButton, { backgroundColor: theme.primary }]}
-                onPress={() => (navigation as any).navigate('Forum')}
-              >
-                <Text style={[textStyles.buttonText, { color: theme.buttonText }]}>
-                  Explore Forum
-                </Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View style={styles.feedPosts}>
-              {feedPosts.map((post) => (
-                <ForumPost
-                  key={post.id}
-                  post={post}
-                  onPress={() => handlePostPress(post.id)}
-                  onLike={() => handleLike(post.id)}
-                  onAuthorPress={() => handleAuthorPress(post.author, post.authorId)}
-                />
-              ))}
-            </View>
-          )}
-        </View>
-      </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
@@ -229,59 +286,71 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  scrollContent: {
-    padding: SPACING.md,
-    alignItems: 'center',
+  listContent: {
+    paddingHorizontal: SPACING.md,
   },
-  welcomeTitle: {
-    textAlign: 'center',
-    marginBottom: SPACING.sm,
+  emptyListContent: {
+    flexGrow: 1,
   },
-  welcomeDescription: {
-    textAlign: 'center',
-    marginBottom: SPACING.xl,
-    lineHeight: 22,
-  },
-  featuresContainer: {
-    width: '100%',
-  },
-  feedSection: {
-    width: '100%',
-    marginTop: SPACING.xl,
-  },
-  feedHeader: {
+  header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: SPACING.md,
+    paddingVertical: SPACING.md,
+    paddingBottom: SPACING.lg,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   feedTitle: {
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  seeAllText: {
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  feedLoading: {
-    paddingVertical: SPACING.xl,
+  loginPrompt: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: SPACING.xl,
   },
   emptyFeed: {
-    paddingVertical: SPACING.xl,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
+    paddingVertical: SPACING.xl * 2,
+    paddingHorizontal: SPACING.xl,
+  },
+  emptyTitle: {
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   emptyText: {
-    marginTop: SPACING.md,
-    marginBottom: SPACING.lg,
+    marginBottom: SPACING.xl,
     textAlign: 'center',
+    lineHeight: 22,
   },
   exploreButton: {
     paddingHorizontal: SPACING.xl,
     paddingVertical: SPACING.md,
     borderRadius: 8,
   },
-  feedPosts: {
-    width: '100%',
+  footerLoading: {
+    paddingVertical: SPACING.lg,
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: SPACING.sm,
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
   },
 });
 
