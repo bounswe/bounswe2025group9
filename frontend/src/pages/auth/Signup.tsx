@@ -502,6 +502,7 @@ const SignUp = () => {
                         <button
                             type="submit"
                             className="nh-button nh-button-primary w-full"
+                            style={{ display: 'inline-block' }}
                         >
                             Create Account
                         </button>

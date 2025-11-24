@@ -18,17 +18,17 @@ let Salmon: Food = {
 };
 
 let Tofu: Food = {
-  id: 105,
-  name: "Organic Firm Tofu",
-  category: "Protein",
-  servingSize: 84,
-  caloriesPerServing: 90,
-  proteinContent: 9,
-  fatContent: 4.5,
-  carbohydrateContent: 3,
+  id: 1433,
+  name: "Soybean curd",
+  category: "Soy and meat-alternative products",
+  servingSize: 248,
+  caloriesPerServing: 151.3,
+  proteinContent: 17.8,
+  fatContent: 9.2,
+  carbohydrateContent: 2.9,
   allergens: ["soy"],
   dietaryOptions: ["vegan", "vegetarian", "gluten-free"],
-  nutritionScore: 5.1,
+  nutritionScore: 4.75,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/organic_firm_tofu.webp"
 };
 
@@ -63,47 +63,47 @@ let Shrimp: Food = {
 };
 
 let Quinoa: Food = {
-  id: 108,
-  name: "Quinoa (Cooked)",
-  category: "Grain",
-  servingSize: 100,
-  caloriesPerServing: 143,
-  proteinContent: 5.01,
-  fatContent: 2.22,
-  carbohydrateContent: 26.35,
+  id: 2154,
+  name: "Quinoa, no added fat",
+  category: "Pasta, noodles, cooked grains",
+  servingSize: 170,
+  caloriesPerServing: 204,
+  proteinContent: 7.4,
+  fatContent: 3.2,
+  carbohydrateContent: 36,
   allergens: [],
   dietaryOptions: ["vegan", "gluten-free", "high-fiber"],
-  nutritionScore: 5.7,
+  nutritionScore: 5.64,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/quinoa_cooked.webp"
 };
 
 let LentilSoup: Food = {
-  id: 109,
-  name: "Cooked Lentils",
-  category: "Protein",
-  servingSize: 100,
-  caloriesPerServing: 165,
-  proteinContent: 8.39,
-  fatContent: 6.76,
-  carbohydrateContent: 18.73,
+  id: 1426,
+  name: "Lentils, from dried, no added fat",
+  category: "Beans, peas, legumes",
+  servingSize: 180,
+  caloriesPerServing: 207,
+  proteinContent: 16.1,
+  fatContent: 0.7,
+  carbohydrateContent: 36,
   allergens: [],
   dietaryOptions: ["vegan", "high-fiber", "low-fat"],
-  nutritionScore: 5.27,
+  nutritionScore: 5.59,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/cooked_lentils.webp"
 };
 
 let GreekYogurt: Food = {
-  id: 196,
-  name: "Plain Yogurt",
-  category: "Dairy",
-  servingSize: 100.0,
-  caloriesPerServing: 63.0,
-  proteinContent: 5.25,
-  fatContent: 1.55,
-  carbohydrateContent: 7.04,
+  id: 275,
+  name: "Yogurt, Greek, NS as to type of milk, plain",
+  category: "Yogurt, Greek",
+  servingSize: 150,
+  caloriesPerServing: 100.5,
+  proteinContent: 15.3,
+  fatContent: 2,
+  carbohydrateContent: 5.4,
   allergens: [],
   dietaryOptions: [],
-  nutritionScore: 5.62,
+  nutritionScore: 5.32,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/plain_yogurt.webp"
 };
 
@@ -168,17 +168,17 @@ let Almonds: Food = {
 };
 
 let Egg: Food = {
-  id: 184,
-  name: "Egg",
-  category: "Protein",
-  servingSize: 100,
-  caloriesPerServing: 147,
-  proteinContent: 12.58,
-  fatContent: 9.94,
-  carbohydrateContent: 0.77,
+  id: 1276,
+  name: "Egg, whole, cooked, NS as to cooking method",
+  category: "Eggs and omelets",
+  servingSize: 50,
+  caloriesPerServing: 88,
+  proteinContent: 5.9,
+  fatContent: 7,
+  carbohydrateContent: 0.5,
   allergens: ["egg"],
   dietaryOptions: ["keto-friendly", "high-protein"],
-  nutritionScore: 5.29,
+  nutritionScore: 5.61,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/egg.webp"
 };
 
@@ -198,17 +198,17 @@ let Apple: Food = {
 };
 
 let Oatmeal: Food = {
-  id: 117,
-  name: "Old Fashioned Oats",
-  category: "Grain",
-  servingSize: 40,
-  caloriesPerServing: 150,
-  proteinContent: 5,
-  fatContent: 3,
-  carbohydrateContent: 27,
+  id: 2139,
+  name: "Oatmeal, regular or quick, made with water, no added fat",
+  category: "Oatmeal",
+  servingSize: 240,
+  caloriesPerServing: 153.6,
+  proteinContent: 5.3,
+  fatContent: 2.6,
+  carbohydrateContent: 27.4,
   allergens: ["gluten"],
   dietaryOptions: ["vegetarian", "high-fiber"],
-  nutritionScore: 6.45,
+  nutritionScore: 4.92,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/old_fashioned_oats.webp"
 };
 
@@ -258,17 +258,17 @@ let PeanutButter: Food = {
 };
 
 let CottageCheese: Food = {
-  id: 121,
-  name: "4% Small Curd Cottage Cheese",
-  category: "Dairy",
-  servingSize: 113,
-  caloriesPerServing: 110,
-  proteinContent: 13,
-  fatContent: 5,
-  carbohydrateContent: 5,
+  id: 554,
+  name: "Cottage cheese, farmer's",
+  category: "Cottage/ricotta cheese",
+  servingSize: 210,
+  caloriesPerServing: 310.8,
+  proteinContent: 23.1,
+  fatContent: 20.4,
+  carbohydrateContent: 9.1,
   allergens: ["milk"],
   dietaryOptions: ["vegetarian", "high-protein"],
-  nutritionScore: 5.18,
+  nutritionScore: 5.53,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/4%_small_curd_cottage_cheese.webp"
 };
 
@@ -318,60 +318,60 @@ let MixedSalad: Food = {
 };
 
 let Pork: Food = {
-  id: 56,
-  name: "Pork Chops (Top Loin, Boneless)",
-  category: "Protein",
-  servingSize: 100,
-  caloriesPerServing: 144,
-  proteinContent: 21.35,
-  fatContent: 5.89,
+  id: 647,
+  name: "Pork, chop, lean and fat eaten",
+  category: "Pork",
+  servingSize: 90,
+  caloriesPerServing: 175.5,
+  proteinContent: 24.3,
+  fatContent: 8.3,
   carbohydrateContent: 0,
   allergens: [],
   dietaryOptions: ["gluten-free", "keto-friendly", "high-protein"],
-  nutritionScore: 6.17,
+  nutritionScore: 6.73,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/pork_chops_top_loin_boneless.webp"
 };
 let Brocolli: Food = {
-  id: 192,
-  name: "Broccoli",
-  category: "Legume/Plant-based",
-  servingSize: 100, // g
-  caloriesPerServing: 333,
-  proteinContent: 13,  // g
-  fatContent: 17,      // g
-  carbohydrateContent: 31, // g
-  allergens: ["sesame"], // often includes tahini; may contain gluten depending on recipe
+  id: 2783,
+  name: "Broccoli, raw",
+  category: "Broccoli",
+  servingSize: 90,
+  caloriesPerServing: 35.1,
+  proteinContent: 2.3,
+  fatContent: 0.3,
+  carbohydrateContent: 5.6,
+  allergens: [],
   dietaryOptions: ["vegetarian", "vegan", "dairy-free", "high-fiber"],
-  nutritionScore: 74,
+  nutritionScore: 4.96,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/broccoli.webp"
 };
 let Goat: Food = {
-  id: 211,
-  name: "Goat Meat (Cooked, Roasted)",
-  category: "Protein",
-  servingSize: 100,
-  caloriesPerServing: 143,
-  proteinContent: 27.1,
-  fatContent: 3.03,
+  id: 685,
+  name: "Goat",
+  category: "Lamb, goat, game",
+  servingSize: 17,
+  caloriesPerServing: 24.1,
+  proteinContent: 4.6,
+  fatContent: 0.5,
   carbohydrateContent: 0,
   allergens: [],
   dietaryOptions: ["gluten-free", "keto-friendly", "high-protein"],
-  nutritionScore: 7.41,
+  nutritionScore: 7.01,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/goat_meat_cooked_roasted.webp"
 };
 
 let ChickenBreast: Food = {
-  id: 68,
-  name: "Chicken Breast",
-  category: "Protein",
-  servingSize: 100,
-  caloriesPerServing: 195,
-  proteinContent: 29.55,
-  fatContent: 7.72,
+  id: 730,
+  name: "Chicken breast, baked, broiled, or roasted, skin not eaten, from raw",
+  category: "Chicken, whole pieces",
+  servingSize: 135,
+  caloriesPerServing: 217.4,
+  proteinContent: 40.8,
+  fatContent: 4.8,
   carbohydrateContent: 0,
   allergens: [],
   dietaryOptions: ["gluten-free", "keto-friendly", "high-protein"],
-  nutritionScore: 6.99,
+  nutritionScore: 7.7,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/chicken_breast.webp"
 };
 
@@ -391,77 +391,77 @@ let Beef: Food = {
 };
 
 let RiceNoodles: Food = {
-  id: 154,
-  name: "Rice Noodles (Cooked)",
-  category: "Grain",
-  servingSize: 100,
-  caloriesPerServing: 109,
-  proteinContent: 0.91,
-  fatContent: 0.2,
-  carbohydrateContent: 24.9,
+  id: 2126,
+  name: "Rice noodles, cooked",
+  category: "Pasta, noodles, cooked grains",
+  servingSize: 175,
+  caloriesPerServing: 187.2,
+  proteinContent: 3.1,
+  fatContent: 0.4,
+  carbohydrateContent: 41.8,
   allergens: [],
   dietaryOptions: ["vegan", "gluten-free"],
-  nutritionScore: 4.62,
+  nutritionScore: 4.71,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/rice_noodles_cooked.webp"
 };
 
 let Anchovies: Food = {
-  id: 94,
-  name: "Flat Anchovies in Olive Oil",
-  category: "Protein",
-  servingSize: 15,
-  caloriesPerServing: 35,
-  proteinContent: 4,
-  fatContent: 2,
+  id: 949,
+  name: "Fish, anchovy",
+  category: "Fish",
+  servingSize: 45,
+  caloriesPerServing: 94.5,
+  proteinContent: 13,
+  fatContent: 4.4,
   carbohydrateContent: 0,
   allergens: ["fish"],
   dietaryOptions: ["pescatarian", "high-protein"],
-  nutritionScore: 6.7,
+  nutritionScore: 6.92,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/flat_anchovies_in_olive_oil.webp"
 };
 
 let Tilapia: Food = {
-  id: 176,
-  name: "Tilapia Fillets",
-  category: "Protein",
-  servingSize: 112,
-  caloriesPerServing: 90,
-  proteinContent: 20,
-  fatContent: 2,
+  id: 1002,
+  name: "Fish, tilapia, baked or broiled",
+  category: "Fish",
+  servingSize: 90,
+  caloriesPerServing: 144,
+  proteinContent: 22.5,
+  fatContent: 6,
   carbohydrateContent: 0,
   allergens: ["fish"],
   dietaryOptions: ["pescatarian", "gluten-free", "low-fat"],
-  nutritionScore: 6.09,
+  nutritionScore: 6.53,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/tilapia_fillets.webp"
 };
 
 let RiceCakes: Food = {
-  id: 223,
-  name: "Rice Cakes - Lightly Salted",
-  category: "Grain",
-  servingSize: 9,
-  caloriesPerServing: 40,
-  proteinContent: 0.5,
-  fatContent: 0,
-  carbohydrateContent: 8,
+  id: 1986,
+  name: "Rice cake",
+  category: "Crackers, excludes saltines",
+  servingSize: 3,
+  caloriesPerServing: 11.8,
+  proteinContent: 0.2,
+  fatContent: 0.1,
+  carbohydrateContent: 2.4,
   allergens: [],
   dietaryOptions: ["vegan", "gluten-free"],
-  nutritionScore: 5.09,
+  nutritionScore: 4.7,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/rice_cakes_-_lightly_salted.webp"
 };
 
 let MultigrainBread: Food = {
-  id: 150,
-  name: "Multigrain Bread",
-  category: "Grain",
-  servingSize: 100,
-  caloriesPerServing: 251,
-  proteinContent: 10,
-  fatContent: 3.8,
-  carbohydrateContent: 46.4,
+  id: 1712,
+  name: "Bread, multigrain",
+  category: "Yeast breads",
+  servingSize: 36,
+  caloriesPerServing: 95.4,
+  proteinContent: 4.8,
+  fatContent: 1.5,
+  carbohydrateContent: 15.6,
   allergens: ["gluten"],
   dietaryOptions: ["vegetarian", "high-fiber"],
-  nutritionScore: 6.2,
+  nutritionScore: 6.03,
   imageUrl: "https://bafybeidyss4dualqhr6s2hrrfvgdou2isyoye5j34dur4gsdalthl4bkqi.ipfs.w3s.link/multigrain_bread.webp"
 };
 
