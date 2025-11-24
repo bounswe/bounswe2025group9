@@ -42,4 +42,14 @@ describe('rankFoodsByQuery', () => {
     const ranked = rankFoodsByQuery('', foods);
     expect(ranked).toEqual(foods);
   });
+
+  it('falls back to best available matches when below threshold', () => {
+    const foods = [
+      makeFood({ id: 1, title: 'Alpha' }),
+      makeFood({ id: 2, title: 'Beta' }),
+    ];
+
+    const ranked = rankFoodsByQuery('zzz', foods);
+    expect(ranked.map(f => f.title)).toEqual(['Alpha', 'Beta']);
+  });
 });
