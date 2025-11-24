@@ -763,7 +763,149 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   };
 
   if (loading && !todayLog) {
-    return <div className="p-8 text-center">Loading nutrition data...</div>;
+    return (
+      <div className="space-y-6 animate-pulse">
+        {/* Header skeleton */}
+        <div className="nh-card">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div
+                className="w-8 h-8 rounded"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+              <div className="space-y-2">
+                <div
+                  className="h-6 w-48 rounded"
+                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                ></div>
+                <div
+                  className="h-4 w-64 rounded"
+                  style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                ></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <div
+                className="h-9 w-20 rounded-lg"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+              <div
+                className="h-9 w-20 rounded-lg"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+            </div>
+          </div>
+          
+          {/* Date selector skeleton */}
+          <div className="flex items-center justify-between mt-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
+            <div
+              className="w-8 h-8 rounded-lg"
+              style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+            ></div>
+            <div className="text-center flex-1">
+              <div
+                className="h-6 w-32 rounded mx-auto mb-2"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+              <div
+                className="h-4 w-16 rounded mx-auto"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+            </div>
+            <div
+              className="w-8 h-8 rounded-lg"
+              style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+            ></div>
+          </div>
+        </div>
+
+        {/* Nutrition summary cards skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, index) => (
+            <div key={index} className="nh-card p-4">
+              <div
+                className="h-4 w-24 rounded mb-3"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+              <div
+                className="h-8 w-20 rounded mb-2"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+              <div className="w-full rounded-full h-2 mb-2" style={{ backgroundColor: 'var(--forum-search-border)' }}>
+                <div
+                  className="h-2 rounded-full"
+                  style={{ 
+                    width: '60%',
+                    backgroundColor: 'var(--color-bg-tertiary)'
+                  }}
+                ></div>
+              </div>
+              <div
+                className="h-3 w-16 rounded"
+                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+              ></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Meals section skeleton */}
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <div
+              className="w-7 h-7 rounded"
+              style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+            ></div>
+            <div
+              className="h-6 w-32 rounded"
+              style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+            ></div>
+          </div>
+
+          <div className="space-y-4">
+            {[...Array(4)].map((_, index) => (
+              <div key={index} className="nh-card p-4">
+                <div className="flex items-center justify-between mb-3">
+                  <div
+                    className="h-5 w-24 rounded"
+                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                  ></div>
+                  <div
+                    className="h-8 w-24 rounded-lg"
+                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                  ></div>
+                </div>
+                <div className="space-y-2">
+                  {[...Array(2)].map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-2 rounded">
+                      <div className="flex items-center gap-3 flex-1">
+                        <div
+                          className="w-12 h-12 rounded"
+                          style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                        ></div>
+                        <div className="flex-1 space-y-2">
+                          <div
+                            className="h-4 w-3/4 rounded"
+                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                          ></div>
+                          <div
+                            className="h-3 w-1/2 rounded"
+                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                          ></div>
+                        </div>
+                      </div>
+                      <div
+                        className="h-4 w-16 rounded"
+                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                      ></div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (error) {

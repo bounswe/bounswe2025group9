@@ -71,7 +71,8 @@ const SORT_OPTIONS = [
 
 const Foods = () => {
     const [foods, setFoods] = useState<Food[]>([])
-    const [fetchSuccess, setFetchSuccess] = useState(true)
+    const [fetchSuccess, setFetchSuccess] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [shouldFetch, setShouldFetch] = useState(true);
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
@@ -84,6 +85,7 @@ const Foods = () => {
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
 
     const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder) => {
+        setLoading(true);
         try {
             const params: any = { 
                 page: pageNum, 
@@ -119,6 +121,8 @@ const Foods = () => {
             console.error('Error fetching foods:', error);
             setFetchSuccess(false);
             setWarning(null);
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -151,6 +155,7 @@ const Foods = () => {
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         setPage(1);
+        setLoading(true); // Show skeleton immediately when searching
         setShouldFetch(true);
     };
 
@@ -177,6 +182,7 @@ const Foods = () => {
         setSortBy(newSortBy);
         setSortOrder(newSortOrder);
         setPage(1);
+        setLoading(true); // Show skeleton immediately when sorting changes
         
         // Fetch with the new sorting parameters directly
         console.log("Immediately fetching with new sort:", { newSortBy, newSortOrder });
@@ -189,12 +195,14 @@ const Foods = () => {
     const clearSearch = () => {
         setSearchTerm('');
         setPage(1);
+        setLoading(true); // Show skeleton immediately when clearing search
         setShouldFetch(true);
     };
 
     // Add handlePageChange function for pagination
     const handlePageChange = (page: number) => {
         setPage(page);
+        setLoading(true); // Show skeleton immediately when page changes
         setShouldFetch(true);
         // Scroll to top when changing page
         window.scrollTo(0, 0);
@@ -293,7 +301,45 @@ const Foods = () => {
                             </div>
                         )}
 
-                        {fetchSuccess ? (
+                        {loading ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                {[...Array(6)].map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className="nh-card p-4 w-full max-w-xs mx-auto flex flex-col animate-pulse"
+                                    >
+                                        <div 
+                                            className="h-60 w-full mb-4 rounded"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-6 w-3/4 rounded mb-4"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-4 w-full rounded mb-2"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-4 w-2/3 rounded mb-2"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-4 w-full rounded mb-2"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-4 w-4/5 rounded mb-2"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-4 w-3/4 rounded"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : fetchSuccess ? (
                             <>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     {foods.length > 0 ?
