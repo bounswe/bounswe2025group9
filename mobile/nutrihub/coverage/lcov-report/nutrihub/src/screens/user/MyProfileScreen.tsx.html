@@ -25,14 +25,14 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/109</span>
+                <span class='fraction'>0/111</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/62</span>
+                <span class='fraction'>0/70</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/102</span>
+                <span class='fraction'>0/104</span>
             </div>
         
             
@@ -555,7 +555,19 @@
 <a name='L490'></a><a href='#L490'>490</a>
 <a name='L491'></a><a href='#L491'>491</a>
 <a name='L492'></a><a href='#L492'>492</a>
-<a name='L493'></a><a href='#L493'>493</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L493'></a><a href='#L493'>493</a>
+<a name='L494'></a><a href='#L494'>494</a>
+<a name='L495'></a><a href='#L495'>495</a>
+<a name='L496'></a><a href='#L496'>496</a>
+<a name='L497'></a><a href='#L497'>497</a>
+<a name='L498'></a><a href='#L498'>498</a>
+<a name='L499'></a><a href='#L499'>499</a>
+<a name='L500'></a><a href='#L500'>500</a>
+<a name='L501'></a><a href='#L501'>501</a>
+<a name='L502'></a><a href='#L502'>502</a>
+<a name='L503'></a><a href='#L503'>503</a>
+<a name='L504'></a><a href='#L504'>504</a>
+<a name='L505'></a><a href='#L505'>505</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -774,10 +786,22 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1266,13 +1290,25 @@ const MyProfileScreen: React.FC = <span class="cstat-no" title="statement not co
                     const name = <span class="cstat-no" title="statement not covered" >localUri.split('/').pop() || 'profile.jpg';</span>
                     const res = <span class="cstat-no" title="statement not covered" >await userService.uploadProfilePhoto(localUri, name);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >                    setUserProfile(<span class="fstat-no" title="function not covered" >pr</span>ev =&gt; <span class="cstat-no" title="statement not covered" >prev ? { ...prev, profile_image: res.profile_image } : prev)</span>;</span>
+                    // Add cache-busting parameter to force image reload
+                    const cacheBustedUrl = <span class="cstat-no" title="statement not covered" >res.profile_image </span>
+                      ? `${res.profile_image}${res.profile_image.includes('?') ? '&amp;' : '?'}t=${Date.now()}`
+                      : res.profile_image;
+                    
+<span class="cstat-no" title="statement not covered" >                    setUserProfile(<span class="fstat-no" title="function not covered" >pr</span>ev =&gt; <span class="cstat-no" title="statement not covered" >prev ? { ...prev, profile_image: cacheBustedUrl } : prev)</span>;</span>
                     
 <span class="cstat-no" title="statement not covered" >                    try {</span>
                       const refreshed = <span class="cstat-no" title="statement not covered" >await userService.getMyProfile(true);</span>
-<span class="cstat-no" title="statement not covered" >                      setUserProfile(refreshed);</span>
+                      // Add cache-busting parameter to the refreshed profile image too
+                      const refreshedWithCache = <span class="cstat-no" title="statement not covered" >{</span>
+                        ...refreshed,
+                        profile_image: refreshed.profile_image 
+                          ? `${refreshed.profile_image}${refreshed.profile_image.includes('?') ? '&amp;' : '?'}t=${Date.now()}`
+                          : refreshed.profile_image
+                      };
+<span class="cstat-no" title="statement not covered" >                      setUserProfile(refreshedWithCache);</span>
                       // Also update the AuthContext
-<span class="cstat-no" title="statement not covered" >                      updateUser(refreshed);</span>
+<span class="cstat-no" title="statement not covered" >                      updateUser(refreshedWithCache);</span>
                     } catch (refreshError) {
 <span class="cstat-no" title="statement not covered" >                      console.warn('Failed to refresh profile after upload', refreshError);</span>
                     }
@@ -1546,7 +1582,7 @@ export default MyProfileScreen;
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-21T08:54:39.260Z
+                at 2025-11-24T18:52:57.722Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>
