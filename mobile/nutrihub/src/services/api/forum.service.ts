@@ -32,6 +32,11 @@ export interface PaginatedResponse<T> {
   results: T[];
 }
 
+export interface PaginationParams {
+  page?: number;
+  page_size?: number;
+}
+
 // API response interfaces matching backend structure
 type ApiAuthor =
   | string
@@ -530,17 +535,36 @@ export const forumService = {
 
   /**
    * Get personalized feed of posts from followed users and liked posts
-   * @returns Array of ForumTopic objects
+   * Mirrors the web frontend logic by supporting pagination params.
    */
-  async getFeed(): Promise<ForumTopic[]> {
+  async getFeed(params?: PaginationParams): Promise<PaginatedResponse<ForumTopic>> {
     // Check for token before making the request
     const accessToken = await AsyncStorage.getItem('access_token');
     if (!accessToken) {
       console.log("Skipping feed request - no access token available");
-      return [];
+      return {
+        count: 0,
+        next: null,
+        previous: null,
+        results: [],
+      };
     }
     
-    const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>('/users/feed/');
+    let url = '/users/feed/';
+    if (params) {
+      const queryParts: string[] = [];
+      if (typeof params.page === 'number') {
+        queryParts.push(`page=${params.page}`);
+      }
+      if (typeof params.page_size === 'number') {
+        queryParts.push(`page_size=${params.page_size}`);
+      }
+      if (queryParts.length > 0) {
+        url += `?${queryParts.join('&')}`;
+      }
+    }
+    
+    const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>(url);
     if (response.error) {
       if (response.status === 401) {
         console.error("Authentication error in getFeed - token may be invalid");
@@ -549,7 +573,7 @@ export const forumService = {
       throw new Error(response.error);
     }
     
-    if (!response.data || !response.data.results) {
+    if (!response.data || !Array.isArray(response.data.results)) {
       console.error('Unexpected feed response format:', response.data);
       throw new Error('Unexpected API response format for feed');
     }
@@ -558,6 +582,11 @@ export const forumService = {
       response.data.results.map(apiTopic => mapApiTopicToForumTopic(apiTopic))
     );
     
-    return mappedPosts;
+    return {
+      count: response.data.count ?? mappedPosts.length,
+      next: response.data.next ?? null,
+      previous: response.data.previous ?? null,
+      results: mappedPosts,
+    };
   }
 };

@@ -33,6 +33,8 @@ type HomeScreenNavigationProp = CompositeNavigationProp<
   NativeStackNavigationProp<ForumStackParamList>
 >;
 
+const FEED_PAGE_SIZE = 10;
+
 const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { theme, textStyles } = useTheme();
@@ -48,30 +50,36 @@ const HomeScreen: React.FC = () => {
   /**
    * Fetch feed posts with pagination
    */
-  const fetchFeed = async (pageNum: number = 1, isRefreshing: boolean = false) => {
+  const mergePosts = useCallback((existing: ForumTopic[], incoming: ForumTopic[], append: boolean): ForumTopic[] => {
+    const combined = append ? [...existing, ...incoming] : incoming;
+    const seen = new Set<number>();
+    const unique: ForumTopic[] = [];
+    for (const post of combined) {
+      if (seen.has(post.id)) continue;
+      seen.add(post.id);
+      unique.push(post);
+    }
+    return unique;
+  }, []);
+
+  const fetchFeed = useCallback(async (pageNum: number = 1, append: boolean = false, isRefreshing: boolean = false) => {
     if (isRefreshing) {
       setRefreshing(true);
-    } else if (pageNum === 1) {
-      setLoading(true);
-    } else {
+    } else if (append) {
       setLoadingMore(true);
+    } else {
+      setLoading(true);
     }
 
     try {
-      const posts = await forumService.getFeed();
-      
-      if (pageNum === 1) {
-        setFeedPosts(posts);
-      } else {
-        setFeedPosts(prev => [...prev, ...posts]);
-      }
-      
-      // For now, we don't have pagination info from backend
-      // So we'll assume there are no more posts if we get less than expected
-      setHasMore(posts.length >= 10);
+      const response = await forumService.getFeed({ page: pageNum, page_size: FEED_PAGE_SIZE });
+      const posts = response.results;
+      setFeedPosts(prev => mergePosts(prev, posts, append));
+      setHasMore(Boolean(response.next));
+      setPage(pageNum);
     } catch (err) {
       console.error('Error fetching feed:', err);
-      if (pageNum === 1) {
+      if (!append) {
         setFeedPosts([]);
       }
     } finally {
@@ -79,31 +87,31 @@ const HomeScreen: React.FC = () => {
       setRefreshing(false);
       setLoadingMore(false);
     }
-  };
+  }, [mergePosts]);
 
   // Fetch feed on mount
   useEffect(() => {
     if (user) {
-      fetchFeed(1);
+      fetchFeed(1, false);
+    } else {
+      setFeedPosts([]);
     }
-  }, [user]);
+  }, [user, fetchFeed]);
 
   // Refresh feed when screen comes into focus
   useFocusEffect(
     useCallback(() => {
       if (user) {
-        setPage(1);
-        fetchFeed(1);
+        fetchFeed(1, false);
       }
-    }, [user])
+    }, [user, fetchFeed])
   );
 
   /**
    * Handle pull-to-refresh
    */
   const handleRefresh = () => {
-    setPage(1);
-    fetchFeed(1, true);
+    fetchFeed(1, false, true);
   };
 
   /**
@@ -112,8 +120,7 @@ const HomeScreen: React.FC = () => {
   const handleLoadMore = () => {
     if (!loadingMore && hasMore && !loading) {
       const nextPage = page + 1;
-      setPage(nextPage);
-      fetchFeed(nextPage);
+      fetchFeed(nextPage, true);
     }
   };
 
