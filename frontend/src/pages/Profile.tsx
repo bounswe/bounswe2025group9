@@ -119,12 +119,22 @@ const Profile = () => {
     loadUserData()
   }, [user])
 
+  // Helper function to format date as YYYY-MM-DD in local timezone (not UTC)
+  const formatDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // Fetch nutrition data for sidebar
   const fetchNutritionData = useCallback(async (date?: Date) => {
     try {
       // If no date provided, use selectedNutritionDate, or default to today
       const dateToUse = date || selectedNutritionDate || new Date()
-      const dateStr = dateToUse.toISOString().split('T')[0]
+      // Normalize to midnight local time to avoid timezone issues
+      dateToUse.setHours(0, 0, 0, 0);
+      const dateStr = formatDateString(dateToUse)
       const [log, targets] = await Promise.all([
         apiClient.getDailyLog(dateStr),
         apiClient.getNutritionTargets()
