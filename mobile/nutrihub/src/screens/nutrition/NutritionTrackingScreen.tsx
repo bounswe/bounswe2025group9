@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,43 +8,452 @@ import {
   ActivityIndicator,
   Modal,
   Alert,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import MacronutrientCard from '../../components/nutrition/MacronutrientCard';
 import MicronutrientPanel from '../../components/nutrition/MicronutrientPanel';
-import { FoodLogEntry, MealTotals, DailyNutritionLog } from '../../types/nutrition';
-import { mockTodayLog, mockNutritionTargets, mockHistoricalLogs } from '../../data/mockNutritionData';
+import UserMetricsModal from '../../components/nutrition/UserMetricsModal';
+import FoodSelectorModal from '../../components/food/FoodSelectorModal';
+import TextInput from '../../components/common/TextInput';
+import { FoodLogEntry, MealTotals, DailyNutritionLog, NutritionTargets, UserMetrics, MicroNutrient } from '../../types/nutrition';
+import { FoodItem } from '../../types/types';
+import { nutritionService } from '../../services/api/nutrition.service';
+
+// Helper functions to categorize and extract info from micronutrient keys (matching frontend logic)
+const extractUnit = (key: string): string => {
+  // Extract unit from key name (e.g., "Vitamin A, RAE (µg)" -> "µg")
+  const match = key.match(/\(([^)]+)\)$/);
+  return match ? match[1] : '';
+};
+
+const extractName = (key: string): string => {
+  // Extract name without unit and without parenthetical clarifications
+  // Examples:
+  // "Vitamin K (phylloquinone) (µg)" -> "Vitamin K"
+  // "Vitamin A, RAE (µg)" -> "Vitamin A, RAE"
+  // "Vitamin D (D2 + D3) (µg)" -> "Vitamin D"
+  // "Vitamin E (alpha-tocopherol) (mg)" -> "Vitamin E"
+  
+  // First, remove the unit (last parentheses)
+  let name = key.replace(/\s*\([^)]+\)$/, '').trim();
+  
+  // Then, remove any remaining parenthetical clarifications
+  // This handles cases like "Vitamin K (phylloquinone)" -> "Vitamin K"
+  name = name.replace(/\s*\([^)]+\)/g, '').trim();
+  
+  return name;
+};
+
+const isVitamin = (name: string): boolean => {
+  const lowerName = name.toLowerCase();
+  return lowerName.includes('vitamin') || 
+         lowerName.includes('thiamin') || 
+         lowerName.includes('riboflavin') || 
+         lowerName.includes('niacin') || 
+         lowerName.includes('folate') || 
+         lowerName.includes('folic acid') ||
+         lowerName.includes('choline') ||
+         lowerName.includes('carotene') ||
+         lowerName.includes('lycopene') ||
+         lowerName.includes('lutein');
+};
+
+const isMineral = (name: string): boolean => {
+  const lowerName = name.toLowerCase();
+  return lowerName.includes('calcium') || 
+         lowerName.includes('iron') || 
+         lowerName.includes('magnesium') || 
+         lowerName.includes('phosphorus') || 
+         lowerName.includes('potassium') || 
+         lowerName.includes('sodium') || 
+         lowerName.includes('zinc') || 
+         lowerName.includes('copper') || 
+         lowerName.includes('manganese') || 
+         lowerName.includes('selenium');
+};
 
 const NutritionTrackingScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation();
-  
+
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [showAddFood, setShowAddFood] = useState(false);
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [selectedWeeklyDay, setSelectedWeeklyDay] = useState<{ log: DailyNutritionLog; percentage: number } | null>(null);
 
+  // Food entry management state
+  const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
+  const [showServingDialog, setShowServingDialog] = useState(false);
+  const [servingSize, setServingSize] = useState<number | string>(100);
+  const [servingUnit, setServingUnit] = useState('g');
+  const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null);
+
+  // Data state
+  const [dailyLog, setDailyLog] = useState<DailyNutritionLog | null>(null);
+  const [targets, setTargets] = useState<NutritionTargets | null>(null);
+  const [metrics, setMetrics] = useState<UserMetrics | null>(null);
+  const [weeklyLogs, setWeeklyLogs] = useState<DailyNutritionLog[]>([]);
+  const [showMetricsModal, setShowMetricsModal] = useState(false);
+
   // Format numbers to 1 decimal place
-  const formatNumber = (num: number): string => {
-    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
+  const formatNumber = (num: number | string | undefined | null): string => {
+    if (num === undefined || num === null) {
+      return '0';
+    }
+    const val = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(val)) {
+      return '0';
+    }
+    return Number.isInteger(val) ? val.toString() : val.toFixed(1);
   };
 
-  // Mock data - in production, this would come from API
-  const todayLog = mockTodayLog;
-  const targets = mockNutritionTargets;
+  // Fetch initial data (metrics and targets)
+  const fetchInitialData = useCallback(async () => {
+    try {
+      setLoading(true);
 
-  // Group entries by meal type
-  const breakfastEntries = todayLog.entries.filter(e => e.meal_type === 'breakfast');
-  const lunchEntries = todayLog.entries.filter(e => e.meal_type === 'lunch');
-  const dinnerEntries = todayLog.entries.filter(e => e.meal_type === 'dinner');
-  const snackEntries = todayLog.entries.filter(e => e.meal_type === 'snack');
+      // Try to fetch metrics first
+      let userMetrics: UserMetrics | null = null;
+      try {
+        userMetrics = await nutritionService.getUserMetrics();
+        setMetrics(userMetrics);
+      } catch (metricsError: any) {
+        console.error('Error fetching user metrics:', metricsError);
+        // If 404 on metrics, show modal and don't try to fetch targets
+        const is404 =
+          metricsError.status === 404 ||
+          metricsError.response?.status === 404 ||
+          (typeof metricsError.message === 'string' && (metricsError.message.includes('404') || metricsError.message.includes('Not found'))) ||
+          (typeof metricsError.error === 'string' && (metricsError.error.includes('404') || metricsError.error.includes('Not found')));
+
+        if (is404) {
+          setMetrics(null);
+          setTargets(null);
+          setShowMetricsModal(true);
+          setLoading(false);
+          return;
+        } else {
+          Alert.alert('Error', 'Failed to load user metrics. Please try again.');
+        }
+      }
+
+      // Only fetch targets if metrics exist
+      if (userMetrics) {
+        try {
+          const userTargets = await nutritionService.getTargets();
+          setTargets(userTargets);
+        } catch (targetsError: any) {
+          console.error('Error fetching nutrition targets:', targetsError);
+          // If 404 on targets, it might mean metrics need to be set
+          if (targetsError.status === 404 || targetsError.response?.status === 404 || targetsError.message?.includes('404') || targetsError.message?.includes('Not found')) {
+            setTargets(null);
+            // Show modal if we don't have metrics
+            if (!userMetrics) {
+              setShowMetricsModal(true);
+            }
+          } else {
+            Alert.alert('Error', 'Failed to load nutrition targets. Please try again.');
+          }
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching initial data:', error);
+      Alert.alert('Error', 'Failed to load nutrition data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Fetch daily log for selected date
+  const fetchDailyLog = useCallback(async () => {
+    if (!metrics) return; // Don't fetch log if metrics aren't set
+
+    try {
+      const dateStr = selectedDate.toISOString().split('T')[0];
+      const log = await nutritionService.getDailyLog(dateStr);
+      setDailyLog(log);
+    } catch (error) {
+      console.error('Error fetching daily log:', error);
+      // If 404, it might just mean no log exists yet, which is fine
+      // The service should handle creating one or returning empty structure if needed
+      // But if it throws, we might want to set a default empty log
+    }
+  }, [selectedDate, metrics]);
+
+  // Fetch weekly logs
+  const fetchWeeklyLogs = useCallback(async () => {
+    if (!metrics) return;
+
+    try {
+      const weekStart = getWeekStart(selectedDate);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekEnd.getDate() + 6);
+
+      const startStr = weekStart.toISOString().split('T')[0];
+      const endStr = weekEnd.toISOString().split('T')[0];
+
+      const logs = await nutritionService.getLogsForRange(startStr, endStr);
+      // Ensure logs is always an array
+      const logsArray = Array.isArray(logs) ? logs : [];
+      setWeeklyLogs(logsArray);
+    } catch (error) {
+      console.error('Error fetching weekly logs:', error);
+      setWeeklyLogs([]); // Set to empty array on error
+    }
+  }, [selectedDate, metrics]);
+
+  // Initial load
+  useFocusEffect(
+    useCallback(() => {
+      fetchInitialData();
+    }, [fetchInitialData])
+  );
+
+  // Fetch logs when date or metrics change
+  useEffect(() => {
+    if (metrics) {
+      fetchDailyLog();
+      if (viewMode === 'weekly') {
+        fetchWeeklyLogs();
+      }
+    }
+  }, [fetchDailyLog, fetchWeeklyLogs, viewMode, metrics]);
+
+  // Refresh weekly logs when switching to weekly view
+  useEffect(() => {
+    if (metrics && viewMode === 'weekly') {
+      fetchWeeklyLogs();
+    }
+  }, [viewMode, metrics, fetchWeeklyLogs]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await Promise.all([
+      fetchInitialData(),
+      fetchDailyLog(),
+      viewMode === 'weekly' ? fetchWeeklyLogs() : Promise.resolve()
+    ]);
+    setRefreshing(false);
+  };
+
+  const handleMetricsSaved = async (newMetrics: UserMetrics) => {
+    setMetrics(newMetrics);
+    setShowMetricsModal(false);
+    // Refresh targets as they might have changed
+    try {
+      const newTargets = await nutritionService.getTargets();
+      setTargets(newTargets);
+      // Refresh daily log and weekly logs with new targets
+      await fetchDailyLog();
+      if (viewMode === 'weekly') {
+        await fetchWeeklyLogs();
+      }
+    } catch (error) {
+      console.error('Error refreshing targets after saving metrics:', error);
+    }
+  };
+
+  // Handle food selection from FoodSelectorModal
+  const handleFoodSelect = (food: FoodItem) => {
+    setSelectedFood(food);
+    setServingSize(1); // Default to 1 serving
+    setServingUnit('serving');
+    setShowAddFood(false);
+    setShowServingDialog(true);
+  };
+
+  // Handle confirming serving size and adding food entry
+  const handleConfirmServing = async () => {
+    if (!selectedFood) return;
+
+    // Validate serving size
+    const numServingSize = typeof servingSize === 'string' ? parseFloat(servingSize) : servingSize;
+    if (!numServingSize || numServingSize <= 0 || isNaN(numServingSize)) {
+      Alert.alert('Invalid Serving Size', 'Please enter a valid serving size greater than 0');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const dateStr = selectedDate.toISOString().split('T')[0];
+
+      // Calculate multiplier based on unit
+      let multiplier = numServingSize;
+      if (servingUnit === 'g') {
+        // Convert grams to multiplier using the food's actual serving size
+        const foodServingSize = selectedFood.servingSize || 100;
+        multiplier = numServingSize / foodServingSize;
+      }
+
+      // Round to 6 decimal places
+      multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+      // Validate multiplier
+      if (multiplier > 9999.999999) {
+        Alert.alert('Serving Size Too Large', 'The serving size is too large. Please reduce the amount.');
+        setLoading(false);
+        return;
+      }
+
+      await nutritionService.addFoodEntry({
+        date: dateStr,
+        food_id: selectedFood.id,
+        serving_size: multiplier,
+        serving_unit: servingUnit,
+        meal_type: selectedMeal,
+      });
+
+      // Refresh both daily and weekly logs to keep them in sync
+      // Use Promise.all to ensure both refresh before continuing
+      await Promise.all([
+        fetchDailyLog(),
+        fetchWeeklyLogs()
+      ]);
+
+      setShowServingDialog(false);
+      setSelectedFood(null);
+      setServingSize(1); // Reset to default 1 serving
+      setServingUnit('serving');
+      setEditingEntry(null);
+    } catch (error: any) {
+      console.error('Error adding food entry:', error);
+      Alert.alert('Error', error?.message || 'Failed to add food entry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle editing an existing entry
+  const handleEditEntry = (entry: FoodLogEntry) => {
+    setEditingEntry(entry);
+
+    // Convert multiplier back to display value
+    let displaySize = entry.serving_size;
+    // For food_serving_size, we need to calculate it from the entry data
+    // Backend doesn't provide this, so we'll use 100g as default
+    const foodServingSize = 100;
+
+    if (entry.serving_unit === 'g') {
+      displaySize = entry.serving_size * foodServingSize;
+    }
+
+    setServingSize(displaySize);
+    setServingUnit(entry.serving_unit);
+    setSelectedMeal(entry.meal_type as 'breakfast' | 'lunch' | 'dinner' | 'snack');
+
+    // Set a placeholder food object for display in the dialog
+    // Using type assertion since we only need minimal properties
+    setSelectedFood({
+      id: entry.food_id,
+      title: entry.food_name,
+      description: '',
+      iconName: 'food',
+      category: 'Other' as any,
+    } as FoodItem);
+
+    setShowServingDialog(true);
+  };
+
+  // Handle updating an existing entry
+  const handleUpdateEntry = async () => {
+    if (!editingEntry) return;
+
+    // Validate serving size
+    const numServingSize = typeof servingSize === 'string' ? parseFloat(servingSize) : servingSize;
+    if (!numServingSize || numServingSize <= 0 || isNaN(numServingSize)) {
+      Alert.alert('Invalid Serving Size', 'Please enter a valid serving size greater than 0');
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // Calculate multiplier
+      let multiplier = numServingSize;
+      if (servingUnit === 'g') {
+        // Use food's actual serving size from database, otherwise default to 100g
+        const foodServingSize = selectedFood?.servingSize || 100;
+        multiplier = numServingSize / foodServingSize;
+      }
+
+      // Round to 6 decimal places
+      multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+      // Validate multiplier
+      if (multiplier > 9999.999999) {
+        Alert.alert('Serving Size Too Large', 'The serving size is too large. Please reduce the amount.');
+        setLoading(false);
+        return;
+      }
+
+      await nutritionService.updateFoodEntry(editingEntry.id, {
+        serving_size: multiplier,
+        serving_unit: servingUnit,
+        meal_type: selectedMeal,
+      });
+
+      // Refresh both daily and weekly logs to keep them in sync
+      // Use Promise.all to ensure both refresh before continuing
+      await Promise.all([
+        fetchDailyLog(),
+        fetchWeeklyLogs()
+      ]);
+
+      setShowServingDialog(false);
+      setEditingEntry(null);
+      setSelectedFood(null);
+      setServingSize(1); // Reset to default 1 serving
+      setServingUnit('serving');
+    } catch (error: any) {
+      console.error('Error updating entry:', error);
+      Alert.alert('Error', error?.message || 'Failed to update entry. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle deleting an entry
+  const handleDeleteEntry = (entryId: number) => {
+    Alert.alert(
+      'Delete Entry',
+      'Are you sure you want to delete this food entry?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              setLoading(true);
+              await nutritionService.deleteFoodEntry(entryId);
+
+              // Refresh both daily and weekly logs to keep them in sync
+              // Use Promise.all to ensure both refresh before continuing
+              await Promise.all([
+                fetchDailyLog(),
+                fetchWeeklyLogs()
+              ]);
+            } catch (error: any) {
+              console.error('Error deleting entry:', error);
+              Alert.alert('Error', error?.message || 'Failed to delete entry. Please try again.');
+            } finally {
+              setLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
 
   const getMealIcon = (mealType: string): React.ComponentProps<typeof Icon>['name'] => {
     switch (mealType) {
@@ -79,16 +488,16 @@ const NutritionTrackingScreen: React.FC = () => {
     // Format without year to prevent overflow, add year only if not current year
     const currentYear = new Date().getFullYear();
     const dateYear = date.getFullYear();
-    
+
     if (currentYear === dateYear) {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
+      return date.toLocaleDateString('en-US', {
+        weekday: 'short',
+        month: 'short',
+        day: 'numeric'
       });
     }
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric',
       year: 'numeric'
     });
@@ -98,19 +507,19 @@ const NutritionTrackingScreen: React.FC = () => {
     const endDate = new Date(startDate);
     endDate.setDate(endDate.getDate() + 6);
     const currentYear = new Date().getFullYear();
-    
-    const startStr = startDate.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-    const endStr = endDate.toLocaleDateString('en-US', { 
-      month: 'short', 
+
+    const startStr = startDate.toLocaleDateString('en-US', {
+      month: 'short',
       day: 'numeric'
     });
-    
+    const endStr = endDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric'
+    });
+
     // Only add year if not current year
     const yearStr = startDate.getFullYear() !== currentYear ? `, ${startDate.getFullYear()}` : '';
-    
+
     return `${startStr} - ${endStr}${yearStr}`;
   };
 
@@ -135,8 +544,14 @@ const NutritionTrackingScreen: React.FC = () => {
   };
 
   const isToday = selectedDate.toDateString() === new Date().toDateString();
-  const isCurrentWeek = viewMode === 'weekly' && 
+  const isCurrentWeek = viewMode === 'weekly' &&
     getWeekStart(selectedDate).toDateString() === getWeekStart(new Date()).toDateString();
+
+  // Group entries by meal type
+  const breakfastEntries = dailyLog?.entries?.filter(e => e.meal_type === 'breakfast') || [];
+  const lunchEntries = dailyLog?.entries?.filter(e => e.meal_type === 'lunch') || [];
+  const dinnerEntries = dailyLog?.entries?.filter(e => e.meal_type === 'dinner') || [];
+  const snackEntries = dailyLog?.entries?.filter(e => e.meal_type === 'snack') || [];
 
   // Calculate meal breakdown for calories
   const mealBreakdown = {
@@ -146,10 +561,19 @@ const NutritionTrackingScreen: React.FC = () => {
   };
 
   const getWeeklyDayDetailedInfo = (log: DailyNutritionLog, percentage: number) => {
+    if (!targets || !log) {
+      return {
+        title: 'Loading...',
+        message: 'Please wait while we load your targets.',
+        icon: 'dots-horizontal',
+        color: theme.textSecondary,
+      };
+    }
+
     const date = new Date(log.date);
     const dayName = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
     const isLogToday = date.toDateString() === new Date().toDateString();
-    
+
     const isVeryLow = percentage < 50;
     const isLow = percentage >= 50 && percentage < 70;
     const isFair = percentage >= 70 && percentage < 90;
@@ -157,90 +581,120 @@ const NutritionTrackingScreen: React.FC = () => {
     const isMinorOver = percentage > 100 && percentage <= 110;
     const isModerateOver = percentage > 110 && percentage <= 130;
     const isSevereOver = percentage > 130;
-    
-    const remaining = targets.calories - log.total_calories;
-    const over = log.total_calories - targets.calories;
-    
+
+    const logCalories = log.total_calories || 0;
+    const targetCalories = targets.calories || 0;
+    const remaining = targetCalories - logCalories;
+    const over = logCalories - targetCalories;
+
     if (percentage === 100) {
       return {
         title: `${dayName} - Perfect! 🎉`,
-        message: `You hit exactly ${formatNumber(log.total_calories)} calories, meeting your daily target perfectly! This is optimal for maintaining your health goals.${isLogToday ? '\n\nKeep up this excellent balance for the rest of today!' : ''}`,
+        message: `You hit exactly ${formatNumber(logCalories)} calories, meeting your daily target perfectly! This is optimal for maintaining your health goals.${isLogToday ? '\n\nKeep up this excellent balance for the rest of today!' : ''}`,
         icon: 'check-circle',
         color: theme.success,
       };
     }
-    
+
     if (isOnTrack) {
       return {
         title: `${dayName} - Almost There (${percentage}%)`,
-        message: `You consumed ${formatNumber(log.total_calories)} calories, which is ${formatNumber(remaining)} calories short of your ${formatNumber(targets.calories)} target. This is still within a healthy range.${isLogToday ? '\n\nJust a bit more to reach your goal!' : ''}`,
+        message: `You consumed ${formatNumber(logCalories)} calories, which is ${formatNumber(remaining)} calories short of your ${formatNumber(targetCalories)} target. This is still within a healthy range.${isLogToday ? '\n\nJust a bit more to reach your goal!' : ''}`,
         icon: 'chart-line',
         color: theme.success,
       };
     }
-    
+
     if (isFair) {
       return {
         title: `${dayName} - Fair Progress (${percentage}%)`,
-        message: `You've consumed ${formatNumber(log.total_calories)} of your ${formatNumber(targets.calories)} calorie target. You need ${formatNumber(remaining)} more calories.${isLogToday ? '\n\nTry to add more nutritious foods to your remaining meals today.' : '\n\nConsider adding more calorie-dense, healthy foods to meet your targets.'}`,
+        message: `You've consumed ${formatNumber(logCalories)} of your ${formatNumber(targetCalories)} calorie target. You need ${formatNumber(remaining)} more calories.${isLogToday ? '\n\nTry to add more nutritious foods to your remaining meals today.' : '\n\nConsider adding more calorie-dense, healthy foods to meet your targets.'}`,
         icon: 'alert',
         color: theme.warning,
       };
     }
-    
+
     if (isLow) {
       return {
         title: `${dayName} - Low (${percentage}%)`,
-        message: `You consumed only ${formatNumber(log.total_calories)} of your ${formatNumber(targets.calories)} calorie target. This is significantly low and may affect your energy levels and metabolism.${isLogToday ? '\n\nMake sure to eat substantial meals for the rest of the day.' : '\n\nConsistently low intake can impact your health negatively.'}`,
+        message: `You consumed only ${formatNumber(logCalories)} of your ${formatNumber(targetCalories)} calorie target. This is significantly low and may affect your energy levels and metabolism.${isLogToday ? '\n\nMake sure to eat substantial meals for the rest of the day.' : '\n\nConsistently low intake can impact your health negatively.'}`,
         icon: 'alert-circle',
         color: theme.error,
       };
     }
-    
+
     if (isVeryLow) {
       return {
         title: `${dayName} - Very Low! (${percentage}%)`,
-        message: `You consumed only ${formatNumber(log.total_calories)} calories, which is critically below your ${formatNumber(targets.calories)} target. This level of intake is concerning and can harm your metabolism, energy levels, and overall health.${isLogToday ? '\n\nPlease ensure you eat adequate meals for the rest of today.' : '\n\nConsult a healthcare professional if this pattern continues.'}`,
+        message: `You consumed only ${formatNumber(logCalories)} calories, which is critically below your ${formatNumber(targetCalories)} target. This level of intake is concerning and can harm your metabolism, energy levels, and overall health.${isLogToday ? '\n\nPlease ensure you eat adequate meals for the rest of today.' : '\n\nConsult a healthcare professional if this pattern continues.'}`,
         icon: 'close-circle',
         color: theme.error,
       };
     }
-    
+
     if (isMinorOver) {
       return {
         title: `${dayName} - Slightly Over (${percentage}%)`,
-        message: `You consumed ${formatNumber(log.total_calories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targets.calories)} target. This is a minor excess and shouldn't be a major concern.${isLogToday ? '\n\nConsider lighter options for the rest of the day.' : '\n\nTry to balance this tomorrow with slightly reduced portions.'}`,
+        message: `You consumed ${formatNumber(logCalories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targetCalories)} target. This is a minor excess and shouldn't be a major concern.${isLogToday ? '\n\nConsider lighter options for the rest of the day.' : '\n\nTry to balance this tomorrow with slightly reduced portions.'}`,
         icon: 'alert',
         color: theme.warning,
       };
     }
-    
+
     if (isModerateOver) {
       return {
         title: `${dayName} - Moderately Over (${percentage}%)`,
-        message: `You consumed ${formatNumber(log.total_calories)} calories, exceeding your ${formatNumber(targets.calories)} target by ${formatNumber(over)} calories. This is a moderate excess that can impact your health goals.${isLogToday ? '\n\nConsider skipping snacks and choosing lighter options.' : '\n\nBalance this by reducing intake tomorrow and increasing physical activity.'}`,
+        message: `You consumed ${formatNumber(logCalories)} calories, exceeding your ${formatNumber(targetCalories)} target by ${formatNumber(over)} calories. This is a moderate excess that can impact your health goals.${isLogToday ? '\n\nConsider skipping snacks and choosing lighter options.' : '\n\nBalance this by reducing intake tomorrow and increasing physical activity.'}`,
         icon: 'alert-circle',
         color: theme.error,
       };
     }
-    
+
     // Severe over
     return {
       title: `${dayName} - Significantly Over! (${percentage}%)`,
-      message: `You consumed ${formatNumber(log.total_calories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targets.calories)} target. This is a substantial excess that can significantly impact your health goals.${isLogToday ? '\n\nPlease avoid additional meals and snacks for the rest of today.' : '\n\nFocus on portion control, increase physical activity, and aim to balance this over the next few days.'}`,
+      message: `You consumed ${formatNumber(logCalories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targetCalories)} target. This is a substantial excess that can significantly impact your health goals.${isLogToday ? '\n\nPlease avoid additional meals and snacks for the rest of today.' : '\n\nFocus on portion control, increase physical activity, and aim to balance this over the next few days.'}`,
       icon: 'alert',
       color: '#dc2626',
     };
   };
 
+  const getMicronutrientsList = useCallback((): MicroNutrient[] => {
+    if (!dailyLog?.micronutrients_summary || !targets?.micronutrients) return [];
+
+    // Get all micronutrients from targets (like frontend does)
+    return Object.entries(targets.micronutrients)
+      .map(([key, targetValue]) => {
+        const currentValue = dailyLog.micronutrients_summary[key] || 0;
+        const name = extractName(key);
+        const unit = extractUnit(key) || '';
+        
+        // Categorize based on name (matching frontend logic)
+        let category: 'vitamin' | 'mineral' = 'vitamin'; // Default
+        if (isMineral(name)) {
+          category = 'mineral';
+        } else if (isVitamin(name)) {
+          category = 'vitamin';
+        }
+
+        return {
+          name,
+          current: currentValue,
+          target: targetValue || 0,
+          unit,
+          category,
+        };
+      })
+      .filter(nutrient => nutrient.target > 0); // Only show nutrients with targets set
+  }, [dailyLog, targets]);
+
   const renderWeeklySummary = () => {
-    const weekStart = getWeekStart(selectedDate);
-    const weekLogs = [...mockHistoricalLogs, todayLog].filter(log => {
-      const logDate = new Date(log.date);
-      const weekEnd = new Date(weekStart);
-      weekEnd.setDate(weekEnd.getDate() + 6);
-      return logDate >= weekStart && logDate <= weekEnd;
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    if (!targets || !metrics) return null;
+
+    // Ensure weeklyLogs is an array before spreading
+    const logsArray = Array.isArray(weeklyLogs) ? weeklyLogs : [];
+    // Sort logs by date descending
+    const sortedLogs = [...logsArray].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return (
       <View style={[styles.weeklyCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -250,178 +704,108 @@ const NutritionTrackingScreen: React.FC = () => {
             Weekly Summary
           </Text>
         </View>
-        
-        {weekLogs.map((log: DailyNutritionLog) => {
-          const date = new Date(log.date);
-          const caloriePercent = Math.round((log.total_calories / targets.calories) * 100);
-          const isLogToday = date.toDateString() === new Date().toDateString();
-          
-          // Under-target severity levels
-          const isVeryLow = caloriePercent < 50;
-          const isLow = caloriePercent >= 50 && caloriePercent < 70;
-          const isFair = caloriePercent >= 70 && caloriePercent < 90;
-          const isOnTrack = caloriePercent >= 90 && caloriePercent <= 100;
-          
-          // Over-target severity levels
-          const isMinorOver = caloriePercent > 100 && caloriePercent <= 110;
-          const isModerateOver = caloriePercent > 110 && caloriePercent <= 130;
-          const isSevereOver = caloriePercent > 130;
-          
-          const getDayStatusColor = () => {
-            if (isOnTrack) return theme.success;
-            
-            // Under target
-            if (caloriePercent < 100) {
-              if (isVeryLow) return theme.error;
-              if (isLow) return theme.warning;
-              return theme.warning; // Fair
-            }
-            
-            // Over target
-            if (isMinorOver) return theme.warning;
-            if (isModerateOver) return theme.error;
-            return '#dc2626'; // Dark red for severe
-          };
-          
-          const statusColor = getDayStatusColor();
-          
-          return (
-            <View 
-              key={log.id} 
-              style={[styles.weeklyDayItem, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border }]}
-            >
-              <View style={styles.weeklyDayHeader}>
-                <View style={{ flex: 1 }}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
-                    <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
-                      {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                    </Text>
-                  </View>
-                  {isLogToday && (
-                    <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.sm }]}>
-                      <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>Today</Text>
+
+        {sortedLogs.length === 0 ? (
+          <View style={{ padding: SPACING.lg, alignItems: 'center' }}>
+            <Text style={[textStyles.body, { color: theme.textSecondary }]}>No logs found for this week.</Text>
+          </View>
+        ) : (
+          sortedLogs.map((log: DailyNutritionLog) => {
+            const date = new Date(log.date);
+            const logCalories = log.total_calories || 0;
+            const targetCalories = targets.calories || 1; // Avoid division by zero
+            const caloriePercent = targetCalories > 0 ? Math.round((logCalories / targetCalories) * 100) : 0;
+            const isLogToday = date.toDateString() === new Date().toDateString();
+
+            // Under-target severity levels
+            const isVeryLow = caloriePercent < 50;
+            const isLow = caloriePercent >= 50 && caloriePercent < 70;
+            const isOnTrack = caloriePercent >= 90 && caloriePercent <= 100;
+
+            // Over-target severity levels
+            const isMinorOver = caloriePercent > 100 && caloriePercent <= 110;
+            const isModerateOver = caloriePercent > 110 && caloriePercent <= 130;
+
+            const getDayStatusColor = () => {
+              if (isOnTrack) return theme.success;
+
+              // Under target
+              if (caloriePercent < 100) {
+                if (isVeryLow) return theme.error;
+                if (isLow) return theme.warning;
+                return theme.warning; // Fair
+              }
+
+              // Over target
+              if (isMinorOver) return theme.warning;
+              if (isModerateOver) return theme.error;
+              return '#dc2626'; // Dark red for severe
+            };
+
+            const statusColor = getDayStatusColor();
+
+            return (
+              <View
+                key={log.date}
+                style={[styles.weeklyDayItem, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border }]}
+              >
+                <View style={styles.weeklyDayHeader}>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
+                      <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
+                        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                      </Text>
                     </View>
-                  )}
-                </View>
-                <TouchableOpacity 
-                  style={{ alignItems: 'flex-end' }}
-                  onPress={() => setSelectedWeeklyDay({ log, percentage: caloriePercent })}
-                  activeOpacity={0.7}
-                >
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                    <Text 
-                      style={[
-                        textStyles.body,
-                        { 
-                          color: statusColor,
-                          fontWeight: '700',
-                          fontSize: 16
-                        }
-                      ]}
-                    >
-                      {caloriePercent}%
-                    </Text>
-                    {/* Show warning icon for severe over, otherwise info icon */}
-                    {(isSevereOver || isModerateOver) ? (
-                      <Icon name="alert-circle" size={16} color={statusColor} style={{ opacity: 0.8 }} />
-                    ) : (
-                      <Icon name="information-outline" size={16} color={theme.textSecondary} style={{ opacity: 0.6 }} />
+                    {isLogToday && (
+                      <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.sm }]}>
+                        <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>Today</Text>
+                      </View>
                     )}
                   </View>
-                  {/* Only show checkmark when actually met (100%) */}
-                  {caloriePercent === 100 && (
-                    <Icon name="check-circle" size={14} color={theme.success} style={{ marginTop: 2 }} />
-                  )}
-                  {/* Show progress icon for 90-99% */}
-                  {isOnTrack && caloriePercent < 100 && (
-                    <Icon name="chart-line" size={14} color={theme.success} style={{ marginTop: 2 }} />
-                  )}
-                  {/* Show alert for very low */}
-                  {isVeryLow && (
-                    <Icon name="alert-circle" size={14} color={theme.error} style={{ marginTop: 2 }} />
-                  )}
-                </TouchableOpacity>
-              </View>
-              
-              <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.md, fontWeight: '500' }]}>
-                {log.total_calories.toFixed(0)} / {targets.calories.toFixed(0)} kcal
-              </Text>
-              
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <View style={[styles.progressBarContainer, { backgroundColor: `${theme.primary}10`, height: 10, flex: 1 }]}>
-                  <View 
-                    style={[
-                      styles.progressBar,
-                      {
-                        width: `${Math.min(caloriePercent, 100)}%`,
-                        backgroundColor: caloriePercent > 100 ? statusColor : (isOnTrack ? theme.success : statusColor)
-                      }
-                    ]}
-                  />
-                </View>
-                {/* Overflow indicator - only for actual warnings (not minor acceptable over) */}
-                {caloriePercent > 110 && (
-                  <View 
-                    style={[
-                      styles.weeklyOverflowBadge,
-                      { backgroundColor: statusColor }
-                    ]}
+                  <TouchableOpacity
+                    style={{ alignItems: 'flex-end' }}
+                    onPress={() => setSelectedWeeklyDay({ log, percentage: caloriePercent })}
+                    activeOpacity={0.7}
                   >
-                    <Text style={[textStyles.small, { color: '#fff', fontSize: 9, fontWeight: '700' }]}>
-                      +{caloriePercent - 100}%
-                    </Text>
-                  </View>
-                )}
-                {/* "Met" badge for exactly 100% or minor over (100-110%) */}
-                {caloriePercent === 100 && (
-                  <View 
-                    style={[
-                      styles.weeklyOverflowBadge,
-                      { backgroundColor: theme.success }
-                    ]}
-                  >
-                    <Text style={[textStyles.small, { color: '#fff', fontSize: 9, fontWeight: '700' }]}>
-                      Met
-                    </Text>
-                  </View>
-                )}
-                {caloriePercent > 100 && caloriePercent <= 110 && (
-                  <View 
-                    style={[
-                      styles.weeklyOverflowBadge,
-                      { backgroundColor: theme.warning }
-                    ]}
-                  >
-                    <Text style={[textStyles.small, { color: '#fff', fontSize: 9, fontWeight: '700' }]}>
-                      +{caloriePercent - 100}%
-                    </Text>
-                  </View>
-                )}
-              </View>
-              
-              <View style={styles.weeklyDayMacros}>
-                <View style={styles.weeklyMacroItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Protein</Text>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
-                    {formatNumber(log.total_protein)}g
-                  </Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Text
+                        style={[
+                          textStyles.body,
+                          {
+                            color: statusColor,
+                            fontWeight: '700',
+                            fontSize: 16
+                          }
+                        ]}
+                      >
+                        {caloriePercent}%
+                      </Text>
+                      <Icon name="information-outline" size={16} color={theme.textSecondary} style={{ opacity: 0.6 }} />
+                    </View>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.weeklyMacroItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Carbs</Text>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
-                    {formatNumber(log.total_carbohydrates)}g
-                  </Text>
-                </View>
-                <View style={styles.weeklyMacroItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Fat</Text>
-                  <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
-                    {formatNumber(log.total_fat)}g
-                  </Text>
+
+                <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.md, fontWeight: '500' }]}>
+                  {formatNumber(logCalories)} / {formatNumber(targetCalories)} kcal
+                </Text>
+
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <View style={[styles.progressBarContainer, { backgroundColor: `${theme.primary}10`, height: 10, flex: 1 }]}>
+                    <View
+                      style={[
+                        styles.progressBar,
+                        {
+                          width: `${Math.min(caloriePercent, 100)}%`,
+                          backgroundColor: caloriePercent > 100 ? statusColor : (isOnTrack ? theme.success : statusColor)
+                        }
+                      ]}
+                    />
+                  </View>
                 </View>
               </View>
-            </View>
-          );
-        })}
+            );
+          })
+        )}
       </View>
     );
   };
@@ -433,18 +817,19 @@ const NutritionTrackingScreen: React.FC = () => {
     const totals = calculateMealTotals(entries);
     const mealColor = getMealColor(mealType);
 
+
     return (
-      <View 
-        key={mealType} 
+      <View
+        key={mealType}
         style={[styles.mealCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
       >
         {/* Meal Header */}
         <View style={styles.mealHeader}>
           <View style={styles.mealHeaderLeft}>
-            <View 
+            <View
               style={[
                 styles.mealIconContainer,
-                { 
+                {
                   backgroundColor: theme.surface,
                   borderColor: `${mealColor}50`,
                   borderWidth: 1
@@ -458,11 +843,11 @@ const NutritionTrackingScreen: React.FC = () => {
                 {mealType}
               </Text>
               <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.xs / 2 }]}>
-                {totals.calories.toFixed(0)} kcal • {entries.length} {entries.length === 1 ? 'item' : 'items'}
+                {formatNumber(totals.calories)} kcal • {entries.length} {entries.length === 1 ? 'item' : 'items'}
               </Text>
             </View>
           </View>
-          
+
           <TouchableOpacity
             style={[styles.addButton, { backgroundColor: theme.primary }]}
             onPress={() => {
@@ -471,8 +856,10 @@ const NutritionTrackingScreen: React.FC = () => {
             }}
             activeOpacity={0.8}
           >
-            <Icon name="plus" size={16} color="#fff" />
-            <Text style={[textStyles.small, { color: '#fff', marginLeft: 4, fontWeight: '700' }]}>Add</Text>
+            <View style={styles.addButtonContent}>
+              <Icon name="plus-circle" size={20} color="#fff" />
+              <Text style={[textStyles.body, { color: '#fff', marginLeft: 6, fontWeight: '600', fontSize: 14 }]}>Add Food</Text>
+            </View>
           </TouchableOpacity>
         </View>
 
@@ -496,29 +883,37 @@ const NutritionTrackingScreen: React.FC = () => {
                     <Text style={[textStyles.body, { color: theme.text, fontWeight: '500' }]} numberOfLines={1}>
                       {entry.food_name}
                     </Text>
-                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                  {formatNumber(entry.serving_size)} {entry.serving_unit}
-                </Text>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                      {formatNumber(entry.serving_size)} {entry.serving_unit}
+                    </Text>
                   </View>
 
                   {/* Nutrition Info */}
                   <View style={styles.nutritionInfo}>
-                  <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                    {formatNumber(entry.calories)} kcal
-                  </Text>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]} numberOfLines={1}>
-                    P: {formatNumber(entry.protein)}g • C: {formatNumber(entry.carbohydrates)}g • F: {formatNumber(entry.fat)}g
-                  </Text>
+                    <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+                      {formatNumber(entry.calories)} kcal
+                    </Text>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary }]} numberOfLines={1}>
+                      P: {formatNumber(entry.protein)}g • C: {formatNumber(entry.carbohydrates)}g • F: {formatNumber(entry.fat)}g
+                    </Text>
                   </View>
                 </View>
 
                 {/* Actions */}
                 <View style={styles.entryActions}>
-                  <TouchableOpacity style={styles.actionButton}>
-                    <Icon name="pencil" size={18} color={theme.textSecondary} />
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.editButton, { backgroundColor: `${theme.primary}15`, borderColor: `${theme.primary}30` }]}
+                    onPress={() => handleEditEntry(entry)}
+                    activeOpacity={0.7}
+                  >
+                    <Icon name="pencil" size={18} color={theme.primary} />
                   </TouchableOpacity>
-                  <TouchableOpacity style={styles.actionButton}>
-                    <Icon name="delete" size={18} color={theme.error} />
+                  <TouchableOpacity
+                    style={[styles.actionButton, styles.deleteButton, { backgroundColor: `${theme.error}15`, borderColor: `${theme.error}30` }]}
+                    onPress={() => handleDeleteEntry(entry.id)}
+                    activeOpacity={0.7}
+                  >
+                    <Icon name="delete-outline" size={18} color={theme.error} />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -566,26 +961,85 @@ const NutritionTrackingScreen: React.FC = () => {
     );
   };
 
+  // Show loading state
+  if (loading && !refreshing && !dailyLog && !metrics) {
+    return (
+      <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={theme.primary} />
+        <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.md }]}>Loading nutrition data...</Text>
+      </View>
+    );
+  }
+
+  // Show message if metrics are not set (but don't show if modal is already showing)
+  if (!metrics && !loading && !showMetricsModal) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom', 'left', 'right']}>
+        <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }]}>
+          <Icon name="chart-line" size={64} color={theme.textSecondary} style={{ opacity: 0.3, marginBottom: SPACING.lg }} />
+          <Text style={[textStyles.heading3, { color: theme.text, marginBottom: SPACING.md, textAlign: 'center' }]}>
+            Setup Required
+          </Text>
+          <Text style={[textStyles.body, { color: theme.textSecondary, textAlign: 'center', marginBottom: SPACING.xl }]}>
+            To track your nutrition, we need some basic information about you. Please set up your metrics to get started.
+          </Text>
+          <TouchableOpacity
+            style={[styles.modalButton, { backgroundColor: theme.primary, paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md }]}
+            onPress={() => setShowMetricsModal(true)}
+          >
+            <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Set Up Metrics</Text>
+          </TouchableOpacity>
+        </View>
+        {/* User Metrics Modal - render even on setup screen */}
+        <UserMetricsModal
+          visible={showMetricsModal}
+          onClose={() => {
+            // Only allow closing if metrics exist (editing mode)
+            // If metrics don't exist, user must set them
+            if (metrics) {
+              setShowMetricsModal(false);
+            } else {
+              // If no metrics, show alert that metrics are required
+              Alert.alert(
+                'Metrics Required',
+                'You need to set up your metrics to use nutrition tracking. Please fill in the form and save.',
+                [{ text: 'OK' }]
+              );
+            }
+          }}
+          onSave={handleMetricsSaved}
+          initialMetrics={metrics || undefined}
+        />
+      </SafeAreaView>
+    );
+  }
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom', 'left', 'right']}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => navigation.goBack()}
           activeOpacity={0.7}
         >
           <Icon name="arrow-left" size={24} color={theme.text} />
         </TouchableOpacity>
         <Text style={[textStyles.heading3, { color: theme.text, fontWeight: '700' }]}>Nutrition Tracking</Text>
-        <TouchableOpacity activeOpacity={0.7}>
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => setShowMetricsModal(true)}
+        >
           <Icon name="cog" size={24} color={theme.text} />
         </TouchableOpacity>
       </View>
 
-      <ScrollView 
+      <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.primary} />
+        }
       >
         {/* Date Navigation Card */}
         <View style={[styles.dateCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -594,7 +1048,7 @@ const NutritionTrackingScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.viewModeButton,
-                viewMode === 'daily' && { 
+                viewMode === 'daily' && {
                   backgroundColor: theme.surface,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -608,7 +1062,7 @@ const NutritionTrackingScreen: React.FC = () => {
             >
               <Text style={[
                 textStyles.body,
-                { 
+                {
                   color: viewMode === 'daily' ? theme.primary : theme.textSecondary,
                   fontWeight: viewMode === 'daily' ? '700' : '500'
                 }
@@ -619,7 +1073,7 @@ const NutritionTrackingScreen: React.FC = () => {
             <TouchableOpacity
               style={[
                 styles.viewModeButton,
-                viewMode === 'weekly' && { 
+                viewMode === 'weekly' && {
                   backgroundColor: theme.surface,
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -628,12 +1082,18 @@ const NutritionTrackingScreen: React.FC = () => {
                   elevation: 2
                 }
               ]}
-              onPress={() => setViewMode('weekly')}
+              onPress={async () => {
+                setViewMode('weekly');
+                // Force refresh weekly logs when switching to weekly view
+                if (metrics) {
+                  await fetchWeeklyLogs();
+                }
+              }}
               activeOpacity={0.8}
             >
               <Text style={[
                 textStyles.body,
-                { 
+                {
                   color: viewMode === 'weekly' ? theme.primary : theme.textSecondary,
                   fontWeight: viewMode === 'weekly' ? '700' : '500'
                 }
@@ -652,9 +1112,9 @@ const NutritionTrackingScreen: React.FC = () => {
             >
               <Icon name="chevron-left" size={24} color={theme.primary} />
             </TouchableOpacity>
-            
+
             <View style={styles.dateInfo}>
-              <Text 
+              <Text
                 style={[textStyles.heading4, { color: theme.primary, fontWeight: '700' }]}
                 numberOfLines={1}
                 adjustsFontSizeToFit
@@ -673,7 +1133,7 @@ const NutritionTrackingScreen: React.FC = () => {
                 </View>
               )}
             </View>
-            
+
             <TouchableOpacity
               style={[
                 styles.dateArrow,
@@ -691,50 +1151,58 @@ const NutritionTrackingScreen: React.FC = () => {
         {viewMode === 'daily' ? (
           <>
             {/* Macronutrients Overview */}
-            <View style={styles.macroSection}>
-              <MacronutrientCard
-                name="Calories"
-                current={todayLog.total_calories}
-                target={targets.calories}
-                unit=""
-                color="#f97316"
-                mealBreakdown={mealBreakdown}
-              />
-              <MacronutrientCard
-                name="Protein"
-                current={todayLog.total_protein}
-                target={targets.protein}
-                unit="g"
-                color="#3b82f6"
-                icon="P"
-              />
-              <MacronutrientCard
-                name="Carbohydrates"
-                current={todayLog.total_carbohydrates}
-                target={targets.carbohydrates}
-                unit="g"
-                color="#10b981"
-                icon="C"
-              />
-              <MacronutrientCard
-                name="Fat"
-                current={todayLog.total_fat}
-                target={targets.fat}
-                unit="g"
-                color="#f59e0b"
-                icon="F"
-              />
-            </View>
+            {dailyLog && targets && metrics ? (
+              <View style={styles.macroSection}>
+                <MacronutrientCard
+                  name="Calories"
+                  current={dailyLog.total_calories}
+                  target={targets.calories}
+                  unit=""
+                  color="#f97316"
+                  mealBreakdown={mealBreakdown}
+                />
+                <MacronutrientCard
+                  name="Protein"
+                  current={dailyLog.total_protein}
+                  target={targets.protein}
+                  unit="g"
+                  color="#3b82f6"
+                  icon="P"
+                />
+                <MacronutrientCard
+                  name="Carbohydrates"
+                  current={dailyLog.total_carbohydrates}
+                  target={targets.carbohydrates}
+                  unit="g"
+                  color="#10b981"
+                  icon="C"
+                />
+                <MacronutrientCard
+                  name="Fat"
+                  current={dailyLog.total_fat}
+                  target={targets.fat}
+                  unit="g"
+                  color="#f59e0b"
+                  icon="F"
+                />
+              </View>
+            ) : (
+              <View style={[styles.macroSection, { alignItems: 'center', padding: SPACING.xl }]}>
+                <Text style={[textStyles.body, { color: theme.textSecondary }]}>
+                  {!metrics ? 'Please set up your metrics first.' : !targets ? 'Please set your nutrition targets.' : 'No data for this day.'}
+                </Text>
+              </View>
+            )}
 
             {/* Meals Section */}
             <View style={styles.mealsSection}>
               <View style={styles.sectionHeader}>
                 <Icon name="silverware-fork-knife" size={28} color={theme.primary} />
                 <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm }]}>
-                  Today's Meals
+                  {isToday ? "Today's Meals" : "Meals"}
                 </Text>
               </View>
-              
+
               {renderMealSection('breakfast', breakfastEntries)}
               {renderMealSection('lunch', lunchEntries)}
               {renderMealSection('dinner', dinnerEntries)}
@@ -742,7 +1210,9 @@ const NutritionTrackingScreen: React.FC = () => {
             </View>
 
             {/* Micronutrients Section */}
-            <MicronutrientPanel micronutrients={todayLog.micronutrients} />
+            {dailyLog && dailyLog.micronutrients_summary && (
+              <MicronutrientPanel micronutrients={getMicronutrientsList()} />
+            )}
           </>
         ) : (
           <>
@@ -752,34 +1222,225 @@ const NutritionTrackingScreen: React.FC = () => {
         )}
       </ScrollView>
 
-      {/* Add Food Modal */}
-      <Modal
+      {/* Food Selector Modal */}
+      <FoodSelectorModal
         visible={showAddFood}
-        animationType="slide"
+        onClose={() => setShowAddFood(false)}
+        onSelect={handleFoodSelect}
+      />
+
+      {/* Serving Size Dialog */}
+      <Modal
+        visible={showServingDialog}
+        animationType="fade"
         transparent={true}
-        onRequestClose={() => setShowAddFood(false)}
+        onRequestClose={() => {
+          setShowServingDialog(false);
+          setEditingEntry(null);
+          setSelectedFood(null);
+        }}
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
-            <Text style={[textStyles.heading3, { color: theme.text, marginBottom: SPACING.md }]}>
-              Add Food to {selectedMeal}
-            </Text>
-            <Text style={[textStyles.body, { color: theme.text, marginBottom: SPACING.lg }]}>
-              This would open a food search/selector interface.
-              Integration with backend food database needed.
-            </Text>
+            <View style={styles.modalHeader}>
+              <Text style={[textStyles.heading3, { color: theme.text, flex: 1 }]}>
+                {editingEntry ? 'Edit Entry' : 'Add Food'}
+              </Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setShowServingDialog(false);
+                  setEditingEntry(null);
+                  setSelectedFood(null);
+                }}
+                style={{ padding: SPACING.xs }}
+              >
+                <Icon name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={{ maxHeight: 400 }}>
+              {selectedFood && (
+                <View style={{ marginBottom: SPACING.lg }}>
+                  <Text style={[textStyles.heading4, { color: theme.primary, marginBottom: SPACING.xs }]}>
+                    {selectedFood.title}
+                  </Text>
+                  {selectedFood.macronutrients && (
+                    <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                      Per {selectedFood.servingSize || 100}g: {selectedFood.macronutrients.calories} kcal • P: {selectedFood.macronutrients.protein}g • C: {selectedFood.macronutrients.carbohydrates}g • F: {selectedFood.macronutrients.fat}g
+                    </Text>
+                  )}
+                </View>
+              )}
+
+              <View style={{ marginBottom: SPACING.lg }}>
+                <TextInput
+                  label="Serving Size"
+                  value={servingSize.toString()}
+                  onChangeText={setServingSize}
+                  keyboardType="numeric"
+                  placeholder={servingUnit === 'g' ? (selectedFood?.servingSize ? String(selectedFood.servingSize) : '100') : '1'}
+                  helperText={`Enter the amount consumed in ${servingUnit === 'g' ? 'grams' : 'servings'}`}
+                />
+
+                <Text style={[textStyles.body, { color: theme.text, marginBottom: SPACING.xs, marginTop: SPACING.sm }]}>
+                  Unit
+                </Text>
+                <View style={{ flexDirection: 'row', gap: SPACING.md }}>
+                  <TouchableOpacity
+                    style={[
+                      styles.unitButton,
+                      servingUnit === 'g' && { backgroundColor: theme.primary, borderColor: theme.primary },
+                      servingUnit !== 'g' && { borderColor: theme.border }
+                    ]}
+                    onPress={() => {
+                      setServingUnit('g');
+                      // Update serving size to food's actual serving size in grams from database
+                      const defaultGrams = selectedFood?.servingSize || 100;
+                      setServingSize(defaultGrams);
+                    }}
+                  >
+                    <Text style={[
+                      textStyles.body,
+                      { color: servingUnit === 'g' ? '#fff' : theme.text }
+                    ]}>
+                      Grams (g)
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[
+                      styles.unitButton,
+                      servingUnit === 'serving' && { backgroundColor: theme.primary, borderColor: theme.primary },
+                      servingUnit !== 'serving' && { borderColor: theme.border }
+                    ]}
+                    onPress={() => {
+                      setServingUnit('serving');
+                      // Update serving size to default for servings (1)
+                      setServingSize(1);
+                    }}
+                  >
+                    <Text style={[
+                      textStyles.body,
+                      { color: servingUnit === 'serving' ? '#fff' : theme.text }
+                    ]}>
+                      Servings
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* Nutrition Preview */}
+              {selectedFood && !isNaN(Number(servingSize)) && Number(servingSize) > 0 && (
+                <View style={{
+                  backgroundColor: theme.background,
+                  padding: SPACING.md,
+                  borderRadius: BORDER_RADIUS.md,
+                  marginBottom: SPACING.lg
+                }}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.sm }]}>
+                    Nutrition Preview ({servingSize} {servingUnit})
+                  </Text>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                    <View>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Calories</Text>
+                      <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700' }]}>
+                        {(() => {
+                          const size = Number(servingSize);
+                          let multiplier = size;
+                          if (servingUnit === 'g') {
+                            const foodServingSize = selectedFood?.servingSize || 100;
+                            multiplier = size / foodServingSize;
+                          }
+                          const cals = (selectedFood.macronutrients?.calories || 0) * multiplier;
+                          return Math.round(cals);
+                        })()}
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Protein</Text>
+                      <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                        {(() => {
+                          const size = Number(servingSize);
+                          let multiplier = size;
+                          if (servingUnit === 'g') {
+                            const foodServingSize = selectedFood?.servingSize || 100;
+                            multiplier = size / foodServingSize;
+                          }
+                          const protein = (selectedFood.macronutrients?.protein || 0) * multiplier;
+                          return protein.toFixed(1);
+                        })()}g
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Carbs</Text>
+                      <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                        {(() => {
+                          const size = Number(servingSize);
+                          let multiplier = size;
+                          if (servingUnit === 'g') {
+                            const foodServingSize = selectedFood?.servingSize || 100;
+                            multiplier = size / foodServingSize;
+                          }
+                          const carbs = (selectedFood.macronutrients?.carbohydrates || 0) * multiplier;
+                          return carbs.toFixed(1);
+                        })()}g
+                      </Text>
+                    </View>
+                    <View>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Fat</Text>
+                      <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
+                        {(() => {
+                          const size = Number(servingSize);
+                          let multiplier = size;
+                          if (servingUnit === 'g') {
+                            const foodServingSize = selectedFood?.servingSize || 100;
+                            multiplier = size / foodServingSize;
+                          }
+                          const fat = (selectedFood.macronutrients?.fat || 0) * multiplier;
+                          return fat.toFixed(1);
+                        })()}g
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              )}
+            </ScrollView>
+
             <TouchableOpacity
               style={[styles.modalButton, { backgroundColor: theme.primary }]}
-              onPress={() => setShowAddFood(false)}
+              onPress={editingEntry ? handleUpdateEntry : handleConfirmServing}
             >
-              <Text style={[textStyles.body, { color: '#fff', fontWeight: '600' }]}>Close</Text>
+              <Text style={[textStyles.body, { color: '#fff', fontWeight: '600' }]}>
+                {editingEntry ? 'Update Entry' : 'Add Food'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
       </Modal>
 
+      {/* User Metrics Modal */}
+      <UserMetricsModal
+        visible={showMetricsModal}
+        onClose={() => {
+          // Only allow closing if metrics exist (editing mode)
+          // If metrics don't exist, user must set them
+          if (metrics) {
+            setShowMetricsModal(false);
+          } else {
+            // If no metrics, show alert that metrics are required
+            Alert.alert(
+              'Metrics Required',
+              'You need to set up your metrics to use nutrition tracking. Please fill in the form and save.',
+              [{ text: 'OK' }]
+            );
+          }
+        }}
+        onSave={handleMetricsSaved}
+        initialMetrics={metrics || undefined}
+      />
+
       {/* Weekly Day Info Modal */}
-      {selectedWeeklyDay && (
+      {selectedWeeklyDay && targets && (
         <Modal
           visible={selectedWeeklyDay !== null}
           animationType="fade"
@@ -790,28 +1451,28 @@ const NutritionTrackingScreen: React.FC = () => {
             <View style={[styles.weeklyInfoModalContent, { backgroundColor: theme.surface }]}>
               <View style={styles.modalHeader}>
                 <View style={[
-                  styles.modalIconContainer, 
-                  { 
+                  styles.modalIconContainer,
+                  {
                     backgroundColor: theme.surface,
                     borderColor: `${getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color}50`,
                     borderWidth: 1,
                   }
                 ]}>
-                  <Icon 
-                    name={getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).icon as React.ComponentProps<typeof Icon>['name']} 
-                    size={24} 
-                    color={getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color} 
+                  <Icon
+                    name={getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).icon as React.ComponentProps<typeof Icon>['name']}
+                    size={24}
+                    color={getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color}
                   />
                 </View>
                 <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.md, flex: 1 }]}>
                   {getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).title}
                 </Text>
               </View>
-              
+
               <Text style={[textStyles.body, { color: theme.textSecondary, lineHeight: 22, marginTop: SPACING.md }]}>
                 {getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).message}
               </Text>
-              
+
               <View style={styles.weeklyModalStats}>
                 <View style={styles.weeklyModalStatItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Consumed</Text>
@@ -830,7 +1491,7 @@ const NutritionTrackingScreen: React.FC = () => {
                     {selectedWeeklyDay.percentage > 100 ? 'Over' : 'Remaining'}
                   </Text>
                   <Text style={[textStyles.heading4, { color: getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color }]}>
-                    {selectedWeeklyDay.percentage > 100 
+                    {selectedWeeklyDay.percentage > 100
                       ? formatNumber(selectedWeeklyDay.log.total_calories - targets.calories)
                       : formatNumber(targets.calories - selectedWeeklyDay.log.total_calories)
                     } kcal
@@ -969,16 +1630,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   addButton: {
+    borderRadius: BORDER_RADIUS.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  addButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 20,
-    borderRadius: 999, // Ensure fully rounded
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-    elevation: 2,
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm + 2,
+    paddingHorizontal: SPACING.lg,
   },
   entriesList: {
     marginBottom: SPACING.md,
@@ -1011,12 +1675,24 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   entryActions: {
-    flexDirection: 'column',
-    gap: SPACING.xs,
+    flexDirection: 'row',
+    gap: SPACING.sm,
     flexShrink: 0,
+    alignItems: 'center',
   },
   actionButton: {
-    padding: SPACING.xs,
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  editButton: {
+    // Additional styles can be added here if needed
+  },
+  deleteButton: {
+    // Additional styles can be added here if needed
   },
   emptyMeal: {
     alignItems: 'center',
@@ -1146,6 +1822,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.xs,
+  },
+  unitButton: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

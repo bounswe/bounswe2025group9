@@ -1,9 +1,3 @@
-/**
- * Design system for the NutriHub application
- * 
- * This file contains all theme-related constants including colors, 
- * typography, spacing, and other design tokens.
- */
 import { TextStyle, ViewStyle } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
@@ -22,12 +16,12 @@ export const getValidIconName = (
 ): keyof typeof MaterialCommunityIcons.glyphMap => {
   // Default icon if none provided
   if (!name) return 'help-circle';
-  
+
   // Check if the icon name exists in the glyphMap
   if (name in MaterialCommunityIcons.glyphMap) {
     return name as keyof typeof MaterialCommunityIcons.glyphMap;
   }
-  
+
   // Return a fallback icon if the requested one doesn't exist
   return 'help-circle';
 };
@@ -44,7 +38,7 @@ export const PALETTE = {
     DARK: '#2563eb', // Darker blue (matching frontend --color-primary-hover)
     CONTRAST: '#FFFFFF', // Text on primary color
   },
-  
+
   // Secondary/accent colors
   ACCENT: {
     DEFAULT: '#3B82F6', // Blue accent (matching frontend --color-primary)
@@ -52,7 +46,7 @@ export const PALETTE = {
     DARK: '#2563EB',
     CONTRAST: '#FFFFFF', // Text on accent color
   },
-  
+
   // Neutral/grayscale colors for text, backgrounds, etc.
   NEUTRAL: {
     WHITE: '#FFFFFF',
@@ -68,7 +62,7 @@ export const PALETTE = {
     GRAY_800: '#1F2937', // Matching frontend --color-gray-800
     GRAY_900: '#111827', // Matching frontend --color-gray-900
   },
-  
+
   // Semantic colors for feedback/state
   SUCCESS: {
     DEFAULT: '#059669', // Matching frontend --color-success (dark theme)
@@ -94,7 +88,7 @@ export const PALETTE = {
     DARK: '#1D4ED8',
     CONTRAST: '#FFFFFF',
   },
-  
+
   // Special purpose colors
   AMBER: {
     DEFAULT: '#FEF3C7', // Light amber background
@@ -102,7 +96,7 @@ export const PALETTE = {
     DARK: '#78350F',
     CONTRAST: '#78350F', // Dark text on amber
   },
-  
+
   // Dark mode specific
   DARK: {
     BACKGROUND: '#090909', // Matching frontend --color-bg-primary (dark)
@@ -114,7 +108,7 @@ export const PALETTE = {
     TEXT_DISABLED: '#9CA3AF', // NEUTRAL.GRAY_400
     DIVIDER: 'rgba(255, 255, 255, 0.15)',
   },
-  
+
   // Light mode specific
   LIGHT: {
     BACKGROUND: '#fffbeb', // Matching frontend --color-bg-primary (light)
@@ -157,12 +151,12 @@ export interface Theme {
   background: string;
   surface: string;
   surfaceVariant: string;
-  
+
   // Text colors
   text: string;
   textSecondary: string;
   textDisabled: string;
-  
+
   // Interactive elements
   primary: string;
   primaryVariant: string;
@@ -171,11 +165,11 @@ export interface Theme {
   accent: string;
   accentLight: string;
   accentDark: string;
-  
+
   // Borders and dividers
   border: string;
   divider: string;
-  
+
   // Status/feedback colors
   success: string;
   successContrast: string;
@@ -185,7 +179,7 @@ export interface Theme {
   errorContrast: string;
   info: string;
   infoContrast: string;
-  
+
   // Component specific
   card: string;
   headerBackground: string;
@@ -195,7 +189,7 @@ export interface Theme {
   tabBarInactiveColor: string;
   inputBackground: string;
   placeholder: string;
-  
+
   // UI component variants
   badgeBackground: string;
   badgeText: string;
@@ -212,12 +206,12 @@ export const DARK_THEME: Theme = {
   background: PALETTE.DARK.BACKGROUND,
   surface: PALETTE.DARK.SURFACE,
   surfaceVariant: PALETTE.DARK.SURFACE_ELEVATED,
-  
+
   // Text colors
   text: PALETTE.DARK.TEXT,
   textSecondary: PALETTE.DARK.TEXT_SECONDARY,
   textDisabled: PALETTE.DARK.TEXT_DISABLED,
-  
+
   // Interactive elements
   primary: PALETTE.ACCENT.DEFAULT,
   primaryVariant: PALETTE.ACCENT.DARK,
@@ -226,11 +220,11 @@ export const DARK_THEME: Theme = {
   accent: PALETTE.ACCENT.DEFAULT,
   accentLight: PALETTE.ACCENT.LIGHT,
   accentDark: PALETTE.ACCENT.DARK,
-  
+
   // Borders and dividers
   border: PALETTE.DARK.BORDER,
   divider: PALETTE.DARK.DIVIDER,
-  
+
   // Status/feedback colors
   success: PALETTE.SUCCESS.DEFAULT,
   successContrast: PALETTE.SUCCESS.CONTRAST,
@@ -240,7 +234,7 @@ export const DARK_THEME: Theme = {
   errorContrast: PALETTE.ERROR.CONTRAST,
   info: PALETTE.INFO.DEFAULT,
   infoContrast: PALETTE.INFO.CONTRAST,
-  
+
   // Component specific
   card: PALETTE.DARK.SURFACE_ELEVATED,
   headerBackground: PALETTE.DARK.BACKGROUND,
@@ -250,7 +244,7 @@ export const DARK_THEME: Theme = {
   tabBarInactiveColor: PALETTE.COMPONENT.TAB_BAR_INACTIVE_DARK,
   inputBackground: PALETTE.DARK.SURFACE_ELEVATED,
   placeholder: PALETTE.NEUTRAL.GRAY_500,
-  
+
   // UI component variants
   badgeBackground: PALETTE.COMPONENT.BADGE_BACKGROUND_DARK,
   badgeText: PALETTE.COMPONENT.BADGE_TEXT_DARK,
@@ -267,12 +261,12 @@ export const LIGHT_THEME: Theme = {
   background: PALETTE.LIGHT.BACKGROUND,
   surface: PALETTE.LIGHT.SURFACE,
   surfaceVariant: PALETTE.LIGHT.SURFACE_VARIANT,
-  
+
   // Text colors
   text: PALETTE.LIGHT.TEXT,
   textSecondary: PALETTE.LIGHT.TEXT_SECONDARY,
   textDisabled: PALETTE.LIGHT.TEXT_DISABLED,
-  
+
   // Interactive elements
   primary: PALETTE.PRIMARY.DEFAULT,
   primaryVariant: PALETTE.PRIMARY.DARK,
@@ -281,11 +275,11 @@ export const LIGHT_THEME: Theme = {
   accent: PALETTE.ACCENT.DEFAULT,
   accentLight: PALETTE.ACCENT.LIGHT,
   accentDark: PALETTE.ACCENT.DARK,
-  
+
   // Borders and dividers
   border: PALETTE.LIGHT.BORDER,
   divider: PALETTE.LIGHT.DIVIDER,
-  
+
   // Status/feedback colors
   success: PALETTE.SUCCESS.DEFAULT,
   successContrast: PALETTE.SUCCESS.CONTRAST,
@@ -295,7 +289,7 @@ export const LIGHT_THEME: Theme = {
   errorContrast: PALETTE.ERROR.CONTRAST,
   info: PALETTE.INFO.DEFAULT,
   infoContrast: PALETTE.INFO.CONTRAST,
-  
+
   // Component specific
   card: PALETTE.LIGHT.SURFACE,
   headerBackground: PALETTE.LIGHT.HEADER, // Change to green from frontend
@@ -305,7 +299,7 @@ export const LIGHT_THEME: Theme = {
   tabBarInactiveColor: PALETTE.COMPONENT.TAB_BAR_INACTIVE_LIGHT,
   inputBackground: PALETTE.LIGHT.SURFACE,
   placeholder: PALETTE.NEUTRAL.GRAY_500,
-  
+
   // UI component variants
   badgeBackground: PALETTE.COMPONENT.BADGE_BACKGROUND_LIGHT,
   badgeText: PALETTE.COMPONENT.BADGE_TEXT_LIGHT,
@@ -466,5 +460,10 @@ export const createTextStyles = (theme: Theme) => ({
   small: {
     ...TYPOGRAPHY.small,
     color: theme.textSecondary,
+  },
+  button: {
+    ...TYPOGRAPHY.body,
+    fontWeight: '600' as TextStyle['fontWeight'],
+    color: theme.text,
   },
 });

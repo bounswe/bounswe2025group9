@@ -42,6 +42,16 @@ jest.mock('@react-navigation/native', () => ({
     navigate: jest.fn(),
     goBack: jest.fn(),
   })),
+  useFocusEffect: jest.fn((callback) => {
+    // Only call callback once to avoid infinite loops
+    if (typeof callback === 'function') {
+      try {
+        callback();
+      } catch (e) {
+        // Ignore errors in test
+      }
+    }
+  }),
 }));
 
 // Mock SafeAreaView
@@ -62,6 +72,45 @@ jest.mock('../src/components/nutrition/MacronutrientCard', () => {
 // Mock MicronutrientPanel component
 jest.mock('../src/components/nutrition/MicronutrientPanel', () => {
   return 'MockMicronutrientPanel';
+});
+
+// Mock nutrition service
+jest.mock('../src/services/api/nutrition.service', () => ({
+  nutritionService: {
+    getUserMetrics: jest.fn().mockRejectedValue({ status: 404 }),
+    getTargets: jest.fn().mockRejectedValue({ status: 404 }),
+    getDailyLog: jest.fn().mockResolvedValue({
+      date: new Date().toISOString().split('T')[0],
+      total_calories: 0,
+      total_protein: 0,
+      total_carbohydrates: 0,
+      total_fat: 0,
+      micronutrients_summary: {},
+      entries: [],
+    }),
+    getLogsForRange: jest.fn().mockResolvedValue([]),
+  },
+}));
+
+// Mock FoodSelectorModal
+jest.mock('../src/components/food/FoodSelectorModal', () => {
+  return 'MockFoodSelectorModal';
+});
+
+// Mock UserMetricsModal
+jest.mock('../src/components/nutrition/UserMetricsModal', () => {
+  return 'MockUserMetricsModal';
+});
+
+// Mock Alert
+jest.mock('react-native', () => {
+  const RN = jest.requireActual('react-native');
+  return {
+    ...RN,
+    Alert: {
+      alert: jest.fn(),
+    },
+  };
 });
 
 describe('NutritionTrackingScreen', () => {
@@ -99,6 +148,14 @@ describe('NutritionTrackingScreen', () => {
     const monthName = today.toLocaleDateString('en-US', { month: 'short' });
     
     expect(getByText(new RegExp(monthName))).toBeTruthy();
+  });
+
+  it('should render add food buttons for each meal', () => {
+    const { getAllByText } = render(<NutritionTrackingScreen />);
+    
+    // Should have "Add Food" buttons for each meal type
+    const addButtons = getAllByText(/add food/i);
+    expect(addButtons.length).toBeGreaterThan(0);
   });
 });
 

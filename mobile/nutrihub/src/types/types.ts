@@ -24,6 +24,7 @@ export interface FoodItem {
   category: FoodCategoryType;
   imageUrl?: string;
   nutritionScore?: number;
+  servingSize?: number; // Serving size in grams from the database
   macronutrients?: {
     calories: number;
     protein: number;

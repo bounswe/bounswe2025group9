@@ -1,4 +1,4 @@
-import apiClient from './client';
+import { apiClient } from './client';
 import {
   DailyNutritionLog,
   NutritionTargets,
@@ -16,8 +16,11 @@ class NutritionService {
    */
   async getDailyLog(date: string): Promise<DailyNutritionLog> {
     try {
-      const response = await apiClient.get(`/nutrition/logs/${date}/`);
-      return response.data;
+      const response = await apiClient.get<DailyNutritionLog>(`/meal-planner/daily-log/`, {
+        params: { date }
+      });
+      if (response.error) throw new Error(response.error);
+      return response.data!;
     } catch (error) {
       console.error('Error fetching daily nutrition log:', error);
       throw error;
@@ -29,13 +32,29 @@ class NutritionService {
    */
   async getLogsForRange(startDate: string, endDate: string): Promise<DailyNutritionLog[]> {
     try {
-      const response = await apiClient.get('/nutrition/logs/', {
+      const response = await apiClient.get<any>('/meal-planner/daily-log/history/', {
         params: {
           start_date: startDate,
           end_date: endDate,
         },
       });
-      return response.data;
+      if (response.error) throw new Error(response.error);
+      
+      // Handle paginated response from Django REST Framework
+      // The response can be either:
+      // 1. Direct array: [log1, log2, ...]
+      // 2. Paginated object: { count: N, next: null, previous: null, results: [log1, log2, ...] }
+      if (!response.data) {
+        return [];
+      }
+      
+      // Check if it's a paginated response
+      if (response.data.results && Array.isArray(response.data.results)) {
+        return response.data.results;
+      }
+      
+      // Otherwise, treat as direct array
+      return Array.isArray(response.data) ? response.data : [];
     } catch (error) {
       console.error('Error fetching nutrition logs range:', error);
       throw error;
@@ -47,7 +66,17 @@ class NutritionService {
    */
   async getTargets(): Promise<NutritionTargets> {
     try {
-      const response = await apiClient.get('/nutrition/targets/');
+      const response = await apiClient.get<NutritionTargets>('/users/nutrition-targets/');
+      if (response.error) {
+        const error: any = new Error(response.error);
+        error.status = response.status;
+        throw error;
+      }
+      if (!response.data) {
+        const error: any = new Error('No data returned');
+        error.status = 404;
+        throw error;
+      }
       return response.data;
     } catch (error) {
       console.error('Error fetching nutrition targets:', error);
@@ -60,8 +89,9 @@ class NutritionService {
    */
   async updateTargets(targets: Partial<NutritionTargets>): Promise<NutritionTargets> {
     try {
-      const response = await apiClient.put('/nutrition/targets/', targets);
-      return response.data;
+      const response = await apiClient.put<NutritionTargets>('/users/nutrition-targets/', targets);
+      if (response.error) throw new Error(response.error);
+      return response.data!;
     } catch (error) {
       console.error('Error updating nutrition targets:', error);
       throw error;
@@ -73,7 +103,17 @@ class NutritionService {
    */
   async getUserMetrics(): Promise<UserMetrics> {
     try {
-      const response = await apiClient.get('/nutrition/metrics/');
+      const response = await apiClient.get<UserMetrics>('/users/metrics/');
+      if (response.error) {
+        const error: any = new Error(response.error);
+        error.status = response.status;
+        throw error;
+      }
+      if (!response.data) {
+        const error: any = new Error('No data returned');
+        error.status = 404;
+        throw error;
+      }
       return response.data;
     } catch (error) {
       console.error('Error fetching user metrics:', error);
@@ -84,13 +124,11 @@ class NutritionService {
   /**
    * Update user metrics and recalculate targets
    */
-  async updateUserMetrics(metrics: Partial<UserMetrics>): Promise<{
-    metrics: UserMetrics;
-    targets: NutritionTargets;
-  }> {
+  async updateUserMetrics(metrics: Partial<UserMetrics>): Promise<UserMetrics> {
     try {
-      const response = await apiClient.put('/nutrition/metrics/', metrics);
-      return response.data;
+      const response = await apiClient.post<UserMetrics>('/users/metrics/', metrics);
+      if (response.error) throw new Error(response.error);
+      return response.data!;
     } catch (error) {
       console.error('Error updating user metrics:', error);
       throw error;
@@ -108,8 +146,9 @@ class NutritionService {
     meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
   }): Promise<FoodLogEntry> {
     try {
-      const response = await apiClient.post('/nutrition/entries/', data);
-      return response.data;
+      const response = await apiClient.post<FoodLogEntry>('/meal-planner/daily-log/entries/', data);
+      if (response.error) throw new Error(response.error);
+      return response.data!;
     } catch (error) {
       console.error('Error adding food entry:', error);
       throw error;
@@ -128,8 +167,9 @@ class NutritionService {
     }>
   ): Promise<FoodLogEntry> {
     try {
-      const response = await apiClient.patch(`/nutrition/entries/${entryId}/`, data);
-      return response.data;
+      const response = await apiClient.put<FoodLogEntry>(`/meal-planner/daily-log/entries/${entryId}/`, data);
+      if (response.error) throw new Error(response.error);
+      return response.data!;
     } catch (error) {
       console.error('Error updating food entry:', error);
       throw error;
@@ -141,7 +181,8 @@ class NutritionService {
    */
   async deleteFoodEntry(entryId: number): Promise<void> {
     try {
-      await apiClient.delete(`/nutrition/entries/${entryId}/`);
+      const response = await apiClient.delete(`/meal-planner/daily-log/entries/${entryId}/`);
+      if (response.error) throw new Error(response.error);
     } catch (error) {
       console.error('Error deleting food entry:', error);
       throw error;
@@ -149,72 +190,31 @@ class NutritionService {
   }
 
   /**
-   * Calculate nutrition targets based on user metrics
-   * Uses Mifflin-St Jeor equation for BMR and activity multipliers
+   * Reset nutrition targets to auto-calculated values
    */
-  async calculateTargetsFromMetrics(metrics: UserMetrics): Promise<NutritionTargets> {
+  async resetTargets(): Promise<NutritionTargets> {
     try {
-      const response = await apiClient.post('/nutrition/calculate-targets/', metrics);
-      return response.data;
+      const response = await apiClient.post<NutritionTargets>('/users/nutrition-targets/reset/');
+      if (response.error) throw new Error(response.error);
+      return response.data!;
     } catch (error) {
-      console.error('Error calculating targets:', error);
+      console.error('Error resetting targets:', error);
       throw error;
     }
   }
 
   /**
-   * Get weekly nutrition summary
+   * Get nutrition statistics
    */
-  async getWeeklySummary(startDate: string): Promise<{
-    daily_logs: DailyNutritionLog[];
-    averages: {
-      calories: number;
-      protein: number;
-      carbohydrates: number;
-      fat: number;
-    };
-    compliance_rate: number; // Percentage of days meeting targets
-  }> {
+  async getStatistics(period: 'week' | 'month' = 'week'): Promise<any> {
     try {
-      const response = await apiClient.get('/nutrition/weekly-summary/', {
-        params: { start_date: startDate },
+      const response = await apiClient.get('/meal-planner/nutrition-statistics/', {
+        params: { period }
       });
+      if (response.error) throw new Error(response.error);
       return response.data;
     } catch (error) {
-      console.error('Error fetching weekly summary:', error);
-      throw error;
-    }
-  }
-
-  /**
-   * Search foods for adding to nutrition log
-   */
-  async searchFoods(query: string, page: number = 1): Promise<{
-    results: Array<{
-      id: number;
-      name: string;
-      calories: number;
-      protein: number;
-      carbohydrates: number;
-      fat: number;
-      serving_size: number;
-      serving_unit: string;
-      image_url?: string;
-    }>;
-    count: number;
-    next: string | null;
-    previous: string | null;
-  }> {
-    try {
-      const response = await apiClient.get('/foods/', {
-        params: {
-          search: query,
-          page,
-        },
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error searching foods:', error);
+      console.error('Error fetching statistics:', error);
       throw error;
     }
   }
