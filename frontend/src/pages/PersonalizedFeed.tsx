@@ -70,6 +70,7 @@ const PersonalizedFeed = () => {
         try {
             if (!append) {
                 setLoading(true);
+                setPosts([]); // Clear posts immediately to prevent showing stale data
             } else {
                 setLoadingMore(true);
             }
@@ -436,8 +437,85 @@ const PersonalizedFeed = () => {
                         </div>
 
                         {loading ? (
-                            <div className="text-center py-12">
-                                <p className="nh-text">Loading your feed...</p>
+                            <div className="space-y-6">
+                                {[...Array(5)].map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className="nh-card p-6 rounded-lg shadow-md animate-pulse"
+                                    >
+                                        {/* Header skeleton */}
+                                        <div className="flex items-center justify-between mb-4">
+                                            <div className="flex items-center gap-3">
+                                                <div
+                                                    className="w-12 h-12 rounded-full"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                                <div className="space-y-2">
+                                                    <div
+                                                        className="h-4 w-32 rounded"
+                                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                    ></div>
+                                                    <div
+                                                        className="h-3 w-24 rounded"
+                                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                    ></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Title skeleton */}
+                                        <div
+                                            className="h-6 w-3/4 rounded mb-3"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        
+                                        {/* Tags skeleton */}
+                                        <div className="flex gap-2 mb-4">
+                                            <div
+                                                className="h-6 w-20 rounded-full"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div
+                                                className="h-6 w-16 rounded-full"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                        </div>
+                                        
+                                        {/* Body skeleton */}
+                                        <div className="space-y-2 mb-4">
+                                            <div
+                                                className="h-4 w-full rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div
+                                                className="h-4 w-full rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div
+                                                className="h-4 w-5/6 rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                        </div>
+                                        
+                                        {/* Footer skeleton */}
+                                        <div className="flex justify-between items-center pt-4">
+                                            <div
+                                                className="h-4 w-24 rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div className="flex items-center gap-4">
+                                                <div
+                                                    className="h-4 w-16 rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                                <div
+                                                    className="h-4 w-16 rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         ) : filteredPosts.length === 0 ? (
                             <div className="nh-card p-12 text-center">
@@ -470,9 +548,88 @@ const PersonalizedFeed = () => {
 
                                 {/* Infinite scroll trigger */}
                                 {hasMore && (
-                                    <div ref={observerTarget} className="py-8 text-center">
+                                    <div ref={observerTarget} className="py-8">
                                         {loadingMore && (
-                                            <p className="nh-text">Loading more posts...</p>
+                                            <div className="space-y-6">
+                                                {[...Array(3)].map((_, index) => (
+                                                    <div
+                                                        key={`loading-more-${index}`}
+                                                        className="nh-card p-6 rounded-lg shadow-md animate-pulse"
+                                                    >
+                                                        {/* Header skeleton */}
+                                                        <div className="flex items-center justify-between mb-4">
+                                                            <div className="flex items-center gap-3">
+                                                                <div
+                                                                    className="w-12 h-12 rounded-full"
+                                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                                ></div>
+                                                                <div className="space-y-2">
+                                                                    <div
+                                                                        className="h-4 w-32 rounded"
+                                                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                                    ></div>
+                                                                    <div
+                                                                        className="h-3 w-24 rounded"
+                                                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                                    ></div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {/* Title skeleton */}
+                                                        <div
+                                                            className="h-6 w-3/4 rounded mb-3"
+                                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                        ></div>
+                                                        
+                                                        {/* Tags skeleton */}
+                                                        <div className="flex gap-2 mb-4">
+                                                            <div
+                                                                className="h-6 w-20 rounded-full"
+                                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                            ></div>
+                                                            <div
+                                                                className="h-6 w-16 rounded-full"
+                                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                            ></div>
+                                                        </div>
+                                                        
+                                                        {/* Body skeleton */}
+                                                        <div className="space-y-2 mb-4">
+                                                            <div
+                                                                className="h-4 w-full rounded"
+                                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                            ></div>
+                                                            <div
+                                                                className="h-4 w-full rounded"
+                                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                            ></div>
+                                                            <div
+                                                                className="h-4 w-5/6 rounded"
+                                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                            ></div>
+                                                        </div>
+                                                        
+                                                        {/* Footer skeleton */}
+                                                        <div className="flex justify-between items-center pt-4">
+                                                            <div
+                                                                className="h-4 w-24 rounded"
+                                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                            ></div>
+                                                            <div className="flex items-center gap-4">
+                                                                <div
+                                                                    className="h-4 w-16 rounded"
+                                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                                ></div>
+                                                                <div
+                                                                    className="h-4 w-16 rounded"
+                                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                                ></div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         )}
                                     </div>
                                 )}
