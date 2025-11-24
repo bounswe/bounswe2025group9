@@ -519,13 +519,13 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                     >
                       <button
                         onClick={() => handleHelpClick(nutrient)}
-                        className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
+                        className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors z-10"
                         title="View daily recommendation"
                       >
                         <Question size={12} weight="bold" className="text-white" />
                       </button>
-                      <span className="text-[var(--color-text-secondary)] text-sm pr-6">{nutrientName}</span>
-                      <span className="font-semibold text-[var(--color-text-primary)] ml-2">
+                      <span className="text-[var(--color-text-secondary)] text-sm flex-1">{nutrientName}</span>
+                      <span className="font-semibold text-[var(--color-text-primary)] ml-2 pr-8">
                         {amount}{unit}
                       </span>
                     </div>
