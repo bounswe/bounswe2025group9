@@ -24,8 +24,8 @@ from foods.serializers import (
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework import status, generics
 from django.db import transaction
-from django.db.models import Q, F, Case, When, FloatField, Value, ExpressionWrapper
-from django.db.models.functions import Cast
+from django.db.models import Q, F, Case, When, FloatField, Value, ExpressionWrapper, IntegerField
+from django.db.models.functions import Cast, Length
 import requests
 import sys
 import os
@@ -76,8 +76,22 @@ class FoodCatalog(ListAPIView):
         # --- Search term support ---
         search_term = self.request.query_params.get("search", "").strip()
         if search_term:
-            # Filter by name or description containing the search term (case-insensitive)
+            # Filter by name containing the search term (case-insensitive)
             queryset = queryset.filter(Q(name__icontains=search_term))
+            
+            # Annotate with relevance score for ranking
+            # 1 = exact match (highest priority)
+            # 2 = starts with search term
+            # 3 = contains search term (lowest priority)
+            queryset = queryset.annotate(
+                relevance=Case(
+                    When(name__iexact=search_term, then=Value(1)),
+                    When(name__istartswith=search_term, then=Value(2)),
+                    default=Value(3),
+                    output_field=IntegerField(),
+                )
+            )
+            
             if queryset.count() == 0:
                 self.warning = f'No records found for search term: "{search_term}"'
 
@@ -152,10 +166,10 @@ class FoodCatalog(ListAPIView):
 
         sort_by_lower = sort_by.lower() if sort_by else ""
         
+        # Handle cost-nutrition-ratio as a special calculated field
         if sort_by_lower in valid_sort_fields:
             sort_field = valid_sort_fields[sort_by_lower]
             
-            # Handle cost-nutrition-ratio as a special calculated field
             if sort_field == "cost_nutrition_ratio":
                 # Calculate price / nutritionScore ratio
                 # Handle None and zero cases properly
@@ -180,14 +194,29 @@ class FoodCatalog(ListAPIView):
                     )
                 )
                 sort_field = "cost_nutrition_ratio"
-            
-            if order == "asc":
-                queryset = queryset.order_by(sort_field)
+        
+        # If search term is present, prioritize relevance in ordering
+        if search_term:
+            if sort_by_lower in valid_sort_fields:
+                if order == "asc":
+                    # Order by relevance first, then custom field, then name length
+                    queryset = queryset.order_by("relevance", sort_field, Length("name"))
+                else:
+                    # Order by relevance first, then custom field desc, then name length
+                    queryset = queryset.order_by("relevance", f"-{sort_field}", Length("name"))
             else:
-                queryset = queryset.order_by(f"-{sort_field}")
+                # Order by relevance first, then name length (shorter names first), then alphabetically
+                queryset = queryset.order_by("relevance", Length("name"), "name")
         else:
-            # Default sort by id
-            queryset = queryset.order_by("id")
+            # No search term - use normal sorting
+            if sort_by_lower in valid_sort_fields:
+                if order == "asc":
+                    queryset = queryset.order_by(sort_field)
+                else:
+                    queryset = queryset.order_by(f"-{sort_field}")
+            else:
+                # Default sort by id
+                queryset = queryset.order_by("id")
 
         return queryset
 

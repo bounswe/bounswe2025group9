@@ -45,7 +45,7 @@ const SuccessNotification: React.FC<{
   onHide: () => void;
 }> = ({ visible, message, onHide }) => {
   const { theme } = useTheme();
-  
+
   React.useEffect(() => {
     if (visible) {
       const timer = setTimeout(() => {
@@ -54,9 +54,9 @@ const SuccessNotification: React.FC<{
       return () => clearTimeout(timer);
     }
   }, [visible, onHide]);
-  
+
   if (!visible) return null;
-  
+
   return (
     <View style={[styles.notification, { backgroundColor: theme.success }]}>
       <Icon name="check-circle" size={24} color="#FFFFFF" />
@@ -71,16 +71,16 @@ const SuccessNotification: React.FC<{
 const FoodScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<FoodScreenNavigationProp>();
-  
+
   // Layout mode state
   const [layoutMode, setLayoutMode] = useState<'list' | 'grid'>('grid');
-  
+
   // Food data state
   const [foodData, setFoodData] = useState<FoodItem[]>([]);
-  
+
   // Ref to track if we're already fetching
   const isFetchingRef = React.useRef(false);
-  
+
   // Initialize pagination state with useRef to prevent race conditions
   const [pagination, setPagination] = useState({
     page: 1,          // Current page (starting at 1)
@@ -89,31 +89,31 @@ const FoodScreen: React.FC = () => {
     total: 0,         // Total number of items available
     loading: false    // Whether we're currently loading more items
   });
-  
+
   // Use a ref to track the current page to avoid stale state in callbacks
   const currentPageRef = React.useRef(pagination.page);
-  
+
   // Update ref when pagination changes
   React.useEffect(() => {
     currentPageRef.current = pagination.page;
   }, [pagination.page]);
-  
+
   // Loading and error states
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Modal states
   const [filterModalVisible, setFilterModalVisible] = useState<boolean>(false);
   const [selectedFood, setSelectedFood] = useState<FoodItem | null>(null);
   const [detailModalVisible, setDetailModalVisible] = useState<boolean>(false);
   const [proposeFoodModalVisible, setProposeFoodModalVisible] = useState<boolean>(false);
-  
+
   // Notification state
   const [showSuccessNotification, setShowSuccessNotification] = useState<boolean>(false);
   const [notificationMessage, setNotificationMessage] = useState<string>('');
-  
-  // Initialize food filters hook (but we'll skip client-side sorting since backend handles it)
+
+  // Initialize food filters hook
   const {
     filters,
     filteredItems: clientFilteredItems,
@@ -208,10 +208,10 @@ const FoodScreen: React.FC = () => {
       console.log('Already fetching data, ignoring request');
       return;
     }
-    
+
     try {
       isFetchingRef.current = true;
-      
+
       if (loadMore) {
         if (!pagination.hasMore || pagination.loading) {
           console.log('No more items or already loading, skipping fetch');
@@ -225,7 +225,7 @@ const FoodScreen: React.FC = () => {
         setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
         currentPageRef.current = 1;
       }
-      
+
       // Convert category filter to array if present
       const categoryFilters = filters.category ? [filters.category] : undefined;
       
@@ -240,20 +240,20 @@ const FoodScreen: React.FC = () => {
       console.log(`Fetching food data: loadMore=${loadMore}, page=${pageToFetch}, limit=${pagination.limit}, sortBy=${sortBy}, sortOrder=${sortOrder}`);
       
       const response = await getFoodCatalog(
-        pagination.limit, 
-        offset, 
+        pagination.limit,
+        offset,
         categoryFilters,
         filters.name, // Pass the search term
         sortBy,       // Pass the sort field
         sortOrder     // Pass the sort order
       );
-      
+
       if (response.error) {
         console.error('API Error:', response.error);
         setError(response.error);
         return;
       }
-      
+
       if (!response.data || !Array.isArray(response.data)) {
         console.error('Invalid response data:', response.data);
         setError('Invalid response format from server');
@@ -262,7 +262,7 @@ const FoodScreen: React.FC = () => {
 
       const responseData = response.data;
       console.log(`Received ${responseData.length} items, hasMore=${response.hasMore}, total=${response.total}`);
-      
+
       // Log the first few IDs for debugging
       if (responseData.length > 0) {
         console.log('First few item IDs:', responseData.slice(0, 5).map(item => item.id));
@@ -275,44 +275,44 @@ const FoodScreen: React.FC = () => {
         setFoodData(prevData => {
           // Create a Set of existing IDs for efficient lookups
           const existingIds = new Set(prevData.map(item => item.id));
-          
+
           // Filter out duplicates
           const newItems = responseData.filter(item => !existingIds.has(item.id));
           console.log(`Adding ${newItems.length} new items to existing ${prevData.length} items`);
-          
+
           // Always update the page number for next load
           const nextPage = pageToFetch + 1;
           console.log(`Setting next page to ${nextPage}`);
-          
+
           // Update pagination state
-          setPagination(prev => ({ 
-            ...prev, 
+          setPagination(prev => ({
+            ...prev,
             page: nextPage,
             hasMore: response.hasMore,
             total: response.total,
             loading: false
           }));
-          
+
           // Update the ref
           currentPageRef.current = nextPage;
-          
+
           // Return the combined array
           return [...prevData, ...newItems];
         });
       } else {
         // Replace all data for initial load or refresh
         setFoodData(responseData);
-        
+
         // Update pagination state for first load
         const nextPage = 2; // Since we just loaded page 1
-        setPagination(prev => ({ 
-          ...prev, 
+        setPagination(prev => ({
+          ...prev,
           page: nextPage,
           hasMore: response.hasMore,
           total: response.total,
           loading: false
         }));
-        
+
         // Update the ref
         currentPageRef.current = nextPage;
       }
@@ -334,12 +334,12 @@ const FoodScreen: React.FC = () => {
       console.log('Loading initial food data');
       await fetchFoodData(false);
     };
-    
+
     loadInitialData();
     // We only want this to run once on mount, so no dependencies
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-  
+
   // Create a separate effect to handle category filter changes
   useEffect(() => {
     // Skip on initial mount since we already fetch data in the other useEffect
@@ -379,48 +379,59 @@ const FoodScreen: React.FC = () => {
       });
       return;
     }
-    
+
     console.log('Loading more items from page:', currentPageRef.current);
     fetchFoodData(true);
   }, [fetchFoodData, pagination.hasMore, isLoading, pagination.loading]);
-  
+
   // Toggle layout mode
   const toggleLayoutMode = () => {
     setLayoutMode(prev => (prev === 'list' ? 'grid' : 'list'));
   };
-  
+
   // Handle food item press
   const handleFoodItemPress = useCallback((item: FoodItem) => {
     setSelectedFood(item);
     setDetailModalVisible(true);
   }, []);
-  
+
   // Handle modal close
   const handleModalClose = useCallback(() => {
     setDetailModalVisible(false);
     setSelectedFood(null);
   }, []);
-  
+
   // Handle filter application
   const handleApplyFilters = useCallback((newFilters: FoodFilters) => {
     setCategoryFilter(newFilters.category);
     setDietaryOptions(newFilters.dietaryOptions || []);
     setPriceRange(newFilters.minPrice, newFilters.maxPrice);
     setNutritionScoreRange(newFilters.minNutritionScore, newFilters.maxNutritionScore);
-    
+
     // Reset pagination when filters change
     setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
     currentPageRef.current = 1;
     // Clear food data to avoid mixing results from different filters
     setFoodData([]);
   }, [setCategoryFilter, setDietaryOptions, setPriceRange, setNutritionScoreRange]);
-  
+
   // Handle propose food submission
   const handleProposeFoodSubmit = useCallback(async (data: FoodProposalData) => {
     setProposeFoodModalVisible(false);
     setIsLoading(true);
-    
+
     try {
+      // Convert micronutrients from strings to numbers
+      const micronutrients: Record<string, number> = {};
+      if (data.micronutrients) {
+        Object.entries(data.micronutrients).forEach(([key, value]) => {
+          const numValue = Number(value);
+          if (!isNaN(numValue) && value.trim() !== '') {
+            micronutrients[key] = numValue;
+          }
+        });
+      }
+
       // Convert the data to the format expected by the API
       const proposalData = {
         name: data.name,
@@ -430,15 +441,17 @@ const FoodScreen: React.FC = () => {
         proteinContent: Number(data.protein) || 0,
         fatContent: Number(data.fat) || 0,
         carbohydrateContent: Number(data.carbohydrates) || 0,
-        fiberContent: data.fiber ? Number(data.fiber) : undefined,
-        sugarContent: data.sugar ? Number(data.sugar) : undefined,
-        dietaryOptions: [], // Not provided in the current form
-        nutritionScore: 70, // Default score - could be calculated based on nutrients
-        allergens: [],
+        // Optional fields
+        dietaryOptions: data.dietaryOptions || [],
+        imageUrl: data.imageUrl || undefined,
+        basePrice: data.basePrice ? Number(data.basePrice) : undefined,
+        priceUnit: data.priceUnit || 'per_100g',
+        currency: data.currency || 'TRY',
+        micronutrients: Object.keys(micronutrients).length > 0 ? micronutrients : undefined,
       };
-      
+
       const response = await submitFoodProposal(proposalData);
-      
+
       if (response.error) {
         Alert.alert('Error', response.error);
       } else {
@@ -451,13 +464,13 @@ const FoodScreen: React.FC = () => {
       setIsLoading(false);
     }
   }, []);
-  
+
   // Remove a specific dietary option
   const removeDietaryOption = useCallback((option: DietaryOptionType) => {
     const currentOptions = filters.dietaryOptions || [];
     setDietaryOptions(currentOptions.filter(o => o !== option));
   }, [filters.dietaryOptions, setDietaryOptions]);
-  
+
   // Handle pull-to-refresh
   const onRefresh = useCallback(() => {
     // Don't try to refresh if we're already fetching
@@ -465,10 +478,10 @@ const FoodScreen: React.FC = () => {
       console.log('Already fetching, skipping refresh');
       return;
     }
-    
+
     console.log('Refreshing food data');
     setRefreshing(true);
-    
+
     // Reset pagination state
     setPagination(prev => ({
       ...prev,
@@ -477,22 +490,22 @@ const FoodScreen: React.FC = () => {
       loading: false
     }));
     currentPageRef.current = 1;
-    
+
     // Clear food data to avoid mixing results
     setFoodData([]);
-    
+
     // Fetch fresh data
     fetchFoodData(false)
       .finally(() => {
         setRefreshing(false);
       });
   }, [fetchFoodData]);
-  
+
   // Check if filters are active
-  const hasActiveFilters = filters.name || filters.category || (filters.dietaryOptions?.length ?? 0) > 0 || 
-    filters.minPrice !== undefined || filters.maxPrice !== undefined || 
+  const hasActiveFilters = filters.name || filters.category || (filters.dietaryOptions?.length ?? 0) > 0 ||
+    filters.minPrice !== undefined || filters.maxPrice !== undefined ||
     filters.minNutritionScore !== undefined || filters.maxNutritionScore !== undefined;
-  
+
   // Render food item
   const renderFoodItem = useCallback(({ item }: ListRenderItemInfo<FoodItem>) => (
     <FoodItemComponent
@@ -505,7 +518,7 @@ const FoodScreen: React.FC = () => {
       style={layoutMode === 'grid' ? styles.gridItem : styles.listItem}
     />
   ), [layoutMode, handleFoodItemPress]);
-  
+
   // Render footer for infinite loading
   const renderFooter = useCallback(() => {
     return (
@@ -527,13 +540,13 @@ const FoodScreen: React.FC = () => {
       </View>
     );
   }, [pagination.loading, pagination.hasMore, pagination.total, foodData.length, theme.primary, textStyles.caption]);
-  
+
   // Generate key extractor for list items
   const keyExtractor = useCallback((item: FoodItem) => item.id.toString(), []);
-  
+
   // Use a ref to track the last onEndReached call time
   const lastEndReachedCallRef = React.useRef<number | null>(null);
-  
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Success Notification */}
@@ -542,7 +555,7 @@ const FoodScreen: React.FC = () => {
         message={notificationMessage}
         onHide={() => setShowSuccessNotification(false)}
       />
-      
+
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
@@ -565,7 +578,7 @@ const FoodScreen: React.FC = () => {
             />
           </View>
         </View>
-        
+
         {/* Search and filter bar */}
         <View style={styles.searchContainer}>
           <TextInput
@@ -577,18 +590,18 @@ const FoodScreen: React.FC = () => {
             onClear={() => setNameFilter('')}
             containerStyle={styles.searchInput}
           />
-          
+
           <TouchableOpacity
             style={[styles.layoutButton, { backgroundColor: theme.card }]}
             onPress={toggleLayoutMode}
           >
-            <Icon 
-              name={layoutMode === 'grid' ? 'view-list' : 'view-grid'} 
-              size={24} 
-              color={theme.primary} 
+            <Icon
+              name={layoutMode === 'grid' ? 'view-list' : 'view-grid'}
+              size={24}
+              color={theme.primary}
             />
           </TouchableOpacity>
-          
+
           <TouchableOpacity
             style={[styles.filterButton, { backgroundColor: theme.card }]}
             onPress={() => setFilterModalVisible(true)}
@@ -599,13 +612,13 @@ const FoodScreen: React.FC = () => {
             )}
           </TouchableOpacity>
         </View>
-        
+
         {/* Active filters display */}
         {hasActiveFilters && (
           <View style={styles.activeFiltersContainer}>
             <Text style={[styles.activeFiltersLabel, textStyles.caption]}>Active filters:</Text>
-            <ScrollView 
-              horizontal 
+            <ScrollView
+              horizontal
               showsHorizontalScrollIndicator={false}
               contentContainerStyle={styles.activeFiltersScroll}
             >
@@ -617,15 +630,15 @@ const FoodScreen: React.FC = () => {
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
                     {filters.category}
                   </Text>
-                  <Icon 
-                    name="close" 
-                    size={14} 
-                    color={theme.error} 
-                    style={styles.activeFilterIcon} 
+                  <Icon
+                    name="close"
+                    size={14}
+                    color={theme.error}
+                    style={styles.activeFilterIcon}
                   />
                 </TouchableOpacity>
               )}
-              
+
               {filters.dietaryOptions?.map(option => (
                 <TouchableOpacity
                   key={option}
@@ -635,15 +648,15 @@ const FoodScreen: React.FC = () => {
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
                     {option}
                   </Text>
-                  <Icon 
-                    name="close" 
-                    size={14} 
-                    color={theme.error} 
-                    style={styles.activeFilterIcon} 
+                  <Icon
+                    name="close"
+                    size={14}
+                    color={theme.error}
+                    style={styles.activeFilterIcon}
                   />
                 </TouchableOpacity>
               ))}
-              
+
               {(filters.minPrice !== undefined || filters.maxPrice !== undefined) && (
                 <TouchableOpacity
                   style={[styles.activeFilterChip, { backgroundColor: theme.errorContainerBg }]}
@@ -652,15 +665,15 @@ const FoodScreen: React.FC = () => {
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
                     Price: {filters.minPrice || 0} - {filters.maxPrice || '∞'}
                   </Text>
-                  <Icon 
-                    name="close" 
-                    size={14} 
-                    color={theme.error} 
-                    style={styles.activeFilterIcon} 
+                  <Icon
+                    name="close"
+                    size={14}
+                    color={theme.error}
+                    style={styles.activeFilterIcon}
                   />
                 </TouchableOpacity>
               )}
-              
+
               {(filters.minNutritionScore !== undefined || filters.maxNutritionScore !== undefined) && (
                 <TouchableOpacity
                   style={[styles.activeFilterChip, { backgroundColor: theme.errorContainerBg }]}
@@ -669,23 +682,23 @@ const FoodScreen: React.FC = () => {
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
                     Nutrition: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
                   </Text>
-                  <Icon 
-                    name="close" 
-                    size={14} 
-                    color={theme.error} 
-                    style={styles.activeFilterIcon} 
+                  <Icon
+                    name="close"
+                    size={14}
+                    color={theme.error}
+                    style={styles.activeFilterIcon}
                   />
                 </TouchableOpacity>
               )}
             </ScrollView>
           </View>
         )}
-        
+
         {/* Sort options */}
         <View style={styles.sortOptionsContainer}>
           <Text style={[styles.sortByText, textStyles.body]}>Sort by:</Text>
-          <ScrollView 
-            horizontal 
+          <ScrollView
+            horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.scrollableOptions}
           >
@@ -695,8 +708,8 @@ const FoodScreen: React.FC = () => {
                 style={[
                   styles.sortOption,
                   {
-                    backgroundColor: sortOption === value 
-                      ? theme.sortOptionActiveBg 
+                    backgroundColor: sortOption === value
+                      ? theme.sortOptionActiveBg
                       : theme.sortOptionInactiveBg,
                   },
                 ]}
@@ -707,10 +720,10 @@ const FoodScreen: React.FC = () => {
                     styles.sortOptionText,
                     textStyles.caption,
                     {
-                      color: sortOption === value 
+                      color: sortOption === value
                         ? PALETTE.ACCENT.CONTRAST
                         : theme.text,
-                        fontWeight: sortOption === value ? '500' : '400',
+                      fontWeight: sortOption === value ? '500' : '400',
                     },
                   ]}
                 >
@@ -721,7 +734,7 @@ const FoodScreen: React.FC = () => {
           </ScrollView>
         </View>
       </View>
-      
+
       {/* Content */}
       {isLoading ? (
         <View style={styles.loadingContainer}>
@@ -740,11 +753,11 @@ const FoodScreen: React.FC = () => {
             style={styles.emptyButton}
             iconName="refresh"
           />
-          <TouchableOpacity 
-            style={styles.debugButton} 
+          <TouchableOpacity
+            style={styles.debugButton}
             onPress={() => {
               Alert.alert(
-                "Debug Info", 
+                "Debug Info",
                 `API URL: ${API_CONFIG.BASE_URL}\nEndpoint: /foods\nCategory Filter: ${filters.category || 'None'}`
               );
               fetchFoodData();
@@ -773,13 +786,13 @@ const FoodScreen: React.FC = () => {
           onEndReached={() => {
             // Prevent edge bounce triggering loads on iOS
             if (foodData.length === 0) return;
-            
+
             console.log("Reached end of list, debouncing load more call...");
             // Prevent multiple triggers with debouncing
             if (!pagination.loading && pagination.hasMore && !isFetchingRef.current) {
               // Use a ref to track the last onEndReached call time
-              if (!lastEndReachedCallRef.current || 
-                  Date.now() - lastEndReachedCallRef.current > 1000) {
+              if (!lastEndReachedCallRef.current ||
+                Date.now() - lastEndReachedCallRef.current > 1000) {
                 lastEndReachedCallRef.current = Date.now();
                 handleLoadMore();
               } else {
@@ -794,7 +807,7 @@ const FoodScreen: React.FC = () => {
               <Icon name="food-off" size={64} color={theme.textSecondary} />
               <Text style={[styles.emptyTitle, textStyles.heading4]}>No foods found</Text>
               <Text style={[styles.emptyText, textStyles.body]}>
-                {hasActiveFilters 
+                {hasActiveFilters
                   ? 'Try adjusting your filters to see more results'
                   : 'Start by adding some foods to the catalog'}
               </Text>
@@ -809,14 +822,14 @@ const FoodScreen: React.FC = () => {
           }
         />
       )}
-      
+
       {/* Food Detail Modal */}
       <FoodDetailModal
         food={selectedFood}
         visible={detailModalVisible}
         onClose={handleModalClose}
       />
-      
+
       {/* Filter Modal */}
       <FoodFilterModal
         visible={filterModalVisible}
@@ -824,7 +837,7 @@ const FoodScreen: React.FC = () => {
         filters={filters}
         onApplyFilters={handleApplyFilters}
       />
-      
+
       {/* Propose Food Modal */}
       <ProposeFoodModal
         visible={proposeFoodModalVisible}
@@ -921,7 +934,7 @@ const styles = StyleSheet.create({
     marginRight: SPACING.sm,
   },
   scrollableOptions: {
-    paddingRight: SPACING.lg, 
+    paddingRight: SPACING.lg,
   },
   sortOption: {
     paddingVertical: SPACING.xs,
