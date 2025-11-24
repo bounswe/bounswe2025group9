@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Food } from '../../lib/apiClient';
 import FoodDetail from '../foods/FoodDetail';
 import FoodSelector from '../../components/FoodSelector';
@@ -41,12 +41,35 @@ let MealPlans : { [key:string] : weeklyMealPlan} = {
     },
 };
 
-const MealPlanner = () => {
-    const [dietaryPreference, setDietaryPreference] = useState('high-protein');
+interface MealPlannerProps {
+  profileLayout?: boolean; // When true, moves left sidebar to right
+  dietaryPreference?: string;
+  setDietaryPreference?: (pref: string) => void;
+  planDuration?: 'weekly' | 'daily';
+  setPlanDuration?: (duration: 'weekly' | 'daily') => void;
+  onSaveRef?: React.MutableRefObject<(() => void) | null>; // Ref to expose save handler
+}
+
+const MealPlanner = ({ 
+  profileLayout = false,
+  dietaryPreference: externalDietaryPreference,
+  setDietaryPreference: externalSetDietaryPreference,
+  planDuration: externalPlanDuration,
+  setPlanDuration: externalSetPlanDuration,
+  onSaveRef
+}: MealPlannerProps = {}) => {
+    const [internalDietaryPreference, setInternalDietaryPreference] = useState('high-protein');
+    const [internalPlanDuration, setInternalPlanDuration] = useState<'weekly' | 'daily'>('weekly');
+    
+    // Use external state if provided, otherwise use internal state
+    const dietaryPreference = externalDietaryPreference ?? internalDietaryPreference;
+    const setDietaryPreference = externalSetDietaryPreference ?? setInternalDietaryPreference;
+    const planDuration = externalPlanDuration ?? internalPlanDuration;
+    const setPlanDuration = externalSetPlanDuration ?? setInternalPlanDuration;
+    
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [editingMeal, setEditingMeal] = useState<{day: string, index: number} | null>(null);
     const [successMessage, setSuccessMessage] = useState('');
-    const [planDuration, setPlanDuration] = useState<'weekly' | 'daily'>('weekly');
     
     // Initialize with predefined meal plans
     const [localMealPlans, setLocalMealPlans] = useState<{ [key:string] : weeklyMealPlan}>(MealPlans);
@@ -60,7 +83,7 @@ const MealPlanner = () => {
         }
     };
 
-    const handleSaveMealPlan = () => {
+    const handleSaveMealPlan = useCallback(() => {
         // Build meal plan data from localMealPlans
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
@@ -102,7 +125,14 @@ const MealPlanner = () => {
             .catch(err => {
                 console.error('Error saving meal plan:', err);
             });
-    };
+    }, [dietaryPreference, localMealPlans]);
+
+    // Expose save handler via ref if provided
+    useEffect(() => {
+        if (onSaveRef) {
+            onSaveRef.current = handleSaveMealPlan;
+        }
+    }, [onSaveRef, handleSaveMealPlan]);
 
     const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const meals = ['Breakfast', 'Lunch', 'Dinner'];
@@ -174,67 +204,69 @@ const MealPlanner = () => {
                 )}
 
                 <div className="flex flex-col md:flex-row gap-6">
-                    {/* Left column - Filters */}
-                    <div className="w-full md:w-1/5">
-                        <div className="sticky top-20">
-                            <h3 className="nh-subtitle mb-4 flex items-center gap-2">
-                                <Funnel size={20} weight="fill" className="text-primary" />
-                                Dietary Preferences
-                            </h3>
-                            <div className="flex flex-col gap-3">
-                                <button
-                                    onClick={() => setDietaryPreference('high-protein')}
-                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                                    style={{
-                                        backgroundColor: dietaryPreference === 'high-protein'
-                                            ? getTagStyle('high-protein').activeBg
-                                            : getTagStyle('high-protein').bg,
-                                        color: dietaryPreference === 'high-protein'
-                                            ? getTagStyle('high-protein').activeText
-                                            : getTagStyle('high-protein').text
-                                    }}
-                                >
-                                    <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">High-Protein</span>
-                                </button>
+                    {/* Left column - Filters (only show if not profileLayout) */}
+                    {!profileLayout && (
+                        <div className="w-full md:w-1/5">
+                            <div className="sticky top-20">
+                                <h3 className="nh-subtitle mb-4 flex items-center gap-2">
+                                    <Funnel size={20} weight="fill" className="text-primary" />
+                                    Dietary Preferences
+                                </h3>
+                                <div className="flex flex-col gap-3">
+                                    <button
+                                        onClick={() => setDietaryPreference('high-protein')}
+                                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                        style={{
+                                            backgroundColor: dietaryPreference === 'high-protein'
+                                                ? getTagStyle('high-protein').activeBg
+                                                : getTagStyle('high-protein').bg,
+                                            color: dietaryPreference === 'high-protein'
+                                                ? getTagStyle('high-protein').activeText
+                                                : getTagStyle('high-protein').text
+                                        }}
+                                    >
+                                        <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
+                                        <span className="flex-grow text-center">High-Protein</span>
+                                    </button>
 
-                                <button
-                                    onClick={() => setDietaryPreference('halal')}
-                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                                    style={{
-                                        backgroundColor: dietaryPreference === 'halal'
-                                            ? getTagStyle('halal').activeBg
-                                            : getTagStyle('halal').bg,
-                                        color: dietaryPreference === 'halal'
-                                            ? getTagStyle('halal').activeText
-                                            : getTagStyle('halal').text
-                                    }}
-                                >
-                                    <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Halal</span>
-                                </button>
+                                    <button
+                                        onClick={() => setDietaryPreference('halal')}
+                                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                        style={{
+                                            backgroundColor: dietaryPreference === 'halal'
+                                                ? getTagStyle('halal').activeBg
+                                                : getTagStyle('halal').bg,
+                                            color: dietaryPreference === 'halal'
+                                                ? getTagStyle('halal').activeText
+                                                : getTagStyle('halal').text
+                                        }}
+                                    >
+                                        <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
+                                        <span className="flex-grow text-center">Halal</span>
+                                    </button>
 
-                                <button
-                                    onClick={() => setDietaryPreference('vegan')}
-                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
-                                    style={{
-                                        backgroundColor: dietaryPreference === 'vegan'
-                                            ? getTagStyle('vegan').activeBg
-                                            : getTagStyle('vegan').bg,
-                                        color: dietaryPreference === 'vegan'
-                                            ? getTagStyle('vegan').activeText
-                                            : getTagStyle('vegan').text
-                                    }}
-                                >
-                                    <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Vegan</span>
-                                </button>
+                                    <button
+                                        onClick={() => setDietaryPreference('vegan')}
+                                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                                        style={{
+                                            backgroundColor: dietaryPreference === 'vegan'
+                                                ? getTagStyle('vegan').activeBg
+                                                : getTagStyle('vegan').bg,
+                                            color: dietaryPreference === 'vegan'
+                                                ? getTagStyle('vegan').activeText
+                                                : getTagStyle('vegan').text
+                                        }}
+                                    >
+                                        <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
+                                        <span className="flex-grow text-center">Vegan</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Middle column - Meal Plan */}
-                    <div className="w-full md:w-3/5">
+                    <div className={profileLayout ? "w-full" : "w-full md:w-3/5"}>
                         <div className="mb-6">
                             <h2 className="nh-title">{planTitle}</h2>
                             <p className="nh-text mt-2">
@@ -320,48 +352,40 @@ const MealPlanner = () => {
                         
                     </div>
 
-                    {/* Right column - Actions */}
-                    <div className="w-full md:w-1/5">
-                        <div className="sticky top-20 flex flex-col gap-4">
-                            <div className="nh-card">
-                                <h3 className="nh-subtitle mb-4 text-sm">Plan Settings</h3>
-                                <div className="flex flex-col space-y-3">
-                                    <div className="flex flex-col space-y-2">
-                                        <label className="text-xs font-medium nh-text">Plan Duration</label>
-                                        <select 
-                                            value={planDuration}
-                                            onChange={(e) => setPlanDuration(e.target.value as 'weekly' | 'daily')}
-                                            className="w-full px-3 py-2 text-sm rounded-md border focus:ring-primary focus:border-primary nh-text"
-                                            style={{
-                                                backgroundColor: 'var(--dietary-option-bg)',
-                                                borderColor: 'var(--dietary-option-border)'
-                                            }}
-                                        >
-                                            <option value="weekly">Weekly</option>
-                                            <option value="daily">Daily</option>
-                                        </select>
+                    {/* Right column - Actions (only show if not profileLayout) */}
+                    {!profileLayout && (
+                        <div className="w-full md:w-1/5">
+                            <div className="sticky top-20 flex flex-col gap-4">
+                                <div className="nh-card">
+                                    <h3 className="nh-subtitle mb-4 text-sm">Plan Settings</h3>
+                                    <div className="flex flex-col space-y-3">
+                                        <div className="flex flex-col space-y-2">
+                                            <label className="text-xs font-medium nh-text">Plan Duration</label>
+                                            <select 
+                                                value={planDuration}
+                                                onChange={(e) => setPlanDuration(e.target.value as 'weekly' | 'daily')}
+                                                className="w-full px-3 py-2 text-sm rounded-md border focus:ring-primary focus:border-primary nh-text"
+                                                style={{
+                                                    backgroundColor: 'var(--dietary-option-bg)',
+                                                    borderColor: 'var(--dietary-option-border)'
+                                                }}
+                                            >
+                                                <option value="weekly">Weekly</option>
+                                                <option value="daily">Daily</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            
-                            <div className="nh-card rounded-lg shadow-md">
-                                <h3 className="nh-subtitle mb-3 text-sm">Planning Tips</h3>
-                                <ul className="nh-text text-xs space-y-2">
-                                    <li>• Consider your daily calorie needs</li>
-                                    <li>• Include a variety of food groups</li>
-                                    <li>• Plan for leftovers to save time</li>
-                                    <li>• Check your available cooking time</li>
-                                </ul>
-                            </div>
 
-                            <button
-                                onClick={handleSaveMealPlan}
-                                className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium"
-                            >
-                                Save Meal Plan
-                            </button>
+                                <button
+                                    onClick={handleSaveMealPlan}
+                                    className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium"
+                                >
+                                    Save Meal Plan
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
 
                 <FoodDetail 

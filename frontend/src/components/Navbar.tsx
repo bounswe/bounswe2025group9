@@ -173,8 +173,8 @@ const Navbar = () => {
                             <Link to="/forum" className="text-white hover:text-gray-300 whitespace-nowrap">
                                 Forum
                             </Link>
-                            <Link to="/mealplanner" className="text-white hover:text-gray-300 whitespace-nowrap">
-                                Meal Planner
+                            <Link to="/nutrition" className="text-white hover:text-gray-300 whitespace-nowrap">
+                                Nutrition Tracking
                             </Link>
                             {(user?.is_staff || user?.is_superuser) && (
                                 <Link to="/admin/moderation" className="text-white hover:text-gray-300 whitespace-nowrap">
