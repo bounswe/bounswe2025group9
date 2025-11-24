@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { Food } from '../../lib/apiClient';
 import FoodDetail from '../foods/FoodDetail';
 import FoodSelector from '../../components/FoodSelector';
-import { PencilSimple, Funnel, CalendarBlank, Hamburger } from '@phosphor-icons/react';
+import { PencilSimple, Funnel, CalendarBlank, Hamburger, ForkKnife } from '@phosphor-icons/react';
 import {apiClient} from '../../lib/apiClient';
 import { Brocolli, Goat, Pork, ChickenBreast, Beef, RiceNoodles, Anchovies, Tilapia, RiceCakes, Egg, MultigrainBread, Oatmeal, Tofu, LentilSoup, Quinoa, GreekYogurt, CottageCheese } from './MockFoods';
 
@@ -48,6 +48,7 @@ interface MealPlannerProps {
   planDuration?: 'weekly' | 'daily';
   setPlanDuration?: (duration: 'weekly' | 'daily') => void;
   onSaveRef?: React.MutableRefObject<(() => void) | null>; // Ref to expose save handler
+  onLogRef?: React.MutableRefObject<(() => void) | null>; // Ref to expose log handler
 }
 
 const MealPlanner = ({ 
@@ -56,7 +57,8 @@ const MealPlanner = ({
   setDietaryPreference: externalSetDietaryPreference,
   planDuration: externalPlanDuration,
   setPlanDuration: externalSetPlanDuration,
-  onSaveRef
+  onSaveRef,
+  onLogRef
 }: MealPlannerProps = {}) => {
     const [internalDietaryPreference, setInternalDietaryPreference] = useState('high-protein');
     const [internalPlanDuration, setInternalPlanDuration] = useState<'weekly' | 'daily'>('weekly');
@@ -70,8 +72,11 @@ const MealPlanner = ({
     const [selectedFood, setSelectedFood] = useState<Food | null>(null);
     const [editingMeal, setEditingMeal] = useState<{day: string, index: number} | null>(null);
     const [successMessage, setSuccessMessage] = useState('');
+    const [errorMessage, setErrorMessage] = useState('');
+    const [isLogging, setIsLogging] = useState(false);
+    const [savedMealPlanId, setSavedMealPlanId] = useState<number | null>(null);
     
-    // Initialize with predefined meal plans
+    // Initialize with predefined meal plans (now using real database food IDs)
     const [localMealPlans, setLocalMealPlans] = useState<{ [key:string] : weeklyMealPlan}>(MealPlans);
 
     const handleFoodSelect = (food: Food) => {
@@ -83,49 +88,132 @@ const MealPlanner = ({
         }
     };
 
-    const handleSaveMealPlan = useCallback(() => {
+    const handleSaveMealPlan = useCallback(async () => {
         // Build meal plan data from localMealPlans
         const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
         const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
         const weeklyPlan = localMealPlans[dietaryPreference];
         const meals: { food_id: number; serving_size: number; meal_type: string }[] = [];
+        const invalidFoods: string[] = [];
+        
         for (const day of days) {
             const dayMeals = weeklyPlan[day as keyof typeof weeklyPlan];
             dayMeals.forEach((food, index) => {
-                meals.push({
-                    food_id: food.id,
-                    serving_size: 1, // assuming serving size is 1 for all meals
-                    meal_type: mealTypes[index].toLowerCase()
-                });
+                // Only include foods with valid IDs
+                if (food && food.id) {
+                    meals.push({
+                        food_id: food.id,
+                        serving_size: 1, // assuming serving size is 1 for all meals
+                        meal_type: mealTypes[index].toLowerCase()
+                    });
+                } else {
+                    invalidFoods.push(`${day} ${mealTypes[index]}: ${food?.name || 'Unknown'}`);
+                }
             });
         }
+        
+        // Check if we have any valid meals
+        if (meals.length === 0) {
+            setErrorMessage('Cannot save meal plan: No valid foods found. Please replace preset foods with foods from the database by clicking the edit button.');
+            setSuccessMessage('');
+            setTimeout(() => setErrorMessage(''), 7000);
+            return;
+        }
+        
+        // Show warning if some foods were filtered out
+        if (invalidFoods.length > 0) {
+            console.warn('Some foods were filtered out:', invalidFoods);
+            setErrorMessage(`Note: ${invalidFoods.length} preset food(s) not found in database. Saving meal plan with ${meals.length} valid meal(s).`);
+            setTimeout(() => setErrorMessage(''), 5000);
+        }
+        
         const mealPlanData = {
             name: `${dietaryPreference} meal plan`,
             meals
         };
 
-        apiClient.createMealPlan(mealPlanData)
-            .then(() => {
-                return apiClient.getMealPlans();
-            })
-            .then(response => {
-                const plans = response.results;
-                const newPlan = plans.find(plan => plan.name === mealPlanData.name);
-                if (!newPlan) {
-                    throw new Error("Newly created meal plan not found");
+        try {
+            const newPlan = await apiClient.createMealPlan(mealPlanData);
+            console.log('Meal plan created:', newPlan);
+            setSavedMealPlanId(newPlan.id);
+            await apiClient.setCurrentMealPlan(newPlan.id);
+            setSuccessMessage('Meal plan saved successfully!');
+            setErrorMessage('');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (err: any) {
+            console.error('Error saving meal plan:', err);
+            setSuccessMessage('');
+            
+            // Parse validation errors for food IDs
+            if (err?.response?.data?.meals) {
+                const mealErrors = err.response.data.meals;
+                const invalidCount = mealErrors.filter((mealError: any) => mealError?.food_id).length;
+                
+                if (invalidCount > 0) {
+                    setErrorMessage(`Cannot save: ${invalidCount} preset food(s) don't exist in the database. Please click the edit button (pencil icon) to replace them with foods from the database.`);
+                } else {
+                    setErrorMessage('Failed to save meal plan. Some preset foods may not exist in the database. Please replace them with foods from the database.');
                 }
-                return apiClient.setCurrentMealPlan(newPlan.id);
-            })
-            .then(setCurrentResponse => {
-                console.log('Meal plan set as current:', setCurrentResponse);
-                setSuccessMessage('Meal plan saved successfully!');
-                // Clear success message after 3 seconds
-                setTimeout(() => setSuccessMessage(''), 3000);
-            })
-            .catch(err => {
-                console.error('Error saving meal plan:', err);
-            });
+            } else {
+                setErrorMessage('Failed to save meal plan. Please try again or replace preset foods with foods from the database.');
+            }
+            setTimeout(() => setErrorMessage(''), 7000);
+        }
     }, [dietaryPreference, localMealPlans]);
+
+    const logMealPlan = useCallback(async (planId: number) => {
+        setIsLogging(true);
+        try {
+            await apiClient.logMealPlanToNutrition(planId);
+            setSuccessMessage('Meals logged to nutrition tracking successfully!');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } catch (err) {
+            console.error('Error logging meals to nutrition:', err);
+            setSuccessMessage('Failed to log meals. Please try again.');
+            setTimeout(() => setSuccessMessage(''), 3000);
+        } finally {
+            setIsLogging(false);
+        }
+    }, []);
+
+    const handleLogToNutrition = useCallback(async () => {
+        if (!savedMealPlanId) {
+            // If no saved plan, save it first, then log
+            try {
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
+                const weeklyPlan = localMealPlans[dietaryPreference];
+                const meals: { food_id: number; serving_size: number; meal_type: string }[] = [];
+                for (const day of days) {
+                    const dayMeals = weeklyPlan[day as keyof typeof weeklyPlan];
+                    dayMeals.forEach((food, index) => {
+                        meals.push({
+                            food_id: food.id,
+                            serving_size: 1,
+                            meal_type: mealTypes[index].toLowerCase()
+                        });
+                    });
+                }
+                
+                const mealPlanData = {
+                    name: `${dietaryPreference} meal plan`,
+                    meals
+                };
+                
+                const newPlan = await apiClient.createMealPlan(mealPlanData);
+                setSavedMealPlanId(newPlan.id);
+                await apiClient.setCurrentMealPlan(newPlan.id);
+                // Now log it
+                await logMealPlan(newPlan.id);
+            } catch (err) {
+                console.error('Error saving and logging meal plan:', err);
+                setSuccessMessage('Failed to save and log meals. Please try again.');
+                setTimeout(() => setSuccessMessage(''), 3000);
+            }
+            return;
+        }
+        await logMealPlan(savedMealPlanId);
+    }, [savedMealPlanId, dietaryPreference, localMealPlans, logMealPlan]);
 
     // Expose save handler via ref if provided
     useEffect(() => {
@@ -133,6 +221,13 @@ const MealPlanner = ({
             onSaveRef.current = handleSaveMealPlan;
         }
     }, [onSaveRef, handleSaveMealPlan]);
+
+    // Expose log handler via ref if provided
+    useEffect(() => {
+        if (onLogRef) {
+            onLogRef.current = handleLogToNutrition;
+        }
+    }, [onLogRef, handleLogToNutrition]);
 
     const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const meals = ['Breakfast', 'Lunch', 'Dinner'];
@@ -147,6 +242,36 @@ const MealPlanner = ({
     // Determine which days to show based on plan duration
     const days = planDuration === 'daily' ? [getTodayDayName()] : allDays;
     const planTitle = planDuration === 'daily' ? 'Daily Meal Plan' : 'Weekly Meal Plan';
+    
+    // Calculate total macros for the current meal plan
+    const calculateMacros = () => {
+        let totalCalories = 0;
+        let totalProtein = 0;
+        let totalCarbs = 0;
+        let totalFat = 0;
+        
+        const weeklyPlan = localMealPlans[dietaryPreference];
+        days.forEach(day => {
+            const dayMeals = weeklyPlan[day.toLowerCase() as keyof typeof weeklyPlan];
+            dayMeals.forEach(food => {
+                if (food) {
+                    totalCalories += food.caloriesPerServing || 0;
+                    totalProtein += food.proteinContent || 0;
+                    totalCarbs += food.carbohydrateContent || 0;
+                    totalFat += food.fatContent || 0;
+                }
+            });
+        });
+        
+        return {
+            calories: Math.round(totalCalories),
+            protein: Math.round(totalProtein),
+            carbs: Math.round(totalCarbs),
+            fat: Math.round(totalFat)
+        };
+    };
+    
+    const macros = calculateMacros();
 
     // Helper to get tag styles based on dietary preference
     const getTagStyle = (preference: string) => {
@@ -200,6 +325,20 @@ const MealPlanner = ({
                         }}
                     >
                         {successMessage}
+                    </div>
+                )}
+                
+                {/* Error message */}
+                {errorMessage && (
+                    <div 
+                        className="mb-4 px-4 py-3 rounded"
+                        style={{
+                            backgroundColor: 'var(--color-error)',
+                            color: 'white',
+                            border: '1px solid var(--color-error)'
+                        }}
+                    >
+                        {errorMessage}
                     </div>
                 )}
 
@@ -268,7 +407,16 @@ const MealPlanner = ({
                     {/* Middle column - Meal Plan */}
                     <div className={profileLayout ? "w-full" : "w-full md:w-3/5"}>
                         <div className="mb-6">
-                            <h2 className="nh-title">{planTitle}</h2>
+                            <div className="flex items-center justify-between flex-wrap gap-4">
+                                <h2 className="nh-title">{planTitle}</h2>
+                                {/* Macro Values */}
+                                <div className="flex items-center gap-4 text-sm nh-text">
+                                    <span>Calories: <strong className="text-primary">{macros.calories}</strong></span>
+                                    <span>Protein: <strong className="text-primary">{macros.protein}g</strong></span>
+                                    <span>Carbs: <strong className="text-primary">{macros.carbs}g</strong></span>
+                                    <span>Fat: <strong className="text-primary">{macros.fat}g</strong></span>
+                                </div>
+                            </div>
                             <p className="nh-text mt-2">
                                 {planDuration === 'daily' 
                                     ? `Today's meals: Click on any meal to view details, or click the edit icon to change it.`
@@ -382,6 +530,15 @@ const MealPlanner = ({
                                     className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium"
                                 >
                                     Save Meal Plan
+                                </button>
+
+                                <button
+                                    onClick={handleLogToNutrition}
+                                    disabled={isLogging}
+                                    className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <ForkKnife size={20} weight="fill" />
+                                    {isLogging ? 'Logging...' : 'Log Meal Plan'}
                                 </button>
                             </div>
                         </div>

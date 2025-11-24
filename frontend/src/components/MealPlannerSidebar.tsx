@@ -1,4 +1,4 @@
-import { Funnel, CalendarBlank } from '@phosphor-icons/react'
+import { Funnel, CalendarBlank, ForkKnife } from '@phosphor-icons/react'
 
 interface MealPlannerSidebarProps {
   dietaryPreference: string
@@ -6,6 +6,8 @@ interface MealPlannerSidebarProps {
   planDuration: 'weekly' | 'daily'
   setPlanDuration: (duration: 'weekly' | 'daily') => void
   onSave: () => void
+  onLogToNutrition?: () => void
+  isLogging?: boolean
 }
 
 const MealPlannerSidebar = ({
@@ -13,7 +15,9 @@ const MealPlannerSidebar = ({
   setDietaryPreference,
   planDuration,
   setPlanDuration,
-  onSave
+  onSave,
+  onLogToNutrition,
+  isLogging = false
 }: MealPlannerSidebarProps) => {
   // Helper to get tag styles based on dietary preference
   const getTagStyle = (preference: string) => {
@@ -141,6 +145,18 @@ const MealPlannerSidebar = ({
       >
         Save Meal Plan
       </button>
+
+      {/* Log Meal Plan Button */}
+      {onLogToNutrition && (
+        <button
+          onClick={onLogToNutrition}
+          disabled={isLogging}
+          className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <ForkKnife size={20} weight="fill" />
+          {isLogging ? 'Logging...' : 'Log Meal Plan'}
+        </button>
+      )}
     </div>
   )
 }

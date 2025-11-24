@@ -32,7 +32,6 @@
 
 /* buttons */
 .nh-button {
-  display: inline-block;
   padding: var(--space-2) var(--space-4);
   border-radius: var(--radius-md);
   font-weight: 500;

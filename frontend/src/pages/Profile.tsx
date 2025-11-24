@@ -1,9 +1,9 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, ChartLineUp, CaretDown, CaretRight, CalendarBlank } from '@phosphor-icons/react'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CalendarBlank, PencilSimple, Trash, ForkKnife, CaretDown, CaretRight } from '@phosphor-icons/react'
 import { apiClient, ForumPost, MealPlan } from '../lib/apiClient'
 import { UserMetrics } from '../types/nutrition'
 import NutritionSummary from '../components/NutritionSummary'
@@ -68,6 +68,8 @@ const Profile = () => {
   const [mealPlannerDietaryPreference, setMealPlannerDietaryPreference] = useState('high-protein')
   const [mealPlannerDuration, setMealPlannerDuration] = useState<'weekly' | 'daily'>('weekly')
   const mealPlannerSaveRef = useRef<(() => void) | null>(null)
+  const mealPlannerLogRef = useRef<(() => void) | null>(null)
+  const [isLoggingMeals, setIsLoggingMeals] = useState(false)
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
@@ -88,8 +90,12 @@ const Profile = () => {
   const [reportDescription, setReportDescription] = useState('')
 
   // States for saved meal plans
-  // const [savedMealPlans, setSavedMealPlans] = useState<MealPlan[]>([])
-  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan | null>()
+  const [allMealPlans, setAllMealPlans] = useState<MealPlan[]>([])
+  const [expandedMealPlans, setExpandedMealPlans] = useState<Set<number>>(new Set())
+  const [editingMealPlanId, setEditingMealPlanId] = useState<number | null>(null)
+  const [editedMealPlanName, setEditedMealPlanName] = useState('')
+  const [isLoggingMealPlan, setIsLoggingMealPlan] = useState(false)
+  const [loggingMealPlanId, setLoggingMealPlanId] = useState<number | null>(null)
 
   // Metrics state
   const [metrics, setMetrics] = useState<UserMetrics>({
@@ -109,55 +115,10 @@ const Profile = () => {
   const [hasMetrics, setHasMetrics] = useState(false)
   const [metricsUpdateKey, setMetricsUpdateKey] = useState(0) // Key to force NutritionTracking refresh
 
-  // Nutrition data for Daily Targets sidebar
-  const [nutritionData, setNutritionData] = useState<{
-    todayLog: import('../types/nutrition').DailyNutritionLog | null;
-    targets: import('../types/nutrition').NutritionTargets | null;
-  }>({ todayLog: null, targets: null })
-
-  // Expandable sections state
-  const [showVitamins, setShowVitamins] = useState(false)
-  const [showMinerals, setShowMinerals] = useState(false)
-
-  // Track selected date in nutrition tracking
-  const [selectedNutritionDate, setSelectedNutritionDate] = useState(new Date())
-
   // Load user data on mount
   useEffect(() => {
     loadUserData()
   }, [user])
-
-  // Helper function to format date as YYYY-MM-DD in local timezone (not UTC)
-  const formatDateString = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // Fetch nutrition data for sidebar
-  const fetchNutritionData = useCallback(async (date?: Date) => {
-    try {
-      // If no date provided, use selectedNutritionDate, or default to today
-      const dateToUse = date || selectedNutritionDate || new Date()
-      // Normalize to midnight local time to avoid timezone issues
-      dateToUse.setHours(0, 0, 0, 0);
-      const dateStr = formatDateString(dateToUse)
-      const [log, targets] = await Promise.all([
-        apiClient.getDailyLog(dateStr),
-        apiClient.getNutritionTargets()
-      ])
-      setNutritionData({ todayLog: log, targets })
-    } catch (error) {
-      console.error('Error fetching nutrition data:', error)
-    }
-  }, [selectedNutritionDate])
-
-  // Handle date change from NutritionTracking component
-  const handleNutritionDateChange = useCallback((date: Date) => {
-    setSelectedNutritionDate(date)
-    fetchNutritionData(date)
-  }, [fetchNutritionData])
 
   // Function to handle tab change
   const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics') => {
@@ -400,21 +361,165 @@ const Profile = () => {
     }
   }
 
-  // New function: load saved meal plans
-  const loadCurrentMealPlan = async () => {
+  // Load all meal plans for user
+  const loadAllMealPlans = async () => {
     try {
-      const response = await apiClient.getCurrentMealPlan()
-      setCurrentMealPlan(response || [])
+      const response = await apiClient.getMealPlans()
+      // Store all meal plans
+      if (response.results && response.results.length > 0) {
+        setAllMealPlans(response.results)
+      }
     } catch (error) {
-      console.error('Error loading saved meal plans:', error)
-      setCurrentMealPlan(null)
+      console.error('Error loading meal plans:', error)
+      setAllMealPlans([])
     }
+  }
+
+  // Toggle expand/collapse meal plan
+  const toggleMealPlan = (planId: number) => {
+    const newExpanded = new Set(expandedMealPlans)
+    if (newExpanded.has(planId)) {
+      newExpanded.delete(planId)
+    } else {
+      newExpanded.add(planId)
+    }
+    setExpandedMealPlans(newExpanded)
+  }
+
+  // Handle delete meal plan
+  const handleDeleteMealPlan = async (planId: number, planName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${planName}"?`)) {
+      try {
+        await apiClient.deleteMealPlan(planId)
+        // Remove from expanded set if it was expanded
+        const newExpanded = new Set(expandedMealPlans)
+        newExpanded.delete(planId)
+        setExpandedMealPlans(newExpanded)
+        await loadAllMealPlans() // Reload meal plans
+      } catch (error) {
+        console.error('Error deleting meal plan:', error)
+        alert('Failed to delete meal plan. Please try again.')
+      }
+    }
+  }
+
+  // Handle save edited meal plan name
+  const handleSaveMealPlanName = async () => {
+    if (!editingMealPlanId || !editedMealPlanName.trim()) return
+    
+    try {
+      await apiClient.updateMealPlan(editingMealPlanId, {
+        name: editedMealPlanName.trim()
+      })
+      setEditingMealPlanId(null)
+      await loadAllMealPlans() // Reload to get updated list
+    } catch (error) {
+      console.error('Error updating meal plan:', error)
+      alert('Failed to update meal plan name. Please try again.')
+    }
+  }
+
+  // Handle log meal plan to nutrition tracking
+  const handleLogMealPlan = async (planId: number) => {
+    setLoggingMealPlanId(planId)
+    setIsLoggingMealPlan(true)
+    try {
+      await apiClient.logMealPlanToNutrition(planId)
+      alert('Meal plan successfully logged to Nutrition Tracking!')
+    } catch (error) {
+      console.error('Error logging meal plan:', error)
+      alert('Failed to log meal plan to Nutrition Tracking. Please try again.')
+    } finally {
+      setIsLoggingMealPlan(false)
+      setLoggingMealPlanId(null)
+    }
+  }
+
+  // Render meal plan details
+  const renderMealPlanDetails = (mealPlan: MealPlan) => {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const mealTypes = ["breakfast", "lunch", "dinner"];
+    const details = mealPlan.meals_details || [];
+    
+    return days.map((day) => {
+      const dayLower = day.toLowerCase();
+      const dayMeals = details.filter((meal: any) => {
+        if (meal.day) {
+          return meal.day.toLowerCase() === dayLower;
+        }
+        return true;
+      });
+      
+      const organizedMeals = mealTypes.map(mealType => {
+        return dayMeals.find((meal: any) => 
+          meal.meal_type && meal.meal_type.toLowerCase() === mealType
+        ) || null;
+      }).filter(Boolean);
+      
+      const dayIndex = days.indexOf(day);
+      const fallbackMeals = organizedMeals.length === 0 && details.length > 0
+        ? details.slice(dayIndex * 3, (dayIndex + 1) * 3)
+        : organizedMeals;
+      
+      return (
+        <div key={day} className="nh-card">
+          <h3 className="nh-subtitle mb-4">{day}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {fallbackMeals.length > 0 ? (
+              fallbackMeals.map((meal: any, i: number) => (
+                <div
+                  key={`${day}-${i}`}
+                  className="rounded-md p-3 border relative transition-all hover:shadow-sm"
+                  style={{
+                    backgroundColor: 'var(--dietary-option-bg)',
+                    borderColor: 'var(--dietary-option-border)'
+                  }}
+                >
+                  <div
+                    className="text-xs font-medium mb-2"
+                    style={{ color: 'var(--color-light)' }}
+                  >
+                    {meal.meal_type ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1) : mealTypes[i].charAt(0).toUpperCase() + mealTypes[i].slice(1)}
+                  </div>
+
+                  <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
+                    {meal.food && meal.food.imageUrl ? (
+                      <img
+                        src={meal.food.imageUrl}
+                        alt={meal.food.name}
+                        className="object-contain max-h-14 max-w-full rounded"
+                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                      />
+                    ) : (
+                      <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+                        <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="text-sm font-medium nh-text mb-1">
+                    {meal.food ? meal.food.name : 'No food selected'}
+                  </div>
+                  <div className="text-xs nh-text opacity-75">
+                    {meal.calculated_nutrition ? `${meal.calculated_nutrition.calories} kcal` : 'N/A'}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-3 text-center py-4 nh-text opacity-50">
+                No meals planned for {day}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
   }
 
   // Fetch saved meal plans when 'mealPlans' tab is activated
   useEffect(() => {
     if (activeTab === 'mealPlans') {
-      loadCurrentMealPlan()
+      loadAllMealPlans()
     }
   }, [activeTab])
 
@@ -739,12 +844,8 @@ const Profile = () => {
         setHasMetrics(true)
       }
       showSuccess('Metrics saved successfully')
-      // Refresh targets and nutrition data after saving metrics
-      // This will update the Daily Targets sidebar immediately
-      await Promise.all([
-        loadUserMetrics(),
-        fetchNutritionData()
-      ])
+      // Refresh targets after saving metrics
+      await loadUserMetrics()
       // Force NutritionTracking and NutritionSummary to refresh by updating the key
       // This ensures today's nutrition values are updated immediately with new targets
       setMetricsUpdateKey(prev => prev + 1)
@@ -809,7 +910,7 @@ const Profile = () => {
                   }}
                 >
                   <User size={18} weight="fill" />
-                  <span className="flex-grow text-center">Overview</span>
+                  <span className="grow text-center">Overview</span>
                 </button>
 
                 {/* Meal Planner Tab */}
@@ -826,7 +927,7 @@ const Profile = () => {
                   }}
                 >
                   <CalendarBlank size={18} weight="fill" />
-                  <span className="flex-grow text-center">Meal Planner</span>
+                  <span className="grow text-center">Meal Planner</span>
                 </button>
 
                 <button
@@ -842,7 +943,7 @@ const Profile = () => {
                   }}
                 >
                   <Warning size={18} weight="fill" />
-                  <span className="flex-grow text-center">Allergens</span>
+                  <span className="grow text-center">Allergens</span>
                 </button>
 
                 <button
@@ -858,7 +959,7 @@ const Profile = () => {
                   }}
                 >
                   <Heart size={18} weight="fill" />
-                  <span className="flex-grow text-center">Liked Posts</span>
+                  <span className="grow text-center">Liked Posts</span>
                 </button>
 
                 <button
@@ -874,7 +975,7 @@ const Profile = () => {
                   }}
                 >
                   <BookOpen size={18} weight="fill" />
-                  <span className="flex-grow text-center">Liked Recipes</span>
+                  <span className="grow text-center">Liked Recipes</span>
                 </button>
 
                 <button
@@ -890,7 +991,7 @@ const Profile = () => {
                   }}
                 >
                   <Certificate size={18} weight="fill" />
-                  <span className="flex-grow text-center">Profession Tags</span>
+                  <span className="grow text-center">Profession Tags</span>
                 </button>
 
                 <button
@@ -902,7 +1003,7 @@ const Profile = () => {
                   }}
                 >
                   <Warning size={18} weight="fill" />
-                  <span className="flex-grow text-center">Report User</span>
+                  <span className="grow text-center">Report User</span>
                 </button>
 
                 {/* New button for Saved Meal Plans */}
@@ -919,7 +1020,7 @@ const Profile = () => {
                   }}
                 >
                   <BookmarkSimple size={18} weight="fill" />
-                  <span className="flex-grow text-center">Saved Meal Plans</span>
+                  <span className="grow text-center">Saved Meal Plans</span>
                 </button>
 
               </div>
@@ -1445,68 +1546,116 @@ const Profile = () => {
 
             {/* Saved Meal Plans Tab */}
             {activeTab === 'mealPlans' && (
-              <div className="space-y-6">
-                <h2 className="nh-title">
-                  {currentMealPlan ? currentMealPlan.name : 'Saved Meal Plan'}
-                </h2>
-                {currentMealPlan ? (
-                  <div className="space-y-4">
-                    {(() => {
-                      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                      // Assume that currentMealPlan.meals_details has 21 items ordered as Monday-Breakfast, Monday-Lunch, Monday-Dinner, Tuesday-Breakfast, etc.
-                      const details = currentMealPlan.meals_details || [];
-                      return days.map((day, index) => {
-                        const start = index * 3;
-                        const dayMeals = details.slice(start, start + 3);
-                        return (
-                          <div key={day} className="nh-card">
-                            <h3 className="nh-subtitle mb-4">{day}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {dayMeals.map((meal, i) => (
-                                <div
-                                  key={`${day}-${i}`}
-                                  className="rounded-md p-3 border relative transition-all hover:shadow-sm"
-                                  style={{
-                                    backgroundColor: 'var(--dietary-option-bg)',
-                                    borderColor: 'var(--dietary-option-border)'
-                                  }}
-                                >
-                                  <div
-                                    className="text-xs font-medium mb-2"
-                                    style={{ color: 'var(--color-light)' }}
+              <div className="space-y-4">
+                <h2 className="nh-title">Saved Meal Plans</h2>
+                {allMealPlans.length > 0 ? (
+                  <div className="space-y-3">
+                    {allMealPlans.map((mealPlan) => {
+                      const isExpanded = expandedMealPlans.has(mealPlan.id)
+                      const isEditing = editingMealPlanId === mealPlan.id
+                      
+                      return (
+                        <div
+                          key={mealPlan.id}
+                          className="nh-card"
+                        >
+                          {/* Meal Plan Header */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                              <button
+                                onClick={() => toggleMealPlan(mealPlan.id)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                              >
+                                {isExpanded ? (
+                                  <CaretDown size={20} className="text-primary" />
+                                ) : (
+                                  <CaretRight size={20} className="text-primary" />
+                                )}
+                              </button>
+                              
+                              {isEditing ? (
+                                <div className="flex items-center gap-2 flex-1">
+                                  <input
+                                    type="text"
+                                    value={editedMealPlanName}
+                                    onChange={(e) => setEditedMealPlanName(e.target.value)}
+                                    className="nh-input flex-1"
+                                    placeholder="Meal plan name"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={handleSaveMealPlanName}
+                                    className="nh-button nh-button-primary px-3 py-1 text-sm"
                                   >
-                                    {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
-                                  </div>
-
-                                  {/* Food Image */}
-                                  <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
-                                    {meal.food.imageUrl ? (
-                                      <img
-                                        src={meal.food.imageUrl}
-                                        alt={meal.food.name}
-                                        className="object-contain max-h-14 max-w-full rounded"
-                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                      />
-                                    ) : (
-                                      <div className="food-image-placeholder w-full h-full flex items-center justify-center">
-                                        <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="text-sm font-medium nh-text mb-1">
-                                    {meal.food.name}
-                                  </div>
-                                  <div className="text-xs nh-text opacity-75">
-                                    {meal.calculated_nutrition.calories} kcal
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingMealPlanId(null)
+                                      setEditedMealPlanName('')
+                                    }}
+                                    className="nh-button nh-button-secondary px-3 py-1 text-sm"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-4 flex-1 flex-wrap">
+                                  <h3 className="nh-subtitle mb-0">{mealPlan.name}</h3>
+                                  {/* Macro Values */}
+                                  <div className="flex items-center gap-3 text-xs nh-text opacity-75">
+                                    <span>Calories: <strong>{Math.round(mealPlan.total_calories || 0)}</strong></span>
+                                    <span>Protein: <strong>{Math.round(mealPlan.total_protein || 0)}g</strong></span>
+                                    <span>Carbs: <strong>{Math.round(mealPlan.total_carbohydrates || 0)}g</strong></span>
+                                    <span>Fat: <strong>{Math.round(mealPlan.total_fat || 0)}g</strong></span>
                                   </div>
                                 </div>
-                              ))}
+                              )}
                             </div>
+                            
+                            {!isEditing && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleLogMealPlan(mealPlan.id)}
+                                  disabled={isLoggingMealPlan && loggingMealPlanId === mealPlan.id}
+                                  className="nh-button nh-button-primary flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg shadow-md hover:shadow-lg transition-all text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                  style={{ display: 'flex' }}
+                                >
+                                  <ForkKnife size={16} weight="fill" />
+                                  {isLoggingMealPlan && loggingMealPlanId === mealPlan.id ? 'Logging...' : 'Log'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingMealPlanId(mealPlan.id)
+                                    setEditedMealPlanName(mealPlan.name)
+                                  }}
+                                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                  title="Edit meal plan name"
+                                >
+                                  <PencilSimple size={18} className="text-primary" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMealPlan(mealPlan.id, mealPlan.name)}
+                                  className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  title="Delete meal plan"
+                                >
+                                  <Trash size={18} className="text-red-500" />
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        );
-                      });
-                    })()}
+                          
+                          {/* Meal Plan Details (Expanded) */}
+                          {isExpanded && (
+                            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                              <div className="space-y-4">
+                                {renderMealPlanDetails(mealPlan)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="nh-card text-center py-12">
@@ -1527,6 +1676,7 @@ const Profile = () => {
                   planDuration={mealPlannerDuration}
                   setPlanDuration={setMealPlannerDuration}
                   onSaveRef={mealPlannerSaveRef}
+                  onLogRef={mealPlannerLogRef}
                 />
               </div>
             )}
@@ -1547,6 +1697,17 @@ const Profile = () => {
                       mealPlannerSaveRef.current()
                     }
                   }}
+                  onLogToNutrition={async () => {
+                    if (mealPlannerLogRef.current) {
+                      setIsLoggingMeals(true)
+                      try {
+                        await mealPlannerLogRef.current()
+                      } finally {
+                        setIsLoggingMeals(false)
+                      }
+                    }
+                  }}
+                  isLogging={isLoggingMeals}
                 />
               ) : (
                 <div className="nh-card rounded-lg shadow-md">
