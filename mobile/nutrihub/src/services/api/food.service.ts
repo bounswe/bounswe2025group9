@@ -15,6 +15,7 @@ export interface ApiFoodItem {
   carbohydrateContent: number;
   fiberContent?: number;
   sugarContent?: number;
+  micronutrients?: Record<string, number>;
   dietaryOptions?: string[];
   allergens?: string[];
   nutritionScore?: number;
@@ -84,6 +85,7 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
       fiber: apiFood.fiberContent,
       sugar: apiFood.sugarContent,
     },
+    micronutrients: apiFood.micronutrients,
     dietaryOptions: apiFood.dietaryOptions as any[],
     allergens: apiFood.allergens as any[],
     price: apiFood.price,
