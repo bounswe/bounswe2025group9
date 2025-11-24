@@ -43,7 +43,10 @@ export interface FoodProposalData {
   dietaryOptions?: string[];
   nutritionScore?: number;
   imageUrl?: string;
-  allergens?: string[];
+  basePrice?: number;
+  priceUnit?: 'per_100g' | 'per_unit';
+  currency?: string;
+  micronutrients?: Record<string, number>;
 }
 
 // Transform API food item to app FoodItem format
