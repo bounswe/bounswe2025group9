@@ -58,7 +58,9 @@ def _fetch_sorted_prices(price_unit: str, currency: str) -> Iterable[Decimal]:
             yield decimal_price
 
 
-def _compute_tertiles(prices: Iterable[Decimal]) -> Tuple[Optional[Decimal], Optional[Decimal]]:
+def _compute_tertiles(
+    prices: Iterable[Decimal],
+) -> Tuple[Optional[Decimal], Optional[Decimal]]:
     price_list = list(prices)
     if not price_list:
         return None, None
@@ -202,7 +204,10 @@ def _should_force_recalculation(threshold: PriceCategoryThreshold) -> bool:
         not threshold.last_recalculated_at
         or timezone.now() - threshold.last_recalculated_at >= MAX_THRESHOLD_AGE
     )
-    return stale or threshold.updates_since_recalculation >= MAX_PRICE_UPDATES_BEFORE_RECALC
+    return (
+        stale
+        or threshold.updates_since_recalculation >= MAX_PRICE_UPDATES_BEFORE_RECALC
+    )
 
 
 def register_price_update(entry: FoodEntry, *, changed_by=None):
@@ -231,7 +236,11 @@ def _derive_recipe_category(
     fallback_cost: Optional[Decimal] = None,
     currency: str = DEFAULT_CURRENCY,
 ) -> Optional[str]:
-    scores = [CATEGORY_SCORES.get(cat) for cat in ingredient_categories if CATEGORY_SCORES.get(cat)]
+    scores = [
+        CATEGORY_SCORES.get(cat)
+        for cat in ingredient_categories
+        if CATEGORY_SCORES.get(cat)
+    ]
     if scores:
         average = sum(scores) / len(scores)
         if average < 1.5:
@@ -280,7 +289,9 @@ def recalculate_recipes_for_food(entry: FoodEntry, *, changed_by=None):
             fallback_cost=quantized_cost,
             currency=entry.currency,
         )
-        recipe.save(update_fields=["total_cost", "currency", "price_category", "updated_at"])
+        recipe.save(
+            update_fields=["total_cost", "currency", "price_category", "updated_at"]
+        )
 
         _log_price_audit(
             change_type=PriceAudit.ChangeType.RECIPE_RECALC,
@@ -440,6 +451,7 @@ def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
         base_price=proposal.base_price,
         price_unit=proposal.price_unit or PriceUnit.PER_100G,
         currency=proposal.currency or DEFAULT_CURRENCY,
+        micronutrients=proposal.micronutrients,
     )
     entry.allergens.set(proposal.allergens.all())
 
