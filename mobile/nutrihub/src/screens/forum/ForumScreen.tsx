@@ -22,12 +22,13 @@ import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import ForumPost from '../../components/forum/ForumPost';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { ForumTopic } from '../../types/types';
+import { ForumTopic, FoodItem, RecipeIngredient } from '../../types/types';
 import { ForumStackParamList, SerializedForumPost } from '../../navigation/types';
 import { forumService, ApiTag } from '../../services/api/forum.service';
 import { usePosts } from '../../context/PostsContext';
 import { useAuth } from '../../context/AuthContext';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import FoodSelectorModal from '../../components/food/FoodSelectorModal';
 
 // Storage key for liked posts - must match the one in forum.service.ts
 const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
@@ -134,6 +135,12 @@ const ForumScreen: React.FC = () => {
   const [searchResultsCount, setSearchResultsCount] = useState<number>(0);
   const [executedSearchQuery, setExecutedSearchQuery] = useState<string>('');
   const [ingredientMatchMap, setIngredientMatchMap] = useState<Record<number, string[]>>({});
+  const [selectedFoods, setSelectedFoods] = useState<FoodItem[]>([]);
+  const [foodFilterVisible, setFoodFilterVisible] = useState(false);
+  const [recipeIngredientsMap, setRecipeIngredientsMap] = useState<Record<number, RecipeIngredient[] | null>>({});
+  const [foodFilterMatches, setFoodFilterMatches] = useState<Record<number, string[]>>({});
+  const [foodFilterLoading, setFoodFilterLoading] = useState(false);
+  const [visiblePosts, setVisiblePosts] = useState<ForumTopic[]>([]);
   
   // Use the global posts context
   const { posts, setPosts, updatePost } = usePosts();
@@ -435,6 +442,44 @@ const ForumScreen: React.FC = () => {
     runSearch(searchQuery);
   }, [searchQuery, runSearch, clearSearch]);
 
+  const handleFoodSelect = (food: FoodItem) => {
+    setSelectedFoods(prev => {
+      if (prev.some(f => f.id === food.id)) {
+        return prev;
+      }
+      return [...prev, food];
+    });
+    setFoodFilterVisible(false);
+  };
+
+  const handleRemoveFood = (foodId: number) => {
+    setSelectedFoods(prev => prev.filter(food => food.id !== foodId));
+  };
+
+  const clearFoodFilters = () => {
+    setSelectedFoods([]);
+    setFoodFilterMatches({});
+    setRecipeIngredientsMap({});
+  };
+
+  const getIngredientMatches = (postId: number) => {
+    const matches: string[] = [];
+
+    if (selectedFoods.length > 0 && foodFilterMatches[postId]?.length) {
+      matches.push(...foodFilterMatches[postId]);
+    }
+
+    if (isSearching && ingredientMatchMap[postId]?.length) {
+      ingredientMatchMap[postId].forEach(match => {
+        if (!matches.includes(match)) {
+          matches.push(match);
+        }
+      });
+    }
+
+    return matches.length > 0 ? matches : undefined;
+  };
+
   useEffect(() => {
     const normalized = searchQuery.trim();
 
@@ -499,6 +544,90 @@ const ForumScreen: React.FC = () => {
     });
   }, [isSearching, executedSearchQuery, searchResults, ingredientMatchMap]);
 
+  // Apply food filters (requires all selected foods to be present in recipe ingredients)
+  useEffect(() => {
+    let isCancelled = false;
+
+    const applyFoodFilter = async () => {
+      const basePosts = isSearching ? searchResults : posts;
+
+      if (selectedFoods.length === 0) {
+        if (!isCancelled) {
+          setVisiblePosts(basePosts);
+          setFoodFilterMatches({});
+          setFoodFilterLoading(false);
+        }
+        return;
+      }
+
+      const postsWithRecipes = basePosts.filter(post => post.hasRecipe !== false);
+
+      if (postsWithRecipes.length === 0) {
+        if (!isCancelled) {
+          setVisiblePosts([]);
+          setFoodFilterMatches({});
+          setFoodFilterLoading(false);
+        }
+        return;
+      }
+
+      const idsToFetch = postsWithRecipes
+        .filter(post => recipeIngredientsMap[post.id] === undefined)
+        .map(post => post.id);
+
+      const fetched: Record<number, RecipeIngredient[] | null> = {};
+
+      if (idsToFetch.length > 0) {
+        setFoodFilterLoading(true);
+        await Promise.all(idsToFetch.map(async (postId) => {
+          try {
+            const recipe = await forumService.getRecipe(postId);
+            fetched[postId] = recipe?.ingredients || null;
+          } catch (error) {
+            console.error('Failed to fetch recipe for post', postId, error);
+            fetched[postId] = null;
+          }
+        }));
+      }
+
+      const combinedIngredients = { ...recipeIngredientsMap, ...fetched };
+      const matches: Record<number, string[]> = {};
+
+      const filtered = postsWithRecipes.filter(post => {
+        const ingredients = combinedIngredients[post.id];
+        if (!ingredients) return false;
+
+        const matchedFoods = selectedFoods.filter(food =>
+          ingredients.some(ingredient =>
+            ingredient.food_id === food.id ||
+            (ingredient.food_name && ingredient.food_name.toLowerCase() === food.title.toLowerCase())
+          )
+        );
+
+        if (matchedFoods.length === selectedFoods.length) {
+          matches[post.id] = matchedFoods.map(food => food.title);
+          return true;
+        }
+        return false;
+      });
+
+      if (!isCancelled) {
+        if (Object.keys(fetched).length > 0) {
+          setRecipeIngredientsMap(prev => ({ ...prev, ...fetched }));
+        }
+        setFoodFilterMatches(matches);
+        setVisiblePosts(filtered);
+        setFoodFilterLoading(false);
+      }
+    };
+
+    applyFoodFilter();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [selectedFoods, isSearching, searchResults, posts, recipeIngredientsMap]);
+
   // Handle refresh
   const handleRefresh = useCallback(async () => {
     setLoading(true);
@@ -533,18 +662,12 @@ const ForumScreen: React.FC = () => {
 
   // Get current posts to display (search results or regular posts)
   const getCurrentPosts = useCallback((): ForumTopic[] => {
-    if (isSearching) {
-      return searchResults;
-    }
-    return posts;
-  }, [isSearching, searchResults, posts]);
+    return visiblePosts;
+  }, [visiblePosts]);
 
   // Render forum post
   const renderItem = ({ item }: { item: ForumTopic }) => {
-    const matches = ingredientMatchMap[item.id];
-    const ingredientMatches =
-      isSearching && matches && matches.length > 0 ? matches : undefined;
-
+    const ingredientMatches = getIngredientMatches(item.id);
     return (
       <ForumPost
         post={item}
@@ -609,6 +732,14 @@ const ForumScreen: React.FC = () => {
         </Text>
       </View>
       
+      {selectedFoods.length > 0 && foodFilterLoading && (
+        <View style={[styles.searchStatus, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
+          <Text style={[styles.searchStatusText, textStyles.body]}>
+            Checking recipes for selected foods...
+          </Text>
+        </View>
+      )}
+      
       {/* Search Bar */}
       <View style={styles.searchContainer}>
         <View style={[styles.searchInputContainer, { borderColor: theme.border, backgroundColor: theme.surface }]}>
@@ -645,11 +776,24 @@ const ForumScreen: React.FC = () => {
       {isSearching && (
         <View style={[styles.searchStatus, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
           <Text style={[styles.searchStatusText, textStyles.body]}>
-            {searchResultsCount > 0 
-              ? `Found ${searchResultsCount} result${searchResultsCount !== 1 ? 's' : ''} for "${executedSearchQuery || searchQuery}"${selectedTagIds.length > 0 ? ' in selected category' : ''}` 
-              : selectedTagIds.length > 0 
-                ? `No results found for "${executedSearchQuery || searchQuery}" in selected category`
-                : `No results found for "${executedSearchQuery || searchQuery}"`}
+            {(() => {
+              const activeQuery = executedSearchQuery || searchQuery;
+              const resultCount = selectedFoods.length > 0 ? visiblePosts.length : searchResultsCount;
+              const filterParts = [];
+              if (selectedTagIds.length > 0) filterParts.push('selected category');
+              if (selectedFoods.length > 0) filterParts.push('selected foods');
+              const filterSuffix = filterParts.length > 0 ? ` in ${filterParts.join(' and ')}` : '';
+
+              if (resultCount > 0) {
+                return `Found ${resultCount} result${resultCount !== 1 ? 's' : ''} for "${activeQuery}"${filterSuffix}`;
+              }
+
+              if (filterParts.length > 0) {
+                return `No results found for "${activeQuery}"${filterSuffix}`;
+              }
+
+              return `No results found for "${activeQuery}"`;
+            })()}
           </Text>
           <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
             <Icon name="close" size={16} color={theme.primary} />
@@ -759,6 +903,37 @@ const ForumScreen: React.FC = () => {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <View style={styles.foodFilterContainer}>
+          <TouchableOpacity
+            style={[styles.foodFilterButton, { backgroundColor: theme.primary }]}
+            onPress={() => setFoodFilterVisible(true)}
+            activeOpacity={0.9}
+          >
+            <Icon name="silverware-fork-knife" size={18} color="#fff" />
+            <Text style={[styles.foodFilterButtonText, { color: '#fff' }]}>
+              Filter by Food Items
+            </Text>
+          </TouchableOpacity>
+
+          {selectedFoods.length > 0 && (
+            <View style={styles.foodChipsContainer}>
+              {selectedFoods.map(food => (
+                <View key={food.id} style={[styles.foodChip, { borderColor: theme.border }]}>
+                  <Text style={[styles.foodChipText, { color: theme.text }]} numberOfLines={1}>
+                    {food.title}
+                  </Text>
+                  <TouchableOpacity onPress={() => handleRemoveFood(food.id)} style={styles.foodChipRemove}>
+                    <Icon name="close" size={14} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+              ))}
+              <TouchableOpacity onPress={clearFoodFilters}>
+                <Text style={[styles.clearFoodsText, { color: theme.primary }]}>Clear foods</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
       </View>
       
       <FlatList
@@ -776,7 +951,7 @@ const ForumScreen: React.FC = () => {
             <Text style={[styles.emptyText, textStyles.body]}>
               {isSearching
                 ? `No posts match your search for "${searchQuery}". Try different keywords or clear your search.`
-                : selectedTagIds.length > 0
+                : selectedTagIds.length > 0 || selectedFoods.length > 0
                 ? 'Try adjusting your filters or be the first to post in this category!'
                 : 'Be the first to start a discussion!'}
             </Text>
@@ -791,6 +966,12 @@ const ForumScreen: React.FC = () => {
         <Icon name="plus" size={20} color="#FFFFFF" />
         <Text style={[styles.newPostText, { color: '#FFFFFF' }]}>New Post</Text>
       </TouchableOpacity>
+
+      <FoodSelectorModal
+        visible={foodFilterVisible}
+        onClose={() => setFoodFilterVisible(false)}
+        onSelect={handleFoodSelect}
+      />
     </SafeAreaView>
   );
 };
@@ -966,6 +1147,49 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 14,
     fontWeight: '500',
+  },
+  foodFilterContainer: {
+    marginTop: SPACING.sm,
+    gap: SPACING.xs,
+  },
+  foodFilterButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 12,
+  },
+  foodFilterButtonText: {
+    marginLeft: SPACING.xs,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  foodChipsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: SPACING.xs,
+  },
+  foodChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderRadius: 16,
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: SPACING.xs / 2,
+    maxWidth: '70%',
+  },
+  foodChipText: {
+    maxWidth: 140,
+  },
+  foodChipRemove: {
+    marginLeft: 4,
+  },
+  clearFoodsText: {
+    textDecorationLine: 'underline',
+    fontSize: 12,
+    fontWeight: '600',
   },
 });
 

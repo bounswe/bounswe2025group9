@@ -168,20 +168,46 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         help_text="Original serving size of the food (for display calculations)"
     )
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
-    food_id = serializers.PrimaryKeyRelatedField(
-        source='food',
-        queryset=FoodEntry.objects.all(),
-        required=False,
-        allow_null=True,
-        write_only=True
-    )
-    private_food_id = serializers.PrimaryKeyRelatedField(
-        source='private_food',
-        queryset=FoodProposal.objects.filter(is_private=True),
-        required=False,
-        allow_null=True,
-        write_only=True
-    )
+    food_id = serializers.IntegerField(required=False, allow_null=True, read_only=False)
+    private_food_id = serializers.IntegerField(required=False, allow_null=True, read_only=False)
+    
+    def to_internal_value(self, data):
+        """Convert food_id/private_food_id to food/private_food objects."""
+        # Get the raw data
+        ret = super().to_internal_value(data)
+        
+        # Map food_id to food object
+        if 'food_id' in data and data['food_id'] is not None:
+            try:
+                from foods.models import FoodEntry
+                ret['food'] = FoodEntry.objects.get(id=data['food_id'])
+            except FoodEntry.DoesNotExist:
+                raise serializers.ValidationError({'food_id': 'Food with this ID does not exist.'})
+            # Remove food_id from ret since it's not a model field
+            ret.pop('food_id', None)
+        
+        # Map private_food_id to private_food object
+        if 'private_food_id' in data and data['private_food_id'] is not None:
+            try:
+                from foods.models import FoodProposal
+                ret['private_food'] = FoodProposal.objects.get(
+                    id=data['private_food_id'],
+                    is_private=True
+                )
+            except FoodProposal.DoesNotExist:
+                raise serializers.ValidationError({'private_food_id': 'Private food with this ID does not exist.'})
+            # Remove private_food_id from ret since it's not a model field
+            ret.pop('private_food_id', None)
+        
+        return ret
+    
+    def to_representation(self, instance):
+        """Convert food/private_food objects to food_id/private_food_id."""
+        ret = super().to_representation(instance)
+        # Add food_id and private_food_id to the response
+        ret['food_id'] = instance.food_id if instance.food_id else None
+        ret['private_food_id'] = instance.private_food_id if instance.private_food_id else None
+        return ret
 
     class Meta:
         from .models import FoodLogEntry
@@ -210,8 +236,30 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
     
     def validate(self, data):
         """Validate that exactly one of food or private_food is set."""
+        # Get initial data to check if food_id/private_food_id were provided in request
+        initial_data = getattr(self, 'initial_data', {})
+        has_food_id = 'food_id' in initial_data
+        has_private_food_id = 'private_food_id' in initial_data
+        
+        # Get food/private_food from validated data (after PrimaryKeyRelatedField processing)
         food = data.get('food')
         private_food = data.get('private_food')
+        
+        # If updating, fallback to instance values if food_id/private_food_id not in request
+        if self.instance:
+            # If food_id/private_food_id weren't provided in request, use instance values
+            if not has_food_id and not has_private_food_id:
+                # Neither was provided, use instance values
+                food = self.instance.food if not food else food
+                private_food = self.instance.private_food if not private_food else private_food
+            elif has_food_id and not food:
+                # food_id was provided but validation failed (e.g., invalid ID)
+                # Don't fallback, let the field validation error show
+                pass
+            elif has_private_food_id and not private_food:
+                # private_food_id was provided but validation failed
+                # Don't fallback, let the field validation error show
+                pass
         
         if not food and not private_food:
             raise serializers.ValidationError(

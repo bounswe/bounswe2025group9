@@ -24,6 +24,7 @@ export interface Food {
   dietaryOptions: string[];
   nutritionScore: number;
   imageUrl: string;
+  micronutrients?: Record<string, number>;
   base_price?: string | number | null;
   price_unit?: PriceUnit;
   price_category?: PriceCategory | null;
@@ -1077,6 +1078,8 @@ export const apiClient = {
     }, true),
 
   updateFoodEntry: (id: number, update: {
+    food_id?: number | null;
+    private_food_id?: number | null;
     serving_size?: number;
     serving_unit?: string;
     meal_type?: string;

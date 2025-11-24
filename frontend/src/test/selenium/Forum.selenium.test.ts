@@ -114,5 +114,45 @@ describe('Forum Page - Selenium E2E Tests', () => {
     // This is a loose check - pagination may or may not be present depending on data
     expect(paginationElements.length).toBeGreaterThanOrEqual(0);
   }, 30000);
-});
 
+  it('opens the food filter modal and can search/select a food', async () => {
+    await driver.get(`${defaultConfig.baseUrl}/forum`);
+
+    const foodFilterButton = await driver.wait(
+      until.elementLocated(By.xpath("//button[contains(., 'Filter by Food Items')]")),
+      defaultConfig.defaultTimeout
+    );
+    await foodFilterButton.click();
+
+    const dialogPanel = await driver.wait(
+      until.elementLocated(By.xpath("//div[contains(@class,'max-w-4xl') and .//h3[contains(text(), 'Select Food Item')]]")),
+      defaultConfig.defaultTimeout
+    );
+
+    const foodSearchInput = await driver.findElement(By.xpath("//div[contains(@class,'max-w-4xl')]//input[@placeholder='Search foods...']"));
+    await foodSearchInput.clear();
+    await foodSearchInput.sendKeys('appl'); // fuzzy search should still find apple
+
+    await driver.wait(async () => {
+      const cards = await driver.findElements(By.xpath("//div[contains(@class,'max-w-4xl')]//div[contains(@class,'nh-card')]"));
+      const empty = await driver.findElements(By.xpath("//div[contains(@class,'max-w-4xl')]//*[contains(text(),'No foods found')]"));
+      return cards.length > 0 || empty.length > 0;
+    }, defaultConfig.defaultTimeout);
+
+    const cards = await driver.findElements(By.xpath("//div[contains(@class,'max-w-4xl')]//div[contains(@class,'nh-card')]"));
+    if (cards.length > 0) {
+      const firstName = await cards[0].findElement(By.xpath(".//h3")).getText();
+      await cards[0].click();
+      await driver.wait(until.stalenessOf(dialogPanel), defaultConfig.defaultTimeout);
+
+      const activeFoodChip = await driver.wait(
+        until.elementLocated(By.xpath(`//*[contains(text(), '${firstName}') and contains(text(), 'Food:')]`)),
+        defaultConfig.defaultTimeout
+      );
+      expect(await activeFoodChip.isDisplayed()).toBe(true);
+    } else {
+      const emptyMessage = await driver.findElement(By.xpath("//div[contains(@class,'max-w-4xl')]//*[contains(text(),'No foods found')]"));
+      expect(await emptyMessage.isDisplayed()).toBe(true);
+    }
+  }, 30000);
+});

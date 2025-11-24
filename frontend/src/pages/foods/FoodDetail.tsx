@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Hamburger, Tag, Fire, Scales, Question } from '@phosphor-icons/react';
+import { X, Hamburger, Tag, Fire, Scales, Question, Pill } from '@phosphor-icons/react';
 import { Food, apiClient } from '../../lib/apiClient';
 import NutritionScore from '../../components/NutritionScore';
 
@@ -192,6 +192,66 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
   };
 
   if (!food) return null;
+
+  // Helper function to extract unit from nutrient name (last parentheses only)
+  const extractUnit = (nutrientName: string): string => {
+    // Match the last set of parentheses at the end of the string
+    const match = nutrientName.match(/\(([^()]+)\)$/);
+    return match ? match[1] : '';
+  };
+
+  // Helper function to convert amount to comparable value (in micrograms)
+  const normalizeAmount = (amount: number, unit: string): number => {
+    const unitLower = unit.toLowerCase();
+    if (unitLower === 'g') return amount * 1_000_000; // g to µg
+    if (unitLower === 'mg') return amount * 1_000;    // mg to µg
+    if (unitLower === 'µg' || unitLower === 'ug') return amount; // already in µg
+    return amount; // fallback for unknown units
+  };
+
+  // Define priority micronutrients to display
+  const priorityMicronutrients = [
+    "Water (g)",
+    "Niacin (mg)",
+    "Thiamin (mg)",
+    "Retinol (g)",
+    "Zinc, Zn (mg)",
+    "Copper, Cu (mg)",
+    "Riboflavin (mg)",
+    "Sodium, Na (mg)",
+    "Calcium, Ca (mg)",
+    "Cholesterol (mg)",
+    "Total Sugars (g)",
+    "Vitamin B-6 (mg)",
+    "Potassium, K (mg)",
+    "Magnesium, Mg (mg)",
+    "Phosphorus, P (mg)",
+    "Selenium, Se (g)",
+    "Vitamin B-12 (g)",
+    "Choline, total (mg)",
+    "Carotene, beta (g)",
+    "Vitamin A, RAE (g)",
+    "Vitamin D (D2 + D3) (g)",
+    "Vitamin K (phylloquinone) (g)",
+    "Fatty acids, total saturated (g)",
+    "Vitamin E (alpha-tocopherol) (mg)",
+    "Fatty acids, total monounsaturated (g)",
+    "Fatty acids, total polyunsaturated (g)"
+  ];
+
+  // Filter and display only priority micronutrients that exist in the food data, sorted by normalized amount
+  const displayedMicronutrients = food.micronutrients 
+    ? priorityMicronutrients
+        .filter(nutrient => food.micronutrients && nutrient in food.micronutrients)
+        .map(nutrient => [nutrient, food.micronutrients![nutrient]] as [string, number])
+        .sort((a, b) => {
+          const unitA = extractUnit(a[0]);
+          const unitB = extractUnit(b[0]);
+          const normalizedA = normalizeAmount(a[1], unitA);
+          const normalizedB = normalizeAmount(b[1], unitB);
+          return normalizedB - normalizedA;
+        })
+    : [];
 
   return (
     <div className={`fixed inset-0 z-50 flex items-center justify-center ${open ? 'visible' : 'invisible'}`}>
@@ -422,34 +482,31 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
           </div>
 
           {/* Micronutrients Section */}
-          {food.micronutrients && Object.keys(food.micronutrients).length > 0 && (
+          {displayedMicronutrients.length > 0 && (
             <div className="mb-8">
               <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
-                <Scales size={20} weight="fill" className="text-[var(--color-accent)]" />
-                Micronutrients (per serving)
+                <Pill size={20} weight="fill" className="text-[var(--color-accent)]" />
+                Micronutrients (per {food.servingSize}g serving)
               </h3>
               
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {Object.entries(food.micronutrients).map(([nutrientName, value]) => (
-                  <div 
-                    key={nutrientName}
-                    className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative"
-                  >
-                    <button
-                      onClick={() => handleHelpClick(nutrientName)}
-                      className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                      title="View daily recommendation"
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                {displayedMicronutrients.map(([nutrient, amount]) => {
+                  const unit = extractUnit(nutrient);
+                  // Remove only the unit part (last parentheses) from the name
+                  const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
+                  
+                  return (
+                    <div 
+                      key={nutrient}
+                      className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center"
                     >
-                      <Question size={14} weight="bold" className="text-white" />
-                    </button>
-                    <p className="text-xl font-bold text-[var(--color-text-primary)]">
-                      {typeof value === 'number' ? value.toFixed(1) : value}
-                    </p>
-                    <p className="text-[var(--color-text-secondary)] text-xs mt-1">
-                      {nutrientName}
-                    </p>
-                  </div>
-                ))}
+                      <span className="text-[var(--color-text-secondary)] text-sm">{nutrientName}</span>
+                      <span className="font-semibold text-[var(--color-text-primary)] ml-2">
+                        {amount}{unit}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

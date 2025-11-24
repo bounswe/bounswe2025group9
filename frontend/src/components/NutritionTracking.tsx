@@ -418,11 +418,24 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         return;
       }
 
-      const updateData = {
+      const updateData: {
+        food_id?: number | null;
+        private_food_id?: number | null;
+        serving_size: number;
+        serving_unit: string;
+        meal_type: string;
+      } = {
         serving_size: multiplier,
         serving_unit: servingUnit,
         meal_type: selectedMeal
       };
+
+      // Include food_id or private_food_id if available
+      if (editingEntry.food_id != null && editingEntry.food_id !== undefined) {
+        updateData.food_id = editingEntry.food_id;
+      } else if (editingEntry.private_food_id != null && editingEntry.private_food_id !== undefined) {
+        updateData.private_food_id = editingEntry.private_food_id;
+      }
 
       console.log('Updating entry with data:', updateData);
 
