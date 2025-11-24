@@ -119,6 +119,36 @@ Note: The API credentials are required for:
 - Nutritional information retrieval
 - Food database integration
 
+## Building Android APK with Docker
+
+### Prerequisites
+
+- Docker with at least 8GB RAM allocated, gradle build fails with OOM otherwise
+
+### Build Instructions
+
+```bash
+cd mobile/nutrihub
+
+# Build the Docker image
+docker build -t nutrihub-apk .
+
+# Create a temporary container
+docker create --name nutrihub-temp nutrihub-apk
+
+# Extract the APK
+docker cp nutrihub-temp:/app/android/app/build/outputs/apk/release/app-release.apk ./nutrihub.apk
+
+# Clean up
+docker rm nutrihub-temp
+```
+
+### Troubleshooting
+
+**If build fails with "Gradle daemon disappeared":**
+- Increase Docker memory to 8GB+ in Docker settings
+- Restart Docker
+
 ## Manual Setup
 
 ### Backend Setup
