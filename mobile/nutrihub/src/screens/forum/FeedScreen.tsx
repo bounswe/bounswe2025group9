@@ -36,6 +36,8 @@ type FeedScreenNavigationProp = CompositeNavigationProp<
 /**
  * Feed screen component displaying personalized posts
  */
+const PAGE_SIZE = 10;
+
 const FeedScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation<FeedScreenNavigationProp>();
@@ -43,47 +45,97 @@ const FeedScreen: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [feedPosts, setFeedPosts] = useState<ForumTopic[]>([]);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const { user: currentUser } = useAuth();
 
   /**
-   * Fetch feed posts from API
+   * Merge and deduplicate posts by id while preserving order.
    */
-  const fetchFeed = async (isRefreshing: boolean = false) => {
-    if (!isRefreshing) {
-      setLoading(true);
+  const mergePosts = useCallback((existing: ForumTopic[], incoming: ForumTopic[], append: boolean): ForumTopic[] => {
+    const combined = append ? [...existing, ...incoming] : incoming;
+    const seen = new Set<number>();
+    const unique: ForumTopic[] = [];
+    for (const post of combined) {
+      if (seen.has(post.id)) continue;
+      seen.add(post.id);
+      unique.push(post);
     }
-    setError(null);
+    return unique;
+  }, []);
 
-    try {
-      const posts = await forumService.getFeed();
-      setFeedPosts(posts);
-    } catch (err) {
-      console.error('Error fetching feed:', err);
-      setError('Failed to load your feed. Please try again later.');
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
-    }
-  };
+  /**
+   * Fetch feed posts from API with pagination support
+   */
+  const fetchFeed = useCallback(
+    async (pageNum: number = 1, append: boolean = false, isRefreshing: boolean = false) => {
+      if (isRefreshing) {
+        setRefreshing(true);
+      } else if (append) {
+        setLoadingMore(true);
+      } else {
+        setLoading(true);
+      }
+      setError(null);
+
+      try {
+        const response = await forumService.getFeed({ page: pageNum, page_size: PAGE_SIZE });
+        const newPosts = response.results;
+        setHasMore(Boolean(response.next));
+        setPage(pageNum);
+        setFeedPosts(prev => mergePosts(prev, newPosts, append));
+      } catch (err) {
+        console.error('Error fetching feed:', err);
+        setError('Failed to load your feed. Please try again later.');
+        if (!append) {
+          setFeedPosts([]);
+        }
+      } finally {
+        setLoading(false);
+        setRefreshing(false);
+        setLoadingMore(false);
+      }
+    },
+    [mergePosts]
+  );
 
   // Fetch feed on mount
   useEffect(() => {
-    fetchFeed();
-  }, []);
+    if (currentUser) {
+      fetchFeed(1, false);
+    } else {
+      setFeedPosts([]);
+      setHasMore(true);
+    }
+  }, [currentUser, fetchFeed]);
 
   // Refresh feed when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      fetchFeed();
-    }, [])
+      if (!currentUser) {
+        return;
+      }
+      fetchFeed(1, false);
+    }, [currentUser, fetchFeed])
   );
 
   /**
    * Handle pull-to-refresh
    */
   const handleRefresh = () => {
-    setRefreshing(true);
-    fetchFeed(true);
+    setPage(1);
+    fetchFeed(1, false, true);
+  };
+
+  /**
+   * Handle loading additional posts when reaching list end
+   */
+  const handleLoadMore = () => {
+    if (!loadingMore && !loading && hasMore) {
+      const nextPage = page + 1;
+      fetchFeed(nextPage, true);
+    }
   };
 
   /**
@@ -232,6 +284,15 @@ const FeedScreen: React.FC = () => {
             feedPosts.length === 0 && styles.emptyListContent,
           ]}
           ListEmptyComponent={renderEmptyState}
+          ListFooterComponent={
+            hasMore ? (
+              <View style={styles.footerLoading}>
+                {loadingMore && <ActivityIndicator size="small" color={theme.primary} />}
+              </View>
+            ) : null
+          }
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.2}
           refreshControl={
             <RefreshControl
               refreshing={refreshing}
@@ -282,6 +343,10 @@ const styles = StyleSheet.create({
   },
   emptyListContent: {
     flexGrow: 1,
+  },
+  footerLoading: {
+    paddingVertical: SPACING.md,
+    alignItems: 'center',
   },
   emptyContainer: {
     flex: 1,

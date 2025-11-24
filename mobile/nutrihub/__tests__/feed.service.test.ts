@@ -103,15 +103,15 @@ describe('Forum Service - Feed Feature', () => {
       const result = await forumService.getFeed();
 
       expect(apiClient.get).toHaveBeenCalledWith('/users/feed/');
-      expect(result).toHaveLength(3);
-      expect(result[0].id).toBe(1);
-      expect(result[0].title).toBe('Post from followed user');
-      expect(result[0].author).toBe('followeduser');
-      expect(result[0].authorId).toBe(2);
-      expect(result[0].tags).toEqual(['Recipe']);
-      expect(result[0].likesCount).toBe(10);
-      expect(result[0].commentsCount).toBe(3);
-      expect(result[0].createdAt).toBeInstanceOf(Date);
+      expect(result.results).toHaveLength(3);
+      expect(result.results[0].id).toBe(1);
+      expect(result.results[0].title).toBe('Post from followed user');
+      expect(result.results[0].author).toBe('followeduser');
+      expect(result.results[0].authorId).toBe(2);
+      expect(result.results[0].tags).toEqual(['Recipe']);
+      expect(result.results[0].likesCount).toBe(10);
+      expect(result.results[0].commentsCount).toBe(3);
+      expect(result.results[0].createdAt).toBeInstanceOf(Date);
     });
 
     test('should preserve like status from AsyncStorage', async () => {
@@ -128,9 +128,9 @@ describe('Forum Service - Feed Feature', () => {
       const result = await forumService.getFeed();
 
       // Post 1 is in liked posts storage, so should be liked
-      expect(result[0].isLiked).toBe(true);
+      expect(result.results[0].isLiked).toBe(true);
       // Post 3 is in liked posts storage
-      expect(result[2].isLiked).toBe(true);
+      expect(result.results[2].isLiked).toBe(true);
     });
 
     test('should return empty array when feed is empty', async () => {
@@ -146,8 +146,8 @@ describe('Forum Service - Feed Feature', () => {
 
       const result = await forumService.getFeed();
 
-      expect(result).toEqual([]);
-      expect(result).toHaveLength(0);
+      expect(result.results).toEqual([]);
+      expect(result.count).toBe(0);
     });
 
     test('should handle paginated feed response', async () => {
@@ -163,8 +163,8 @@ describe('Forum Service - Feed Feature', () => {
 
       const result = await forumService.getFeed();
 
-      expect(result).toHaveLength(3);
-      // Note: Pagination handling would be done by the component
+      expect(result.results).toHaveLength(3);
+      expect(result.next).toBe('http://api/users/feed/?page=2');
     });
 
     test('should return empty array when user is not authenticated', async () => {
@@ -172,7 +172,7 @@ describe('Forum Service - Feed Feature', () => {
 
       const result = await forumService.getFeed();
 
-      expect(result).toEqual([]);
+      expect(result.results).toEqual([]);
       expect(apiClient.get).not.toHaveBeenCalled();
     });
 
@@ -216,8 +216,8 @@ describe('Forum Service - Feed Feature', () => {
 
       const result = await forumService.getFeed();
 
-      expect(result[0].authorDisplayName).toBe('Followed User');
-      expect(result[0].authorProfileImage).toBe('http://example.com/image.jpg');
+      expect(result.results[0].authorDisplayName).toBe('Followed User');
+      expect(result.results[0].authorProfileImage).toBe('http://example.com/image.jpg');
     });
 
     test('should handle author as string fallback', async () => {
@@ -238,8 +238,24 @@ describe('Forum Service - Feed Feature', () => {
 
       const result = await forumService.getFeed();
 
-      expect(result[0].author).toBe('followeduser');
-      expect(result[0].authorDisplayName).toBe('followeduser');
+      expect(result.results[0].author).toBe('followeduser');
+      expect(result.results[0].authorDisplayName).toBe('followeduser');
+    });
+
+    test('should append pagination params when provided', async () => {
+      (apiClient.get as jest.Mock).mockResolvedValueOnce({
+        data: {
+          count: 3,
+          next: null,
+          previous: null,
+          results: mockFeedPosts,
+        },
+        status: 200,
+      });
+
+      await forumService.getFeed({ page: 2, page_size: 5 });
+
+      expect(apiClient.get).toHaveBeenCalledWith('/users/feed/?page=2&page_size=5');
     });
   });
 });
