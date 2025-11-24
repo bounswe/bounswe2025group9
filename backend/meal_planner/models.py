@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from decimal import Decimal, ROUND_HALF_UP
 
 
 
@@ -41,18 +42,31 @@ class MealPlan(models.Model):
         total_carbs = 0.0
         
         for meal in self.meals:
-            # Assuming meal structure: {'food_id': int, 'serving_size': float, 'meal_type': str}
-            from foods.models import FoodEntry
+            from foods.models import FoodEntry, FoodProposal
+            
+            food_id = meal.get('food_id')
+            private_food_id = meal.get('private_food_id')
+            serving_size = meal.get('serving_size', 1.0)
+            
+            food_source = None
+            
             try:
-                food_entry = FoodEntry.objects.get(id=meal.get('food_id'))
-                serving_size = meal.get('serving_size', 1.0)
-                
-                total_calories += food_entry.caloriesPerServing * serving_size
-                total_protein += food_entry.proteinContent * serving_size
-                total_fat += food_entry.fatContent * serving_size
-                total_carbs += food_entry.carbohydrateContent * serving_size
-            except FoodEntry.DoesNotExist:
+                if food_id:
+                    food_source = FoodEntry.objects.get(id=food_id)
+                elif private_food_id:
+                    food_source = FoodProposal.objects.get(
+                        id=private_food_id,
+                        proposedBy=self.user,
+                        is_private=True
+                    )
+            except (FoodEntry.DoesNotExist, FoodProposal.DoesNotExist):
                 continue
+            
+            if food_source:
+                total_calories += food_source.caloriesPerServing * serving_size
+                total_protein += food_source.proteinContent * serving_size
+                total_fat += food_source.fatContent * serving_size
+                total_carbs += food_source.carbohydrateContent * serving_size
         
         # Update the total nutrition fields
         self.total_calories = total_calories
@@ -145,11 +159,21 @@ class FoodLogEntry(models.Model):
     food = models.ForeignKey(
         'foods.FoodEntry',
         on_delete=models.PROTECT,  # Prevent deletion of foods that are logged
-        related_name='log_entries'
+        related_name='log_entries',
+        null=True,  # Made nullable to support private foods
+        blank=True
+    )
+    private_food = models.ForeignKey(
+        'foods.FoodProposal',
+        on_delete=models.PROTECT,
+        related_name='private_log_entries',
+        null=True,
+        blank=True,
+        help_text="Reference to private food (rejected proposal)"
     )
     serving_size = models.DecimalField(
-        max_digits=6,
-        decimal_places=2,
+        max_digits=10,
+        decimal_places=6,
         help_text="Serving size multiplier (e.g., 2 for two servings)"
     )
     serving_unit = models.CharField(
@@ -177,24 +201,56 @@ class FoodLogEntry(models.Model):
         verbose_name_plural = "Food Log Entries"
     
     def __str__(self):
-        return f"{self.food.name} ({self.serving_size} {self.serving_unit}) - {self.meal_type}"
+        food_name = self.food.name if self.food else (self.private_food.name if self.private_food else "Unknown")
+        return f"{food_name} ({self.serving_size} {self.serving_unit}) - {self.meal_type}"
+    
+    def clean(self):
+        """Validate that exactly one of food or private_food is set."""
+        from django.core.exceptions import ValidationError
+        if not self.food and not self.private_food:
+            raise ValidationError("Either food or private_food must be set.")
+        if self.food and self.private_food:
+            raise ValidationError("Only one of food or private_food can be set.")
     
     def save(self, *args, **kwargs):
-        """Calculate nutrition values before saving."""
-        # Calculate nutrition based on food and serving size
-        multiplier = float(self.serving_size)
-        self.calories = float(self.food.caloriesPerServing) * multiplier
-        self.protein = float(self.food.proteinContent) * multiplier
-        self.carbohydrates = float(self.food.carbohydrateContent) * multiplier
-        self.fat = float(self.food.fatContent) * multiplier
+        """Override save to auto-calculate nutrition and validate food source."""
+        from foods.models import FoodProposal
         
-        # Calculate micronutrients
-        if self.food.micronutrients:
-            self.micronutrients = {
-                nutrient: value * multiplier
-                for nutrient, value in self.food.micronutrients.items()
-            }
+        # Derive nutrition from either food or private_food BEFORE validation
+        if self.food_id:
+            food_source = self.food
+        elif self.private_food_id:
+            food_source = self.private_food
+        else:
+            food_source = None
         
+        if food_source:
+            # Calculate nutrition based on serving size and round to 2 decimal places
+            serving_size_float = float(self.serving_size)
+            
+            # Round to 2 decimal places using Decimal for precision
+            self.calories = Decimal(str(food_source.caloriesPerServing * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.protein = Decimal(str(food_source.proteinContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.fat = Decimal(str(food_source.fatContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.carbohydrates = Decimal(str(food_source.carbohydrateContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            
+            # Handle micronutrients if they exist
+            if hasattr(food_source, 'micronutrients') and food_source.micronutrients:
+                self.micronutrients = {
+                    nutrient: value * float(self.serving_size)
+                    for nutrient, value in food_source.micronutrients.items()
+                }
+        
+        # Now run validation (after nutrition fields are set)
+        self.full_clean()  # Run validation
         super().save(*args, **kwargs)
         
         # Update daily log totals

@@ -191,3 +191,106 @@ def calculate_macro_calories(protein_g, carbohydrates_g, fat_g):
     )
     
     return round(calories, 2)
+
+
+def calculate_micronutrient_targets(age, gender):
+    """
+    Calculate micronutrient targets based on Recommended Dietary Allowances (RDA).
+    
+    Uses FDA/WHO RDA values based on age and gender.
+    Returns targets in the format matching the API response (e.g., "Vitamin A, RAE (µg)").
+    
+    Args:
+        age (int): Age in years
+        gender (str): 'M' for male, 'F' for female
+    
+    Returns:
+        dict: Dictionary with micronutrient targets matching API format
+            Example: {
+                "Vitamin A, RAE (µg)": 900,
+                "Vitamin C (mg)": 90,
+                ...
+            }
+    
+    Raises:
+        ValueError: If gender is not 'M' or 'F'
+    """
+    if gender not in ['M', 'F']:
+        raise ValueError("Gender must be 'M' or 'F'")
+    
+    # Base RDA values for adults (ages 19-50)
+    # Format: (male_value, female_value, unit, max_value_if_applicable)
+    rda_values = {
+        # Vitamins
+        'Vitamin A, RAE (µg)': (900, 700, None, 3000),
+        'Vitamin C (mg)': (90, 75, None, 2000),
+        'Vitamin D (µg)': (15, 15, None, 100),
+        'Vitamin E (alpha-tocopherol) (mg)': (15, 15, None, 1000),
+        'Vitamin K (phylloquinone) (µg)': (120, 90, None, None),
+        'Thiamin (mg)': (1.2, 1.1, None, None),
+        'Riboflavin (mg)': (1.3, 1.1, None, None),
+        'Niacin (mg)': (16, 14, None, 35),
+        'Vitamin B-6 (mg)': (1.7, 1.5, None, 100),
+        'Folate, DFE (µg)': (400, 400, None, 1000),
+        'Folic acid (µg)': (400, 400, None, 1000),
+        'Folate, food (µg)': (400, 400, None, None),
+        'Folate, total (µg)': (400, 400, None, None),
+        'Vitamin B-12 (µg)': (2.4, 2.4, None, None),
+        'Choline, total (mg)': (550, 425, None, 3500),
+        'Carotene, beta (µg)': (None, None, None, None),  # No RDA, precursor to Vitamin A
+        'Lutein + zeaxanthin (µg)': (None, None, None, None),  # No RDA
+        'Lycopene (µg)': (None, None, None, None),  # No RDA
+        
+        # Minerals
+        'Calcium, Ca (mg)': (1000, 1000, None, 2500),
+        'Iron, Fe (mg)': (8, 18, None, 45),  # Higher for females due to menstruation
+        'Magnesium, Mg (mg)': (420, 320, None, None),
+        'Phosphorus, P (mg)': (700, 700, None, 4000),
+        'Potassium, K (mg)': (3400, 2600, None, None),
+        'Sodium, Na (mg)': (1500, 1500, None, 2300),  # AI (Adequate Intake), not RDA
+        'Zinc, Zn (mg)': (11, 8, None, 40),
+        'Copper, Cu (mg)': (0.9, 0.9, None, 10),
+        'Manganese, Mn (mg)': (2.3, 1.8, None, 11),
+        'Selenium, Se (µg)': (55, 55, None, 400),
+        
+        # Fatty acids (AI values)
+        'Fatty acids, total saturated (g)': (None, None, None, None),  # No target, limit instead
+        'Fatty acids, total monounsaturated (g)': (None, None, None, None),
+        'Fatty acids, total polyunsaturated (g)': (None, None, None, None),
+        'MUFA 18:1 (g)': (None, None, None, None),
+        'PUFA 18:2 (g)': (None, None, None, None),
+        'PUFA 18:3 (g)': (None, None, None, None),
+        
+        # Water
+        'Water (g)': (3700, 2700, None, None),  # AI for total water (includes beverages and food)
+    }
+    
+    # Age adjustments for older adults (51+)
+    if age >= 51:
+        # Vitamin D increases for older adults
+        rda_values['Vitamin D (µg)'] = (20, 20, None, 100)
+        # Calcium increases for older adults
+        rda_values['Calcium, Ca (mg)'] = (1200, 1200, None, 2500)
+    
+    # Build targets dictionary
+    targets = {}
+    
+    for nutrient_name, (male_val, female_val, _, max_val) in rda_values.items():
+        # Select value based on gender
+        if gender == 'M':
+            target_value = male_val
+        else:
+            target_value = female_val
+        
+        # Only include nutrients with defined RDA values
+        if target_value is not None:
+            # Store as number (simple format) or as object with target and maximum
+            if max_val is not None:
+                targets[nutrient_name] = {
+                    'target': target_value,
+                    'maximum': max_val
+                }
+            else:
+                targets[nutrient_name] = target_value
+    
+    return targets

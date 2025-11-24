@@ -18,8 +18,11 @@ export interface MicroNutrient {
 
 export interface FoodLogEntry {
   id: number;
-  food_id: number;
+  food_id?: number | null;
+  private_food_id?: number | null;
   food_name: string;
+  food_serving_size: number; // Original serving size of the food (e.g., 100g)
+  image_url: string; // Image URL from the food
   serving_size: number;
   serving_unit: string;
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
@@ -27,45 +30,78 @@ export interface FoodLogEntry {
   protein: number;
   carbohydrates: number;
   fat: number;
-  image_url?: string;
+  micronutrients?: { [key: string]: number };
   logged_at: string;
 }
 
 export interface DailyNutritionLog {
-  id: number;
-  user_id: number;
   date: string; // ISO date string (YYYY-MM-DD)
-  entries: FoodLogEntry[];
   total_calories: number;
   total_protein: number;
   total_carbohydrates: number;
   total_fat: number;
-  micronutrients: MicroNutrient[];
+  micronutrients_summary: { [key: string]: number };
+  entries?: FoodLogEntry[]; // Optional because history endpoint doesn't return entries
+  targets?: {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+  };
+  adherence?: {
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+  };
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface NutritionTargets {
-  id: number;
-  user_id: number;
   calories: number;
   protein: number; // in grams
   carbohydrates: number; // in grams
   fat: number; // in grams
   micronutrients: {
-    [key: string]: {
-      target: number;
-      maximum?: number;
-      unit: string;
-    };
+    [key: string]: number;
   };
-  calculated_from_metrics: boolean; // true if auto-calculated
-  last_updated: string;
+  is_custom: boolean;
+  bmr: number;
+  tdee: number;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface UserMetrics {
   height: number; // in cm
   weight: number; // in kg
   age: number;
-  gender: 'male' | 'female' | 'other';
+  gender: 'M' | 'F';
   activity_level: 'sedentary' | 'light' | 'moderate' | 'active' | 'very_active';
+  bmr?: number;
+  tdee?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface NutritionStatistics {
+  period: 'week' | 'month';
+  start_date: string;
+  end_date: string;
+  statistics: {
+    avg_calories: number;
+    avg_protein: number;
+    avg_carbohydrates: number;
+    avg_fat: number;
+    days_logged: number;
+    streak_days: number;
+    adherence: {
+      calories: number;
+      protein: number;
+      carbohydrates: number;
+      fat: number;
+    };
+  };
 }
 

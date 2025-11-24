@@ -23,6 +23,7 @@ class FoodLoader:
         self.skip_errors = skip_errors
         self.count = 0
         self.failed = 0
+        self.skipped = 0  # Track skipped items due to inputFoods filter
         # Collect failures as dicts: {index, name, error, trace}
         self.failures = []
 
@@ -41,6 +42,12 @@ class FoodLoader:
         iterable = foods[:limit] if limit else foods
         for idx, food_data in enumerate(iterable, start=1):
             try:
+                # Filter: only process foods with inputFoods array length < 4
+                input_foods = food_data.get("inputFoods", [])
+                if len(input_foods) >= 4:
+                    self.skipped += 1
+                    continue
+
                 self.create_food_entry(food_data)
                 self.count += 1
             except Exception as e:
@@ -68,7 +75,9 @@ class FoodLoader:
                     # Print a short warning but do not raise to allow processing to continue
                     print(f"⚠️  {error_msg} (continuing)")
 
-        print(f"✓ Successfully loaded {self.count} foods. Failed: {self.failed}")
+        print(f"✓ Successfully loaded {self.count} foods.")
+        print(f"⚠️  Skipped {self.skipped} foods (inputFoods >= 4).")
+        print(f"❌ Failed: {self.failed}")
 
         # If there were failures, print a brief report (with limited detail)
         if self.failures:
@@ -318,16 +327,22 @@ class FoodLoader:
         return allergens
 
     def create_food_entry(self, food_data):
-
         """Create or update a FoodEntry from JSON food data."""
 
         # Extract basic information
         name = food_data.get("description", "").strip()
+        if len(name) > 100:
+            name = name[:100]  # Truncate to max length
         if not name:
             raise ValueError("Food description is missing")
 
         category = self.extract_category(food_data)
         serving_size = self.extract_serving_size(food_data)
+
+        # Validate serving size
+        if serving_size <= 0 or serving_size > 1000:
+            raise ValueError(f"Invalid serving size: {serving_size}g")
+
         nutrients = self.extract_nutrients(food_data)
 
         # IMPORTANT: Nutrients in the JSON are per 100g, but our database stores per serving.
@@ -347,7 +362,28 @@ class FoodLoader:
         dietary_options = self.infer_dietary_options(name)
         allergen_names = self.infer_allergens(name)
 
-        # Create or update the FoodEntry with normalized nutritional values
+        # Pre-fetch allergen objects
+        allergen_objects = []
+        for allergen_name in allergen_names:
+            allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+            allergen_objects.append(allergen)
+
+        # Calculate nutrition score first
+        food_dict = {
+            "caloriesPerServing": normalized_calories,
+            "proteinContent": normalized_protein,
+            "fatContent": normalized_fat,
+            "carbohydrateContent": normalized_carbs,
+            "servingSize": serving_size,
+            "category": category,
+            "name": name,
+        }
+
+        score = calculate_nutrition_score(food_dict)
+        if not (0.0 <= score <= 10.0):
+            raise ValueError(f"Nutrition score out of bounds: {score}")
+
+        # Create or update the FoodEntry
         food_entry, created = FoodEntry.objects.update_or_create(
             name=name,
             defaults={
@@ -359,43 +395,18 @@ class FoodLoader:
                 "carbohydrateContent": normalized_carbs,
                 "micronutrients": normalized_micronutrients,
                 "dietaryOptions": dietary_options,
-                "nutritionScore": 0.0,  # Temporary, will recalculate below
+                "nutritionScore": score,
                 "imageUrl": "",
             },
         )
 
-        # Add allergens
-        for allergen_name in allergen_names:
-            allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
-            food_entry.allergens.add(allergen)
-
-        # Recalculate nutrition score using external function
-        # Convert FoodEntry object to dict for nutrition_score function
-        food_dict = {
-            "caloriesPerServing": food_entry.caloriesPerServing,
-            "proteinContent": food_entry.proteinContent,
-            "fatContent": food_entry.fatContent,
-            "carbohydrateContent": food_entry.carbohydrateContent,
-            "servingSize": food_entry.servingSize,
-            "category": food_entry.category,
-            "name": food_entry.name,
-        }
-        try:
-            score = calculate_nutrition_score(food_dict)
-            assert (
-                0.0 <= score <= 10.0
-            ), "Nutrition score out of bounds, score = {score}"
-            food_entry.nutritionScore = score
-        except Exception as e:
-            print(f"⚠️  Failed to calculate nutrition score for '{name}': {str(e)}")
-            # Delete the food entry if score calculation fails
-            print(f"❌ Deleting incomplete food entry '{name}'")
-            food_entry.delete()
-        food_entry.save()
+        # Set allergens
+        if allergen_objects:
+            food_entry.allergens.set(allergen_objects)
 
         action = "Created" if created else "Updated"
         print(
-            f"  {action}: {name} ({serving_size}g, {nutrients['calories']}kcal, score: {food_entry.nutritionScore})"
+            f"  {action:<10}: {name[:20]:<20} ({serving_size:>5.1f}g, {normalized_calories:>6.1f}kcal, score: {score:>5.1f})", end="\r"
         )
 
 
@@ -405,7 +416,8 @@ class FoodLoader:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description="Load food items from JSON file (USDA FDC format) into the FoodEntry model"
+        description="Load food items from JSON file (USDA FDC format) into the FoodEntry model. "
+        "Only loads foods with inputFoods array length < 4. This captures food items and eliminates recipes."
     )
     parser.add_argument(
         "json_file",
