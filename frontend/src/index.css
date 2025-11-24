@@ -54,7 +54,7 @@
 
   --forum-default-bg: #333333;
   --forum-default-text: #bbbbbb;
-  --forum-default-active-bg: #555555;
+  --forum-default-active-bg: #3b82f6; /* blue-500 - matches button color */
   --forum-default-active-text: white;
   --forum-default-hover-bg: #444444;
 
@@ -202,7 +202,7 @@
 
   --forum-default-bg: #f2f2f2;
   --forum-default-text: #666666;
-  --forum-default-active-bg: #888888;
+  --forum-default-active-bg: #0d7c5f; /* emerald-900 - dark green like header */
   --forum-default-active-text: white;
   --forum-default-hover-bg: #e5e5e5;
 
@@ -340,4 +340,20 @@ img {
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
   overflow: hidden;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease-out;
 }

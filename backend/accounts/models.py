@@ -137,3 +137,148 @@ class Follow(models.Model):
 
     class Meta:
         unique_together = ('follower', 'following')
+
+
+class UserMetrics(models.Model):
+    """
+    Stores user's physical metrics for calculating nutrition targets.
+    One-to-one relationship with User.
+    """
+    GENDER_CHOICES = [
+        ('M', 'Male'),
+        ('F', 'Female'),
+    ]
+    
+    ACTIVITY_LEVEL_CHOICES = [
+        ('sedentary', 'Sedentary (little or no exercise)'),
+        ('light', 'Light (exercise 1-3 days/week)'),
+        ('moderate', 'Moderate (exercise 3-5 days/week)'),
+        ('active', 'Active (exercise 6-7 days/week)'),
+        ('very_active', 'Very Active (hard exercise & physical job)'),
+    ]
+    
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='metrics'
+    )
+    height = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Height in centimeters"
+    )
+    weight = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        help_text="Weight in kilograms"
+    )
+    age = models.PositiveIntegerField(help_text="Age in years")
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES)
+    activity_level = models.CharField(max_length=20, choices=ACTIVITY_LEVEL_CHOICES)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "User Metrics"
+    
+    def __str__(self):
+        return f"{self.user.username}'s metrics"
+    
+    def calculate_bmr(self):
+        """Calculate Basal Metabolic Rate using Mifflin-St Jeor Equation."""
+        from project.utils.nutrition_calculator import calculate_bmr
+        return calculate_bmr(
+            float(self.weight),
+            float(self.height),
+            self.age,
+            self.gender
+        )
+    
+    def calculate_tdee(self):
+        """Calculate Total Daily Energy Expenditure."""
+        from project.utils.nutrition_calculator import calculate_tdee
+        bmr = self.calculate_bmr()
+        return calculate_tdee(bmr, self.activity_level)
+
+
+class NutritionTargets(models.Model):
+    """
+    Stores user's daily nutrition targets.
+    Can be auto-calculated from UserMetrics or manually customized.
+    """
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        primary_key=True,
+        related_name='nutrition_targets'
+    )
+    calories = models.DecimalField(
+        max_digits=7,
+        decimal_places=2,
+        help_text="Daily calorie target"
+    )
+    protein = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        help_text="Daily protein target in grams"
+    )
+    carbohydrates = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        help_text="Daily carbohydrates target in grams"
+    )
+    fat = models.DecimalField(
+        max_digits=6,
+        decimal_places=2,
+        help_text="Daily fat target in grams"
+    )
+    micronutrients = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Daily micronutrient targets (e.g., vitamins, minerals)"
+    )
+    is_custom = models.BooleanField(
+        default=False,
+        help_text="True if manually set, False if auto-calculated from metrics"
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name_plural = "Nutrition Targets"
+    
+    def __str__(self):
+        return f"{self.user.username}'s nutrition targets"
+    
+    @classmethod
+    def create_from_metrics(cls, user_metrics):
+        """
+        Create or update nutrition targets based on user metrics.
+        Uses default macro ratios: 40% carbs, 30% protein, 30% fat.
+        Also calculates micronutrient targets based on RDA values for age and gender.
+        """
+        from project.utils.nutrition_calculator import calculate_macro_targets, calculate_micronutrient_targets
+        
+        tdee = user_metrics.calculate_tdee()
+        macro_targets = calculate_macro_targets(tdee)
+        micronutrient_targets = calculate_micronutrient_targets(
+            user_metrics.age,
+            user_metrics.gender
+        )
+        
+        targets, created = cls.objects.update_or_create(
+            user=user_metrics.user,
+            defaults={
+                'calories': macro_targets['calories'],
+                'protein': macro_targets['protein_g'],
+                'carbohydrates': macro_targets['carbohydrates_g'],
+                'fat': macro_targets['fat_g'],
+                'micronutrients': micronutrient_targets,
+                'is_custom': False,
+            }
+        )
+        
+        return targets

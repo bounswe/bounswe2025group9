@@ -526,5 +526,38 @@ export const forumService = {
     );
     
     return mappedPosts;
+  },
+
+  /**
+   * Get personalized feed of posts from followed users and liked posts
+   * @returns Array of ForumTopic objects
+   */
+  async getFeed(): Promise<ForumTopic[]> {
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      console.log("Skipping feed request - no access token available");
+      return [];
+    }
+    
+    const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>('/users/feed/');
+    if (response.error) {
+      if (response.status === 401) {
+        console.error("Authentication error in getFeed - token may be invalid");
+        throw new Error("Authentication error - please login again");
+      }
+      throw new Error(response.error);
+    }
+    
+    if (!response.data || !response.data.results) {
+      console.error('Unexpected feed response format:', response.data);
+      throw new Error('Unexpected API response format for feed');
+    }
+    
+    const mappedPosts = await Promise.all(
+      response.data.results.map(apiTopic => mapApiTopicToForumTopic(apiTopic))
+    );
+    
+    return mappedPosts;
   }
 };

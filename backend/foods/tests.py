@@ -1,16 +1,61 @@
+from decimal import Decimal
+
 from django.test import TestCase
 from django.urls import reverse
 from rest_framework.test import APIClient, APITestCase
 from rest_framework import status
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from foods.models import FoodEntry, FoodProposal
+from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
+from foods.models import FoodEntry, FoodProposal, PriceAudit
 from foods.serializers import FoodEntrySerializer
+from foods.services import (
+    approve_food_proposal,
+    override_food_price_category,
+    recalculate_price_thresholds,
+    update_food_price,
+)
 from accounts.models import Allergen
 from unittest.mock import patch
 import requests
 
 User = get_user_model()
+
+
+def create_food_entry(
+    name: str,
+    *,
+    base_price: Decimal | float | str | None = None,
+    price_unit: str = PriceUnit.PER_100G,
+    currency: str = DEFAULT_CURRENCY,
+):
+    data = {
+        "name": name,
+        "category": "Test",
+        "servingSize": 100,
+        "caloriesPerServing": 100,
+        "proteinContent": 10,
+        "fatContent": 5,
+        "carbohydrateContent": 15,
+        "dietaryOptions": [],
+        "nutritionScore": 5.0,
+        "imageUrl": "",
+        "price_unit": price_unit,
+        "currency": currency,
+    }
+    if base_price is not None:
+        data["base_price"] = Decimal(str(base_price))
+    entry = FoodEntry.objects.create(**data)
+    entry.allergens.set([])
+    return entry
+
+
+def seed_price_entries(prices: list[Decimal | float | str]):
+    for idx, price in enumerate(prices):
+        create_food_entry(
+            name=f"Baseline {idx}-{price}",
+            base_price=price,
+        )
 
 
 class FoodCatalogTests(TestCase):
@@ -778,3 +823,261 @@ class FoodNutritionInfoTests(APITestCase):
         response = self.client.get(self.nutrition_info_url, {"name": "peanut-butter & jelly"})
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+
+class PriceCategorizationTests(TestCase):
+    def setUp(self):
+        self.moderator = User.objects.create_user(
+            username="moderator",
+            email="moderator@example.com",
+            password="ModPass123!",
+            name="Mod",
+            surname="Erator",
+            is_staff=True,
+        )
+
+    def test_recalculate_price_thresholds_uses_sorted_prices(self):
+        seed_price_entries([10, 20, 30, 40, 50, 60])
+
+        threshold = recalculate_price_thresholds(
+            PriceUnit.PER_100G, currency=DEFAULT_CURRENCY
+        )
+        self.assertEqual(threshold.lower_threshold, Decimal("20"))
+        self.assertEqual(threshold.upper_threshold, Decimal("40"))
+
+    def test_update_food_price_assigns_category_and_logs_audit(self):
+        seed_price_entries([10, 20, 30, 40, 50, 60])
+        entry = create_food_entry("Target Food")
+
+        update_food_price(
+            entry,
+            base_price=Decimal("35.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            changed_by=self.moderator,
+        )
+        entry.refresh_from_db()
+
+        self.assertEqual(entry.price_category, PriceCategory.MID)
+        audit = entry.price_audits.filter(
+            change_type=PriceAudit.ChangeType.PRICE_UPDATE
+        ).first()
+        self.assertIsNotNone(audit)
+        self.assertEqual(audit.changed_by, self.moderator)
+        self.assertEqual(audit.new_price_category, PriceCategory.MID)
+
+    def test_manual_override_survives_price_updates(self):
+        seed_price_entries([10, 20, 30, 40, 50, 60])
+        entry = create_food_entry("Override Food")
+
+        update_food_price(
+            entry,
+            base_price=Decimal("35.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            changed_by=self.moderator,
+        )
+        override_reason = "Seasonal scarcity"
+        override_food_price_category(
+            entry,
+            category=PriceCategory.PREMIUM,
+            changed_by=self.moderator,
+            reason=override_reason,
+        )
+
+        update_food_price(
+            entry,
+            base_price=Decimal("18.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            changed_by=self.moderator,
+        )
+        entry.refresh_from_db()
+
+        self.assertEqual(entry.price_category, PriceCategory.PREMIUM)
+        self.assertEqual(entry.category_overridden_by, self.moderator)
+        self.assertEqual(entry.category_override_reason, override_reason)
+
+
+class FoodProposalApprovalTests(TestCase):
+    def setUp(self):
+        self.moderator = User.objects.create_user(
+            username="foodmod",
+            email="foodmod@example.com",
+            password="ModPass321!",
+            name="Food",
+            surname="Mod",
+            is_staff=True,
+        )
+        self.proposer = User.objects.create_user(
+            username="submitter",
+            email="submitter@example.com",
+            password="SubmitPass123!",
+            name="Food",
+            surname="Fan",
+        )
+        seed_price_entries([12, 18, 30, 45, 60, 72])
+
+    def _create_proposal(self, base_price: Decimal) -> FoodProposal:
+        return FoodProposal.objects.create(
+            name="Approved Food",
+            category="Snacks",
+            servingSize=100,
+            caloriesPerServing=250,
+            proteinContent=5,
+            fatContent=10,
+            carbohydrateContent=30,
+            dietaryOptions=[],
+            nutritionScore=6.5,
+            imageUrl="",
+            base_price=base_price,
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            proposedBy=self.proposer,
+        )
+
+    def test_approve_food_proposal_assigns_category_and_creates_audit(self):
+        proposal = self._create_proposal(Decimal("32.50"))
+
+        proposal, entry = approve_food_proposal(
+            proposal, changed_by=self.moderator
+        )
+
+        self.assertTrue(proposal.isApproved)
+        self.assertIsNotNone(entry)
+        self.assertEqual(entry.price_category, PriceCategory.MID)
+        self.assertTrue(
+            entry.price_audits.filter(
+                change_type=PriceAudit.ChangeType.PRICE_UPDATE
+            ).exists()
+        )
+
+
+class ModeratorWorkflowTests(APITestCase):
+    def setUp(self):
+        self.moderator = User.objects.create_user(
+            username="api-mod",
+            email="api-mod@example.com",
+            password="ApiModPass123!",
+            name="Api",
+            surname="Mod",
+            is_staff=True,
+        )
+        self.proposer = User.objects.create_user(
+            username="api-submitter",
+            email="api-submitter@example.com",
+            password="ApiSubmit123!",
+            name="Api",
+            surname="User",
+        )
+        seed_price_entries([15, 25, 35, 45, 55, 65])
+        self.client.force_authenticate(user=self.moderator)
+
+    def test_full_moderation_flow_records_price_audit(self):
+        proposal = FoodProposal.objects.create(
+            name="API Approved Food",
+            category="Meals",
+            servingSize=150,
+            caloriesPerServing=320,
+            proteinContent=12,
+            fatContent=9,
+            carbohydrateContent=40,
+            dietaryOptions=[],
+            nutritionScore=7.2,
+            imageUrl="",
+            base_price=Decimal("38.00"),
+            price_unit=PriceUnit.PER_100G,
+            currency=DEFAULT_CURRENCY,
+            proposedBy=self.proposer,
+        )
+
+        url = reverse("moderation-food-proposals-approve", args=[proposal.id])
+        response = self.client.post(url, {"approved": True}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        entry = FoodEntry.objects.get(name=proposal.name)
+        self.assertEqual(entry.price_category, PriceCategory.MID)
+        self.assertTrue(
+            entry.price_audits.filter(
+                change_type=PriceAudit.ChangeType.PRICE_UPDATE
+            ).exists()
+        )
+
+    def test_reject_food_proposal_marks_as_private(self):
+        """Test that rejecting a proposal marks it as private"""
+        proposal = FoodProposal.objects.create(
+            name="Rejected Private Food",
+            category="Meals",
+            servingSize=100,
+            caloriesPerServing=200,
+            proteinContent=10,
+            fatContent=5,
+            carbohydrateContent=30,
+            nutritionScore=5.0,
+            proposedBy=self.proposer,
+        )
+
+        url = reverse("moderation-food-proposals-approve", args=[proposal.id])
+        response = self.client.post(url, {"approved": False}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        proposal.refresh_from_db()
+        self.assertFalse(proposal.isApproved)
+        self.assertTrue(proposal.is_private)
+
+
+class UserFoodProposalListTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="proposer",
+            email="proposer@example.com",
+            password="password123"
+        )
+        self.other_user = User.objects.create_user(
+            username="other",
+            email="other@example.com",
+            password="password123"
+        )
+        self.client.force_authenticate(user=self.user)
+        self.url = reverse("my_food_proposals")
+
+    def test_list_my_proposals(self):
+        # Create proposals for user
+        FoodProposal.objects.create(
+            name="My Pending",
+            proposedBy=self.user,
+            servingSize=100, caloriesPerServing=100,
+            proteinContent=10, fatContent=10, carbohydrateContent=10,
+            nutritionScore=5.0
+        )
+        FoodProposal.objects.create(
+            name="My Private",
+            proposedBy=self.user,
+            isApproved=False,
+            is_private=True,
+            servingSize=100, caloriesPerServing=100,
+            proteinContent=10, fatContent=10, carbohydrateContent=10,
+            nutritionScore=5.0
+        )
+        
+        # Create proposal for other user
+        FoodProposal.objects.create(
+            name="Other's Proposal",
+            proposedBy=self.other_user,
+            servingSize=100, caloriesPerServing=100,
+            proteinContent=10, fatContent=10, carbohydrateContent=10,
+            nutritionScore=5.0
+        )
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        results = response.data.get("results", [])
+        self.assertEqual(len(results), 2)
+        names = [p["name"] for p in results]
+        self.assertIn("My Pending", names)
+        self.assertIn("My Private", names)
+        self.assertNotIn("Other's Proposal", names)
+
+

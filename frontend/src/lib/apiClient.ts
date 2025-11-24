@@ -8,6 +8,9 @@ export interface PaginatedResponseWithStatus<T> {
   warning?: string;
 }
 // types
+export type PriceUnit = 'per_100g' | 'per_unit';
+export type PriceCategory = '₺' | '₺ ₺' | '₺ ₺₺';
+
 export interface Food {
   id: number;
   name: string;
@@ -21,6 +24,14 @@ export interface Food {
   dietaryOptions: string[];
   nutritionScore: number;
   imageUrl: string;
+  micronutrients?: Record<string, number>;
+  base_price?: string | number | null;
+  price_unit?: PriceUnit;
+  price_category?: PriceCategory | null;
+  currency?: string;
+  category_overridden_by?: number | null;
+  category_override_reason?: string | null;
+  category_overridden_at?: string | null;
 }
 
 export interface FoodProposal {
@@ -35,6 +46,9 @@ export interface FoodProposal {
   dietaryOptions?: string[];
   nutritionScore: number;
   imageUrl?: string;
+  base_price?: string | number | null;
+  price_unit?: PriceUnit;
+  currency?: string;
 }
 
 export interface FoodProposalResponse {
@@ -201,6 +215,53 @@ export interface MealPlan {
   is_active: boolean;
 };
 
+export interface PriceCategoryThreshold {
+  id: number;
+  price_unit: PriceUnit;
+  price_unit_display?: string;
+  currency: string;
+  lower_threshold: string | null;
+  upper_threshold: string | null;
+  updates_since_recalculation: number;
+  last_recalculated_at: string | null;
+}
+
+export interface PriceAudit {
+  id: number;
+  food?: number | null;
+  food_name?: string | null;
+  price_unit: PriceUnit;
+  currency: string;
+  old_base_price?: string | null;
+  new_base_price?: string | null;
+  old_price_category?: PriceCategory | null;
+  new_price_category?: PriceCategory | null;
+  change_type: string;
+  changed_by?: number | null;
+  changed_by_username?: string | null;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+}
+
+export type PriceReportStatus = 'open' | 'in_review' | 'resolved';
+
+export interface PriceReport {
+  id: number;
+  food: number;
+  food_name?: string;
+  reported_by: number;
+  reported_by_username?: string;
+  description: string;
+  status: PriceReportStatus;
+  resolution_notes?: string;
+  resolved_by?: number | null;
+  resolved_by_username?: string | null;
+  resolved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 
 
 // api base urls
@@ -295,6 +356,19 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
       error.data = errorData;
       
       throw error;
+    }
+
+    // Handle empty responses (like 204 No Content for DELETE requests)
+    if (response.status === 204 || response.headers.get('content-length') === '0') {
+      console.log(`Response from ${options?.method || 'GET'} ${url}: No content`);
+      return undefined as T;
+    }
+
+    // Check if response has content before parsing
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.log(`Response from ${options?.method || 'GET'} ${url}: Non-JSON content`);
+      return undefined as T;
     }
 
     const data = await response.json();
@@ -692,6 +766,54 @@ export const apiClient = {
     }, true),
 
   
+  // Get personalized feed
+  getPersonalizedFeed: (params?: PaginationParams) => {
+    let url = "/users/feed/";
+    
+    if (params) {
+      const queryParams = new URLSearchParams();
+      
+      if (params.page !== undefined) {
+        queryParams.append('page', params.page.toString());
+      }
+      
+      if (params.page_size !== undefined) {
+        queryParams.append('page_size', params.page_size.toString());
+      }
+      
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+    }
+    
+    console.log('[API] Fetching personalized feed');
+    return fetchJson<PaginatedResponse<ForumPost>>(url, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received personalized feed:`, response);
+      
+      // Check if backend is using like_count instead of likes in each post
+      if (response && response.results) {
+        response.results = response.results.map(post => {
+          const postObj = post as any;
+          if ('like_count' in postObj && !('likes' in postObj)) {
+            console.log('[API] Mapping like_count to likes for post', postObj.id);
+            postObj.likes = postObj.like_count;
+          }
+          // Ensure likes is always a non-negative number
+          if (typeof postObj.likes !== 'number' || postObj.likes < 0) {
+            console.log('[API] Ensuring non-negative like count for post', postObj.id, 'current:', postObj.likes);
+            postObj.likes = Math.max(0, postObj.likes || 0);
+          }
+          return post;
+        });
+      }
+      
+      return response;
+    });
+  },
+
   toggleLikePost: (postId: number) => {
     console.log(`[API] Toggling like for post ID: ${postId}`);
     return fetchJson<{ liked: boolean, like_count?: number }>(`/forum/posts/${postId}/like/`, {
@@ -739,6 +861,38 @@ export const apiClient = {
     });
   },
   
+  // Follow system
+  toggleFollowUser: (username: string) => {
+    console.log(`[API] Toggling follow for user: ${username}`);
+    return fetchJson<{ message: string }>("/users/follow/", {
+      method: "POST",
+      body: JSON.stringify({ username })
+    }, true).then(response => {
+      console.log(`[API] Toggle follow response:`, response);
+      return response;
+    });
+  },
+
+  getFollowers: (username: string) => {
+    console.log(`[API] Fetching followers for user: ${username}`);
+    return fetchJson<{ followers: Array<{ id: number; username: string; profile_image?: string }> }>(`/users/followers/${username}/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received followers:`, response);
+      return response;
+    });
+  },
+
+  getFollowing: (username: string) => {
+    console.log(`[API] Fetching following for user: ${username}`);
+    return fetchJson<{ following: Array<{ id: number; username: string; profile_image?: string }> }>(`/users/following/${username}/`, {
+      method: "GET"
+    }, true).then(response => {
+      console.log(`[API] Received following:`, response);
+      return response;
+    });
+  },
+
   // logout endpoint
   logout: (refreshToken: string) => {
     console.log('[API] Logging out on the server');
@@ -801,48 +955,33 @@ export const apiClient = {
     if (accessToken) {
       headers["Authorization"] = `Bearer ${accessToken}`;
     }
-    return fetchJson<MealPlan>(`/meal-planner/`, {
+    headers["Content-Type"] = "application/json";
+
+    return fetch(`${BACKEND_API_URL}/meal-planner/plans/`, {
       method: "POST",
       headers,
-      body: JSON.stringify(mealPlanData)
-    }, true).then(response => {
-      console.log(`[API] Meal plan created:`, response);
-      return response;
-    }).catch(error => {
-      console.error(`[API] Error creating meal plan:`, error);
-      throw error;
+      body: JSON.stringify(mealPlanData),
+      credentials: 'include' as RequestCredentials,
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+      return response.json();
     });
   },
 
   getMealPlans: () => {
-    console.log(`[API] Fetching meal plans`);
-    return fetchJson<PaginatedResponse<MealPlan>>(`/meal-planner/`, {
+    console.log('[API] Fetching meal plans');
+    return fetchJson<PaginatedResponse<MealPlan>>("/meal-planner/plans/", {
       method: "GET"
-    }, true).then(response => {
-      console.log(`[API] Received meal plans:`, response);
-      return response;
-    }).catch(error => {
-      console.error(`[API] Error fetching meal plans:`, error);
-      throw error;
-    });
+    }, true);
   },
 
-  setCurrentMealPlan: (mealPlanId: number) => {
-    console.log(`[API] Setting current meal plan: ${mealPlanId}`);
-    const headers: HeadersInit = {};
-    if (accessToken) {
-      headers["Authorization"] = `Bearer ${accessToken}`;
-    }
-    return fetchJson<any>(`/meal-planner/${mealPlanId}/set-current/`, {
-      method: "POST",
-      headers,
-    }, true).then(response => {
-      console.log(`[API] Meal plan set as current:`, response);
-      return response;
-    }).catch(error => {
-      console.error(`[API] Error setting current meal plan:`, error);
-      throw error;
-    });
+  setCurrentMealPlan: (planId: number) => {
+    console.log(`[API] Setting current meal plan to ID: ${planId}`);
+    return fetchJson<MealPlan>(`/meal-planner/plans/${planId}/set_current/`, {
+      method: "POST"
+    }, true);
   },
 
   getCurrentMealPlan: () => {
@@ -857,6 +996,97 @@ export const apiClient = {
       throw error;
     });
   },
+
+  // Nutrition Tracking API
+
+  // User Metrics
+  getUserMetrics: () =>
+    fetchJson<import('../types/nutrition').UserMetrics>("/users/metrics/", {
+      method: "GET"
+    }, true),
+
+  createUserMetrics: (metrics: import('../types/nutrition').UserMetrics) =>
+    fetchJson<import('../types/nutrition').UserMetrics>("/users/metrics/", {
+      method: "POST",
+      body: JSON.stringify(metrics)
+    }, true),
+
+  // Nutrition Targets
+  getNutritionTargets: () =>
+    fetchJson<import('../types/nutrition').NutritionTargets>("/users/nutrition-targets/", {
+      method: "GET"
+    }, true),
+
+  updateNutritionTargets: (targets: Partial<import('../types/nutrition').NutritionTargets>) =>
+    fetchJson<import('../types/nutrition').NutritionTargets>("/users/nutrition-targets/", {
+      method: "PUT",
+      body: JSON.stringify(targets)
+    }, true),
+
+  resetNutritionTargets: () =>
+    fetchJson<import('../types/nutrition').NutritionTargets>("/users/nutrition-targets/reset/", {
+      method: "POST"
+    }, true),
+
+  // Daily Nutrition Log
+  getDailyLog: (date?: string) => {
+    let url = "/meal-planner/daily-log/";
+    if (date) {
+      url += `?date=${date}`;
+    }
+    return fetchJson<import('../types/nutrition').DailyNutritionLog>(url, {
+      method: "GET"
+    }, true);
+  },
+
+  getDailyLogHistory: (startDate?: string, endDate?: string) => {
+    let url = "/meal-planner/daily-log/history/";
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    const queryString = params.toString();
+    if (queryString) url += `?${queryString}`;
+    
+    return fetchJson<import('../types/nutrition').DailyNutritionLog[]>(url, {
+      method: "GET"
+    }, true);
+  },
+
+  // Food Log Entries
+  addFoodEntry: (entry: {
+    food_id: number;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+    date?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').FoodLogEntry>("/meal-planner/daily-log/entries/", {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }, true),
+
+  updateFoodEntry: (id: number, update: {
+    food_id?: number | null;
+    private_food_id?: number | null;
+    serving_size?: number;
+    serving_unit?: string;
+    meal_type?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').FoodLogEntry>(`/meal-planner/daily-log/entries/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(update)
+    }, true),
+
+  deleteFoodEntry: (id: number) =>
+    fetchJson<void>(`/meal-planner/daily-log/entries/${id}/`, {
+      method: "DELETE"
+    }, true),
+
+  // Nutrition Statistics
+  getNutritionStatistics: (period: 'week' | 'month' = 'week') =>
+    fetchJson<import('../types/nutrition').NutritionStatistics>(`/meal-planner/nutrition-statistics/?period=${period}`, {
+      method: "GET"
+    }, true),
 
   // Moderation endpoints
   moderation: {
@@ -918,6 +1148,79 @@ export const apiClient = {
       fetchJson<{ message: string }>(`/foods/moderation/food-proposals/${proposalId}/approve/`, {
         method: "POST",
         body: JSON.stringify({ approved }),
+      }, true),
+
+    // Price moderation
+    getPriceThresholds: (params?: { currency?: string }) => {
+      let url = "/foods/price-thresholds/";
+      if (params?.currency) {
+        url += `?currency=${params.currency}`;
+      }
+      return fetchJson<
+        PriceCategoryThreshold[] | PaginatedResponse<PriceCategoryThreshold>
+      >(url, { method: "GET" }, true);
+    },
+
+    recalculatePriceThreshold: (data: { price_unit: PriceUnit; currency?: string }) =>
+      fetchJson<PriceCategoryThreshold>("/foods/price-thresholds/recalculate/", {
+        method: "POST",
+        body: JSON.stringify({
+          price_unit: data.price_unit,
+          currency: data.currency,
+        }),
+      }, true),
+
+    updateFoodPrice: (
+      foodId: number,
+      payload: {
+        base_price: string | number;
+        price_unit: PriceUnit;
+        currency: string;
+        reason?: string;
+        override_category?: PriceCategory | null;
+        override_reason?: string;
+        clear_override?: boolean;
+      }
+    ) =>
+      fetchJson<Food>(`/foods/${foodId}/price/`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      }, true),
+
+    getPriceAudits: (params?: { food?: number; change_type?: string; price_unit?: PriceUnit }) => {
+      let url = "/foods/price-audits/";
+      const query = new URLSearchParams();
+      if (params?.food) {
+        query.append("food", params.food.toString());
+      }
+      if (params?.change_type) {
+        query.append("change_type", params.change_type);
+      }
+      if (params?.price_unit) {
+        query.append("price_unit", params.price_unit);
+      }
+      const queryString = query.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
+      return fetchJson<PaginatedResponse<PriceAudit> | PriceAudit[]>(url, { method: "GET" }, true);
+    },
+
+    getPriceReports: (params?: { status?: PriceReportStatus }) => {
+      let url = "/foods/price-reports/";
+      if (params?.status) {
+        url += `?status=${params.status}`;
+      }
+      return fetchJson<PaginatedResponse<PriceReport> | PriceReport[]>(url, { method: "GET" }, true);
+    },
+
+    updatePriceReport: (
+      reportId: number,
+      data: { status?: PriceReportStatus; resolution_notes?: string }
+    ) =>
+      fetchJson<PriceReport>(`/foods/price-reports/${reportId}/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
       }, true),
 
     // Certificate verification

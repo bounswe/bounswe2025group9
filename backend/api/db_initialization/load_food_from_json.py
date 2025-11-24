@@ -1,0 +1,446 @@
+import json
+import os
+import sys
+import django
+import argparse
+import traceback
+from pathlib import Path
+
+# Django setup
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.append(BASE_DIR)
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "project.settings")
+django.setup()
+
+from foods.models import FoodEntry, Allergen
+from api.db_initialization.nutrition_score import calculate_nutrition_score
+
+
+class FoodLoader:
+    """Standalone food loader for USDA FDC JSON format."""
+
+    def __init__(self, skip_errors=False):
+        self.skip_errors = skip_errors
+        self.count = 0
+        self.failed = 0
+        self.skipped = 0  # Track skipped items due to inputFoods filter
+        # Collect failures as dicts: {index, name, error, trace}
+        self.failures = []
+
+    def load_foods(self, json_file, limit=None):
+        """Main entry point: load foods from JSON file."""
+        json_file = Path(json_file)
+
+        if not json_file.exists():
+            raise FileNotFoundError(f"JSON file not found: {json_file}")
+
+        print(f"Loading foods from {json_file}...")
+
+        foods = self.load_json_file(json_file)
+        print(f"Loaded {len(foods)} foods from JSON")
+
+        iterable = foods[:limit] if limit else foods
+        for idx, food_data in enumerate(iterable, start=1):
+            try:
+                # Filter: only process foods with inputFoods array length < 4
+                input_foods = food_data.get("inputFoods", [])
+                if len(input_foods) >= 4:
+                    self.skipped += 1
+                    continue
+
+                self.create_food_entry(food_data)
+                self.count += 1
+            except Exception as e:
+                name = (
+                    food_data.get("description", "Unknown")
+                    if isinstance(food_data, dict)
+                    else str(food_data)
+                )
+                error_msg = f"Failed to load food '{name}': {str(e)}"
+                trace = traceback.format_exc()
+                # Record the failure
+                self.failed += 1
+                self.failures.append(
+                    {
+                        "index": idx,
+                        "name": name,
+                        "error": str(e),
+                        "trace": trace,
+                    }
+                )
+                # Always continue; respect --skip-errors only for verbosity
+                if self.skip_errors:
+                    print(f"⚠️  {error_msg}")
+                else:
+                    # Print a short warning but do not raise to allow processing to continue
+                    print(f"⚠️  {error_msg} (continuing)")
+
+        print(f"✓ Successfully loaded {self.count} foods.")
+        print(f"⚠️  Skipped {self.skipped} foods (inputFoods >= 4).")
+        print(f"❌ Failed: {self.failed}")
+
+        # If there were failures, print a brief report (with limited detail)
+        if self.failures:
+            print("\nFailed items summary:")
+            for fail in self.failures:
+                print(f" - #{fail['index']}: {fail['name']} -> {fail['error']}")
+
+            # Optionally, show full tracebacks for debugging if skip_errors is enabled
+            if self.skip_errors:
+                print("\nFull tracebacks for failures:")
+                for fail in self.failures:
+                    print(f"--- #{fail['index']} {fail['name']} ---")
+                    print(fail["trace"])
+
+    def load_json_file(self, filepath):
+        """Load JSON file and return list of food items.
+        Handles:
+        1. Array of objects: [{ food1 }, { food2 }, ...]
+        2. Object with 'SurveyFoods' key: { "SurveyFoods": [ ... ] }
+        3. JSONL format: one object per line
+        """
+        foods = []
+
+        with open(filepath, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Try to parse the whole content as JSON first
+        try:
+            parsed = json.loads(content)
+            if isinstance(parsed, list):
+                return parsed
+            if isinstance(parsed, dict):
+                # Common case: top-level object with key 'SurveyFoods'
+                if "SurveyFoods" in parsed and isinstance(parsed["SurveyFoods"], list):
+                    return parsed["SurveyFoods"]
+                # Fallback: return the first list value we find
+                for v in parsed.values():
+                    if isinstance(v, list):
+                        return v
+                return []
+        except json.JSONDecodeError:
+            # If full-JSON parsing failed, try to extract the 'SurveyFoods' array
+            key = '"SurveyFoods"'
+            idx = content.find(key)
+            if idx != -1:
+                start = content.find("[", idx)
+                if start != -1:
+                    depth = 0
+                    end = None
+                    i = start
+                    while i < len(content):
+                        ch = content[i]
+                        if ch == "[":
+                            depth += 1
+                        elif ch == "]":
+                            depth -= 1
+                            if depth == 0:
+                                end = i + 1
+                                break
+                        i += 1
+                    if end:
+                        arr_text = content[start:end]
+                        try:
+                            return json.loads(arr_text)
+                        except json.JSONDecodeError:
+                            pass
+
+            # Final fallback: attempt JSONL parsing (one JSON object per line)
+            for line in content.splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    foods.append(json.loads(line))
+                except json.JSONDecodeError as e:
+                    print(f"⚠️  Failed to parse JSON line: {str(e)}")
+
+        return foods
+
+    def extract_nutrients(self, food_data):
+        """Extract macronutrients and micronutrients from foodNutrients array."""
+        nutrients = {
+            "calories": 0,
+            "protein": 0,
+            "fat": 0,
+            "carbs": 0,
+            "micronutrients": {},
+        }
+
+        # Nutrient number to field mapping
+        macro_mapping = {
+            "203": "protein",  # Protein
+            "204": "fat",  # Total lipid (fat)
+            "205": "carbs",  # Carbohydrate, by difference
+            "208": "calories",  # Energy (kcal)
+        }
+
+        # Extract nutrients
+        for item in food_data.get("foodNutrients", []):
+            nutrient = item.get("nutrient", {})
+            nutrient_number = nutrient.get("number", "")
+            nutrient_name = nutrient.get("name", "")
+            unit_name = nutrient.get("unitName", "")
+            amount = item.get("amount", 0)
+
+            if not nutrient_number or amount is None:
+                continue
+
+            try:
+                amount = float(amount)
+            except (ValueError, TypeError):
+                amount = 0
+
+            # Map to macronutrient if applicable
+            if nutrient_number in macro_mapping:
+                nutrients[macro_mapping[nutrient_number]] = amount
+            else:
+                # Add to micronutrients as dict value (amount with unit in name)
+                if nutrient_name and amount > 0:
+                    nutrients["micronutrients"][
+                        f"{nutrient_name} ({unit_name})"
+                    ] = amount
+
+        return nutrients
+
+    def extract_serving_size(self, food_data):
+        """Extract serving size in grams from foodPortions.
+        Returns the first (primary) portion's gram weight, or 100g as default.
+        """
+        portions = food_data.get("foodPortions", [])
+
+        if portions:
+            # Sort by sequenceNumber to get the primary portion
+            sorted_portions = sorted(
+                portions, key=lambda x: x.get("sequenceNumber", 999)
+            )
+            first_portion = sorted_portions[0]
+
+            gram_weight = first_portion.get("gramWeight")
+            if gram_weight and gram_weight > 0:
+                return float(gram_weight)
+
+        return 100.0  # Default: 100g
+
+    def extract_category(self, food_data):
+        """Extract category from wweiaFoodCategory."""
+        wweia_category = food_data.get("wweiaFoodCategory", {})
+        return wweia_category.get("wweiaFoodCategoryDescription", "Uncategorized")
+
+    def infer_dietary_options(self, description):
+        """Infer dietary options from food description."""
+        options = []
+        description_lower = description.lower()
+
+        # Fat content
+        if (
+            "fat-free" in description_lower
+            or "nonfat" in description_lower
+            or "skim" in description_lower
+        ):
+            options.append("fat-free")
+        elif (
+            "low-fat" in description_lower
+            or "lowfat" in description_lower
+            or "1%" in description_lower
+        ):
+            options.append("low-fat")
+        elif "reduced fat" in description_lower or "2%" in description_lower:
+            options.append("reduced-fat")
+
+        # Dietary category
+        if any(
+            word in description_lower
+            for word in ["vegan", "vegetable", "legume", "bean", "tofu"]
+        ):
+            options.append("vegetarian")
+
+        # Sugars
+        if "unsweetened" in description_lower:
+            options.append("unsweetened")
+        elif "sugar-free" in description_lower or "no sugar" in description_lower:
+            options.append("sugar-free")
+
+        # Lactose
+        if "lactose" in description_lower:
+            if "free" in description_lower:
+                options.append("lactose-free")
+            else:
+                options.append("contains-lactose")
+
+        # Gluten (inferred from common allergen info)
+        if any(word in description_lower for word in ["wheat", "barley", "rye"]):
+            options.append("contains-gluten")
+
+        return options
+
+    def infer_allergens(self, description):
+        """
+        Infer allergens from food description.
+        Returns list of allergen names to add to the food.
+        """
+        allergens = []
+        description_lower = description.lower()
+
+        allergen_keywords = {
+            "milk": [
+                "milk",
+                "cheese",
+                "yogurt",
+                "dairy",
+                "butter",
+                "cream",
+                "whey",
+                "casein",
+                "lactose",
+            ],
+            "eggs": ["egg", "omelet", "mayonnaise"],
+            "peanuts": ["peanut"],
+            "tree nuts": [
+                "nut",
+                "almond",
+                "walnut",
+                "pecan",
+                "cashew",
+                "pistachio",
+                "hazelnut",
+            ],
+            "fish": ["fish", "salmon", "tuna", "cod", "halibut", "anchovy"],
+            "shellfish": [
+                "shrimp",
+                "crab",
+                "lobster",
+                "oyster",
+                "clam",
+                "mussel",
+                "scallop",
+            ],
+            "soy": ["soy", "tofu", "edamame"],
+            "wheat": ["wheat", "bread", "pasta", "flour"],
+            "sesame": ["sesame"],
+        }
+
+        for allergen_name, keywords in allergen_keywords.items():
+            if any(keyword in description_lower for keyword in keywords):
+                allergens.append(allergen_name)
+
+        return allergens
+
+    def create_food_entry(self, food_data):
+        """Create or update a FoodEntry from JSON food data."""
+
+        # Extract basic information
+        name = food_data.get("description", "").strip()
+        if len(name) > 100:
+            name = name[:100]  # Truncate to max length
+        if not name:
+            raise ValueError("Food description is missing")
+
+        category = self.extract_category(food_data)
+        serving_size = self.extract_serving_size(food_data)
+
+        # Validate serving size
+        if serving_size <= 0 or serving_size > 1000:
+            raise ValueError(f"Invalid serving size: {serving_size}g")
+
+        nutrients = self.extract_nutrients(food_data)
+
+        # IMPORTANT: Nutrients in the JSON are per 100g, but our database stores per serving.
+        # Normalize nutrient values from per 100g to per serving.
+        normalization_factor = serving_size / 100.0
+        normalized_calories = round(nutrients["calories"] * normalization_factor, 1)
+        normalized_protein = round(nutrients["protein"] * normalization_factor, 1)
+        normalized_fat = round(nutrients["fat"] * normalization_factor, 1)
+        normalized_carbs = round(nutrients["carbs"] * normalization_factor, 1)
+
+        # Normalize micronutrients as well
+        normalized_micronutrients = {}
+        for key, value in nutrients["micronutrients"].items():
+            normalized_micronutrients[key] = round(value * normalization_factor, 1)
+
+        # Infer dietary options and allergens
+        dietary_options = self.infer_dietary_options(name)
+        allergen_names = self.infer_allergens(name)
+
+        # Pre-fetch allergen objects
+        allergen_objects = []
+        for allergen_name in allergen_names:
+            allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+            allergen_objects.append(allergen)
+
+        # Calculate nutrition score first
+        food_dict = {
+            "caloriesPerServing": normalized_calories,
+            "proteinContent": normalized_protein,
+            "fatContent": normalized_fat,
+            "carbohydrateContent": normalized_carbs,
+            "servingSize": serving_size,
+            "category": category,
+            "name": name,
+        }
+
+        score = calculate_nutrition_score(food_dict)
+        if not (0.0 <= score <= 10.0):
+            raise ValueError(f"Nutrition score out of bounds: {score}")
+
+        # Create or update the FoodEntry
+        food_entry, created = FoodEntry.objects.update_or_create(
+            name=name,
+            defaults={
+                "category": category,
+                "servingSize": serving_size,
+                "caloriesPerServing": normalized_calories,
+                "proteinContent": normalized_protein,
+                "fatContent": normalized_fat,
+                "carbohydrateContent": normalized_carbs,
+                "micronutrients": normalized_micronutrients,
+                "dietaryOptions": dietary_options,
+                "nutritionScore": score,
+                "imageUrl": "",
+            },
+        )
+
+        # Set allergens
+        if allergen_objects:
+            food_entry.allergens.set(allergen_objects)
+
+        action = "Created" if created else "Updated"
+        print(
+            f"  {action:<10}: {name[:20]:<20} ({serving_size:>5.1f}g, {normalized_calories:>6.1f}kcal, score: {score:>5.1f})", end="\r"
+        )
+
+
+# ============================================================================
+# Main entry point
+# ============================================================================
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(
+        description="Load food items from JSON file (USDA FDC format) into the FoodEntry model. "
+        "Only loads foods with inputFoods array length < 4. This captures food items and eliminates recipes."
+    )
+    parser.add_argument(
+        "json_file",
+        type=str,
+        help="Path to JSON file containing food items",
+    )
+    parser.add_argument(
+        "--limit",
+        type=int,
+        default=None,
+        help="Limit number of foods to load (for testing)",
+    )
+    parser.add_argument(
+        "--skip-errors",
+        action="store_true",
+        help="Continue loading even if some items fail",
+    )
+
+    args = parser.parse_args()
+
+    loader = FoodLoader(skip_errors=args.skip_errors)
+    try:
+        loader.load_foods(args.json_file, limit=args.limit)
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        sys.exit(1)

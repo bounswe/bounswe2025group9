@@ -8,4 +8,7 @@ food_images_webp/
 # Python cache
 __pycache__/
 *.py[cod]
-*$py.class 
+*$py.class
+
+# Large JSON database files (use zip instead)
+NewFoodDatabase.json 

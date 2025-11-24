@@ -1,8 +1,15 @@
 from django.contrib import admin
 from rest_framework import viewsets, status, serializers
+from rest_framework.response import Response
 from rest_framework.permissions import BasePermission
 from rest_framework.decorators import action
-from .models import FoodEntry, FoodProposal
+from .models import (
+    FoodEntry,
+    FoodProposal,
+    PriceAudit,
+    PriceCategoryThreshold,
+    PriceReport,
+)
 from .services import approve_food_proposal, reject_food_proposal
 
 
@@ -18,6 +25,9 @@ class AdminFoodEntry(admin.ModelAdmin):
         "fatContent",
         "carbohydrateContent",
         "nutritionScore",
+        "base_price",
+        "price_unit",
+        "price_category",
     )
     search_fields = ("name", "category")
     list_filter = ("category",)
@@ -64,7 +74,7 @@ class AdminFoodProposal(admin.ModelAdmin):
         # Handle status changes using services
         if obj.isApproved is True and old_status != True:
             # Approving (from None or False to True)
-            approve_food_proposal(obj)
+            approve_food_proposal(obj, changed_by=request.user)
         elif obj.isApproved is False and old_status != False:
             # Rejecting (from None or True to False)
             reject_food_proposal(obj)
@@ -116,6 +126,9 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "createdAt",
             "allergens",
             "dietaryOptions",
+            "base_price",
+            "price_unit",
+            "currency",
         ]
 
     def get_proposedBy(self, obj):
@@ -180,10 +193,60 @@ class FoodProposalModerationViewSet(viewsets.ReadOnlyModelViewSet):
         approved = serializer.validated_data["approved"]
 
         if approved:
-            proposal, entry = approve_food_proposal(proposal)
+            proposal, entry = approve_food_proposal(
+                proposal, changed_by=request.user
+            )
             message = f"Food proposal '{proposal.name}' approved and added to catalog."
         else:
             reject_food_proposal(proposal)
             message = f"Food proposal '{proposal.name}' rejected."
 
         return Response({"message": message}, status=status.HTTP_200_OK)
+
+
+@admin.register(PriceCategoryThreshold)
+class PriceCategoryThresholdAdmin(admin.ModelAdmin):
+    list_display = (
+        "price_unit",
+        "currency",
+        "lower_threshold",
+        "upper_threshold",
+        "updates_since_recalculation",
+        "last_recalculated_at",
+    )
+    list_filter = ("price_unit", "currency")
+
+
+@admin.register(PriceAudit)
+class PriceAuditAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "food",
+        "price_unit",
+        "currency",
+        "change_type",
+        "old_base_price",
+        "new_base_price",
+        "old_price_category",
+        "new_price_category",
+        "changed_by",
+        "created_at",
+    )
+    list_filter = ("change_type", "price_unit", "currency")
+    search_fields = ("food__name", "changed_by__username")
+    readonly_fields = ("metadata",)
+
+
+@admin.register(PriceReport)
+class PriceReportAdmin(admin.ModelAdmin):
+    list_display = (
+        "id",
+        "food",
+        "reported_by",
+        "status",
+        "created_at",
+        "resolved_by",
+        "resolved_at",
+    )
+    list_filter = ("status", "created_at")
+    search_fields = ("food__name", "reported_by__username")

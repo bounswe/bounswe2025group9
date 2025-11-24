@@ -217,13 +217,25 @@ const MyProfileScreen: React.FC = () => {
                     const name = localUri.split('/').pop() || 'profile.jpg';
                     const res = await userService.uploadProfilePhoto(localUri, name);
 
-                    setUserProfile(prev => prev ? { ...prev, profile_image: res.profile_image } : prev);
+                    // Add cache-busting parameter to force image reload
+                    const cacheBustedUrl = res.profile_image 
+                      ? `${res.profile_image}${res.profile_image.includes('?') ? '&' : '?'}t=${Date.now()}`
+                      : res.profile_image;
+                    
+                    setUserProfile(prev => prev ? { ...prev, profile_image: cacheBustedUrl } : prev);
                     
                     try {
                       const refreshed = await userService.getMyProfile(true);
-                      setUserProfile(refreshed);
+                      // Add cache-busting parameter to the refreshed profile image too
+                      const refreshedWithCache = {
+                        ...refreshed,
+                        profile_image: refreshed.profile_image 
+                          ? `${refreshed.profile_image}${refreshed.profile_image.includes('?') ? '&' : '?'}t=${Date.now()}`
+                          : refreshed.profile_image
+                      };
+                      setUserProfile(refreshedWithCache);
                       // Also update the AuthContext
-                      updateUser(refreshed);
+                      updateUser(refreshedWithCache);
                     } catch (refreshError) {
                       console.warn('Failed to refresh profile after upload', refreshError);
                     }
