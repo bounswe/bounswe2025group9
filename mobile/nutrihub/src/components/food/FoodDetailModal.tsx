@@ -111,6 +111,10 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
         .filter(nutrient => food.micronutrients && nutrient in food.micronutrients)
         .map(nutrient => {
           let value = food.micronutrients![nutrient];
+          // Ensure value is a valid number
+          if (typeof value !== 'number' || isNaN(value)) {
+            value = 0;
+          }
           // Normalize to per 100g if servingSize is provided and not already 100g
           if (food.servingSize && food.servingSize !== 100) {
             value = (value * 100) / food.servingSize;
@@ -340,13 +344,18 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                       // Remove only the unit part (last parentheses) from the name
                       const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
                       
+                      // Ensure amount is a valid number
+                      const displayAmount = typeof amount === 'number' && !isNaN(amount) 
+                        ? amount.toFixed(2) 
+                        : '0.00';
+                      
                       return (
                         <View key={nutrient} style={styles.micronutrientItem}>
                           <Text style={[styles.micronutrientLabel, textStyles.body]}>
                             {nutrientName}
                           </Text>
                           <Text style={[styles.micronutrientValue, textStyles.body]}>
-                            {amount.toFixed(2)}{unit}
+                            {displayAmount}{unit}
                           </Text>
                         </View>
                       );
