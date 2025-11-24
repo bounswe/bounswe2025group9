@@ -31,6 +31,11 @@ BADGE_RULES = {
         (50, "Received 50 likes"),
         (100, "Received 100 likes"),
     ],
+    "food_proposals": [
+        (5, "5 approved food proposals"),
+        (15, "15 approved food proposals"),
+        (30, "30 approved food proposals"),
+    ],
 }
 
 
@@ -48,6 +53,12 @@ def get_user_badges(user):
     for milestone, desc in BADGE_RULES["likes"]:
         if total_likes >= milestone:
             badges.append({"type": "likes", "level": milestone, "description": desc})
+
+    # food proposals milestones (only approved proposals count)
+    food_proposal_count = user.foodproposal_set.filter(isApproved=True).count()
+    for milestone, desc in BADGE_RULES["food_proposals"]:
+        if food_proposal_count >= milestone:
+            badges.append({"type": "food_proposals", "level": milestone, "description": desc})
 
     return badges
 
