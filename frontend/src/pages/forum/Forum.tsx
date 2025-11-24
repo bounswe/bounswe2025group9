@@ -1,10 +1,11 @@
 // forum page component
 import { useState, useEffect, useCallback } from 'react'
-import { PlusCircle, CaretLeft, CaretRight, Tag, X, Funnel, MagnifyingGlass } from '@phosphor-icons/react'
+import { PlusCircle, CaretLeft, CaretRight, Tag, X, Funnel, MagnifyingGlass, ForkKnife } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
-import { apiClient, ForumPost } from '../../lib/apiClient'
+import { apiClient, ForumPost, Food, RecipeIngredient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import ForumPostCard from '../../components/ForumPostCard'
+import FoodSelector from '../../components/FoodSelector'
 // import cross-tab notification system
 import { notifyLikeChange, subscribeLikeChanges } from '../../lib/likeNotifications';
 
@@ -90,6 +91,7 @@ const calculateFuzzySimilarity = (query: string, target: string): number => {
 
 // local storage key for liked posts (keep for direct localStorage access)
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
+const FORUM_FILTERS_STORAGE_KEY = 'nutriHub_forumFilters';
 
 // Define tag colors based on tag name for consistent display
 const getTagStyle = (tagName: string) => {
@@ -184,6 +186,11 @@ const Forum = () => {
     const [filterLabel, setFilterLabel] = useState<string | null>(null);
     const [selectedSubTags, setSelectedSubTags] = useState<number[]>([]);
     const [selectedSubTagLabels, setSelectedSubTagLabels] = useState<string[]>([]);
+    const [selectedFoods, setSelectedFoods] = useState<Food[]>([]);
+    const [foodSelectorOpen, setFoodSelectorOpen] = useState(false);
+    const [recipeIngredientsMap, setRecipeIngredientsMap] = useState<Record<number, RecipeIngredient[] | null>>({});
+    const [foodFilterMatches, setFoodFilterMatches] = useState<Record<number, string[]>>({});
+    const [foodFilterLoading, setFoodFilterLoading] = useState(false);
     
     // Search related state
     const [searchQuery, setSearchQuery] = useState<string>('');
@@ -193,6 +200,36 @@ const Forum = () => {
     const [executedSearchQuery, setExecutedSearchQuery] = useState<string>('');
     const [ingredientMatchMap, setIngredientMatchMap] = useState<Record<number, string[]>>({});
     const SEARCH_DEBOUNCE_MS = 400;
+
+    // Restore saved filters on mount so they persist across navigation
+    useEffect(() => {
+        const storedFilters = localStorage.getItem(FORUM_FILTERS_STORAGE_KEY);
+        if (storedFilters) {
+            try {
+                const parsed = JSON.parse(storedFilters);
+                if (parsed.activeFilter !== undefined) setActiveFilter(parsed.activeFilter);
+                if (parsed.filterLabel !== undefined) setFilterLabel(parsed.filterLabel);
+                if (Array.isArray(parsed.selectedSubTags)) setSelectedSubTags(parsed.selectedSubTags);
+                if (Array.isArray(parsed.selectedSubTagLabels)) setSelectedSubTagLabels(parsed.selectedSubTagLabels);
+                if (Array.isArray(parsed.selectedFoods)) setSelectedFoods(parsed.selectedFoods);
+            } catch (error) {
+                console.error('[Forum] Failed to parse saved filters:', error);
+                localStorage.removeItem(FORUM_FILTERS_STORAGE_KEY);
+            }
+        }
+    }, []);
+
+    // Persist filters whenever they change
+    useEffect(() => {
+        const payload = {
+            activeFilter,
+            filterLabel,
+            selectedSubTags,
+            selectedSubTagLabels,
+            selectedFoods
+        };
+        localStorage.setItem(FORUM_FILTERS_STORAGE_KEY, JSON.stringify(payload));
+    }, [activeFilter, filterLabel, selectedSubTags, selectedSubTagLabels, selectedFoods]);
     
     // helper to get liked posts for the current user from local storage
     const getUserLikedPostsFromStorage = useCallback((): {[key: number]: boolean} => {
@@ -248,60 +285,53 @@ const Forum = () => {
     
     // Calculate total pages based on filtered posts count
     const totalPages = Math.ceil(totalCount / postsPerPage);
+    const hasActiveFilters = activeFilter !== null || selectedSubTags.length > 0 || selectedFoods.length > 0;
+
+    const fetchRecipeIngredientsForFoodFilter = useCallback(async (postIds: number[]) => {
+        const idsToFetch = postIds.filter(postId => recipeIngredientsMap[postId] === undefined);
+
+        if (idsToFetch.length === 0) {
+            return {};
+        }
+
+        setFoodFilterLoading(true);
+        const fetchedIngredients: Record<number, RecipeIngredient[] | null> = {};
+
+        try {
+            await Promise.all(idsToFetch.map(async (postId) => {
+                try {
+                    const recipe = await apiClient.getRecipeForPost(postId);
+                    fetchedIngredients[postId] = recipe?.ingredients || null;
+                } catch (error) {
+                    console.error(`[Forum] Failed to fetch recipe for post ${postId}:`, error);
+                    fetchedIngredients[postId] = null;
+                }
+            }));
+
+            setRecipeIngredientsMap(prev => ({ ...prev, ...fetchedIngredients }));
+        } finally {
+            setFoodFilterLoading(false);
+        }
+
+        return fetchedIngredients;
+    }, [recipeIngredientsMap]);
     
-    // Apply pagination to filtered posts
+    // Apply pagination and filters (tags + food ingredients)
     useEffect(() => {
-        if (isSearching && (activeFilter || selectedSubTags.length > 0)) {
-            // When both searching and filtering, show intersection
-            let filteredSearchResults = searchResults;
-            
-            // Apply main filter
-            if (activeFilter) {
-                filteredSearchResults = filteredSearchResults.filter(post => 
-                    post.tags.some(tag => tag.id === activeFilter)
-                );
-            }
-            
-            // Apply sub-filter (requires both Recipe tag and ALL selected sub-tags)
-            if (selectedSubTags.length > 0) {
-                filteredSearchResults = filteredSearchResults.filter(post => 
-                    post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
-                    selectedSubTags.every(subTagId => 
-                        post.tags.some(tag => tag.id === subTagId)
-                    )
-                );
-            }
-            
-            setTotalCount(filteredSearchResults.length);
-            
-            // Get current page posts from filtered search results
-            const indexOfLastPost = currentPage * postsPerPage;
-            const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = filteredSearchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredSearchResults.length));
-            
-            setPosts(currentPosts);
-        } else if (isSearching) {
-            // When only searching, use search results
-            setTotalCount(searchResultsCount);
-            
-            // Get current page posts from search results
-            const indexOfLastPost = currentPage * postsPerPage;
-            const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = searchResults.slice(indexOfFirstPost, Math.min(indexOfLastPost, searchResults.length));
-            
-            setPosts(currentPosts);
-        } else if (allPosts.length > 0) {
-            // When only filtering or no filters, use allPosts
-            let filteredPosts = allPosts;
-            
-            // Apply main filter
+        let isCancelled = false;
+
+        const applyFilters = async () => {
+            let basePosts = isSearching ? searchResults : allPosts;
+            let filteredPosts = [...basePosts];
+
+            // Apply main tag filter
             if (activeFilter) {
                 filteredPosts = filteredPosts.filter(post => 
                     post.tags.some(tag => tag.id === activeFilter)
                 );
             }
             
-            // Apply sub-filter (requires both Recipe tag and ALL selected sub-tags)
+            // Apply sub-tag filter (requires Recipe tag + all selected sub-tags)
             if (selectedSubTags.length > 0) {
                 filteredPosts = filteredPosts.filter(post => 
                     post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
@@ -310,17 +340,61 @@ const Forum = () => {
                     )
                 );
             }
-                
-            setTotalCount(filteredPosts.length);
+
+            let combinedIngredients = recipeIngredientsMap;
+
+            // Apply food filters - posts must contain ALL selected foods in their recipe ingredients
+            if (selectedFoods.length > 0) {
+                const postsWithRecipes = filteredPosts.filter(post => post.has_recipe !== false);
+                const fetchedIngredients = await fetchRecipeIngredientsForFoodFilter(postsWithRecipes.map(post => post.id));
+                combinedIngredients = { ...recipeIngredientsMap, ...fetchedIngredients };
+
+                const matches: Record<number, string[]> = {};
+                filteredPosts = filteredPosts.filter(post => {
+                    if (post.has_recipe === false) return false;
+                    const ingredients = combinedIngredients[post.id];
+                    if (!ingredients) return false;
+
+                    const matchedFoods = selectedFoods.filter(food =>
+                        ingredients.some(ingredient => 
+                            ingredient.food_id === food.id ||
+                            (ingredient.food_name && ingredient.food_name.toLowerCase() === food.name.toLowerCase())
+                        )
+                    );
+
+                    if (matchedFoods.length === selectedFoods.length) {
+                        matches[post.id] = matchedFoods.map(food => food.name);
+                        return true;
+                    }
+                    return false;
+                });
+
+                if (!isCancelled) {
+                    setFoodFilterMatches(matches);
+                }
+            } else if (!isCancelled) {
+                setFoodFilterMatches(prev => (Object.keys(prev).length > 0 ? {} : prev));
+            }
+            
+            const count = isSearching && !hasActiveFilters ? searchResultsCount : filteredPosts.length;
             
             // Get current page posts
             const indexOfLastPost = currentPage * postsPerPage;
             const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredPosts.length));
+            const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, count));
             
-            setPosts(currentPosts);
-        }
-    }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, isSearching, searchResults, searchResultsCount]);
+            if (!isCancelled) {
+                setTotalCount(count);
+                setPosts(currentPosts);
+            }
+        };
+
+        applyFilters();
+
+        return () => {
+            isCancelled = true;
+        };
+    }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, selectedFoods, isSearching, searchResults, searchResultsCount, recipeIngredientsMap, fetchRecipeIngredientsForFoodFilter, hasActiveFilters]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
@@ -469,12 +543,36 @@ const Forum = () => {
         setCurrentPage(1);
     };
 
+    // Food item filters (matches ingredient food_id)
+    const handleFoodFilterSelect = (food: Food) => {
+        setSelectedFoods(prev => {
+            if (prev.some(f => f.id === food.id)) {
+                return prev;
+            }
+            return [...prev, food];
+        });
+        setFoodSelectorOpen(false);
+        setCurrentPage(1);
+    };
+
+    const removeFoodFilter = (foodId: number) => {
+        setSelectedFoods(prev => prev.filter(food => food.id !== foodId));
+        setCurrentPage(1);
+    };
+
+    const clearFoodFilters = () => {
+        setSelectedFoods([]);
+        setFoodFilterMatches({});
+        setFoodFilterLoading(false);
+    };
+
     // Clear active filter
     const clearFilter = () => {
         setActiveFilter(null);
         setFilterLabel(null);
         setSelectedSubTags([]);
         setSelectedSubTagLabels([]);
+        clearFoodFilters();
         setCurrentPage(1); // Reset to first page
         
         // Clear search if active
@@ -750,11 +848,36 @@ const Forum = () => {
         return posts;
     };
 
+    const getIngredientHighlights = (postId: number) => {
+        const highlights: string[] = [];
+
+        if (selectedFoods.length > 0 && foodFilterMatches[postId]?.length) {
+            highlights.push(...foodFilterMatches[postId]);
+        }
+
+        if (isSearching && ingredientMatchMap[postId]?.length) {
+            ingredientMatchMap[postId].forEach(match => {
+                if (!highlights.includes(match)) {
+                    highlights.push(match);
+                }
+            });
+        }
+
+        return highlights.length > 0 ? highlights : undefined;
+    };
+
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
         // Scroll to top when changing page
         window.scrollTo(0, 0);
     };
+
+    const activeFilterLabels = [
+        ...(filterLabel ? [filterLabel] : []),
+        ...selectedSubTagLabels,
+        ...selectedFoods.map(food => food.name)
+    ];
+    const filterSummaryText = activeFilterLabels.length ? ` (filtered by ${activeFilterLabels.join(' + ')})` : '';
 
  
 
@@ -875,15 +998,16 @@ const Forum = () => {
                                     </>
                                 )}
                                 
-                                {(activeFilter !== null || selectedSubTags.length > 0) && !isSearching && (
-                                    <button 
-                                        onClick={clearFilter}
-                                        className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 hover:bg-gray-300 dark:hover:bg-gray-600"
-                                    >
-                                        <X size={18} weight="bold" className="flex-shrink-0" />
-                                        <span className="flex-grow text-center">Clear Filter</span>
-                                    </button>
-                                )}
+                                <button
+                                    onClick={() => setFoodSelectorOpen(true)}
+                                    className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow text-white"
+                                    style={{
+                                        background: 'linear-gradient(135deg, #0f766e, #1d4ed8)'
+                                    }}
+                                >
+                                    <ForkKnife size={18} weight="fill" className="flex-shrink-0" />
+                                    <span className="flex-grow text-center">Filter by Food Items</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -930,7 +1054,7 @@ const Forum = () => {
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm nh-text">
                                         {searchResultsCount > 0 
-                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${(activeFilter || selectedSubTags.length > 0) ? ' (filtered by tags)' : ''}` 
+                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${filterSummaryText}` 
                                             : `No results found for "${searchQuery}"`}
                                     </p>
                                     <button
@@ -944,17 +1068,49 @@ const Forum = () => {
                             </div>
                         )}
                         
-                        {/* Active filter indicator */}
-                        {(filterLabel || selectedSubTagLabels.length > 0) && (
+                        {selectedFoods.length > 0 && foodFilterLoading && (
                             <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
-                                <div className="flex items-center justify-between">
-                                    <p className="text-sm nh-text">
-                                        Filtered by: <span className="font-medium">
-                                            {filterLabel}
-                                            {filterLabel && selectedSubTagLabels.length > 0 && " + "}
-                                            {selectedSubTagLabels.join(" + ")}
-                                        </span>
-                                    </p>
+                                <p className="text-sm nh-text">Loading recipes to match your selected foods...</p>
+                            </div>
+                        )}
+                        
+                        {/* Active filter indicator */}
+                        {(filterLabel || selectedSubTagLabels.length > 0 || selectedFoods.length > 0) && (
+                            <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex-1">
+                                        <p className="text-sm nh-text font-medium mb-2">Filtered by:</p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {filterLabel && (
+                                                <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-semibold">
+                                                    Tag: {filterLabel}
+                                                </span>
+                                            )}
+                                            {selectedSubTagLabels.map(label => (
+                                                <span
+                                                    key={label}
+                                                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-semibold"
+                                                >
+                                                    Recipe: {label}
+                                                </span>
+                                            ))}
+                                            {selectedFoods.map(food => (
+                                                <span
+                                                    key={food.id}
+                                                    className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 text-xs font-semibold"
+                                                >
+                                                    Food: {food.name}
+                                                    <button
+                                                        onClick={() => removeFoodFilter(food.id)}
+                                                        className="rounded-full hover:bg-emerald-200/80 dark:hover:bg-emerald-800/80 p-0.5 transition-colors"
+                                                        aria-label={`Remove ${food.name} from filters`}
+                                                    >
+                                                        <X size={12} weight="bold" />
+                                                    </button>
+                                                </span>
+                                            ))}
+                                        </div>
+                                    </div>
                                     <button
                                         onClick={clearFilter}
                                         className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
@@ -973,10 +1129,10 @@ const Forum = () => {
                         ) : posts.length === 0 ? (
                             <div className="text-center my-12">
                                 <p className="text-lg">
-                                    {activeFilter !== null || selectedSubTags.length > 0
-                                        ? `No posts found with the selected filter${selectedSubTags.length > 1 ? 's' : ''}. Try different combinations or create a new post.` 
-                                        : `No posts found. Be the first to create a post!`
-                                    }
+                                    {activeFilter !== null || selectedSubTags.length > 0 || selectedFoods.length > 0
+                                        ? 'No posts found with the selected filters. Try different combinations or create a new post.'
+                                        : 'No posts found. Be the first to create a post!'
+                                   }
                                 </p>
                             </div>
                         ) : (
@@ -987,11 +1143,7 @@ const Forum = () => {
                                         post={post}
                                         isLiked={likedPosts[post.id] || false}
                                         onLikeToggle={handleLikeToggle}
-                                        ingredientMatches={
-                                            isSearching && ingredientMatchMap[post.id]?.length
-                                                ? ingredientMatchMap[post.id]
-                                                : undefined
-                                        }
+                                        ingredientMatches={getIngredientHighlights(post.id)}
                                     />
                                 ))}
                             </div>
@@ -1207,6 +1359,11 @@ const Forum = () => {
                     </div>
                 </div>
             </div>
+            <FoodSelector
+                open={foodSelectorOpen}
+                onClose={() => setFoodSelectorOpen(false)}
+                onSelect={handleFoodFilterSelect}
+            />
         </div>
     );
 };
