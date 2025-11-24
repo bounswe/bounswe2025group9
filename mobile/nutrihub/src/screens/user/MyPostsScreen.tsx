@@ -43,13 +43,6 @@ const MyPostsScreen: React.FC = () => {
       screen: 'LikedPosts'
     },
     {
-      id: 'liked-recipes',
-      title: 'Liked Recipes',
-      description: 'View recipes you have liked',
-      icon: 'heart-outline',
-      screen: 'LikedRecipes'
-    },
-    {
       id: 'personal-recipes',
       title: 'Personal Recipes',
       description: 'View and manage your personal recipe collection',
