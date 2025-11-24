@@ -24,7 +24,6 @@ export interface Food {
   dietaryOptions: string[];
   nutritionScore: number;
   imageUrl: string;
-  micronutrients?: Record<string, number>;
   base_price?: string | number | null;
   price_unit?: PriceUnit;
   price_category?: PriceCategory | null;

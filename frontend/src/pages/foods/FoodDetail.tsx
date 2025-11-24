@@ -153,6 +153,17 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     return null;
   };
 
+  const isExceedingTarget = (nutrient: string): boolean => {
+    const target = getNutrientRecommendation(nutrient) || getNutrientTarget(nutrient);
+    if (!target) return false;
+    
+    const todayConsumed = todayLog?.micronutrients_summary?.[nutrient] || 0;
+    const foodAmount = getNutrientValue(nutrient);
+    const totalAfterEating = todayConsumed + foodAmount;
+    
+    return totalAfterEating > target;
+  };
+
   const isOverdosing = (nutrient: string): boolean => {
     const maximum = getNutrientMaximum(nutrient);
     if (!maximum) return false; // No maximum means no overdose risk
@@ -189,6 +200,12 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     const todayConsumed = getTodayConsumed(nutrient);
     const foodAmount = getNutrientValue(nutrient);
     return todayConsumed + foodAmount;
+  };
+
+  const getUnitForNutrient = (nutrient: string): string => {
+    // Extract unit from nutrient name (e.g., "Copper, Cu (mg)" -> "mg")
+    const match = nutrient.match(/\(([^)]+)\)$/);
+    return match ? match[1] : 'g';
   };
 
   if (!food) return null;
@@ -498,9 +515,16 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                   return (
                     <div 
                       key={nutrient}
-                      className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center"
+                      className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center relative"
                     >
-                      <span className="text-[var(--color-text-secondary)] text-sm">{nutrientName}</span>
+                      <button
+                        onClick={() => handleHelpClick(nutrient)}
+                        className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
+                        title="View daily recommendation"
+                      >
+                        <Question size={12} weight="bold" className="text-white" />
+                      </button>
+                      <span className="text-[var(--color-text-secondary)] text-sm pr-6">{nutrientName}</span>
                       <span className="font-semibold text-[var(--color-text-primary)] ml-2">
                         {amount}{unit}
                       </span>
@@ -605,12 +629,14 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 <div className={`p-4 rounded-lg border ${
                   isOverdosing(selectedNutrient) 
                     ? 'bg-red-500/10 border-red-500/30' 
+                    : isExceedingTarget(selectedNutrient)
+                    ? 'bg-yellow-500/10 border-yellow-500/30'
                     : 'bg-blue-500/10 border-blue-500/30'
                 }`}>
                   <p className="text-sm text-[var(--color-text-secondary)] mb-1">This Serving Provides</p>
                   <p className="text-xl font-bold text-[var(--color-text-primary)]">
-                    {getNutrientValue(selectedNutrient)}
-                    {selectedNutrient === 'calories' ? ' kcal' : 'g'}
+                    {getNutrientValue(selectedNutrient).toFixed(1)}
+                    {selectedNutrient === 'calories' ? ' kcal' : selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
                   </p>
                   <div className="mt-2">
                     <div className="flex justify-between text-sm mb-1">
@@ -622,7 +648,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                     <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                       <div
                         className={`h-2 rounded-full transition-all ${
-                          isOverdosing(selectedNutrient) ? 'bg-red-500' : 'bg-blue-500'
+                          isOverdosing(selectedNutrient) ? 'bg-red-500' : isExceedingTarget(selectedNutrient) ? 'bg-yellow-500' : 'bg-blue-500'
                         }`}
                         style={{ width: `${Math.min(getPercentageOfDaily(selectedNutrient) || 0, 100)}%` }}
                       ></div>
@@ -630,7 +656,35 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                   </div>
                 </div>
 
-                {/* Overdose Warning */}
+                {/* Target Exceeded Warning (Yellow) */}
+                {!isOverdosing(selectedNutrient) && isExceedingTarget(selectedNutrient) && (
+                  <div className="p-4 rounded-lg bg-yellow-500/20 border-2 border-yellow-500">
+                    <div className="flex items-start gap-2">
+                      <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                      <div className="flex-1">
+                        <p className="text-sm font-bold text-yellow-700 dark:text-yellow-400 mb-1">
+                          ⚠️ Would Exceed Daily Target
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-400 mb-2">
+                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <br />
+                          <strong>This serving:</strong> +{getNutrientValue(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <br />
+                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <br />
+                          <strong className="text-yellow-800 dark:text-yellow-300">Daily target:</strong> {(getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient))}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                        </p>
+                        <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2 italic">
+                          💡 You would exceed your recommended daily intake. Consider a smaller portion if you want to stay within your target.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Overdose Warning (Red) */}
                 {isOverdosing(selectedNutrient) && getNutrientMaximum(selectedNutrient) && (
                   <div className="p-4 rounded-lg bg-red-500/20 border-2 border-red-500 animate-pulse">
                     <div className="flex items-start gap-2">
@@ -642,13 +696,13 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                           ⚠️ Would Exceed Safe Maximum!
                         </p>
                         <p className="text-xs text-red-600 dark:text-red-400 mb-2">
-                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? '' : 'g'}
+                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
                           <br />
-                          <strong>This serving:</strong> +{getNutrientValue(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? '' : 'g'}
+                          <strong>This serving:</strong> +{getNutrientValue(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
                           <br />
-                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? '' : 'g'}
+                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
                           <br />
-                          <strong className="text-red-700 dark:text-red-300">Safe maximum:</strong> {getNutrientMaximum(selectedNutrient)}{selectedNutrient.includes('(') ? '' : 'g'}
+                          <strong className="text-red-700 dark:text-red-300">Safe maximum:</strong> {getNutrientMaximum(selectedNutrient)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
                         </p>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-red-600 dark:text-red-400">Total % of Safe Maximum</span>
