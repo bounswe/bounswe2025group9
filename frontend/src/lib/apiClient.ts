@@ -49,6 +49,7 @@ export interface FoodProposal {
   base_price?: string | number | null;
   price_unit?: PriceUnit;
   currency?: string;
+  micronutrients?: { [key: string]: number };
 }
 
 export interface FoodProposalResponse {

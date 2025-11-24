@@ -28,6 +28,35 @@ const ProposeNewFood: React.FC = () => {
   const [fat, setFat] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [selectedDietaryOptions, setSelectedDietaryOptions] = useState<string[]>([]);
+  const [micronutrients, setMicronutrients] = useState<{ [key: string]: string }>({
+    // Vitamins
+    'Vitamin A, RAE (µg)': '',
+    'Vitamin B-12 (µg)': '',
+    'Vitamin B-6 (mg)': '',
+    'Vitamin C (mg)': '',
+    'Vitamin D (µg)': '',
+    'Vitamin E (Alpha-Tocopherol) (mg)': '',
+    'Vitamin K (Phylloquinone) (µg)': '',
+    'Thiamin (mg)': '',
+    'Riboflavin (mg)': '',
+    'Niacin (mg)': '',
+    'Folate, DFE (µg)': '',
+    'Folate, Food (µg)': '',
+    'Folate, Total (µg)': '',
+    'Folic Acid (µg)': '',
+    'Choline, Total (mg)': '',
+    // Minerals
+    'Calcium, Ca (mg)': '',
+    'Copper, Cu (mg)': '',
+    'Iron, Fe (mg)': '',
+    'Magnesium, Mg (mg)': '',
+    'Manganese, Mn (mg)': '',
+    'Phosphorus, P (mg)': '',
+    'Potassium, K (mg)': '',
+    'Selenium, Se (µg)': '',
+    'Sodium, Na (mg)': '',
+    'Zinc, Zn (mg)': '',
+  });
   
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -148,6 +177,13 @@ const ProposeNewFood: React.FC = () => {
     });
   };
 
+  const handleMicronutrientChange = (nutrient: string, value: string) => {
+    setMicronutrients(prev => ({
+      ...prev,
+      [nutrient]: value
+    }));
+  };
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError('');
@@ -163,6 +199,14 @@ const ProposeNewFood: React.FC = () => {
     try {
       const nutritionScore = calculateNutritionScore();
       
+      // Filter out empty micronutrients and convert to numbers
+      const filteredMicronutrients: { [key: string]: number } = {};
+      Object.entries(micronutrients).forEach(([key, value]) => {
+        if (value && value.trim() !== '' && !isNaN(Number(value))) {
+          filteredMicronutrients[key] = Number(value);
+        }
+      });
+      
       const proposal: FoodProposal = {
         name: foodName,
         category: category,
@@ -174,6 +218,7 @@ const ProposeNewFood: React.FC = () => {
         dietaryOptions: selectedDietaryOptions,
         nutritionScore: nutritionScore,
         imageUrl: imageUrl || undefined,
+        micronutrients: Object.keys(filteredMicronutrients).length > 0 ? filteredMicronutrients : undefined,
       };
       
       await apiClient.proposeFood(proposal);
@@ -370,6 +415,60 @@ const ProposeNewFood: React.FC = () => {
                       {validationErrors.fat && (
                         <p className="mt-1 text-red-500 text-sm">{validationErrors.fat}</p>
                       )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Micronutrients */}
+                <div className="mb-6">
+                  <h2 className="nh-subtitle mb-4">Micronutrients (per serving)</h2>
+                  <p className="text-sm text-gray-500 mb-4">Optional: Add vitamin and mineral content if known</p>
+                  
+                  <div className="mb-4">
+                    <h3 className="font-medium mb-3">Vitamins</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {Object.entries(micronutrients)
+                        .filter(([key]) => key.startsWith('Vitamin') || key.startsWith('Thiamin') || key.startsWith('Riboflavin') || key.startsWith('Niacin') || key.startsWith('Folate'))
+                        .map(([nutrient, value]) => (
+                          <div key={nutrient}>
+                            <label className="block mb-2 text-sm font-medium">
+                              {nutrient}
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                              value={value}
+                              onChange={(e) => handleMicronutrientChange(nutrient, e.target.value)}
+                              placeholder="0"
+                            />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  <div className="mb-4">
+                    <h3 className="font-medium mb-3">Minerals</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      {Object.entries(micronutrients)
+                        .filter(([key]) => !key.startsWith('Vitamin') && !key.startsWith('Thiamin') && !key.startsWith('Riboflavin') && !key.startsWith('Niacin') && !key.startsWith('Folate'))
+                        .map(([nutrient, value]) => (
+                          <div key={nutrient}>
+                            <label className="block mb-2 text-sm font-medium">
+                              {nutrient}
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                              value={value}
+                              onChange={(e) => handleMicronutrientChange(nutrient, e.target.value)}
+                              placeholder="0"
+                            />
+                          </div>
+                        ))}
                     </div>
                   </div>
                 </div>
