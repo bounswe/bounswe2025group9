@@ -29,6 +29,8 @@ interface FoodProposal {
   base_price?: string | number | null;
   price_unit?: PriceUnit | null;
   currency?: string | null;
+  micronutrients?: Record<string, number>;
+  is_private?: boolean;
 }
 
 const FoodProposals = () => {
@@ -130,7 +132,7 @@ const FoodProposals = () => {
                   />
                 )}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                  <h3 className="font-semibold text-[var(--color-text-primary)]">
                     {proposal.name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -212,31 +214,33 @@ const FoodProposals = () => {
               </div>
 
               {/* Actions */}
-              {proposal.isApproved === null && (
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => setSelectedProposal(proposal)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <Eye size={16} />
-                    Details
-                  </button>
-                  <button
-                    onClick={() => handleApprove(proposal.id, true)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
-                  >
-                    <Check size={16} weight="bold" />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleApprove(proposal.id, false)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
-                  >
-                    <X size={16} weight="bold" />
-                    Reject
-                  </button>
-                </div>
-              )}
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => setSelectedProposal(proposal)}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Eye size={16} />
+                  Details
+                </button>
+                {proposal.isApproved === null && (
+                  <>
+                    <button
+                      onClick={() => handleApprove(proposal.id, true)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
+                    >
+                      <Check size={16} weight="bold" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleApprove(proposal.id, false)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                    >
+                      <X size={16} weight="bold" />
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>
 
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Submitted: {new Date(proposal.createdAt).toLocaleString()}
@@ -257,7 +261,7 @@ const FoodProposals = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {selectedProposal.name}
               </h3>
               <button
@@ -268,8 +272,21 @@ const FoodProposals = () => {
               </button>
             </div>
             <div className="space-y-4">
+              {/* Image */}
+              {selectedProposal.imageUrl && (
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Image</h4>
+                  <img
+                    src={selectedProposal.imageUrl}
+                    alt={selectedProposal.name}
+                    className="w-full max-h-64 object-cover rounded-lg text-gray-900 dark:text-white"
+                  />
+                </div>
+              )}
+
+              {/* Basic Info */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Full Nutritional Information</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Basic Information</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Category:</span>
@@ -280,8 +297,30 @@ const FoodProposals = () => {
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.servingSize}g</span>
                   </div>
                   <div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Nutrition Score:</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.nutritionScore.toFixed(1)}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Proposed By:</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.proposedBy.username}</span>
+                  </div>
+                  <div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">
+                      {selectedProposal.isApproved === null ? 'Pending' : selectedProposal.isApproved ? 'Approved' : 'Rejected'}
+                      {selectedProposal.is_private && ' (Private)'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Macronutrients */}
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Macronutrients (per serving)</h4>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Calories:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.caloriesPerServing}</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.caloriesPerServing} kcal</span>
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Protein:</span>
@@ -297,6 +336,62 @@ const FoodProposals = () => {
                   </div>
                 </div>
               </div>
+
+              {/* Micronutrients */}
+              {selectedProposal.micronutrients && Object.keys(selectedProposal.micronutrients).length > 0 && (
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Micronutrients (per serving)</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    {Object.entries(selectedProposal.micronutrients).map(([nutrient, value]) => (
+                      <div key={nutrient} className="bg-gray-50 dark:bg-gray-700 rounded p-2">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 capitalize">{nutrient}:</span>
+                        <span className="ml-2 font-medium text-gray-900 dark:text-white">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Allergens & Dietary Options */}
+              {(selectedProposal.allergens?.length || selectedProposal.dietaryOptions?.length) && (
+                <div>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Allergens & Dietary Information</h4>
+                  <div className="space-y-2">
+                    {selectedProposal.dietaryOptions && selectedProposal.dietaryOptions.length > 0 && (
+                      <div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Dietary Options:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {selectedProposal.dietaryOptions.map((option) => (
+                            <span
+                              key={option}
+                              className="px-2 py-1 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200 text-xs rounded"
+                            >
+                              {option}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {selectedProposal.allergens && selectedProposal.allergens.length > 0 && (
+                      <div>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">Allergens:</span>
+                        <div className="flex flex-wrap gap-2 mt-1">
+                          {selectedProposal.allergens.map((allergen) => (
+                            <span
+                              key={allergen}
+                              className="px-2 py-1 bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-xs rounded"
+                            >
+                              {allergen}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Pricing */}
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Pricing Details</h4>
                 {selectedProposal.base_price ? (
@@ -317,22 +412,34 @@ const FoodProposals = () => {
                   </div>
                 )}
               </div>
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => handleApprove(selectedProposal.id, true)}
-                  className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Check size={20} weight="bold" />
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleApprove(selectedProposal.id, false)}
-                  className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  <X size={20} weight="bold" />
-                  Reject
-                </button>
+
+              {/* Timestamps */}
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Timeline</h4>
+                <div className="text-sm text-gray-600 dark:text-gray-400">
+                  Submitted: {new Date(selectedProposal.createdAt).toLocaleString()}
+                </div>
               </div>
+
+              {/* Action Buttons - Only show for pending proposals */}
+              {selectedProposal.isApproved === null && (
+                <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={() => handleApprove(selectedProposal.id, true)}
+                    className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Check size={20} weight="bold" />
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleApprove(selectedProposal.id, false)}
+                    className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <X size={20} weight="bold" />
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>

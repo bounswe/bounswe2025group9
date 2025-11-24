@@ -129,6 +129,8 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "base_price",
             "price_unit",
             "currency",
+            "micronutrients",
+            "is_private",
         ]
 
     def get_proposedBy(self, obj):
@@ -193,9 +195,7 @@ class FoodProposalModerationViewSet(viewsets.ReadOnlyModelViewSet):
         approved = serializer.validated_data["approved"]
 
         if approved:
-            proposal, entry = approve_food_proposal(
-                proposal, changed_by=request.user
-            )
+            proposal, entry = approve_food_proposal(proposal, changed_by=request.user)
             message = f"Food proposal '{proposal.name}' approved and added to catalog."
         else:
             reject_food_proposal(proposal)
