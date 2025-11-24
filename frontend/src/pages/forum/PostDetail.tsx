@@ -473,14 +473,128 @@ const PostDetail = () => {
         return (
             <div className="w-full py-12">
                 <div className="nh-container">
-                    <div className="mb-6">
-                        <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6 py-3 rounded-lg shadow-sm hover:shadow transition-all px-4">
-                            <ArrowLeft size={20} weight="bold" />
-                            Back to Forum
-                        </Link>
-                    </div>
-                    <div className="text-center my-12">
-                        <p className="text-lg">Loading post...</p>
+                    <div className="flex flex-col md:flex-row gap-6">
+                        {/* Left column - Empty */}
+                        <div className="w-full md:w-1/5"></div>
+
+                        {/* Middle column - Post Details Skeleton */}
+                        <div className="w-full md:w-3/5">
+                            {/* Post Card Skeleton */}
+                            <div className="nh-card mb-8 rounded-lg shadow-md animate-pulse">
+                                {/* Back button and Title skeleton */}
+                                <div className="flex items-center gap-4 mb-4 pt-4 px-4">
+                                    <div 
+                                        className="h-10 w-10 rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                    <div 
+                                        className="h-8 flex-grow rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                </div>
+                                
+                                {/* Tags skeleton */}
+                                <div className="flex flex-wrap gap-2 mb-4 px-4">
+                                    <div 
+                                        className="h-7 w-20 rounded-md"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                    <div 
+                                        className="h-7 w-24 rounded-md"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                </div>
+                                
+                                {/* Body text skeleton */}
+                                <div className="space-y-3 mb-6 px-4">
+                                    <div 
+                                        className="h-4 w-full rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                    <div 
+                                        className="h-4 w-full rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                    <div 
+                                        className="h-4 w-5/6 rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                    <div 
+                                        className="h-4 w-4/5 rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                    <div 
+                                        className="h-4 w-full rounded"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                </div>
+                                
+                                {/* Footer skeleton */}
+                                <div className="flex justify-between items-center pt-4 pb-4 px-4">
+                                    <div className="flex items-center gap-2">
+                                        <div 
+                                            className="h-8 w-8 rounded-full"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        <div 
+                                            className="h-4 w-40 rounded"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                    </div>
+                                    <div 
+                                        className="h-8 w-24 rounded-md"
+                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                    ></div>
+                                </div>
+                            </div>
+                            
+                            {/* Comments Section Skeleton */}
+                            <div className="mb-6">
+                                <div 
+                                    className="h-6 w-32 rounded mb-4"
+                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                ></div>
+                                
+                                {/* Comment skeletons */}
+                                <div className="space-y-4">
+                                    {[...Array(3)].map((_, index) => (
+                                        <div key={index} className="nh-card rounded-lg shadow-sm border border-gray-700 animate-pulse">
+                                            <div className="flex items-start">
+                                                <div 
+                                                    className="h-12 w-12 rounded-full flex-shrink-0 mr-3"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                                <div className="flex-grow">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <div 
+                                                            className="h-4 w-24 rounded"
+                                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                        ></div>
+                                                        <div 
+                                                            className="h-4 w-20 rounded"
+                                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                        ></div>
+                                                    </div>
+                                                    <div className="p-3 rounded-lg bg-[var(--color-bg-tertiary)]">
+                                                        <div 
+                                                            className="h-4 w-full rounded mb-2"
+                                                            style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                        ></div>
+                                                        <div 
+                                                            className="h-4 w-5/6 rounded"
+                                                            style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {/* Right column - Empty */}
+                        <div className="w-full md:w-1/5"></div>
                     </div>
                 </div>
             </div>
