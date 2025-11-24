@@ -118,10 +118,7 @@ const MealPlanner = ({
         });
         
         // Calculate what we need
-        const caloriesNeeded = Math.max(0, dailyCaloriesTarget - currentCalories);
         const proteinNeeded = Math.max(0, dailyProteinTarget - currentProtein);
-        const carbsNeeded = Math.max(0, dailyCarbsTarget - currentCarbs);
-        const fatNeeded = Math.max(0, dailyFatTarget - currentFat);
         
         // If we already meet or exceed targets significantly, use base serving size of 1
         if (currentCalories >= dailyCaloriesTarget * 0.95 && currentProtein >= dailyProteinTarget * 0.9) {
@@ -139,15 +136,13 @@ const MealPlanner = ({
         }
         
         // Calculate serving sizes for each meal to distribute the needed nutrition
-        const servingSizes = dayMeals.map((food, index) => {
+        const servingSizes = dayMeals.map((food) => {
             if (!food || !food.id) return 1.0;
             
             // Start with base calorie scaling, but distribute across meals
             // Each meal gets a portion of the scaling based on its calorie contribution
             const foodCalories = food.caloriesPerServing || 0;
             const foodProtein = food.proteinContent || 0;
-            const foodCarbs = food.carbohydrateContent || 0;
-            const foodFat = food.fatContent || 0;
             
             // Calculate how much each meal should contribute to targets
             // Distribute targets evenly across meals (3 meals per day)
@@ -174,29 +169,57 @@ const MealPlanner = ({
             }
             
             // Ensure we don't have unreasonably large or small servings
-            // Allow larger servings (up to 8x) if needed to meet targets
-            servingSize = Math.max(0.5, Math.min(servingSize, 8.0));
+            // Allow larger servings (up to 12x) if needed to meet daily targets
+            servingSize = Math.max(0.5, Math.min(servingSize, 12.0));
             
             return Math.round(servingSize * 100) / 100; // Round to 2 decimal places
         });
         
-        // Verify the totals and adjust if still too low
+        // Verify the totals and adjust if still too low - ENSURE we meet targets for THIS DAY
         let totalCal = 0;
         let totalProt = 0;
+        let totalCarbs = 0;
+        let totalFat = 0;
+        
         servingSizes.forEach((size, index) => {
             const food = dayMeals[index];
             if (food) {
                 totalCal += (food.caloriesPerServing || 0) * size;
                 totalProt += (food.proteinContent || 0) * size;
+                totalCarbs += (food.carbohydrateContent || 0) * size;
+                totalFat += (food.fatContent || 0) * size;
             }
         });
         
-        // If still below targets, scale everything up proportionally
+        // CRITICAL: Scale up to ensure THIS DAY meets targets (not weekly average)
+        // Target is 95-105% of daily target for each day
         if (totalCal < dailyCaloriesTarget * 0.95) {
-            const finalScale = (dailyCaloriesTarget * 1.05) / totalCal;
+            // Calculate scale needed to reach target
+            const calorieScale = (dailyCaloriesTarget * 1.02) / totalCal; // 2% buffer
+            
+            // Also check macros
+            let proteinScale = 1.0;
+            if (totalProt < dailyProteinTarget * 0.95) {
+                proteinScale = (dailyProteinTarget * 1.02) / totalProt;
+            }
+            
+            let carbsScale = 1.0;
+            if (totalCarbs < dailyCarbsTarget * 0.95) {
+                carbsScale = (dailyCarbsTarget * 1.02) / totalCarbs;
+            }
+            
+            let fatScale = 1.0;
+            if (totalFat < dailyFatTarget * 0.95) {
+                fatScale = (dailyFatTarget * 1.02) / totalFat;
+            }
+            
+            // Use the maximum scale needed (to meet all targets)
+            const finalScale = Math.max(calorieScale, proteinScale, carbsScale, fatScale);
+            
             return servingSizes.map(size => {
                 const finalSize = size * finalScale;
-                return Math.round(Math.max(0.5, Math.min(finalSize, 8.0)) * 100) / 100;
+                // Increase max to 12x if needed to meet daily targets
+                return Math.round(Math.max(0.5, Math.min(finalSize, 12.0)) * 100) / 100;
             });
         }
         
@@ -316,27 +339,6 @@ const MealPlanner = ({
         if (!savedMealPlanId) {
             // If no saved plan, save it first with optimized serving sizes, then log
             try {
-                // Fetch user's nutrition targets
-                let nutritionTargets = null;
-                try {
-                    nutritionTargets = await apiClient.getNutritionTargets();
-                } catch (error) {
-                    console.warn('Could not fetch nutrition targets:', error);
-                }
-                
-                // Calculate daily nutrition targets
-                let dailyCaloriesTarget = 2000;
-                let dailyProteinTarget = 150;
-                let dailyCarbsTarget = 250;
-                let dailyFatTarget = 67;
-                
-                if (nutritionTargets) {
-                    dailyCaloriesTarget = nutritionTargets.calories;
-                    dailyProteinTarget = nutritionTargets.protein;
-                    dailyCarbsTarget = nutritionTargets.carbohydrates;
-                    dailyFatTarget = nutritionTargets.fat;
-                }
-                
                 const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
                 const mealTypes = ['Breakfast', 'Lunch', 'Dinner'];
                 const weeklyPlan = localMealPlans[dietaryPreference];
@@ -398,6 +400,65 @@ const MealPlanner = ({
         }
     }, [onLogRef, handleLogToNutrition]);
 
+    // Fetch nutrition targets on component mount
+    useEffect(() => {
+        const fetchTargets = async () => {
+            try {
+                const targets = await apiClient.getNutritionTargets();
+                setNutritionTargets({
+                    calories: targets.calories,
+                    protein: targets.protein,
+                    carbohydrates: targets.carbohydrates,
+                    fat: targets.fat
+                });
+            } catch (error) {
+                console.warn('Could not fetch nutrition targets:', error);
+                // Use default targets
+                setNutritionTargets({
+                    calories: 2000,
+                    protein: 150,
+                    carbohydrates: 250,
+                    fat: 67
+                });
+            }
+        };
+        fetchTargets();
+    }, []);
+
+    // Calculate and update serving sizes when meal plans or nutrition targets change
+    useEffect(() => {
+        if (!nutritionTargets) return;
+        
+        const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+        const weeklyPlan = localMealPlans[dietaryPreference];
+        const newServingSizes: { [key: string]: number[] } = {};
+        
+        // Calculate serving sizes for EACH DAY individually to meet daily targets
+        days.forEach(day => {
+            const dayMeals = weeklyPlan[day.toLowerCase() as keyof typeof weeklyPlan];
+            const validDayMeals = dayMeals.filter(food => food && food.id);
+            
+            if (validDayMeals.length > 0) {
+                // Calculate serving sizes to meet DAILY targets (not weekly)
+                const sizes = calculateOptimalServingSizes(
+                    validDayMeals,
+                    nutritionTargets.calories, // Daily target
+                    nutritionTargets.protein,  // Daily target
+                    nutritionTargets.carbohydrates, // Daily target
+                    nutritionTargets.fat // Daily target
+                );
+                newServingSizes[day] = sizes;
+            } else {
+                newServingSizes[day] = [1, 1, 1];
+            }
+        });
+        
+        setServingSizes(prev => ({
+            ...prev,
+            [dietaryPreference]: newServingSizes
+        }));
+    }, [localMealPlans, dietaryPreference, nutritionTargets, calculateOptimalServingSizes]);
+
     const allDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
     const meals = ['Breakfast', 'Lunch', 'Dinner'];
     
@@ -411,36 +472,6 @@ const MealPlanner = ({
     // Determine which days to show based on plan duration
     const days = planDuration === 'daily' ? [getTodayDayName()] : allDays;
     const planTitle = planDuration === 'daily' ? 'Daily Meal Plan' : 'Weekly Meal Plan';
-    
-    // Calculate total macros for the current meal plan
-    const calculateMacros = () => {
-        let totalCalories = 0;
-        let totalProtein = 0;
-        let totalCarbs = 0;
-        let totalFat = 0;
-        
-        const weeklyPlan = localMealPlans[dietaryPreference];
-        days.forEach(day => {
-            const dayMeals = weeklyPlan[day.toLowerCase() as keyof typeof weeklyPlan];
-            dayMeals.forEach(food => {
-                if (food) {
-                    totalCalories += food.caloriesPerServing || 0;
-                    totalProtein += food.proteinContent || 0;
-                    totalCarbs += food.carbohydrateContent || 0;
-                    totalFat += food.fatContent || 0;
-                }
-            });
-        });
-        
-        return {
-            calories: Math.round(totalCalories),
-            protein: Math.round(totalProtein),
-            carbs: Math.round(totalCarbs),
-            fat: Math.round(totalFat)
-        };
-    };
-    
-    const macros = calculateMacros();
 
     // Helper function to calculate macros for a specific day (using serving sizes)
     const calculateDayMacros = (day: string) => {
