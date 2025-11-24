@@ -3,11 +3,7 @@ import { CaretDown, CaretRight } from '@phosphor-icons/react';
 import { apiClient } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition';
 
-interface DailyTargetsProps {
-  compact?: boolean;
-}
-
-const DailyTargets = ({ compact = false }: DailyTargetsProps) => {
+const DailyTargets = () => {
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [loading, setLoading] = useState(true);
