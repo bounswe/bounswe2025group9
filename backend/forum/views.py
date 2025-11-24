@@ -53,7 +53,32 @@ class PostViewSet(viewsets.ModelViewSet):
     SIMILARITY_THRESHOLD = 75
 
     def get_queryset(self):
-        return Post.objects.all().order_by("-created_at")
+        queryset = Post.objects.all()
+        
+        # Apply ordering if specified in query params, otherwise default to -created_at
+        ordering = self.request.query_params.get('ordering', '-created_at')
+        if ordering:
+            queryset = queryset.order_by(ordering)
+        else:
+            queryset = queryset.order_by("-created_at")
+        
+        return queryset
+
+    def list(self, request, *args, **kwargs):
+        """
+        Override list to ensure pagination is properly applied.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
+        
+        # Apply pagination
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+        
+        # If no pagination, return all results (should not happen with pagination_class set)
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def get_serializer_context(self):
         context = super().get_serializer_context()

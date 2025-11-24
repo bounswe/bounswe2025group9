@@ -957,41 +957,59 @@ export const apiClient = {
   createMealPlan: (mealPlanData: {
     name: string;
     meals: {
-      food_id: number;
+      food_id?: number;
+      private_food_id?: number;
       serving_size: number;
       meal_type: string;
     }[];
   }) => {
     console.log(`[API] Creating meal plan with name: ${mealPlanData.name}`);
-    const headers: HeadersInit = {};
-    if (accessToken) {
-      headers["Authorization"] = `Bearer ${accessToken}`;
-    }
-    headers["Content-Type"] = "application/json";
-
-    return fetch(`${BACKEND_API_URL}/meal-planner/plans/`, {
+    return fetchJson<MealPlan>("/meal-planner/", {
       method: "POST",
-      headers,
-      body: JSON.stringify(mealPlanData),
-      credentials: 'include' as RequestCredentials,
-    }).then(response => {
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-      return response.json();
-    });
+      body: JSON.stringify(mealPlanData)
+    }, true);
   },
 
   getMealPlans: () => {
     console.log('[API] Fetching meal plans');
-    return fetchJson<PaginatedResponse<MealPlan>>("/meal-planner/plans/", {
+    return fetchJson<PaginatedResponse<MealPlan>>("/meal-planner/", {
       method: "GET"
+    }, true);
+  },
+
+  getMealPlan: (planId: number) => {
+    console.log(`[API] Fetching meal plan ID: ${planId}`);
+    return fetchJson<MealPlan>(`/meal-planner/${planId}/`, {
+      method: "GET"
+    }, true);
+  },
+
+  updateMealPlan: (planId: number, mealPlanData: {
+    name?: string;
+    meals?: {
+      food_id?: number;
+      private_food_id?: number;
+      serving_size: number;
+      meal_type: string;
+    }[];
+  }) => {
+    console.log(`[API] Updating meal plan ID: ${planId}`);
+    return fetchJson<MealPlan>(`/meal-planner/${planId}/`, {
+      method: "PUT",
+      body: JSON.stringify(mealPlanData)
+    }, true);
+  },
+
+  deleteMealPlan: (planId: number) => {
+    console.log(`[API] Deleting meal plan ID: ${planId}`);
+    return fetchJson<void>(`/meal-planner/${planId}/`, {
+      method: "DELETE"
     }, true);
   },
 
   setCurrentMealPlan: (planId: number) => {
     console.log(`[API] Setting current meal plan to ID: ${planId}`);
-    return fetchJson<MealPlan>(`/meal-planner/plans/${planId}/set_current/`, {
+    return fetchJson<MealPlan>(`/meal-planner/${planId}/set-current/`, {
       method: "POST"
     }, true);
   },
@@ -1007,6 +1025,92 @@ export const apiClient = {
       console.error(`[API] Error fetching current meal plan:`, error);
       throw error;
     });
+  },
+
+  // Log all meals from a meal plan to nutrition tracking
+  logMealPlanToNutrition: async (planId: number, date?: string) => {
+    console.log(`[API] Logging meal plan ${planId} to nutrition tracking`);
+    try {
+      // Get the meal plan details
+      const mealPlan = await apiClient.getMealPlan(planId);
+      
+      // Get today's date if not provided (use local time, not UTC)
+      const getLocalDateString = () => {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+      };
+      const logDate = date || getLocalDateString();
+      
+      // Use meals array which has food_id/private_food_id
+      if (!mealPlan.meals || mealPlan.meals.length === 0) {
+        throw new Error('Meal plan has no meals to log');
+      }
+      
+      // Determine today's day of the week (0 = Sunday, 1 = Monday, ..., 6 = Saturday)
+      const today = new Date();
+      const dayOfWeek = today.getDay(); // 0 = Sunday, 1 = Monday, etc.
+      
+      // Convert to meal plan day index (Monday = 0, Tuesday = 1, ..., Sunday = 6)
+      // JavaScript: Sunday=0, Monday=1, Tuesday=2, ..., Saturday=6
+      // Meal plan order: Monday=0, Tuesday=1, Wednesday=2, ..., Sunday=6
+      let mealPlanDayIndex: number;
+      if (dayOfWeek === 0) {
+        // Sunday is last (index 6)
+        mealPlanDayIndex = 6;
+      } else {
+        // Monday (1) -> 0, Tuesday (2) -> 1, etc.
+        mealPlanDayIndex = dayOfWeek - 1;
+      }
+      
+      // Meals are organized as: Monday (breakfast, lunch, dinner), Tuesday (breakfast, lunch, dinner), etc.
+      // 3 meals per day, so today's meals start at: mealPlanDayIndex * 3
+      const mealsPerDay = 3;
+      const todayMealStartIndex = mealPlanDayIndex * mealsPerDay;
+      const todayMealEndIndex = todayMealStartIndex + mealsPerDay;
+      
+      // Filter meals to only include today's meals
+      const todayMeals = mealPlan.meals.slice(todayMealStartIndex, todayMealEndIndex);
+      
+      if (todayMeals.length === 0) {
+        throw new Error('No meals found for today in this meal plan');
+      }
+      
+      console.log(`[API] Logging ${todayMeals.length} meals for today (day index: ${mealPlanDayIndex})`);
+      
+      // Log each of today's meals to nutrition tracking
+      const promises = todayMeals.map((meal: any) => {
+        const entryData: any = {
+          serving_size: meal.serving_size || 1.0,
+          serving_unit: 'serving',
+          meal_type: meal.meal_type || 'meal',
+          date: logDate
+        };
+        
+        // Handle food_id or private_food_id
+        if (meal.food_id) {
+          entryData.food_id = meal.food_id;
+        } else if (meal.private_food_id) {
+          entryData.private_food_id = meal.private_food_id;
+        } else {
+          // Skip meals without food reference
+          console.warn('Meal missing food_id or private_food_id:', meal);
+          return Promise.resolve(null);
+        }
+        
+        return apiClient.addFoodEntry(entryData);
+      });
+      
+      const results = await Promise.all(promises);
+      const successCount = results.filter(r => r !== null).length;
+      console.log(`[API] Successfully logged ${successCount} meals to nutrition tracking for today`);
+      return { success: true, count: successCount };
+    } catch (error) {
+      console.error(`[API] Error logging meal plan to nutrition:`, error);
+      throw error;
+    }
   },
 
   // Nutrition Tracking API

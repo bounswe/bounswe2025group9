@@ -17,6 +17,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import SwaggerPage from './components/SwaggerPage';
 import MealPlanner from './pages/mealplanner/MealPlanner'
 import FoodCompare from './pages/foods/FoodCompare';
+import NutritionTrackingPage from './pages/NutritionTracking';
 
 // app component with react-router setup
 function App() {
@@ -44,6 +45,7 @@ function App() {
               <Route path="forum/create" element={<CreatePost />} />
               <Route path="profile" element={<Profile />} />
               <Route path="user/:username" element={<UserProfile />} />
+              <Route path="nutrition" element={<NutritionTrackingPage />} />
               <Route path="mealplanner" element={<MealPlanner/>}/>
             </Route>
 
