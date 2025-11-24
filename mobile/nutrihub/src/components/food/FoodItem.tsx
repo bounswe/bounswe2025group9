@@ -12,6 +12,7 @@ import { BORDER_RADIUS, SPACING, getValidIconName } from '../../constants/theme'
 import { useTheme } from '../../context/ThemeContext';
 import Card from '../common/Card';
 import { FoodItem as FoodItemType } from '../../types/types';
+import { getPriceCategoryText, getPriceCategoryColor } from '../../utils/priceUtils';
 
 interface FoodItemProps {
   /**
@@ -96,7 +97,23 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
       <Text style={[styles.badgeText, { color }]}>{text}</Text>
     </View>
   );
-  
+
+  // Render price category badge
+  const renderPriceCategoryBadge = () => {
+    if (!item.priceCategory) return null;
+    
+    const categoryText = getPriceCategoryText(item.priceCategory);
+    const categoryColor = getPriceCategoryColor(item.priceCategory);
+    
+    return (
+      <View style={[styles.priceCategoryBadge, { backgroundColor: categoryColor + '20', borderColor: categoryColor }]}>
+        <Text style={[styles.priceCategoryText, { color: categoryColor }]}>
+          {categoryText}
+        </Text>
+      </View>
+    );
+  };
+
   // Render list layout
   const renderListLayout = () => (
     <Card 
@@ -166,11 +183,11 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
             </View>
           )}
           
-          {/* Price */}
-          {showPrice && item.price !== undefined && (
-            <Text style={[styles.price, textStyles.body]}>
-              ${item.price.toFixed(2)}
-            </Text>
+          {/* Price Category */}
+          {showPrice && item.priceCategory && (
+            <View style={styles.priceRow}>
+              {renderPriceCategoryBadge()}
+            </View>
           )}
         </View>
       </View>
@@ -228,11 +245,11 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
           {item.description}
         </Text>
         
-        {/* Price */}
-        {showPrice && item.price !== undefined && (
-          <Text style={[styles.gridPrice, textStyles.body]}>
-            ${item.price.toFixed(2)}
-          </Text>
+        {/* Price Category */}
+        {showPrice && item.priceCategory && (
+          <View style={styles.priceRow}>
+            {renderPriceCategoryBadge()}
+          </View>
         )}
         
         {/* Dietary options */}
@@ -351,15 +368,15 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
         </View>
       )}
       
-      {/* Price */}
-      {showPrice && item.price !== undefined && (
+      {/* Price Category */}
+      {showPrice && item.priceCategory && (
         <View style={styles.detailedPriceContainer}>
-          <Text style={[styles.detailedPriceLabel, textStyles.caption]}>
-            Price
-          </Text>
-          <Text style={[styles.detailedPriceValue, textStyles.heading3]}>
-            ${item.price.toFixed(2)}
-          </Text>
+          <View style={styles.detailedPriceHeader}>
+            <Text style={[styles.detailedPriceLabel, textStyles.caption]}>
+              Price Category
+            </Text>
+            {renderPriceCategoryBadge()}
+          </View>
         </View>
       )}
     </Card>
@@ -445,9 +462,24 @@ const styles = StyleSheet.create({
   moreBadges: {
     fontWeight: '500',
   },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+    gap: SPACING.xs,
+  },
   price: {
     fontWeight: 'bold',
-    marginTop: SPACING.xs,
+  },
+  priceCategoryBadge: {
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+    borderWidth: 1,
+  },
+  priceCategoryText: {
+    fontSize: 10,
+    fontWeight: '700',
   },
   
   // Grid layout styles
@@ -485,7 +517,6 @@ const styles = StyleSheet.create({
   },
   gridPrice: {
     fontWeight: 'bold',
-    marginTop: SPACING.xs,
   },
   gridBadgeContainer: {
     flexDirection: 'row',
@@ -559,9 +590,18 @@ const styles = StyleSheet.create({
   detailedPriceContainer: {
     alignItems: 'flex-end',
   },
+  detailedPriceHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.xs,
+  },
   detailedPriceLabel: {},
   detailedPriceValue: {
     fontWeight: 'bold',
+  },
+  detailedPriceUnit: {
+    marginTop: SPACING.xs,
   },
 });
 

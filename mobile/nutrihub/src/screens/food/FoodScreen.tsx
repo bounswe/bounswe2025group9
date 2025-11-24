@@ -123,7 +123,7 @@ const FoodScreen: React.FC = () => {
     resetFilters,
     setCategoryFilter,
     setDietaryOptions,
-    setPriceRange,
+    setPriceCategory,
     setNutritionScoreRange,
   } = useFoodFilters(foodData);
   
@@ -405,7 +405,7 @@ const FoodScreen: React.FC = () => {
   const handleApplyFilters = useCallback((newFilters: FoodFilters) => {
     setCategoryFilter(newFilters.category);
     setDietaryOptions(newFilters.dietaryOptions || []);
-    setPriceRange(newFilters.minPrice, newFilters.maxPrice);
+    setPriceCategory(newFilters.priceCategory);
     setNutritionScoreRange(newFilters.minNutritionScore, newFilters.maxNutritionScore);
 
     // Reset pagination when filters change
@@ -413,7 +413,7 @@ const FoodScreen: React.FC = () => {
     currentPageRef.current = 1;
     // Clear food data to avoid mixing results from different filters
     setFoodData([]);
-  }, [setCategoryFilter, setDietaryOptions, setPriceRange, setNutritionScoreRange]);
+  }, [setCategoryFilter, setDietaryOptions, setPriceCategory, setNutritionScoreRange]);
 
   // Handle propose food submission
   const handleProposeFoodSubmit = useCallback(async (data: FoodProposalData) => {
@@ -503,7 +503,7 @@ const FoodScreen: React.FC = () => {
 
   // Check if filters are active
   const hasActiveFilters = filters.name || filters.category || (filters.dietaryOptions?.length ?? 0) > 0 ||
-    filters.minPrice !== undefined || filters.maxPrice !== undefined ||
+    filters.priceCategory !== undefined ||
     filters.minNutritionScore !== undefined || filters.maxNutritionScore !== undefined;
 
   // Render food item
@@ -657,13 +657,13 @@ const FoodScreen: React.FC = () => {
                 </TouchableOpacity>
               ))}
 
-              {(filters.minPrice !== undefined || filters.maxPrice !== undefined) && (
+              {filters.priceCategory && (
                 <TouchableOpacity
                   style={[styles.activeFilterChip, { backgroundColor: theme.errorContainerBg }]}
-                  onPress={() => setPriceRange(undefined, undefined)}
+                  onPress={() => setPriceCategory(undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Price: {filters.minPrice || 0} - {filters.maxPrice || '∞'}
+                    Price: {filters.priceCategory}
                   </Text>
                   <Icon
                     name="close"

@@ -5,7 +5,7 @@
  * Shows nutrition information, dietary tags, allergens, and more.
  */
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -22,6 +22,7 @@ import { BORDER_RADIUS, SPACING, getValidIconName, SHADOWS } from '../../constan
 import { useTheme } from '../../context/ThemeContext';
 import Card from '../common/Card';
 import { FoodItem } from '../../types/types';
+import { getPriceCategoryText, getPriceCategoryColor } from '../../utils/priceUtils';
 
 interface FoodDetailModalProps {
   /**
@@ -103,6 +104,23 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
       </Text>
     </View>
   );
+
+  // Render price category badge
+  const renderPriceCategoryBadge = () => {
+    if (!food.priceCategory) return null;
+    
+    const categoryText = getPriceCategoryText(food.priceCategory);
+    const categoryColor = getPriceCategoryColor(food.priceCategory);
+    
+    return (
+      <View style={[styles.priceCategoryBadge, { backgroundColor: categoryColor + '20', borderColor: categoryColor }]}>
+        <Text style={[styles.priceCategoryText, { color: categoryColor }]}>
+          {categoryText}
+        </Text>
+      </View>
+    );
+  };
+
   
   return (
     <Modal
@@ -179,12 +197,10 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                   <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Per Unit:</Text>
                   <Text style={[styles.infoValue, textStyles.body]}>100g</Text>
                 </View>
-                {food.price && (
+                {food.priceCategory && (
                   <View style={styles.infoRow}>
-                    <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Price:</Text>
-                    <Text style={[styles.priceValue, textStyles.body, { color: theme.success }]}>
-                      ${food.price.toFixed(2)}
-                    </Text>
+                    <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Price Category:</Text>
+                    {renderPriceCategoryBadge()}
                   </View>
                 )}
               </Card>
@@ -399,9 +415,56 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 16,
   },
+  priceSection: {
+    marginTop: SPACING.sm,
+  },
+  priceHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.xs,
+  },
+  priceValueRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: SPACING.xs,
+  },
   priceValue: {
     fontWeight: 'bold',
     fontSize: 18,
+  },
+  priceUnitText: {
+    marginLeft: SPACING.xs,
+  },
+  priceCategoryBadge: {
+    paddingHorizontal: SPACING.xs,
+    paddingVertical: 2,
+    borderRadius: BORDER_RADIUS.xs,
+    borderWidth: 1,
+  },
+  priceCategoryText: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  servingSizeContainer: {
+    marginTop: SPACING.md,
+  },
+  servingSizeLabel: {
+    marginBottom: SPACING.xs,
+  },
+  servingSizeButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+  },
+  servingSizeButton: {
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+  },
+  servingSizeButtonText: {
+    fontWeight: '500',
   },
   nutritionCard: {
     marginBottom: SPACING.md,

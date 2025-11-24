@@ -36,6 +36,10 @@ export interface ApiFoodItem {
   nutritionScore?: number;
   imageUrl?: string;
   price?: number;
+  base_price?: string | number | null;
+  price_unit?: 'per_100g' | 'per_unit';
+  price_category?: string | null; // Can be '₺', '₺ ₺', '₺ ₺₺' or '$', '$$', '$$$'
+  currency?: string;
 }
 
 export interface ApiPaginatedResponse<T> {
@@ -92,6 +96,19 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
     });
   }
 
+  // Convert base_price to number if it's a string
+  const basePrice = apiFood.base_price 
+    ? (typeof apiFood.base_price === 'string' ? parseFloat(apiFood.base_price) : apiFood.base_price)
+    : apiFood.price;
+
+  // Normalize price category - convert Turkish Lira symbols to dollar signs for display
+  const normalizePriceCategory = (category: string | null | undefined): string | null => {
+    if (!category) return null;
+    // Convert Turkish Lira symbols to dollar signs and remove spaces
+    // Backend returns '₺', '₺ ₺', '₺ ₺₺' which should become '$', '$$', '$$$'
+    return category.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+  };
+
   return {
     id: apiFood.id,
     title: apiFood.name,
@@ -111,7 +128,11 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
     },
     dietaryOptions: apiFood.dietaryOptions as any[],
     allergens: apiFood.allergens as any[],
-    price: apiFood.price,
+    price: basePrice,
+    basePrice: basePrice,
+    priceUnit: apiFood.price_unit || 'per_100g',
+    priceCategory: normalizePriceCategory(apiFood.price_category),
+    currency: apiFood.currency || 'USD',
   };
 };
 

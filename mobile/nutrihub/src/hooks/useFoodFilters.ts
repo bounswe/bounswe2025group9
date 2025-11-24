@@ -74,13 +74,12 @@ const useFoodFilters = (items: FoodItem[]) => {
   }, []);
   
   /**
-   * Set price range filter
+   * Set price category filter
    */
-  const setPriceRange = useCallback((min: number | undefined, max: number | undefined) => {
+  const setPriceCategory = useCallback((category: string | undefined) => {
     setFilters(prev => ({
       ...prev,
-      minPrice: min,
-      maxPrice: max,
+      priceCategory: category,
     }));
   }, []);
   
@@ -136,17 +135,16 @@ const useFoodFilters = (items: FoodItem[]) => {
       );
     }
     
-    // Apply price range filter
-    if (filters.minPrice !== undefined) {
-      result = result.filter(item => 
-        item.price !== undefined && item.price >= (filters.minPrice as number)
-      );
-    }
-    
-    if (filters.maxPrice !== undefined) {
-      result = result.filter(item => 
-        item.price !== undefined && item.price <= (filters.maxPrice as number)
-      );
+    // Apply price category filter
+    if (filters.priceCategory) {
+      result = result.filter(item => {
+        if (!item.priceCategory) return false;
+        // Normalize category (handle both $ and ₺ symbols, remove spaces)
+        const normalizedItemCategory = item.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+        const normalizedFilterCategory = filters.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+        console.log(`[Filter] Comparing item category "${item.priceCategory}" (normalized: "${normalizedItemCategory}") with filter "${filters.priceCategory}" (normalized: "${normalizedFilterCategory}")`);
+        return normalizedItemCategory === normalizedFilterCategory;
+      });
     }
     
     // Apply nutrition score range filter
@@ -173,23 +171,8 @@ const useFoodFilters = (items: FoodItem[]) => {
         case FOOD_SORT_OPTIONS.NAME_Z_TO_A:
           return b.title.localeCompare(a.title);
           
-        case FOOD_SORT_OPTIONS.PRICE_LOW_TO_HIGH:
-          return ((a.price || 0) - (b.price || 0));
-          
-        case FOOD_SORT_OPTIONS.PRICE_HIGH_TO_LOW:
-          return ((b.price || 0) - (a.price || 0));
-          
         case FOOD_SORT_OPTIONS.NUTRITION_SCORE:
           return ((b.nutritionScore || 0) - (a.nutritionScore || 0));
-          
-        case FOOD_SORT_OPTIONS.COST_TO_NUTRITION_RATIO:
-          const aRatio = a.price && a.nutritionScore 
-            ? a.price / a.nutritionScore 
-            : Infinity;
-          const bRatio = b.price && b.nutritionScore 
-            ? b.price / b.nutritionScore 
-            : Infinity;
-          return aRatio - bRatio;
           
         default:
           return 0;
@@ -206,7 +189,7 @@ const useFoodFilters = (items: FoodItem[]) => {
     setNameFilter,
     setCategoryFilter,
     setDietaryOptions,
-    setPriceRange,
+    setPriceCategory,
     setNutritionScoreRange,
     setSortOption,
     resetFilters,

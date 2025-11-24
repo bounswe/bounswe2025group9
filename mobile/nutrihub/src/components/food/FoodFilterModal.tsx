@@ -67,13 +67,6 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
     });
   };
 
-  const handlePriceRangeChange = (field: 'minPrice' | 'maxPrice', value: string) => {
-    const numValue = value === '' ? undefined : parseFloat(value);
-    setLocalFilters(prev => ({
-      ...prev,
-      [field]: numValue,
-    }));
-  };
 
   const handleNutritionScoreChange = (field: 'minNutritionScore' | 'maxNutritionScore', value: string) => {
     const numValue = value === '' ? undefined : parseFloat(value);
@@ -179,25 +172,45 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
             </View>
           </Card>
 
-          {/* Price Range */}
+          {/* Price Category */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Price Range ($)</Text>
-            <View style={styles.rangeContainer}>
-              <TextInput
-                placeholder="Min"
-                value={localFilters.minPrice?.toString() || ''}
-                onChangeText={(value) => handlePriceRangeChange('minPrice', value)}
-                keyboardType="decimal-pad"
-                containerStyle={styles.rangeInput}
-              />
-              <Text style={[styles.rangeSeparator, textStyles.body]}>to</Text>
-              <TextInput
-                placeholder="Max"
-                value={localFilters.maxPrice?.toString() || ''}
-                onChangeText={(value) => handlePriceRangeChange('maxPrice', value)}
-                keyboardType="decimal-pad"
-                containerStyle={styles.rangeInput}
-              />
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Price Category</Text>
+            <View style={styles.optionsGrid}>
+              {['$', '$$', '$$$'].map((category) => {
+                const isSelected = localFilters.priceCategory === category;
+                return (
+                  <TouchableOpacity
+                    key={category}
+                    style={[
+                      styles.optionChip,
+                      { 
+                        backgroundColor: isSelected 
+                          ? theme.primary 
+                          : theme.surfaceVariant 
+                      }
+                    ]}
+                    onPress={() => {
+                      setLocalFilters(prev => ({
+                        ...prev,
+                        priceCategory: prev.priceCategory === category ? undefined : category,
+                      }));
+                    }}
+                  >
+                    <Text
+                      style={[
+                        styles.optionChipText,
+                        { 
+                          color: isSelected 
+                            ? '#FFFFFF' 
+                            : theme.text 
+                        }
+                      ]}
+                    >
+                      {category}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </Card>
 

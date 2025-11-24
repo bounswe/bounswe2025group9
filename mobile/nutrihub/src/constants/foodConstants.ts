@@ -56,8 +56,5 @@ export const DIETARY_OPTIONS = {
 export const FOOD_SORT_OPTIONS = {
   NAME_A_TO_Z: 'name-asc',
   NAME_Z_TO_A: 'name-desc',
-  PRICE_LOW_TO_HIGH: 'price-asc',
-  PRICE_HIGH_TO_LOW: 'price-desc',
   NUTRITION_SCORE: 'nutrition-score',
-  COST_TO_NUTRITION_RATIO: 'cost-nutrition-ratio'
 } as const;

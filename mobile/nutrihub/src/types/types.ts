@@ -35,7 +35,11 @@ export interface FoodItem {
   };
   dietaryOptions?: DietaryOptionType[];
   allergens?: AllergenType[];
-  price?: number;
+  price?: number; // Legacy field, use basePrice instead
+  basePrice?: number | null; // Base price from backend
+  priceUnit?: 'per_100g' | 'per_unit'; // Price unit (per 100g or per unit)
+  priceCategory?: string | null; // Price category ('$', '$$', '$$$')
+  currency?: string; // Currency code (e.g., 'USD', 'TRY')
 }
 
 /**
@@ -44,8 +48,7 @@ export interface FoodItem {
 export interface FoodFilters {
   name?: string;
   category?: FoodCategoryType;
-  minPrice?: number;
-  maxPrice?: number;
+  priceCategory?: string; // '$', '$$', or '$$$'
   minNutritionScore?: number;
   maxNutritionScore?: number;
   dietaryOptions?: DietaryOptionType[];
