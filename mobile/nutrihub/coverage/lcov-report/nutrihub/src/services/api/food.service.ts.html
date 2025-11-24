@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">4.22% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/71</span>
+                <span class='fraction'>3/71</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">4.28% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/70</span>
+                <span class='fraction'>3/70</span>
             </div>
         
             
@@ -317,7 +317,8 @@
 <a name='L252'></a><a href='#L252'>252</a>
 <a name='L253'></a><a href='#L253'>253</a>
 <a name='L254'></a><a href='#L254'>254</a>
-<a name='L255'></a><a href='#L255'>255</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L255'></a><a href='#L255'>255</a>
+<a name='L256'></a><a href='#L256'>256</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -365,7 +366,8 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -418,7 +420,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -553,7 +555,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -588,6 +590,7 @@ export interface ApiFoodItem {
   carbohydrateContent: number;
   fiberContent?: number;
   sugarContent?: number;
+  micronutrients?: Record&lt;string, number&gt;;
   dietaryOptions?: string[];
   allergens?: string[];
   nutritionScore?: number;
@@ -619,7 +622,7 @@ export interface FoodProposalData {
 }
 &nbsp;
 // Transform API food item to app FoodItem format
-const transformFoodItem = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(a</span>piFood: ApiFoodItem): FoodItem =&gt; {</span>
+const transformFoodItem = <span class="fstat-no" title="function not covered" >(a</span>piFood: ApiFoodItem): FoodItem =&gt; {
   // Map category to icon name based on category
   const getCategoryIcon = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(c</span>ategory: string): string =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    switch (category) {</span>
@@ -658,6 +661,7 @@ const transformFoodItem = <span class="cstat-no" title="statement not covered" >
       fiber: apiFood.fiberContent,
       sugar: apiFood.sugarContent,
     },
+    micronutrients: apiFood.micronutrients,
     dietaryOptions: apiFood.dietaryOptions as any[],
     allergens: apiFood.allergens as any[],
     price: apiFood.price,
@@ -672,7 +676,7 @@ const transformFoodItem = <span class="cstat-no" title="statement not covered" >
  * @param search Optional search term to filter by name
  * @returns Promise with food items and pagination info
  */
-export const getFoodCatalog = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+export const getFoodCatalog = <span class="fstat-no" title="function not covered" >as</span>ync (
   limit: number = <span class="branch-0 cbranch-no" title="branch not covered" >20,</span>
   offset: number = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
   categories?: string[],
@@ -807,7 +811,7 @@ export const getFoodCatalog = <span class="cstat-no" title="statement not covere
  * @param data Food proposal data
  * @returns Promise with response status
  */
-export const submitFoodProposal = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >as</span>ync (</span>
+export const submitFoodProposal = <span class="fstat-no" title="function not covered" >as</span>ync (
   data: FoodProposalData
 ): Promise&lt;{ data?: any; error?: string; status: number }&gt; =&gt; {
 <span class="cstat-no" title="statement not covered" >  try {</span>
@@ -832,7 +836,7 @@ export const submitFoodProposal = <span class="cstat-no" title="statement not co
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-11-24T17:47:09.427Z
+                at 2025-11-24T18:52:57.722Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

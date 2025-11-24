@@ -59,6 +59,78 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
   
   if (!food) return null;
   
+  // Helper function to extract unit from nutrient name (last parentheses only)
+  const extractUnit = (nutrientName: string): string => {
+    // Match the last set of parentheses at the end of the string
+    const match = nutrientName.match(/\(([^()]+)\)$/);
+    return match ? match[1] : '';
+  };
+
+  // Helper function to convert amount to comparable value (in micrograms)
+  const normalizeAmount = (amount: number, unit: string): number => {
+    const unitLower = unit.toLowerCase();
+    if (unitLower === 'g') return amount * 1_000_000; // g to µg
+    if (unitLower === 'mg') return amount * 1_000;    // mg to µg
+    if (unitLower === 'µg' || unitLower === 'ug') return amount; // already in µg
+    return amount; // fallback for unknown units
+  };
+
+  // Define priority micronutrients to display
+  const priorityMicronutrients = [
+    "Water (g)",
+    "Niacin (mg)",
+    "Thiamin (mg)",
+    "Retinol (g)",
+    "Zinc, Zn (mg)",
+    "Copper, Cu (mg)",
+    "Riboflavin (mg)",
+    "Sodium, Na (mg)",
+    "Calcium, Ca (mg)",
+    "Cholesterol (mg)",
+    "Total Sugars (g)",
+    "Vitamin B-6 (mg)",
+    "Potassium, K (mg)",
+    "Magnesium, Mg (mg)",
+    "Phosphorus, P (mg)",
+    "Selenium, Se (g)",
+    "Vitamin B-12 (g)",
+    "Choline, total (mg)",
+    "Carotene, beta (g)",
+    "Vitamin A, RAE (g)",
+    "Vitamin D (D2 + D3) (g)",
+    "Vitamin K (phylloquinone) (g)",
+    "Fatty acids, total saturated (g)",
+    "Vitamin E (alpha-tocopherol) (mg)",
+    "Fatty acids, total monounsaturated (g)",
+    "Fatty acids, total polyunsaturated (g)"
+  ];
+
+  // Filter and display only priority micronutrients that exist in the food data, sorted by normalized amount
+  // Also normalize values to per 100g if servingSize is available
+  const displayedMicronutrients = food.micronutrients 
+    ? priorityMicronutrients
+        .filter(nutrient => food.micronutrients && nutrient in food.micronutrients)
+        .map(nutrient => {
+          let value = food.micronutrients![nutrient];
+          // Ensure value is a valid number
+          if (typeof value !== 'number' || isNaN(value)) {
+            value = 0;
+          }
+          // Normalize to per 100g if servingSize is provided and not already 100g
+          if (food.servingSize && food.servingSize !== 100) {
+            value = (value * 100) / food.servingSize;
+          }
+          return [nutrient, value] as [string, number];
+        })
+        .sort((a, b) => {
+          const unitA = extractUnit(a[0]);
+          const unitB = extractUnit(b[0]);
+          const normalizedA = normalizeAmount(a[1], unitA);
+          const normalizedB = normalizeAmount(b[1], unitB);
+          return normalizedB - normalizedA;
+        })
+    : [];
+  
   // Get nutrition score color based on value
   const getNutritionScoreColor = (score?: number): string => {
     if (!score) return theme.textSecondary;
@@ -269,6 +341,41 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                         </View>
                       )}
                     </View>
+                  </View>
+                </Card>
+              )}
+              
+              {/* Micronutrients Section */}
+              {displayedMicronutrients.length > 0 && (
+                <Card style={styles.micronutrientsCard}>
+                  <View style={styles.micronutrientsHeader}>
+                    <Icon name="pill" size={20} color={theme.primary} />
+                    <Text style={[styles.sectionTitle, textStyles.subtitle, { marginBottom: 0, marginLeft: SPACING.xs }]}>
+                      Micronutrients (per 100g)
+                    </Text>
+                  </View>
+                  <View style={styles.micronutrientsContainer}>
+                    {displayedMicronutrients.map(([nutrient, amount]) => {
+                      const unit = extractUnit(nutrient);
+                      // Remove only the unit part (last parentheses) from the name
+                      const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
+                      
+                      // Ensure amount is a valid number
+                      const displayAmount = typeof amount === 'number' && !isNaN(amount) 
+                        ? amount.toFixed(2) 
+                        : '0.00';
+                      
+                      return (
+                        <View key={nutrient} style={styles.micronutrientItem}>
+                          <Text style={[styles.micronutrientLabel, textStyles.body]}>
+                            {nutrientName}
+                          </Text>
+                          <Text style={[styles.micronutrientValue, textStyles.body]}>
+                            {displayAmount}{unit}
+                          </Text>
+                        </View>
+                      );
+                    })}
                   </View>
                 </Card>
               )}
@@ -539,6 +646,33 @@ const styles = StyleSheet.create({
   allergenText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  micronutrientsCard: {
+    marginBottom: SPACING.md,
+  },
+  micronutrientsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.md,
+  },
+  micronutrientsContainer: {
+    gap: SPACING.xs,
+  },
+  micronutrientItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.sm,
+    borderRadius: BORDER_RADIUS.sm,
+    backgroundColor: 'rgba(0, 0, 0, 0.02)',
+  },
+  micronutrientLabel: {
+    flex: 1,
+  },
+  micronutrientValue: {
+    fontWeight: '600',
+    marginLeft: SPACING.sm,
   },
 });
 

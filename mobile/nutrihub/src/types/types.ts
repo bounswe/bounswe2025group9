@@ -24,7 +24,7 @@ export interface FoodItem {
   category: FoodCategoryType;
   imageUrl?: string;
   nutritionScore?: number;
-  servingSize?: number; // Serving size in grams from the database
+  servingSize?: number; // in grams
   macronutrients?: {
     calories: number;
     protein: number;
@@ -33,6 +33,7 @@ export interface FoodItem {
     fiber?: number;
     sugar?: number;
   };
+  micronutrients?: Record<string, number>;
   dietaryOptions?: DietaryOptionType[];
   allergens?: AllergenType[];
   price?: number; // Legacy field, use basePrice instead
