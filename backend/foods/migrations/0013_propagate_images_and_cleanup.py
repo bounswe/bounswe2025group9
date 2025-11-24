@@ -107,6 +107,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('foods', '0012_remove_broken_image_links'),
+        ('meal_planner', '0002_dailynutritionlog_foodlogentry_and_more'),  # Ensure FoodLogEntry model exists
     ]
 
     operations = [
