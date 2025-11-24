@@ -26,6 +26,7 @@ import ForumPost from '../../components/forum/ForumPost';
 import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
+import Avatar from '../../components/common/Avatar';
 import { ForumTopic, Comment } from '../../types/types';
 import { ForumStackParamList } from '../../navigation/types';
 import { forumService, RecipeDetail } from '../../services/api/forum.service';
@@ -140,6 +141,17 @@ const PostDetailScreen: React.FC = () => {
       // Fetch comments for the post
       try {
         const commentsData = await forumService.getComments(postId);
+        if (__DEV__) {
+          console.log('📥 Fetched comments:', {
+            count: commentsData.length,
+            comments: commentsData.map(c => ({
+              id: c.id,
+              author: c.author,
+              hasProfileImage: !!c.authorProfileImage,
+              profileImageUrl: c.authorProfileImage,
+            })),
+          });
+        }
         setComments(commentsData);
       } catch (err) {
         console.error('Error fetching comments:', err);
@@ -275,31 +287,45 @@ const PostDetailScreen: React.FC = () => {
   };
   
   // Render comment item
-  const renderComment = (comment: Comment) => (
-    <Card key={comment.id} style={styles.commentCard}>
-      <View style={styles.commentHeader}>
-        <TouchableOpacity
-          style={styles.commentAuthorContainer}
-          onPress={() => {
-            const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
-            const isSelf = !!currentUser && (comment.author === currentUser.username || (displayName && comment.author === displayName));
-            
-            if (isSelf) {
-              // Navigate to own profile tab instead of UserProfile screen
-              navigation.navigate('MyProfile' as any);
-            } else {
-              // Navigate to other user's profile
-              navigation.navigate('UserProfile', { username: comment.author, userId: (comment as any).authorId || undefined });
-            }
-          }}
-          accessibilityRole="button"
-          accessibilityLabel={`View ${comment.author}'s profile`}
-        >
-          <Icon name="account-circle" size={20} color={theme.primary} />
-          <Text style={[styles.commentAuthor, textStyles.subtitle]}>{comment.author}</Text>
-        </TouchableOpacity>
-        <Text style={[styles.commentDate, textStyles.small]}>{formatDate(comment.createdAt)}</Text>
-      </View>
+  const renderComment = (comment: Comment) => {
+    if (__DEV__) {
+      console.log('💬 Comment render:', {
+        commentId: comment.id,
+        author: comment.author,
+        hasProfileImage: !!comment.authorProfileImage,
+        profileImageUrl: comment.authorProfileImage ? comment.authorProfileImage.substring(0, 50) + '...' : null,
+        fullComment: comment,
+      });
+    }
+    
+    return (
+      <Card key={comment.id} style={styles.commentCard}>
+        <View style={styles.commentHeader}>
+          <TouchableOpacity
+            style={styles.commentAuthorContainer}
+            onPress={() => {
+              const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
+              const isSelf = !!currentUser && (comment.author === currentUser.username || (displayName && comment.author === displayName));
+              
+              if (isSelf) {
+                // Navigate to own profile tab instead of UserProfile screen
+                navigation.navigate('MyProfile' as any);
+              } else {
+                // Navigate to other user's profile
+                navigation.navigate('UserProfile', { username: comment.author, userId: (comment as any).authorId || undefined });
+              }
+            }}
+            accessibilityRole="button"
+            accessibilityLabel={`View ${comment.author}'s profile`}
+          >
+            <Avatar 
+              uri={comment.authorProfileImage} 
+              size={20}
+            />
+            <Text style={[styles.commentAuthor, textStyles.subtitle]}>{comment.author}</Text>
+          </TouchableOpacity>
+          <Text style={[styles.commentDate, textStyles.small]}>{formatDate(comment.createdAt)}</Text>
+        </View>
       <Text style={[styles.commentContent, textStyles.body]}>{comment.content}</Text>
       <View style={styles.commentFooter}>
         <TouchableOpacity 
@@ -319,8 +345,9 @@ const PostDetailScreen: React.FC = () => {
           </Text>
         </TouchableOpacity>
       </View>
-    </Card>
-  );
+      </Card>
+    );
+  };
   
   if (isLoading) {
     return (

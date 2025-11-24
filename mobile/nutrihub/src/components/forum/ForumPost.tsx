@@ -11,6 +11,7 @@ import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
+import Avatar from '../common/Avatar';
 import { ForumTopic } from '../../types/types';
 
 interface ForumPostProps {
@@ -209,6 +210,16 @@ const ForumPost: React.FC<ForumPostProps> = ({
     ...(post.isLiked ? { color: theme.primary } : {})
   };
   
+  // Debug logging for profile images
+  if (__DEV__) {
+    console.log('📝 ForumPost render - authorProfileImage:', {
+      postId: post.id,
+      author: post.author,
+      hasImage: !!post.authorProfileImage,
+      imageUrl: post.authorProfileImage ? post.authorProfileImage.substring(0, 50) + '...' : null,
+    });
+  }
+  
   return (
     <Card
       style={style}
@@ -218,7 +229,10 @@ const ForumPost: React.FC<ForumPostProps> = ({
       {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.authorContainer} onPress={handleAuthor} activeOpacity={0.7}>
-          <Icon name="account-circle" size={24} color={theme.primary} />
+          <Avatar 
+            uri={post.authorProfileImage} 
+            size={24}
+          />
           <View style={styles.authorTextContainer}>
             <Text style={[styles.authorName, textStyles.subtitle]}>{post.author}</Text>
             <Text style={[styles.postDate, textStyles.small]}>{formatDate(post.createdAt)}</Text>

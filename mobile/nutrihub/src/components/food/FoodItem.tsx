@@ -107,7 +107,10 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
     >
       <View style={styles.listContentInner}>
         {/* Image or Icon */}
-        <View style={[styles.iconContainer, { backgroundColor: theme.placeholder }]}> 
+        <View style={[
+          styles.iconContainer, 
+          !item.imageUrl && { backgroundColor: theme.placeholder }
+        ]}> 
           {item.imageUrl ? (
             <Image
               source={{ uri: item.imageUrl }}
@@ -182,7 +185,10 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
       testID={testID}
     >
       {/* Image or Icon */}
-      <View style={[styles.gridIconContainer, { backgroundColor: theme.placeholder }]}> 
+      <View style={[
+        styles.gridIconContainer, 
+        !item.imageUrl && { backgroundColor: theme.placeholder }
+      ]}> 
         {item.imageUrl ? (
           <Image 
             source={{ uri: item.imageUrl }} 

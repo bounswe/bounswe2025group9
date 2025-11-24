@@ -5,6 +5,22 @@
 import { apiClient } from './client';
 import { ForumTopic, Comment, PostTagType } from '../../types/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { API_CONFIG } from '../../config';
+
+// Base host URL (without /api) for media files
+const BASE_HOST = API_CONFIG.BASE_URL.replace('/api', '');
+
+// Helper function to ensure absolute URL for media files
+const ensureAbsoluteUrl = (value?: string | null): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  const normalizedPath = value.startsWith('/') ? value : `/${value}`;
+  return `${BASE_HOST}${normalizedPath}`;
+};
 
 // Storage key for liked posts
 const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
@@ -125,6 +141,9 @@ export interface RecipeDetail {
 
 const normalizeAuthor = (author: ApiAuthor) => {
   if (!author) {
+    if (__DEV__) {
+      console.log('⚠️ normalizeAuthor: author is null/undefined');
+    }
     return {
       username: 'Unknown user',
       displayName: 'Unknown user',
@@ -134,6 +153,9 @@ const normalizeAuthor = (author: ApiAuthor) => {
   }
 
   if (typeof author === 'string') {
+    if (__DEV__) {
+      console.log('⚠️ normalizeAuthor: author is string (no profile image):', author);
+    }
     return {
       username: author,
       displayName: author,
@@ -145,11 +167,27 @@ const normalizeAuthor = (author: ApiAuthor) => {
   const nameParts = [author.name, author.surname].filter(Boolean) as string[];
   const displayName = nameParts.length > 0 ? nameParts.join(' ') : author.username;
 
+  // Normalize profile image URL
+  const normalizedProfileImage = ensureAbsoluteUrl(author.profile_image);
+
+  if (__DEV__) {
+    console.log('✅ normalizeAuthor: normalized object author:', {
+      username: author.username,
+      profile_image: author.profile_image,
+      normalizedProfileImage: normalizedProfileImage,
+      id: author.id,
+      result: {
+        username: author.username || displayName || 'Unknown user',
+        profileImage: normalizedProfileImage,
+      },
+    });
+  }
+
   return {
     username: author.username || displayName || 'Unknown user',
     displayName: displayName || author.username || 'Unknown user',
     id: author.id,
-    profileImage: author.profile_image ?? undefined,
+    profileImage: normalizedProfileImage,
   };
 };
 
@@ -229,6 +267,16 @@ const updateLikedPostsStorage = async (postId: number, isLiked: boolean): Promis
 // Convert API response to our Comment type
 const mapApiCommentToComment = (apiComment: ApiComment): Comment => {
   const normalizedAuthor = normalizeAuthor(apiComment.author);
+  
+  if (__DEV__) {
+    console.log('🔄 Mapping API comment to Comment:', {
+      apiCommentId: apiComment.id,
+      apiAuthor: apiComment.author,
+      normalizedAuthor: normalizedAuthor,
+      profileImage: normalizedAuthor.profileImage,
+    });
+  }
+  
   return {
     id: apiComment.id,
     postId: apiComment.post,

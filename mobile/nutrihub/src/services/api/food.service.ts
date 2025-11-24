@@ -2,6 +2,21 @@ import { apiClient } from './client';
 import { API_CONFIG } from '../../config';
 import { FoodItem, FoodCategoryType } from '../../types/types';
 
+// Base host URL (without /api) for media files
+const BASE_HOST = API_CONFIG.BASE_URL.replace('/api', '');
+
+// Helper function to ensure absolute URL for media files
+const ensureAbsoluteUrl = (value?: string | null): string | undefined => {
+  if (!value) {
+    return undefined;
+  }
+  if (/^https?:\/\//i.test(value)) {
+    return value;
+  }
+  const normalizedPath = value.startsWith('/') ? value : `/${value}`;
+  return `${BASE_HOST}${normalizedPath}`;
+};
+
 
 // API response interfaces
 export interface ApiFoodItem {
@@ -68,9 +83,14 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
     }
   };
 
-  const normalizedImageUrl = apiFood.imageUrl
-    ? (apiFood.imageUrl.startsWith('http') ? apiFood.imageUrl : `${API_CONFIG.BASE_URL}${apiFood.imageUrl}`)
-    : undefined;
+  const normalizedImageUrl = ensureAbsoluteUrl(apiFood.imageUrl);
+  
+  if (__DEV__ && apiFood.imageUrl) {
+    console.log('🍎 Food image URL normalization:', {
+      original: apiFood.imageUrl,
+      normalized: normalizedImageUrl,
+    });
+  }
 
   return {
     id: apiFood.id,

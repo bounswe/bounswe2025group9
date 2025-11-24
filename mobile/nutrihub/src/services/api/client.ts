@@ -39,16 +39,41 @@ class ApiClient {
           delete config.headers['Content-Type'];
         }
         
+        // Network logging for debugging (only in development)
+        if (__DEV__) {
+          const method = config.method?.toUpperCase() || 'GET';
+          const url = `${config.baseURL || ''}${config.url || ''}`;
+          console.log(`🌐 [${method}] ${url}`, {
+            headers: config.headers,
+            params: config.params,
+            data: config.data instanceof FormData ? '[FormData]' : config.data,
+          });
+        }
+        
         return config;
       },
       (error) => {
+        if (__DEV__) {
+          console.error('❌ Request Error:', error);
+        }
         return Promise.reject(error);
       }
     );
 
     // Response interceptor for token refresh
     this.axiosInstance.interceptors.response.use(
-      (response) => response,
+      (response) => {
+        // Network logging for successful responses (only in development)
+        if (__DEV__) {
+          const method = response.config.method?.toUpperCase() || 'GET';
+          const url = `${response.config.baseURL || ''}${response.config.url || ''}`;
+          console.log(`✅ [${method}] ${url} - Status: ${response.status}`, {
+            data: response.data,
+            headers: response.headers,
+          });
+        }
+        return response;
+      },
       async (error) => {
         const originalRequest = error.config;
         
@@ -108,6 +133,18 @@ class ApiClient {
           } finally {
             this.isRefreshing = false;
           }
+        }
+        
+        // Network logging for errors (only in development)
+        if (__DEV__) {
+          const method = error.config?.method?.toUpperCase() || 'UNKNOWN';
+          const url = error.config ? `${error.config.baseURL || ''}${error.config.url || ''}` : 'Unknown URL';
+          console.error(`❌ [${method}] ${url} - Error:`, {
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data,
+            message: error.message,
+          });
         }
         
         return Promise.reject(error);
