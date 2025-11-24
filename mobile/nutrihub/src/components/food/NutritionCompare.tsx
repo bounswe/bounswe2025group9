@@ -11,10 +11,149 @@ import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { FoodItem } from '../../types/types';
 import MacroRadarChart from './MacroRadarChart';
+import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 interface NutritionCompareProps {
   foods: FoodItem[];
 }
+
+// Get normalized micronutrient value to per 100g
+const getNormalizedMicronutrient = (food: FoodItem, nutrientName: string): number => {
+  if (!food.micronutrients || !(nutrientName in food.micronutrients)) {
+    return 0;
+  }
+  
+  let value = food.micronutrients[nutrientName];
+  
+  // Ensure value is valid
+  if (typeof value !== 'number' || isNaN(value)) {
+    return 0;
+  }
+  
+  // Normalize to per 100g if servingSize is provided
+  if (food.servingSize && food.servingSize !== 100) {
+    value = (value * 100) / food.servingSize;
+  }
+  
+  return value;
+};
+
+// Circular Progress Component for Micronutrients
+const MicroCircularProgress: React.FC<{
+  value: number;
+  maxValue: number;
+  color: string;
+  size: number;
+  strokeWidth: number;
+  label: string;
+  unit: string;
+}> = ({ value, maxValue, color, size, strokeWidth, label, unit }) => {
+  const { theme, textStyles } = useTheme();
+  const percentage = Math.min((value / maxValue) * 100, 100);
+  
+  return (
+    <View style={[styles.microCircularContainer, { width: size + 10, height: size + 38 }]}>
+      {/* Circle container */}
+      <View style={{ height: size, justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+        {/* Background circle */}
+        <View style={[styles.microCircleBackground, { 
+          width: size, 
+          height: size, 
+          borderRadius: size / 2,
+          borderWidth: strokeWidth,
+          borderColor: theme.border + '30'
+        }]} />
+        
+        {/* Progress arc */}
+        <View style={[styles.microProgressOverlay, { width: size, height: size, borderRadius: size / 2 }]}>
+          <View style={[
+            styles.microProgressArc,
+            {
+              width: size - strokeWidth * 2,
+              height: size - strokeWidth * 2,
+              borderRadius: (size - strokeWidth * 2) / 2,
+              borderWidth: strokeWidth,
+              borderColor: 'transparent',
+              borderTopColor: percentage >= 1 ? color : 'transparent',
+              borderRightColor: percentage >= 26 ? color : 'transparent',
+              borderBottomColor: percentage >= 51 ? color : 'transparent',
+              borderLeftColor: percentage >= 76 ? color : 'transparent',
+              transform: [{ rotate: '-90deg' }],
+              opacity: percentage > 0 ? Math.max(0.4, Math.min(1, (percentage + 20) / 100)) : 0,
+            }
+          ]} />
+        </View>
+        
+        {/* Center content */}
+        <View style={styles.microCircleContent}>
+          <Text style={[styles.microCircleValue, textStyles.body, { color: color }]}>
+            {value.toFixed(1)}
+          </Text>
+          <Text style={[styles.microCircleUnit, { color: theme.textSecondary, fontSize: 8 }]}>
+            {unit}
+          </Text>
+        </View>
+      </View>
+      
+      {/* Label below circle */}
+      <Text style={[styles.microCircleLabel, textStyles.caption, { color: theme.text }]} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+};
+
+// Micro Row Component
+const MicroRow: React.FC<{
+  label: string;
+  icon: string;
+  nutrientKey: string;
+  food1: FoodItem;
+  food2: FoodItem;
+  maxValue: number;
+  color1: string;
+  color2: string;
+  unit: string;
+}> = ({ label, icon, nutrientKey, food1, food2, maxValue, color1, color2, unit }) => {
+  const { theme } = useTheme();
+  const value1 = getNormalizedMicronutrient(food1, nutrientKey);
+  const value2 = getNormalizedMicronutrient(food2, nutrientKey);
+  
+  return (
+    <View style={styles.microRow}>
+      {/* Left Food Circle */}
+      <View style={styles.microSide}>
+        <MicroCircularProgress
+          value={value1}
+          maxValue={maxValue}
+          color={color1}
+          size={60}
+          strokeWidth={4}
+          label={label}
+          unit={unit}
+        />
+      </View>
+      
+      {/* Center Icon */}
+      <View style={styles.microCenterIcon}>
+        <Icon name={icon as any} size={20} color={theme.primary} />
+      </View>
+      
+      {/* Right Food Circle */}
+      <View style={styles.microSide}>
+        <MicroCircularProgress
+          value={value2}
+          maxValue={maxValue}
+          color={color2}
+          size={60}
+          strokeWidth={4}
+          label={label}
+          unit={unit}
+        />
+      </View>
+    </View>
+  );
+};
 
 const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
   const { theme, textStyles } = useTheme();
@@ -28,12 +167,72 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
       </View>
     );
   }
+  
+  const food1Color = '#3b82f6'; // Blue
+  const food2Color = '#10b981'; // Green
 
   return (
     <View style={styles.container}>
       {/* Macronutrient Chart */}
       <View style={[styles.chartCard, { backgroundColor: theme.surface }]}>
         <MacroRadarChart food1={foods[0]} food2={foods[1]} />
+      </View>
+
+      {/* Micronutrients Comparison */}
+      <View style={[styles.microCard, { backgroundColor: theme.surface }]}>
+        <Text style={[styles.microTitle, textStyles.heading4]}>
+          Micronutrients (per 100g)
+        </Text>
+        
+        <View style={styles.microGrid}>
+          <MicroRow
+            label="Water"
+            icon="water"
+            nutrientKey="Water (g)"
+            food1={foods[0]}
+            food2={foods[1]}
+            maxValue={100}
+            color1={food1Color}
+            color2={food2Color}
+            unit="g"
+          />
+          
+          <MicroRow
+            label="Cholesterol"
+            icon="heart-pulse"
+            nutrientKey="Cholesterol (mg)"
+            food1={foods[0]}
+            food2={foods[1]}
+            maxValue={300}
+            color1={food1Color}
+            color2={food2Color}
+            unit="mg"
+          />
+          
+          <MicroRow
+            label="Calcium"
+            icon="bone"
+            nutrientKey="Calcium, Ca (mg)"
+            food1={foods[0]}
+            food2={foods[1]}
+            maxValue={1000}
+            color1={food1Color}
+            color2={food2Color}
+            unit="mg"
+          />
+          
+          <MicroRow
+            label="Vitamin B-6"
+            icon="pill"
+            nutrientKey="Vitamin B-6 (mg)"
+            food1={foods[0]}
+            food2={foods[1]}
+            maxValue={2}
+            color1={food1Color}
+            color2={food2Color}
+            unit="mg"
+          />
+        </View>
       </View>
 
       {/* Additional Comparison Details */}
@@ -139,6 +338,70 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: SPACING.md,
     marginBottom: SPACING.sm,
+  },
+  microCard: {
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+  },
+  microTitle: {
+    marginBottom: SPACING.md,
+  },
+  microGrid: {
+    gap: SPACING.md,
+  },
+  microRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: SPACING.xs,
+  },
+  microSide: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  microCenterIcon: {
+    width: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  microCircularContainer: {
+    alignItems: 'center',
+    justifyContent: 'flex-start',
+    position: 'relative',
+  },
+  microCircleBackground: {
+    position: 'absolute',
+    top: 0,
+  },
+  microProgressOverlay: {
+    position: 'absolute',
+    top: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  microProgressArc: {
+    position: 'absolute',
+  },
+  microCircleContent: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+    marginTop: 0,
+  },
+  microCircleValue: {
+    fontWeight: 'bold',
+    fontSize: 12,
+  },
+  microCircleUnit: {
+    fontSize: 8,
+    marginTop: -2,
+  },
+  microCircleLabel: {
+    textAlign: 'center',
+    fontSize: 10,
+    marginTop: 4,
+    paddingHorizontal: 2,
   },
   detailsCard: {
     borderRadius: 12,
