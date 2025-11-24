@@ -132,7 +132,7 @@ const FoodProposals = () => {
                   />
                 )}
                 <div className="flex-1">
-                  <h3 className="font-semibold text-gray-900 dark:text-white">
+                  <h3 className="font-semibold text-[var(--color-text-primary)]">
                     {proposal.name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
@@ -214,31 +214,33 @@ const FoodProposals = () => {
               </div>
 
               {/* Actions */}
-              {proposal.isApproved === null && (
-                <div className="mt-4 flex gap-2">
-                  <button
-                    onClick={() => setSelectedProposal(proposal)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
-                  >
-                    <Eye size={16} />
-                    Details
-                  </button>
-                  <button
-                    onClick={() => handleApprove(proposal.id, true)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
-                  >
-                    <Check size={16} weight="bold" />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleApprove(proposal.id, false)}
-                    className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
-                  >
-                    <X size={16} weight="bold" />
-                    Reject
-                  </button>
-                </div>
-              )}
+              <div className="mt-4 flex gap-2">
+                <button
+                  onClick={() => setSelectedProposal(proposal)}
+                  className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                >
+                  <Eye size={16} />
+                  Details
+                </button>
+                {proposal.isApproved === null && (
+                  <>
+                    <button
+                      onClick={() => handleApprove(proposal.id, true)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
+                    >
+                      <Check size={16} weight="bold" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleApprove(proposal.id, false)}
+                      className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
+                    >
+                      <X size={16} weight="bold" />
+                      Reject
+                    </button>
+                  </>
+                )}
+              </div>
 
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Submitted: {new Date(proposal.createdAt).toLocaleString()}
@@ -259,7 +261,7 @@ const FoodProposals = () => {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
+              <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
                 {selectedProposal.name}
               </h3>
               <button
@@ -277,7 +279,7 @@ const FoodProposals = () => {
                   <img
                     src={selectedProposal.imageUrl}
                     alt={selectedProposal.name}
-                    className="w-full max-h-64 object-cover rounded-lg"
+                    className="w-full max-h-64 object-cover rounded-lg text-gray-900 dark:text-white"
                   />
                 </div>
               )}
@@ -286,10 +288,6 @@ const FoodProposals = () => {
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Basic Information</h4>
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">ID:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.id}</span>
-                  </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Category:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.category}</span>
@@ -300,7 +298,7 @@ const FoodProposals = () => {
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Nutrition Score:</span>
-                    <span className="ml-2 font-medium text-primary">{selectedProposal.nutritionScore.toFixed(1)}</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.nutritionScore.toFixed(1)}</span>
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Proposed By:</span>
@@ -423,22 +421,25 @@ const FoodProposals = () => {
                 </div>
               </div>
 
-              <div className="flex gap-2 pt-4">
-                <button
-                  onClick={() => handleApprove(selectedProposal.id, true)}
-                  className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  <Check size={20} weight="bold" />
-                  Approve
-                </button>
-                <button
-                  onClick={() => handleApprove(selectedProposal.id, false)}
-                  className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                >
-                  <X size={20} weight="bold" />
-                  Reject
-                </button>
-              </div>
+              {/* Action Buttons - Only show for pending proposals */}
+              {selectedProposal.isApproved === null && (
+                <div className="flex gap-2 pt-4">
+                  <button
+                    onClick={() => handleApprove(selectedProposal.id, true)}
+                    className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                  >
+                    <Check size={20} weight="bold" />
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleApprove(selectedProposal.id, false)}
+                    className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                  >
+                    <X size={20} weight="bold" />
+                    Reject
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
