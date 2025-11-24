@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, ChartLineUp, CaretDown, CaretRight, Trash } from '@phosphor-icons/react'
 import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CalendarBlank, PencilSimple, Trash, ForkKnife, CaretDown, CaretRight } from '@phosphor-icons/react'
 import { apiClient, ForumPost, MealPlan } from '../lib/apiClient'
 import { UserMetrics } from '../types/nutrition'
@@ -84,10 +83,6 @@ const Profile = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [successMessage, setSuccessMessage] = useState('')
   const [errorMessage, setErrorMessage] = useState('')
-
-  // Followers and following counts
-  const [followersCount, setFollowersCount] = useState(0)
-  const [followingCount, setFollowingCount] = useState(0)
 
   // Report user states
   const [reportUserId, setReportUserId] = useState('')
@@ -185,28 +180,6 @@ const Profile = () => {
       // Load profile picture if available
       if (user.profile_image) {
         setProfilePicture(user.profile_image)
-      }
-
-      // Load followers and following counts
-      if (user.username) {
-        try {
-          const [followersData, followingData] = await Promise.all([
-            apiClient.getFollowers(user.username),
-            apiClient.getFollowing(user.username)
-          ])
-          
-          // The API returns an array directly, not an object with followers property
-          const followers = Array.isArray(followersData) ? followersData : (followersData.followers || [])
-          const following = Array.isArray(followingData) ? followingData : (followingData.following || [])
-          
-          setFollowersCount(followers.length)
-          setFollowingCount(following.length)
-        } catch (err) {
-          console.error('Error loading follow data:', err)
-          // Don't show error, just set to 0
-          setFollowersCount(0)
-          setFollowingCount(0)
-        }
       }
     } catch (error) {
       console.error('Error loading user data:', error)
@@ -799,10 +772,8 @@ const Profile = () => {
       setProfilePictureFile(croppedFile)
 
       const reader = new FileReader()
-      reader.onloadend = async () => {
+      reader.onloadend = () => {
         setProfilePicture(reader.result as string)
-        // Auto-upload after preview is set
-        await uploadProfilePictureWithFile(croppedFile)
       }
       reader.readAsDataURL(croppedFile)
     } catch (error) {
@@ -811,11 +782,13 @@ const Profile = () => {
     }
   }
 
-  const uploadProfilePictureWithFile = async (file: File) => {
+  const uploadProfilePicture = async () => {
+    if (!profilePictureFile) return
+
     setIsLoading(true)
     try {
       const formData = new FormData()
-      formData.append('profile_image', file)
+      formData.append('profile_image', profilePictureFile)
 
       await apiClient.uploadProfilePicture(formData)
       await fetchUserProfile()
@@ -828,7 +801,6 @@ const Profile = () => {
       setIsLoading(false)
     }
   }
-
 
   const removeProfilePicture = async () => {
     setIsLoading(true)
@@ -1124,7 +1096,21 @@ const Profile = () => {
                     <div className="flex flex-col items-center lg:items-start">
                       <h3 className="nh-subtitle mb-4 text-center lg:text-left w-full">Profile Picture</h3>
                       <div className="flex flex-col items-center gap-4">
-                        <div className="relative">
+                        {profilePicture ? (
+                          <img
+                            src={profilePicture}
+                            alt="Profile"
+                            className="w-32 h-32 rounded-full object-cover border-4 border-primary-500"
+                            style={{ aspectRatio: '1/1' }}
+                          />
+                        ) : (
+                          <div className="w-32 h-32 rounded-full flex items-center justify-center" style={{
+                            backgroundColor: 'var(--dietary-option-bg)'
+                          }}>
+                            <User size={64} className="text-primary" weight="fill" />
+                          </div>
+                        )}
+                        <div className="flex flex-col gap-2 w-full">
                           <input
                             type="file"
                             accept="image/jpeg,image/png,image/jpg"
@@ -1132,66 +1118,37 @@ const Profile = () => {
                             className="hidden"
                             id="profile-picture-input"
                           />
-                          {profilePicture ? (
-                            <label
-                              htmlFor="profile-picture-input"
-                              className="cursor-pointer block"
+                          <label
+                            htmlFor="profile-picture-input"
+                            className="nh-button nh-button-outline cursor-pointer inline-block text-center text-sm"
+                            style={{
+                              color: 'var(--dietary-option-text)'
+                            }}
+                          >
+                            Choose Picture
+                          </label>
+                          {profilePictureFile && (
+                            <button
+                              onClick={uploadProfilePicture}
+                              className="nh-button nh-button-primary text-sm"
+                              disabled={isLoading}
                             >
-                              <img
-                                src={profilePicture}
-                                alt="Profile"
-                                className="w-32 h-32 rounded-full object-cover border-4 border-primary-500 hover:opacity-80 transition-opacity"
-                                style={{ aspectRatio: '1/1' }}
-                              />
-                            </label>
-                          ) : (
-                            <label
-                              htmlFor="profile-picture-input"
-                              className="cursor-pointer block"
-                            >
-                              <div className="w-32 h-32 rounded-full flex items-center justify-center border-4 border-primary-500 hover:opacity-80 transition-opacity" style={{
-                                backgroundColor: 'var(--dietary-option-bg)'
-                              }}>
-                                <User size={64} className="text-primary" weight="fill" />
-                              </div>
-                            </label>
+                              Upload
+                            </button>
                           )}
-                          
-                          {/* Delete Icon */}
                           {profilePicture && (
-                            <div className="absolute -top-2 right-0">
-                              <button
-                                onClick={removeProfilePicture}
-                                className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
-                                disabled={isLoading}
-                                title="Delete picture"
-                              >
-                                <Trash size={16} weight="fill" className="text-white" />
-                              </button>
-                            </div>
+                            <button
+                              onClick={removeProfilePicture}
+                              className="nh-button nh-button-danger text-sm"
+                              disabled={isLoading}
+                            >
+                              Remove
+                            </button>
                           )}
                         </div>
-                        
-                        {/* Auto-upload when file is selected */}
-                        {profilePictureFile && (
-                          <div className="text-xs nh-text text-center">
-                            {isLoading ? 'Uploading...' : 'Picture will be uploaded automatically'}
-                          </div>
-                        )}
-                        
-                        {/* Followers and Following Counts */}
-                        <div className="grid grid-cols-2 gap-4 w-full text-center pt-2 border-t" style={{
-                          borderColor: 'var(--forum-search-border)'
-                        }}>
-                          <div>
-                            <div className="text-xl font-bold text-primary">{followersCount}</div>
-                            <div className="nh-text text-xs">Followers</div>
-                          </div>
-                          <div>
-                            <div className="text-xl font-bold text-primary">{followingCount}</div>
-                            <div className="nh-text text-xs">Following</div>
-                          </div>
-                        </div>
+                        <p className="text-xs nh-text text-center">
+                          JPEG, PNG. Max 5MB.
+                        </p>
                       </div>
                     </div>
 
