@@ -386,11 +386,12 @@ const Forum = () => {
             
             if (!isCancelled) {
                 setTotalCount(count);
-                setPosts(currentPosts);
-                // Only turn off loading if we've already fetched initial data
-                // This prevents showing "No posts found" before API responds
+                // Only set posts if we've already fetched initial data
+                // This prevents showing empty posts before API responds
                 if (hasFetched) {
-                    setLoading(prev => prev ? false : prev);
+                    setPosts(currentPosts);
+                    // Turn off loading after posts are set
+                    setLoading(false);
                 }
             }
         };
@@ -409,9 +410,9 @@ const Forum = () => {
 
     // Get all posts from API
     const fetchAllPosts = async (_forceRefresh = false) => {
-        if (!loading) {
-            setLoading(true);
-        }
+        setLoading(true);
+        setPosts([]); // Clear posts immediately to prevent showing stale data
+        setHasFetched(false); // Reset hasFetched to prevent showing "No posts" during refresh
 
         try {
             const params = {
@@ -466,14 +467,15 @@ const Forum = () => {
             setAllPosts(allResults);
             setLikedPosts(userLikedPosts); // ensure liked state is current
             setHasFetched(true); // Mark that we've received data from API
+            // This will trigger applyFilters to run and set posts correctly
 
         } catch (error) {
             console.error('Error fetching posts:', error);
             setAllPosts([]); // prevent infinite loading
             setHasFetched(true); // Mark as fetched even on error to show error state
-        } finally {
-            setLoading(false);
+            // applyFilters will handle setting loading to false
         }
+        // Don't set loading to false here - let applyFilters handle it after posts are set
     };
 
     // Fetch liked posts from server and sync localStorage for current user
