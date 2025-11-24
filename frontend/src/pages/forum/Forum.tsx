@@ -176,6 +176,7 @@ const Forum = () => {
     const [posts, setPosts] = useState<ForumPost[]>([]); // store current page posts
     // show loading initially
     const [loading, setLoading] = useState(true);
+    const [hasFetched, setHasFetched] = useState(false); // Track if we've received initial data
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState(1);
     const [postsPerPage, ] = useState(5);
@@ -386,6 +387,11 @@ const Forum = () => {
             if (!isCancelled) {
                 setTotalCount(count);
                 setPosts(currentPosts);
+                // Only turn off loading if we've already fetched initial data
+                // This prevents showing "No posts found" before API responds
+                if (hasFetched) {
+                    setLoading(prev => prev ? false : prev);
+                }
             }
         };
 
@@ -394,7 +400,7 @@ const Forum = () => {
         return () => {
             isCancelled = true;
         };
-    }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, selectedFoods, isSearching, searchResults, searchResultsCount, recipeIngredientsMap, fetchRecipeIngredientsForFoodFilter, hasActiveFilters]);
+    }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, selectedFoods, isSearching, searchResults, searchResultsCount, recipeIngredientsMap, fetchRecipeIngredientsForFoodFilter, hasActiveFilters, hasFetched]);
     
     // Fetch posts when component mounts or when returning to this component
     useEffect(() => {
@@ -459,10 +465,12 @@ const Forum = () => {
             // Update local state
             setAllPosts(allResults);
             setLikedPosts(userLikedPosts); // ensure liked state is current
+            setHasFetched(true); // Mark that we've received data from API
 
         } catch (error) {
             console.error('Error fetching posts:', error);
             setAllPosts([]); // prevent infinite loading
+            setHasFetched(true); // Mark as fetched even on error to show error state
         } finally {
             setLoading(false);
         }
@@ -867,6 +875,8 @@ const Forum = () => {
     };
 
     const handlePageChange = (page: number) => {
+        setLoading(true); // Show skeleton immediately when page changes
+        setPosts([]); // Clear posts to prevent showing old content
         setCurrentPage(page);
         // Scroll to top when changing page
         window.scrollTo(0, 0);
@@ -1123,10 +1133,73 @@ const Forum = () => {
                         )}
                         
                         {loading ? (
-                            <div className="text-center my-12">
-                                <p className="text-lg">Loading posts...</p>
+                            <div className="space-y-6">
+                                {[...Array(5)].map((_, index) => (
+                                    <div
+                                        key={index}
+                                        className="nh-card relative animate-pulse"
+                                    >
+                                        {/* Title skeleton */}
+                                        <div 
+                                            className="h-6 w-3/4 rounded mb-2"
+                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                        ></div>
+                                        
+                                        {/* Tags skeleton */}
+                                        <div className="flex flex-wrap gap-2 mb-3">
+                                            <div 
+                                                className="h-6 w-20 rounded-md"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div 
+                                                className="h-6 w-24 rounded-md"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                        </div>
+                                        
+                                        {/* Body text skeleton */}
+                                        <div className="space-y-2 mb-4">
+                                            <div 
+                                                className="h-4 w-full rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div 
+                                                className="h-4 w-full rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div 
+                                                className="h-4 w-5/6 rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                        </div>
+                                        
+                                        {/* Footer skeleton */}
+                                        <div className="flex justify-between items-center">
+                                            <div className="flex items-center gap-2">
+                                                <div 
+                                                    className="h-8 w-8 rounded-full"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                                <div 
+                                                    className="h-4 w-32 rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                            </div>
+                                            <div className="flex items-center gap-4">
+                                                <div 
+                                                    className="h-8 w-20 rounded-md"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                                <div 
+                                                    className="h-8 w-20 rounded-md"
+                                                    style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
-                        ) : posts.length === 0 ? (
+                        ) : hasFetched && posts.length === 0 ? (
                             <div className="text-center my-12">
                                 <p className="text-lg">
                                     {activeFilter !== null || selectedSubTags.length > 0 || selectedFoods.length > 0
