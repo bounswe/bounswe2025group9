@@ -4,123 +4,6 @@ import { MagnifyingGlass, X, Hamburger } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import NutritionScore from './NutritionScore';
 
-const FOOD_FUZZY_SIMILARITY_THRESHOLD = 65;
-
-const levenshteinDistance = (source: string, target: string): number => {
-    const lenSource = source.length;
-    const lenTarget = target.length;
-
-    if (lenSource === 0) return lenTarget;
-    if (lenTarget === 0) return lenSource;
-
-    const matrix = Array.from({ length: lenSource + 1 }, () => new Array(lenTarget + 1).fill(0));
-
-    for (let i = 0; i <= lenSource; i++) matrix[i][0] = i;
-    for (let j = 0; j <= lenTarget; j++) matrix[0][j] = j;
-
-    for (let i = 1; i <= lenSource; i++) {
-        for (let j = 1; j <= lenTarget; j++) {
-            const cost = source[i - 1] === target[j - 1] ? 0 : 1;
-            matrix[i][j] = Math.min(
-                matrix[i - 1][j] + 1,
-                matrix[i][j - 1] + 1,
-                matrix[i - 1][j - 1] + cost
-            );
-        }
-    }
-
-    return matrix[lenSource][lenTarget];
-};
-
-const simpleRatio = (a: string, b: string): number => {
-    if (!a || !b) return 0;
-    if (a === b) return 100;
-    const dist = levenshteinDistance(a, b);
-    const maxLen = Math.max(a.length, b.length);
-    return Math.round(((maxLen - dist) / maxLen) * 100);
-};
-
-const partialRatio = (a: string, b: string): number => {
-    if (!a || !b) return 0;
-    const shorter = a.length < b.length ? a : b;
-    const longer = a.length < b.length ? b : a;
-
-    const lenShort = shorter.length;
-    if (lenShort === 0) return 0;
-
-    let highest = 0;
-    for (let i = 0; i <= longer.length - lenShort; i++) {
-        const window = longer.slice(i, i + lenShort);
-        const ratio = simpleRatio(shorter, window);
-        if (ratio > highest) highest = ratio;
-        if (highest === 100) break;
-    }
-
-    return highest;
-};
-
-const tokenSortRatio = (a: string, b: string): number => {
-    if (!a || !b) return 0;
-    const normalize = (str: string) =>
-        str
-            .split(/\s+/)
-            .map(token => token.trim())
-            .filter(Boolean)
-            .sort()
-            .join(' ');
-    const normalizedA = normalize(a);
-    const normalizedB = normalize(b);
-    return simpleRatio(normalizedA, normalizedB);
-};
-
-const calculateFuzzySimilarity = (query: string, target: string): number => {
-    const source = query.toLowerCase();
-    const compared = target.toLowerCase();
-
-    const ratio = simpleRatio(source, compared);
-    const partial = partialRatio(source, compared);
-    const tokenSort = tokenSortRatio(source, compared);
-
-    return Math.max(ratio, partial, tokenSort);
-};
-
-const scoreFoodMatch = (normalizedQuery: string, food: Food): number => {
-    const candidates = [
-        food.name || '',
-        food.category || '',
-        (food.dietaryOptions || []).join(' ')
-    ];
-
-    let bestScore = 0;
-    candidates.forEach(text => {
-        const lower = text.toLowerCase();
-        if (lower.includes(normalizedQuery)) {
-            bestScore = Math.max(bestScore, 100);
-        } else {
-            bestScore = Math.max(bestScore, calculateFuzzySimilarity(normalizedQuery, lower));
-        }
-    });
-
-    return bestScore;
-};
-
-export const rankFoodsByQuery = (query: string, foods: Food[]) => {
-    const normalizedQuery = query.trim().toLowerCase();
-    if (!normalizedQuery) return foods;
-
-    const scored = foods.map(food => ({
-        food,
-        score: scoreFoodMatch(normalizedQuery, food)
-    }));
-
-    const passing = scored.filter(item => item.score >= FOOD_FUZZY_SIMILARITY_THRESHOLD);
-    const pool = passing.length > 0 ? passing : scored;
-
-    return pool
-        .sort((a, b) => b.score - a.score || a.food.name.localeCompare(b.food.name))
-        .map(item => item.food);
-};
-
 interface FoodSelectorProps {
     open: boolean;
     onClose: () => void;
@@ -153,9 +36,7 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                 const response = await apiClient.getFoods({ page: 1, search: searchTerm });
 
                 if (response.status === 200 || response.status === 206) {
-                    const foods = response.results || [];
-                    const ranked = rankFoodsByQuery(searchTerm, foods);
-                    setSearchResults(ranked);
+                    setSearchResults(response.results || []);
                     setWarning(response.warning || null);
                 } else if (response.status === 204) {
                     setSearchResults([]);
