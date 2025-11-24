@@ -438,73 +438,104 @@ const Profile = () => {
   // Render meal plan details
   const renderMealPlanDetails = (mealPlan: MealPlan) => {
     const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-    const mealTypes = ["breakfast", "lunch", "dinner"];
+    const mealTypesOrder = ["breakfast", "lunch", "dinner"];
     const details = mealPlan.meals_details || [];
     
+    // Meals are stored sequentially: Monday (breakfast, lunch, dinner), Tuesday (breakfast, lunch, dinner), etc.
+    // 3 meals per day, so we organize by day index
     return days.map((day) => {
-      const dayLower = day.toLowerCase();
-      const dayMeals = details.filter((meal: any) => {
-        if (meal.day) {
-          return meal.day.toLowerCase() === dayLower;
+      const dayIndex = days.indexOf(day);
+      const startIndex = dayIndex * 3; // Start index for this day's meals
+      const endIndex = startIndex + 3; // End index for this day's meals
+      
+      // Get meals for this day
+      const dayMealsArray = details.slice(startIndex, endIndex);
+      
+      // Organize meals by meal_type (breakfast, lunch, dinner)
+      // Create a map of meal_type -> meal
+      const mealsByType: { [key: string]: any } = {};
+      dayMealsArray.forEach((meal: any) => {
+        if (meal && meal.meal_type) {
+          const mealTypeLower = meal.meal_type.toLowerCase();
+          mealsByType[mealTypeLower] = meal;
         }
-        return true;
       });
       
-      const organizedMeals = mealTypes.map(mealType => {
-        return dayMeals.find((meal: any) => 
-          meal.meal_type && meal.meal_type.toLowerCase() === mealType
-        ) || null;
-      }).filter(Boolean);
+      // If meals don't have meal_type, assign based on position
+      if (Object.keys(mealsByType).length === 0) {
+        dayMealsArray.forEach((meal: any, i: number) => {
+          if (meal && i < mealTypesOrder.length) {
+            mealsByType[mealTypesOrder[i]] = meal;
+          }
+        });
+      }
       
-      const dayIndex = days.indexOf(day);
-      const fallbackMeals = organizedMeals.length === 0 && details.length > 0
-        ? details.slice(dayIndex * 3, (dayIndex + 1) * 3)
-        : organizedMeals;
+      // Get meals in order: breakfast, lunch, dinner
+      const orderedMeals = mealTypesOrder.map(mealType => mealsByType[mealType] || null).filter(Boolean);
       
       return (
         <div key={day} className="nh-card">
           <h3 className="nh-subtitle mb-4">{day}</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {fallbackMeals.length > 0 ? (
-              fallbackMeals.map((meal: any, i: number) => (
-                <div
-                  key={`${day}-${i}`}
-                  className="rounded-md p-3 border relative transition-all hover:shadow-sm"
-                  style={{
-                    backgroundColor: 'var(--dietary-option-bg)',
-                    borderColor: 'var(--dietary-option-border)'
-                  }}
-                >
+            {orderedMeals.length > 0 ? (
+              mealTypesOrder.map((mealType) => {
+                const meal = mealsByType[mealType];
+                if (!meal) {
+                  return (
+                    <div 
+                      key={`${day}-${mealType}-empty`} 
+                      className="rounded-md p-3 border relative transition-all hover:shadow-sm flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'var(--dietary-option-bg)',
+                        borderColor: 'var(--dietary-option-border)',
+                        minHeight: '150px'
+                      }}
+                    >
+                      <span className="text-xs nh-text opacity-50">No {mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>
+                    </div>
+                  );
+                }
+                
+                return (
                   <div
-                    className="text-xs font-medium mb-2"
-                    style={{ color: 'var(--color-light)' }}
+                    key={`${day}-${mealType}`}
+                    className="rounded-md p-3 border relative transition-all hover:shadow-sm"
+                    style={{
+                      backgroundColor: 'var(--dietary-option-bg)',
+                      borderColor: 'var(--dietary-option-border)'
+                    }}
                   >
-                    {meal.meal_type ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1) : mealTypes[i].charAt(0).toUpperCase() + mealTypes[i].slice(1)}
-                  </div>
+                    <div
+                      className="text-xs font-medium mb-2"
+                      style={{ color: 'var(--color-light)' }}
+                    >
+                      {meal.meal_type ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1) : mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                    </div>
 
-                  <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
-                    {meal.food && meal.food.imageUrl ? (
-                      <img
-                        src={meal.food.imageUrl}
-                        alt={meal.food.name}
-                        className="object-contain max-h-14 max-w-full rounded"
-                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                      />
-                    ) : (
-                      <div className="food-image-placeholder w-full h-full flex items-center justify-center">
-                        <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
-                      </div>
-                    )}
-                  </div>
+                    <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
+                      {meal.food && meal.food.imageUrl ? (
+                        <img
+                          src={meal.food.imageUrl}
+                          alt={meal.food.name}
+                          className="object-contain max-h-14 max-w-full rounded"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+                          <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
+                        </div>
+                      )}
+                    </div>
 
-                  <div className="text-sm font-medium nh-text mb-1">
-                    {meal.food ? meal.food.name : 'No food selected'}
+                    <div className="text-sm font-medium nh-text mb-1">
+                      {meal.food ? meal.food.name : 'No food selected'}
+                    </div>
+                    <div className="text-xs nh-text opacity-75">
+                      {meal.calculated_nutrition ? `${Math.round(meal.calculated_nutrition.calories)} kcal` : 'N/A'}
+                    </div>
                   </div>
-                  <div className="text-xs nh-text opacity-75">
-                    {meal.calculated_nutrition ? `${meal.calculated_nutrition.calories} kcal` : 'N/A'}
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="col-span-3 text-center py-4 nh-text opacity-50">
                 No meals planned for {day}
