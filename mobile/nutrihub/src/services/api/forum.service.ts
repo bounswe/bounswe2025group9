@@ -588,5 +588,45 @@ export const forumService = {
       previous: response.data.previous ?? null,
       results: mappedPosts,
     };
+    return mappedPosts;
+  },
+
+  /**
+   * Get posts that the current user has liked
+   * @returns Array of ForumTopic objects
+   */
+  async getLikedPosts(): Promise<ForumTopic[]> {
+    // Check for token before making the request
+    const accessToken = await AsyncStorage.getItem('access_token');
+    if (!accessToken) {
+      console.log("Skipping liked posts request - no access token available");
+      return [];
+    }
+    
+    const response = await apiClient.get<PaginatedResponse<ApiForumTopic>>('/users/profile/liked-posts/');
+    if (response.error) {
+      if (response.status === 401) {
+        console.error("Authentication error in getLikedPosts - token may be invalid");
+        throw new Error("Authentication error - please login again");
+      }
+      throw new Error(response.error);
+    }
+    
+    if (!response.data || !response.data.results) {
+      console.error('Unexpected liked posts response format:', response.data);
+      return [];
+    }
+    
+    // Map posts and ensure isLiked is true for all liked posts
+    const mappedPosts = await Promise.all(
+      response.data.results.map(async (apiTopic) => {
+        const topic = await mapApiTopicToForumTopic(apiTopic);
+        // Ensure isLiked is true since these are all liked posts
+        topic.isLiked = true;
+        return topic;
+      })
+    );
+    
+    return mappedPosts;
   }
 };
