@@ -15,6 +15,7 @@ from .serializers import (
     RecipeSerializer,
     RecipeIngredientSerializer,
 )
+from .pagination import ForumPostPagination
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -48,6 +49,7 @@ class PostViewSet(viewsets.ModelViewSet):
     filter_backends = [DjangoFilterBackend, OrderingFilter]
     filterset_fields = ["tags", "author"]
     ordering_fields = ["created_at"]
+    pagination_class = ForumPostPagination
     SIMILARITY_THRESHOLD = 75
 
     def get_queryset(self):

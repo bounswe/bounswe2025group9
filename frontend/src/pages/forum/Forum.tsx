@@ -1,5 +1,5 @@
 // forum page component
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { PlusCircle, CaretLeft, CaretRight, Tag, X, Funnel, MagnifyingGlass, ForkKnife } from '@phosphor-icons/react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost, Food, RecipeIngredient } from '../../lib/apiClient'
@@ -171,15 +171,15 @@ const Forum = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const username = user?.username || 'anonymous';
-    // initialize allPosts as empty array
-    const [allPosts, setAllPosts] = useState<ForumPost[]>([]);
+    // Server-side pagination - store only current page posts
     const [posts, setPosts] = useState<ForumPost[]>([]); // store current page posts
     // show loading initially
     const [loading, setLoading] = useState(true);
     const [hasFetched, setHasFetched] = useState(false); // Track if we've received initial data
+    const [showNoPosts, setShowNoPosts] = useState(false); // Delay showing "No posts found"
     const [totalCount, setTotalCount] = useState<number>(0);
     const [currentPage, setCurrentPage] = useState(1);
-    const [postsPerPage, ] = useState(5);
+    const [postsPerPage] = useState(5);
     const [likedPosts, setLikedPosts] = useState<{[key: number]: boolean}>({});
     
     // State for active filter
@@ -248,25 +248,67 @@ const Forum = () => {
         return {};
     }, [username]);
 
+    // Track if we're currently fetching to prevent duplicate concurrent calls
+    const fetchingLikedPostsRef = useRef<boolean>(false);
+    const fetchingPostsRef = useRef<boolean>(false);
+    const lastPathnameRef = useRef<string | null>(null);
+    const isInitialMountRef = useRef<boolean>(true);
+    
     // Track previous location to detect navigation from PostDetail and sync liked posts from server
     useEffect(() => {
+        const currentPathname = location.pathname;
+        const shouldRefresh = location.state?.refreshPosts;
+        
+        // Determine if we should fetch:
+        // 1. On initial mount (isInitialMountRef is true)
+        // 2. When pathname changes (navigated to/from forum) - this includes returning to forum
+        // 3. When explicitly refreshing
+        // 4. But NOT if we're already fetching the same pathname (prevents concurrent duplicate calls)
+        const pathnameChanged = currentPathname !== lastPathnameRef.current;
+        
+        // Allow fetching if:
+        // - Initial mount, OR
+        // - Pathname changed (including returning to forum), OR
+        // - Explicit refresh
+        // But NOT if we're already fetching (prevents concurrent duplicate calls)
+        const shouldFetch = (isInitialMountRef.current || pathnameChanged || shouldRefresh) &&
+                          !fetchingLikedPostsRef.current && 
+                          !fetchingPostsRef.current;
+        
+        if (!shouldFetch) {
+            return;
+        }
+        
+        // Update refs - mark that we've seen this pathname
+        lastPathnameRef.current = currentPathname;
+        isInitialMountRef.current = false;
+        
         const init = async () => {
+            // 1) Fetch liked posts from server and sync localStorage/state
+            fetchingLikedPostsRef.current = true;
             try {
-                // 1) Fetch liked posts from server and sync localStorage/state
                 const likedMapFromServer = await fetchAndSyncLikedPostsFromServer();
                 setLikedPosts(likedMapFromServer);
             } catch (e) {
                 // fallback to local storage on error
                 setLikedPosts(getUserLikedPostsFromStorage());
+            } finally {
+                fetchingLikedPostsRef.current = false;
             }
 
             // 2) Fetch posts
-            if (location.state?.refreshPosts) {
-                console.log('[Forum] Forcing refresh due to new post creation or external update.');
-                await fetchAllPosts(true);
-                navigate(location.pathname, { replace: true, state: {} });
-            } else {
-                await fetchAllPosts();
+            fetchingPostsRef.current = true;
+            try {
+                if (shouldRefresh) {
+                    console.log('[Forum] Forcing refresh due to new post creation or external update.');
+                    setCurrentPage(1); // Reset to first page on refresh
+                    await fetchPosts(1, true);
+                    navigate(location.pathname, { replace: true, state: {} });
+                } else {
+                    await fetchPosts(1, false);
+                }
+            } finally {
+                fetchingPostsRef.current = false;
             }
         };
         init();
@@ -274,19 +316,18 @@ const Forum = () => {
         // Subscribe to cross-tab like changes
         const unsubscribe = subscribeLikeChanges((event) => {
             if (event.type !== 'post') return;
-            // Update local liked map and allPosts in-place with both liked status and like count
+            // Update local liked map and current page posts in-place with both liked status and like count
             setLikedPosts(prev => ({ ...prev, [event.postId]: event.isLiked }));
-            setAllPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked, likes: event.likeCount } : p));
+            setPosts(prev => prev.map(p => p.id === event.postId ? { ...p, liked: event.isLiked, likes: event.likeCount } : p));
         });
 
         return () => {
             unsubscribe();
         };
-    }, [location, username, navigate]);
+    }, [location.pathname, location.state?.refreshPosts, username, navigate]);
     
     // Calculate total pages based on filtered posts count
     const totalPages = Math.ceil(totalCount / postsPerPage);
-    const hasActiveFilters = activeFilter !== null || selectedSubTags.length > 0 || selectedFoods.length > 0;
 
     const fetchRecipeIngredientsForFoodFilter = useCallback(async (postIds: number[]) => {
         const idsToFetch = postIds.filter(postId => recipeIngredientsMap[postId] === undefined);
@@ -317,110 +358,190 @@ const Forum = () => {
         return fetchedIngredients;
     }, [recipeIngredientsMap]);
     
-    // Apply pagination and filters (tags + food ingredients)
+    // Apply client-side filters (sub-tags and food ingredients) that can't be done server-side
     useEffect(() => {
         let isCancelled = false;
 
         const applyFilters = async () => {
-            let basePosts = isSearching ? searchResults : allPosts;
-            let filteredPosts = [...basePosts];
+            // If searching, use search results directly (search handles its own pagination)
+            if (isSearching) {
+                // Search results are already paginated, just apply client-side filters
+                let filteredPosts = [...searchResults];
 
-            // Apply main tag filter
-            if (activeFilter) {
-                filteredPosts = filteredPosts.filter(post => 
-                    post.tags.some(tag => tag.id === activeFilter)
-                );
-            }
-            
-            // Apply sub-tag filter (requires Recipe tag + all selected sub-tags)
-            if (selectedSubTags.length > 0) {
-                filteredPosts = filteredPosts.filter(post => 
-                    post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
-                    selectedSubTags.every(subTagId => 
-                        post.tags.some(tag => tag.id === subTagId)
-                    )
-                );
-            }
-
-            let combinedIngredients = recipeIngredientsMap;
-
-            // Apply food filters - posts must contain ALL selected foods in their recipe ingredients
-            if (selectedFoods.length > 0) {
-                const postsWithRecipes = filteredPosts.filter(post => post.has_recipe !== false);
-                const fetchedIngredients = await fetchRecipeIngredientsForFoodFilter(postsWithRecipes.map(post => post.id));
-                combinedIngredients = { ...recipeIngredientsMap, ...fetchedIngredients };
-
-                const matches: Record<number, string[]> = {};
-                filteredPosts = filteredPosts.filter(post => {
-                    if (post.has_recipe === false) return false;
-                    const ingredients = combinedIngredients[post.id];
-                    if (!ingredients) return false;
-
-                    const matchedFoods = selectedFoods.filter(food =>
-                        ingredients.some(ingredient => 
-                            ingredient.food_id === food.id ||
-                            (ingredient.food_name && ingredient.food_name.toLowerCase() === food.name.toLowerCase())
+                // Apply sub-tag filter (requires Recipe tag + all selected sub-tags)
+                if (selectedSubTags.length > 0) {
+                    filteredPosts = filteredPosts.filter(post => 
+                        post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
+                        selectedSubTags.every(subTagId => 
+                            post.tags.some(tag => tag.id === subTagId)
                         )
                     );
-
-                    if (matchedFoods.length === selectedFoods.length) {
-                        matches[post.id] = matchedFoods.map(food => food.name);
-                        return true;
-                    }
-                    return false;
-                });
-
-                if (!isCancelled) {
-                    setFoodFilterMatches(matches);
                 }
-            } else if (!isCancelled) {
-                setFoodFilterMatches(prev => (Object.keys(prev).length > 0 ? {} : prev));
-            }
-            
-            const count = isSearching && !hasActiveFilters ? searchResultsCount : filteredPosts.length;
-            
-            // Get current page posts
-            const indexOfLastPost = currentPage * postsPerPage;
-            const indexOfFirstPost = indexOfLastPost - postsPerPage;
-            const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, count));
-            
-            if (!isCancelled) {
-                setTotalCount(count);
-                // Only set posts if we've already fetched initial data
-                // This prevents showing empty posts before API responds
-                if (hasFetched) {
+
+                // Apply food filters - posts must contain ALL selected foods in their recipe ingredients
+                if (selectedFoods.length > 0) {
+                    const postsWithRecipes = filteredPosts.filter(post => post.has_recipe !== false);
+                    const fetchedIngredients = await fetchRecipeIngredientsForFoodFilter(postsWithRecipes.map(post => post.id));
+                    const combinedIngredients = { ...recipeIngredientsMap, ...fetchedIngredients };
+
+                    const matches: Record<number, string[]> = {};
+                    filteredPosts = filteredPosts.filter(post => {
+                        if (post.has_recipe === false) return false;
+                        const ingredients = combinedIngredients[post.id];
+                        if (!ingredients) return false;
+
+                        const matchedFoods = selectedFoods.filter(food =>
+                            ingredients.some(ingredient => 
+                                ingredient.food_id === food.id ||
+                                (ingredient.food_name && ingredient.food_name.toLowerCase() === food.name.toLowerCase())
+                            )
+                        );
+
+                        if (matchedFoods.length === selectedFoods.length) {
+                            matches[post.id] = matchedFoods.map(food => food.name);
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    if (!isCancelled) {
+                        setFoodFilterMatches(matches);
+                    }
+                } else if (!isCancelled) {
+                    setFoodFilterMatches(prev => (Object.keys(prev).length > 0 ? {} : prev));
+                }
+
+                // For search with filters, we need to paginate client-side
+                const indexOfLastPost = currentPage * postsPerPage;
+                const indexOfFirstPost = indexOfLastPost - postsPerPage;
+                const currentPosts = filteredPosts.slice(indexOfFirstPost, Math.min(indexOfLastPost, filteredPosts.length));
+                
+                if (!isCancelled && hasFetched) {
                     setPosts(currentPosts);
-                    // Turn off loading after posts are set
+                    setTotalCount(filteredPosts.length);
+                    if (currentPosts.length === 0) {
+                        setTimeout(() => {
+                            setShowNoPosts(true);
+                        }, 2000);
+                    } else {
+                        setShowNoPosts(false);
+                    }
+                    setLoading(false);
+                }
+            } else {
+                // Not searching - apply client-side filters to current page posts
+                let filteredPosts = [...posts];
+
+                // Apply sub-tag filter (requires Recipe tag + all selected sub-tags)
+                if (selectedSubTags.length > 0) {
+                    filteredPosts = filteredPosts.filter(post => 
+                        post.tags.some(tag => tag.id === TAG_IDS["Recipe"]) &&
+                        selectedSubTags.every(subTagId => 
+                            post.tags.some(tag => tag.id === subTagId)
+                        )
+                    );
+                }
+
+                // Apply food filters - posts must contain ALL selected foods in their recipe ingredients
+                if (selectedFoods.length > 0) {
+                    const postsWithRecipes = filteredPosts.filter(post => post.has_recipe !== false);
+                    const fetchedIngredients = await fetchRecipeIngredientsForFoodFilter(postsWithRecipes.map(post => post.id));
+                    const combinedIngredients = { ...recipeIngredientsMap, ...fetchedIngredients };
+
+                    const matches: Record<number, string[]> = {};
+                    filteredPosts = filteredPosts.filter(post => {
+                        if (post.has_recipe === false) return false;
+                        const ingredients = combinedIngredients[post.id];
+                        if (!ingredients) return false;
+
+                        const matchedFoods = selectedFoods.filter(food =>
+                            ingredients.some(ingredient => 
+                                ingredient.food_id === food.id ||
+                                (ingredient.food_name && ingredient.food_name.toLowerCase() === food.name.toLowerCase())
+                            )
+                        );
+
+                        if (matchedFoods.length === selectedFoods.length) {
+                            matches[post.id] = matchedFoods.map(food => food.name);
+                            return true;
+                        }
+                        return false;
+                    });
+
+                    if (!isCancelled) {
+                        setFoodFilterMatches(matches);
+                    }
+                } else if (!isCancelled) {
+                    setFoodFilterMatches(prev => (Object.keys(prev).length > 0 ? {} : prev));
+                }
+
+                if (!isCancelled && hasFetched) {
+                    setPosts(filteredPosts);
+                    if (filteredPosts.length === 0) {
+                        setTimeout(() => {
+                            setShowNoPosts(true);
+                        }, 2000);
+                    } else {
+                        setShowNoPosts(false);
+                    }
                     setLoading(false);
                 }
             }
         };
 
-        applyFilters();
+        // Only apply filters if we have posts and filters are active
+        if (hasFetched && (selectedSubTags.length > 0 || selectedFoods.length > 0 || isSearching)) {
+            applyFilters();
+        }
 
         return () => {
             isCancelled = true;
         };
-    }, [allPosts, currentPage, postsPerPage, activeFilter, selectedSubTags, selectedFoods, isSearching, searchResults, searchResultsCount, recipeIngredientsMap, fetchRecipeIngredientsForFoodFilter, hasActiveFilters, hasFetched]);
+    }, [posts, currentPage, selectedSubTags, selectedFoods, isSearching, searchResults, recipeIngredientsMap, fetchRecipeIngredientsForFoodFilter, hasFetched]);
     
-    // Fetch posts when component mounts or when returning to this component
+    // Fetch posts when page or filters change (server-side pagination)
     useEffect(() => {
-        fetchAllPosts();
-    }, []);
+        // Don't fetch if we're searching (search handles its own pagination)
+        if (isSearching) {
+            return;
+        }
 
-    // Get all posts from API
-    const fetchAllPosts = async (_forceRefresh = false) => {
+        // Don't fetch if we haven't initialized yet (initial fetch happens in init)
+        if (!hasFetched && currentPage === 1) {
+            return;
+        }
+
+        // Fetch posts when page changes or main tag filter changes
+        if (hasFetched) {
+            // Clear posts immediately before fetching to prevent showing old content
+            setPosts([]);
+            setLoading(true);
+            fetchPosts(currentPage, false);
+        }
+    }, [currentPage, activeFilter]);
+    
+    // Fetch posts from API with server-side pagination
+    const fetchPosts = async (page: number = currentPage, forceRefresh: boolean = false) => {
         setLoading(true);
         setPosts([]); // Clear posts immediately to prevent showing stale data
-        setHasFetched(false); // Reset hasFetched to prevent showing "No posts" during refresh
+        if (forceRefresh) {
+            setHasFetched(false); // Reset hasFetched to prevent showing "No posts" during refresh
+        }
 
         try {
-            const params = {
+            // Build API params with filters
+            const params: any = {
                 ordering: '-created_at',
-                page: 1,
-                page_size: 500 // fetch a large number, maybe adjust based on typical count
+                page: page,
+                page_size: postsPerPage
             };
-            console.log(`Fetching all posts with params:`, params);
+
+            // Add tag filters to API call
+            if (activeFilter) {
+                params.tags = activeFilter;
+            }
+
+            console.log(`Fetching posts with params:`, params);
             const response = await apiClient.getForumPosts(params);
             console.log(`Fetched ${response.results.length} posts, total: ${response.count}`);
 
@@ -436,46 +557,32 @@ const Forum = () => {
                 };
             });
 
-            // Handle pagination if necessary (though large page_size reduces need)
-            let allResults = [...fetchedPosts];
-            let nextUrl: string | null = response.next;
-            let currentPageNum = 1;
-
-            while (nextUrl && allResults.length < response.count) {
-                currentPageNum++;
-                try {
-                    const nextPageResponse = await apiClient.getForumPosts({ ...params, page: currentPageNum });
-                    const nextPagePosts = nextPageResponse.results.map(post => {
-                        return {
-                            ...post,
-                            // author is now an object with id and username from the backend
-                            author: post.author || { id: 0, username: 'Anonymous' },
-                            liked: userLikedPosts[post.id] !== undefined ? userLikedPosts[post.id] : (post.liked || false),
-                        };
-                    });
-                    allResults.push(...nextPagePosts);
-                    nextUrl = nextPageResponse.next;
-                } catch (err) {
-                    console.error(`Error fetching page ${currentPageNum} of posts:`, err);
-                    break; // stop fetching if a page fails
-                }
-            }
-
-            console.log(`Fetched a total of ${allResults.length} posts after pagination.`);
-
             // Update local state
-            setAllPosts(allResults);
+            setPosts(fetchedPosts);
+            setTotalCount(response.count || 0);
             setLikedPosts(userLikedPosts); // ensure liked state is current
             setHasFetched(true); // Mark that we've received data from API
-            // This will trigger applyFilters to run and set posts correctly
+            setLoading(false);
+            
+            // Delay showing "No posts found" - wait 2 seconds after successful fetch
+            if (fetchedPosts.length === 0) {
+                setTimeout(() => {
+                    setShowNoPosts(true);
+                }, 2000);
+            } else {
+                setShowNoPosts(false); // Reset if we have posts
+            }
 
         } catch (error) {
             console.error('Error fetching posts:', error);
-            setAllPosts([]); // prevent infinite loading
+            setPosts([]); // prevent infinite loading
             setHasFetched(true); // Mark as fetched even on error to show error state
-            // applyFilters will handle setting loading to false
+            setLoading(false); // Turn off loading even on error
+            // Show "No posts found" on error after brief delay
+            setTimeout(() => {
+                setShowNoPosts(true);
+            }, 500);
         }
-        // Don't set loading to false here - let applyFilters handle it after posts are set
     };
 
     // Fetch liked posts from server and sync localStorage for current user
@@ -497,7 +604,7 @@ const Forum = () => {
             localStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(updatedAllUsers));
 
             // Also update existing posts liked flag locally to reflect server truth
-            setAllPosts(prev => prev.map(p => ({ ...p, liked: likedMap[p.id] !== undefined ? likedMap[p.id] : p.liked })));
+            setPosts(prev => prev.map(p => ({ ...p, liked: likedMap[p.id] !== undefined ? likedMap[p.id] : p.liked })));
 
             return likedMap;
         } catch (error) {
@@ -761,9 +868,9 @@ const Forum = () => {
         try {
             console.log(`[Forum] Toggling like for post ID: ${postId}`);
 
-            const currentPost = allPosts.find(p => p.id === postId);
+            const currentPost = posts.find(p => p.id === postId);
             if (!currentPost) {
-                console.error('Post not found in local state');
+                console.error('Post not found in current page');
                 return;
             }
 
@@ -776,9 +883,9 @@ const Forum = () => {
             // 1. Update local storage first (our source of truth for liked status)
             const updatedUserLikedPosts = updateSinglePostLikeInStorage(postId, newLiked);
 
-            // 2. Optimistically update the UI state (allPosts and likedPosts)
+            // 2. Optimistically update the UI state (current page posts and likedPosts)
             setLikedPosts(updatedUserLikedPosts);
-            const updatedAllPosts = allPosts.map(post => {
+            const updatedPosts = posts.map(post => {
                 if (post.id === postId) {
                     return {
                         ...post,
@@ -788,13 +895,13 @@ const Forum = () => {
                 }
                 return post;
             });
-            setAllPosts(updatedAllPosts);
+            setPosts(updatedPosts);
 
             // 3. Call the API to persist the change
             const response = await apiClient.toggleLikePost(postId);
             console.log(`[Forum] Toggle like API response:`, response);
 
-            // 5. Get actual values from server response
+            // 4. Get actual values from server response
             const responseObj = response as any;
             const serverLiked = responseObj.liked;
             const serverLikeCount = responseObj.like_count;
@@ -810,13 +917,13 @@ const Forum = () => {
             setLikedPosts(prevState => ({ ...prevState, [postId]: finalLiked }));
 
             // 6. Update state with server values
-            const correctedAllPosts = allPosts.map(post => {
+            const correctedPosts = posts.map(post => {
                 if (post.id === postId) {
                     return { ...post, liked: finalLiked, likes: finalLikeCount };
                 }
                 return post;
             });
-            setAllPosts(correctedAllPosts);
+            setPosts(correctedPosts);
             
             // 7. Notify other tabs with ACTUAL server values
             notifyLikeChange(postId, finalLiked, finalLikeCount, 'post');
@@ -830,7 +937,7 @@ const Forum = () => {
             console.error('[Forum] Error toggling post like:', error);
 
             // Revert UI changes on error
-            const currentPost = allPosts.find(p => p.id === postId);
+            const currentPost = posts.find(p => p.id === postId);
             if (currentPost) {
                 const originalLiked = likedPosts[postId] || false;
                 const revertedLikedStatus = !originalLiked; // the state before the failed toggle attempt
@@ -839,8 +946,8 @@ const Forum = () => {
                 const revertedUserLikedPosts = updateSinglePostLikeInStorage(postId, revertedLikedStatus);
                 setLikedPosts(revertedUserLikedPosts);
 
-                // Revert allPosts state
-                const revertedAllPosts = allPosts.map(post => {
+                // Revert posts state
+                const revertedPosts = posts.map(post => {
                     if (post.id === postId) {
                         // find the original likes count before the optimistic update attempt
                         const originalLikes = Math.max(0, (post.likes || 0) + (originalLiked ? 1 : -1));
@@ -848,7 +955,7 @@ const Forum = () => {
                     }
                     return post;
                 });
-                setAllPosts(revertedAllPosts);
+                setPosts(revertedPosts);
             }
         }
     };
@@ -877,11 +984,13 @@ const Forum = () => {
     };
 
     const handlePageChange = (page: number) => {
-        setLoading(true); // Show skeleton immediately when page changes
-        setPosts([]); // Clear posts to prevent showing old content
+        // Clear posts immediately to prevent showing old content
+        setPosts([]);
+        setLoading(true);
         setCurrentPage(page);
         // Scroll to top when changing page
         window.scrollTo(0, 0);
+        // fetchPosts will be called by useEffect when currentPage changes
     };
 
     const activeFilterLabels = [
@@ -1201,7 +1310,7 @@ const Forum = () => {
                                     </div>
                                 ))}
                             </div>
-                        ) : hasFetched && posts.length === 0 ? (
+                        ) : hasFetched && posts.length === 0 && showNoPosts ? (
                             <div className="text-center my-12">
                                 <p className="text-lg">
                                     {activeFilter !== null || selectedSubTags.length > 0 || selectedFoods.length > 0

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, CookingPot, Scales, Fire } from '@phosphor-icons/react'
 import { apiClient, Recipe } from '../../lib/apiClient'
@@ -128,21 +128,50 @@ const PostDetail = () => {
         }
     };
 
+    // Track if we're currently fetching to prevent duplicate calls
+    const fetchingRef = useRef<boolean>(false);
+    const lastFetchedPostIdRef = useRef<number | null>(null);
+    
     // Fetch specific post when component mounts
     useEffect(() => {
-        fetchPost();
+        // Parse postId inside effect to ensure we have the latest value
+        const currentPostIdNum = parseInt(postId || '0');
+        
+        // Prevent duplicate calls - only fetch if:
+        // 1. We're not already fetching
+        // 2. We have a valid post ID
+        // 3. The postId has changed from what we last fetched (or we haven't fetched yet)
+        if (!fetchingRef.current && currentPostIdNum > 0 && currentPostIdNum !== lastFetchedPostIdRef.current) {
+            fetchingRef.current = true;
+            lastFetchedPostIdRef.current = currentPostIdNum;
+            fetchPost().finally(() => {
+                fetchingRef.current = false;
+            });
+        }
     }, [postId]);
+    
+    // Track if we've fetched recipe/comments for this post to avoid refetching on like toggle
+    const fetchedPostIdRef = useRef<number | null>(null);
+    const fetchedRecipeRef = useRef<boolean>(false);
+    const postIdForEffect = post?.id ?? null;
     
     // Fetch comments when we have a valid post or when page changes
     useEffect(() => {
-        if (post) {
+        if (post && postIdForEffect !== fetchedPostIdRef.current) {
+            // Only fetch if this is a new post (post ID changed)
+            fetchedPostIdRef.current = postIdForEffect;
+            fetchedRecipeRef.current = false;
             fetchComments();
             // Check if post has a recipe
-            if (post.has_recipe) {
+            if (post.has_recipe && !fetchedRecipeRef.current) {
+                fetchedRecipeRef.current = true;
                 fetchRecipe();
             }
+        } else if (post && commentPage && postIdForEffect === fetchedPostIdRef.current) {
+            // Only refetch comments if page changed (not if post object changed due to like)
+            fetchComments();
         }
-    }, [post, commentPage]);
+    }, [postIdForEffect, commentPage]);
     
     // Fetch comments for the current post
     const fetchComments = async () => {
@@ -398,12 +427,12 @@ const PostDetail = () => {
         window.scrollTo(0, 0)
     }, [])
 
-    // Render recipe section
-    const renderRecipe = () => {
+    // Render recipe content (without card wrapper, to be inside main post card)
+    const renderRecipeContent = () => {
         if (!recipe) return null;
         
         return (
-            <div className="nh-card mb-6 rounded-lg shadow-md">
+            <div>
                 <div className="flex items-center mb-4">
                     <div className="flex items-center justify-center mr-3">
                         <CookingPot size={24} weight="fill" className="text-primary" />
@@ -667,6 +696,97 @@ const PostDetail = () => {
                                 {post.body}
                             </p>
                             
+                            {/* Recipe Section - Show if post has recipe and recipe is loaded */}
+                            {post.has_recipe && (
+                                loadingRecipe ? (
+                                    <div className="px-4 mb-6 animate-pulse">
+                                        {/* Recipe Header Skeleton */}
+                                        <div className="flex items-center mb-4">
+                                            <div 
+                                                className="h-6 w-6 rounded mr-3"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div 
+                                                className="h-6 w-40 rounded"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                        </div>
+                                        
+                                        {/* Nutritional Information Skeleton */}
+                                        <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                            {[...Array(4)].map((_, index) => (
+                                                <div key={index} className="p-3 rounded-lg bg-[var(--color-bg-tertiary)]">
+                                                    <div 
+                                                        className="h-6 w-6 rounded mx-auto mb-1"
+                                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                    ></div>
+                                                    <div 
+                                                        className="h-6 w-16 rounded mx-auto mb-1"
+                                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                    ></div>
+                                                    <div 
+                                                        className="h-4 w-20 rounded mx-auto"
+                                                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                    ></div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                        
+                                        {/* Ingredients Skeleton */}
+                                        <div className="mb-6">
+                                            <div 
+                                                className="h-6 w-32 rounded mb-2"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <ul className="space-y-2 ml-2">
+                                                {[...Array(5)].map((_, index) => (
+                                                    <li key={index}>
+                                                        <div 
+                                                            className="h-4 w-full rounded"
+                                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                                        ></div>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                        
+                                        {/* Instructions Skeleton */}
+                                        <div>
+                                            <div 
+                                                className="h-6 w-32 rounded mb-2"
+                                                style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                                            ></div>
+                                            <div className="p-4 rounded-lg bg-[var(--color-bg-tertiary)] space-y-2">
+                                                <div 
+                                                    className="h-4 w-full rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                ></div>
+                                                <div 
+                                                    className="h-4 w-full rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                ></div>
+                                                <div 
+                                                    className="h-4 w-5/6 rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                ></div>
+                                                <div 
+                                                    className="h-4 w-full rounded"
+                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                                                ></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ) : recipe ? (
+                                    <div className="px-4 mb-6">
+                                        {renderRecipeContent()}
+                                    </div>
+                                ) : (
+                                    <div className="mb-8 text-center py-4 px-4">
+                                        <p>Recipe information could not be loaded.</p>
+                                    </div>
+                                )
+                            )}
+                            
                             {/* Footer of the card with author and likes - Ensure styling is relative to the card padding */}
                             <div className="flex justify-between items-center text-sm text-gray-500 border-t pt-4 pb-4 px-4"> {/* Added padding here */}
                                 <Link
@@ -694,95 +814,6 @@ const PostDetail = () => {
                                 </button>
                             </div>
                         </div>
-                        
-                        {/* Recipe Section - Show if post has recipe and recipe is loaded */}
-                        {post.has_recipe && (
-                            loadingRecipe ? (
-                                <div className="nh-card mb-6 rounded-lg shadow-md animate-pulse">
-                                    {/* Recipe Header Skeleton */}
-                                    <div className="flex items-center mb-4">
-                                        <div 
-                                            className="h-6 w-6 rounded mr-3"
-                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                                        ></div>
-                                        <div 
-                                            className="h-6 w-40 rounded"
-                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                                        ></div>
-                                    </div>
-                                    
-                                    {/* Nutritional Information Skeleton */}
-                                    <div className="mb-6 grid grid-cols-2 md:grid-cols-4 gap-4">
-                                        {[...Array(4)].map((_, index) => (
-                                            <div key={index} className="p-3 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--forum-search-border)]">
-                                                <div 
-                                                    className="h-6 w-6 rounded mx-auto mb-1"
-                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                                ></div>
-                                                <div 
-                                                    className="h-6 w-16 rounded mx-auto mb-1"
-                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                                ></div>
-                                                <div 
-                                                    className="h-4 w-20 rounded mx-auto"
-                                                    style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                                ></div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                    
-                                    {/* Ingredients Skeleton */}
-                                    <div className="mb-6">
-                                        <div 
-                                            className="h-6 w-32 rounded mb-2"
-                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                                        ></div>
-                                        <ul className="space-y-2 ml-2">
-                                            {[...Array(5)].map((_, index) => (
-                                                <li key={index}>
-                                                    <div 
-                                                        className="h-4 w-full rounded"
-                                                        style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                                                    ></div>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                    </div>
-                                    
-                                    {/* Instructions Skeleton */}
-                                    <div>
-                                        <div 
-                                            className="h-6 w-32 rounded mb-2"
-                                            style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                                        ></div>
-                                        <div className="p-4 rounded-lg bg-[var(--color-bg-tertiary)] border border-[var(--forum-search-border)] space-y-2">
-                                            <div 
-                                                className="h-4 w-full rounded"
-                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                            ></div>
-                                            <div 
-                                                className="h-4 w-full rounded"
-                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                            ></div>
-                                            <div 
-                                                className="h-4 w-5/6 rounded"
-                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                            ></div>
-                                            <div 
-                                                className="h-4 w-full rounded"
-                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                            ></div>
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : recipe ? (
-                                renderRecipe()
-                            ) : (
-                                <div className="mb-8 text-center py-4">
-                                    <p>Recipe information could not be loaded.</p>
-                                </div>
-                            )
-                        )}
                         
                         {/* Comments Section */}
                         <div className="mb-6">
