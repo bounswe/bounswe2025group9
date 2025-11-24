@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Modal,
+  ScrollView,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
@@ -18,13 +20,17 @@ import { User } from '../../types/types';
 import ProfilePhotoPicker from '../../components/user/ProfilePhotoPicker';
 import { useAuth } from '../../context/AuthContext';
 import { userService } from '../../services/api/user.service';
+import { nutritionService } from '../../services/api/nutrition.service';
+import { UserMetrics } from '../../types/nutrition';
+import UserMetricsModal from '../../components/nutrition/UserMetricsModal';
 
 interface ProfileSection {
   id: string;
   title: string;
   description: string;
   icon: string;
-  screen: string;
+  screen?: string;
+  onPress?: () => void;
   badge?: string;
   badgeColor?: string;
 }
@@ -36,6 +42,9 @@ const ProfileSettingsScreen: React.FC = () => {
 
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [metrics, setMetrics] = useState<UserMetrics | null>(null);
+  const [showMetricsModal, setShowMetricsModal] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
 
   // Load user profile on mount
   useEffect(() => {
@@ -67,6 +76,18 @@ const ProfileSettingsScreen: React.FC = () => {
           setUser(currentUser);
         }
       }
+
+      // Fetch user metrics
+      try {
+        const userMetrics = await nutritionService.getUserMetrics();
+        setMetrics(userMetrics);
+      } catch (error: any) {
+        // Metrics might not exist yet, that's okay
+        if (error.status !== 404 && error.response?.status !== 404) {
+          console.warn('Failed to fetch user metrics:', error);
+        }
+        setMetrics(null);
+      }
     } catch (error) {
       console.error('Error loading user profile:', error);
       Alert.alert('Error', 'Failed to load profile');
@@ -76,6 +97,14 @@ const ProfileSettingsScreen: React.FC = () => {
   };
 
   const profileSections: ProfileSection[] = [
+    {
+      id: 'user-metrics',
+      title: 'User Metrics',
+      description: metrics ? `${metrics.height}cm, ${metrics.weight}kg, ${metrics.age}yrs` : 'Set your height, weight, age, and activity level',
+      icon: 'human-male-height',
+      onPress: () => setShowMetricsModal(true),
+      badgeColor: theme.primary
+    },
     {
       id: 'my-posts',
       title: 'My Posts & Content',
@@ -134,9 +163,20 @@ const ProfileSettingsScreen: React.FC = () => {
     }
   ];
 
-  const handleNavigateToSection = (screen: string) => {
-    // Navigate to the specific screen
-    (navigation as any).navigate(screen);
+  const handleNavigateToSection = (item: ProfileSection) => {
+    if (item.onPress) {
+      item.onPress();
+    } else if (item.screen) {
+      // Navigate to the specific screen
+      (navigation as any).navigate(item.screen);
+    }
+  };
+
+  const handleMetricsSaved = async (newMetrics: UserMetrics) => {
+    setMetrics(newMetrics);
+    setShowMetricsModal(false);
+    // Reload profile to refresh sections
+    await loadUserProfile();
   };
 
   const handleProfilePhotoUploaded = async (uri: string) => {
@@ -219,6 +259,79 @@ const ProfileSettingsScreen: React.FC = () => {
         )}
       </View>
 
+      {/* User Metrics Display */}
+      {metrics && (
+        <View style={[styles.metricsContainer, { backgroundColor: `${theme.primary}10`, borderColor: theme.border }]}>
+          <View style={styles.metricsHeader}>
+            <Icon name="human-male-height" size={20} color={theme.primary} />
+            <Text style={[textStyles.heading4, { color: theme.text, marginLeft: SPACING.xs }]}>
+              Your Metrics
+            </Text>
+            <TouchableOpacity
+              onPress={() => setShowMetricsModal(true)}
+              style={styles.editMetricsButton}
+            >
+              <Icon name="pencil" size={16} color={theme.primary} />
+            </TouchableOpacity>
+          </View>
+          <View style={styles.metricsGrid}>
+            <View style={styles.metricItem}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Height</Text>
+              <Text style={[textStyles.heading4, { color: theme.text }]}>
+                {metrics.height} cm
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Weight</Text>
+              <Text style={[textStyles.heading4, { color: theme.text }]}>
+                {metrics.weight} kg
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Age</Text>
+              <Text style={[textStyles.heading4, { color: theme.text }]}>
+                {metrics.age} yrs
+              </Text>
+            </View>
+            <View style={styles.metricItem}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Gender</Text>
+              <Text style={[textStyles.heading4, { color: theme.text }]}>
+                {metrics.gender === 'M' ? 'Male' : 'Female'}
+              </Text>
+            </View>
+          </View>
+          {metrics.bmr && metrics.tdee && (
+            <View style={[styles.calculatedMetrics, { borderTopColor: theme.border }]}>
+              <View style={styles.calculatedHeader}>
+                <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '600' }]}>
+                  Calculated Values
+                </Text>
+                <TouchableOpacity
+                  onPress={() => setShowInfoModal(true)}
+                  style={styles.infoButton}
+                >
+                  <Icon name="information-outline" size={18} color={theme.primary} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.calculatedRow}>
+                <View style={styles.calculatedItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>BMR</Text>
+                  <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+                    {Math.round(metrics.bmr)} kcal
+                  </Text>
+                </View>
+                <View style={styles.calculatedItem}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>TDEE</Text>
+                  <Text style={[textStyles.body, { color: theme.success, fontWeight: '600' }]}>
+                    {Math.round(metrics.tdee)} kcal
+                  </Text>
+                </View>
+              </View>
+            </View>
+          )}
+        </View>
+      )}
+
       {/* Quick Stats */}
       <View style={styles.quickStats}>
         <View style={styles.statItem}>
@@ -252,7 +365,7 @@ const ProfileSettingsScreen: React.FC = () => {
   const renderSectionItem = ({ item }: { item: ProfileSection }) => (
     <TouchableOpacity
       style={[styles.sectionItem, { backgroundColor: theme.surface, borderColor: theme.border }]}
-      onPress={() => handleNavigateToSection(item.screen)}
+      onPress={() => handleNavigateToSection(item)}
     >
       <View style={styles.sectionLeft}>
         <View style={[styles.iconContainer, { backgroundColor: `${theme.primary}15` }]}>
@@ -307,6 +420,140 @@ const ProfileSettingsScreen: React.FC = () => {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
+
+      {/* User Metrics Modal */}
+      <UserMetricsModal
+        visible={showMetricsModal}
+        onClose={() => setShowMetricsModal(false)}
+        onSave={handleMetricsSaved}
+        initialMetrics={metrics || undefined}
+      />
+
+      {/* BMR/TDEE Info Modal */}
+      <Modal
+        visible={showInfoModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowInfoModal(false)}
+      >
+        <View style={[styles.modalOverlay, { backgroundColor: 'rgba(0,0,0,0.5)' }]}>
+          <View style={[styles.infoModalContent, { backgroundColor: theme.background }]}>
+            <View style={[styles.infoModalHeader, { borderBottomColor: theme.border }]}>
+              <Text style={[textStyles.heading3, { color: theme.text }]}>
+                Understanding BMR & TDEE
+              </Text>
+              <TouchableOpacity onPress={() => setShowInfoModal(false)}>
+                <Icon name="close" size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView style={styles.infoModalBody} showsVerticalScrollIndicator={false}>
+              {/* BMR Section */}
+              <View style={styles.infoSection}>
+                <View style={styles.infoSectionHeader}>
+                  <Icon name="fire" size={24} color={theme.primary} />
+                  <Text style={[textStyles.heading4, { color: theme.text, marginLeft: SPACING.sm }]}>
+                    BMR (Basal Metabolic Rate)
+                  </Text>
+                </View>
+                <Text style={[textStyles.body, { color: theme.text, marginTop: SPACING.sm }]}>
+                  BMR is the number of calories your body burns at rest to maintain basic physiological functions like breathing, circulation, and cell production. It represents the minimum energy needed to keep you alive.
+                </Text>
+                <View style={[styles.formulaBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
+                    Calculation Formula (Mifflin-St Jeor Equation):
+                  </Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontFamily: 'monospace' }]}>
+                    Base = (10 × weight) + (6.25 × height) - (5 × age)
+                  </Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontFamily: 'monospace', marginTop: SPACING.xs }]}>
+                    Male: BMR = Base + 5
+                  </Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontFamily: 'monospace' }]}>
+                    Female: BMR = Base - 161
+                  </Text>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.sm, fontStyle: 'italic' }]}>
+                    Weight in kg, Height in cm, Age in years
+                  </Text>
+                </View>
+              </View>
+
+              {/* TDEE Section */}
+              <View style={styles.infoSection}>
+                <View style={styles.infoSectionHeader}>
+                  <Icon name="run" size={24} color={theme.success} />
+                  <Text style={[textStyles.heading4, { color: theme.text, marginLeft: SPACING.sm }]}>
+                    TDEE (Total Daily Energy Expenditure)
+                  </Text>
+                </View>
+                <Text style={[textStyles.body, { color: theme.text, marginTop: SPACING.sm }]}>
+                  TDEE is the total number of calories you burn per day, including BMR plus all physical activity. This is the amount of calories you need to maintain your current weight.
+                </Text>
+                <View style={[styles.formulaBox, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.xs }]}>
+                    Calculation Formula:
+                  </Text>
+                  <Text style={[textStyles.body, { color: theme.text, fontFamily: 'monospace' }]}>
+                    TDEE = BMR × Activity Multiplier
+                  </Text>
+                  <View style={styles.activityLevelsList}>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.sm, marginBottom: SPACING.xs }]}>
+                      Activity Multipliers:
+                    </Text>
+                    <View style={styles.activityLevelItem}>
+                      <Text style={[textStyles.body, { color: theme.text }]}>
+                        <Text style={{ fontWeight: '600' }}>Sedentary:</Text> 1.2 (little or no exercise)
+                      </Text>
+                    </View>
+                    <View style={styles.activityLevelItem}>
+                      <Text style={[textStyles.body, { color: theme.text }]}>
+                        <Text style={{ fontWeight: '600' }}>Light:</Text> 1.375 (exercise 1-3 days/week)
+                      </Text>
+                    </View>
+                    <View style={styles.activityLevelItem}>
+                      <Text style={[textStyles.body, { color: theme.text }]}>
+                        <Text style={{ fontWeight: '600' }}>Moderate:</Text> 1.55 (exercise 3-5 days/week)
+                      </Text>
+                    </View>
+                    <View style={styles.activityLevelItem}>
+                      <Text style={[textStyles.body, { color: theme.text }]}>
+                        <Text style={{ fontWeight: '600' }}>Active:</Text> 1.725 (exercise 6-7 days/week)
+                      </Text>
+                    </View>
+                    <View style={styles.activityLevelItem}>
+                      <Text style={[textStyles.body, { color: theme.text }]}>
+                        <Text style={{ fontWeight: '600' }}>Very Active:</Text> 1.9 (very hard exercise & physical job)
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              </View>
+
+              {/* Usage Section */}
+              <View style={styles.infoSection}>
+                <View style={styles.infoSectionHeader}>
+                  <Icon name="lightbulb-on" size={24} color={theme.warning} />
+                  <Text style={[textStyles.heading4, { color: theme.text, marginLeft: SPACING.sm }]}>
+                    How We Use These Values
+                  </Text>
+                </View>
+                <Text style={[textStyles.body, { color: theme.text, marginTop: SPACING.sm }]}>
+                  Your TDEE is used to calculate your daily nutrition targets. To maintain your current weight, aim to consume calories equal to your TDEE. To lose weight, consume fewer calories; to gain weight, consume more.
+                </Text>
+              </View>
+            </ScrollView>
+
+            <View style={[styles.infoModalFooter, { borderTopColor: theme.border }]}>
+              <TouchableOpacity
+                style={[styles.closeInfoButton, { backgroundColor: theme.primary }]}
+                onPress={() => setShowInfoModal(false)}
+              >
+                <Text style={[textStyles.button, { color: '#fff' }]}>Got it</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -429,6 +676,104 @@ const styles = StyleSheet.create({
     paddingHorizontal: SPACING.xs,
     paddingVertical: 2,
     borderRadius: BORDER_RADIUS.xs,
+  },
+  metricsContainer: {
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    marginBottom: SPACING.md,
+  },
+  metricsHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+  },
+  editMetricsButton: {
+    marginLeft: 'auto',
+    padding: SPACING.xs,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  metricItem: {
+    width: '48%',
+    marginBottom: SPACING.sm,
+  },
+  calculatedMetrics: {
+    marginTop: SPACING.sm,
+    paddingTop: SPACING.sm,
+    borderTopWidth: 1,
+  },
+  calculatedHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: SPACING.sm,
+  },
+  infoButton: {
+    padding: SPACING.xs,
+  },
+  calculatedRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  calculatedItem: {
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  infoModalContent: {
+    width: '90%',
+    maxHeight: '80%',
+    borderRadius: BORDER_RADIUS.md,
+    overflow: 'hidden',
+  },
+  infoModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: SPACING.md,
+    borderBottomWidth: 1,
+  },
+  infoModalBody: {
+    padding: SPACING.md,
+    maxHeight: 500,
+  },
+  infoSection: {
+    marginBottom: SPACING.lg,
+  },
+  infoSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.xs,
+  },
+  formulaBox: {
+    padding: SPACING.md,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
+    marginTop: SPACING.sm,
+  },
+  activityLevelsList: {
+    marginTop: SPACING.xs,
+  },
+  activityLevelItem: {
+    marginTop: SPACING.xs,
+    paddingLeft: SPACING.sm,
+  },
+  infoModalFooter: {
+    padding: SPACING.md,
+    borderTopWidth: 1,
+  },
+  closeInfoButton: {
+    height: 50,
+    borderRadius: BORDER_RADIUS.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
