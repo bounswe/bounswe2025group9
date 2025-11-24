@@ -4,7 +4,7 @@
  * Displays a list of food items with filtering and sorting options.
  */
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -113,10 +113,10 @@ const FoodScreen: React.FC = () => {
   const [showSuccessNotification, setShowSuccessNotification] = useState<boolean>(false);
   const [notificationMessage, setNotificationMessage] = useState<string>('');
   
-  // Initialize food filters hook
+  // Initialize food filters hook (but we'll skip client-side sorting since backend handles it)
   const {
     filters,
-    filteredItems,
+    filteredItems: clientFilteredItems,
     setNameFilter,
     sortOption,
     setSortOption,
@@ -126,6 +126,80 @@ const FoodScreen: React.FC = () => {
     setPriceRange,
     setNutritionScoreRange,
   } = useFoodFilters(foodData);
+  
+  // Helper function to map mobile sort option to backend format
+  const mapSortOptionToBackend = (sortOption: string): { sortBy?: string; sortOrder?: 'asc' | 'desc' } => {
+    switch (sortOption) {
+      case FOOD_SORT_OPTIONS.NAME_A_TO_Z:
+        return { sortBy: 'name', sortOrder: 'asc' };
+      case FOOD_SORT_OPTIONS.NAME_Z_TO_A:
+        return { sortBy: 'name', sortOrder: 'desc' };
+      case FOOD_SORT_OPTIONS.PRICE_LOW_TO_HIGH:
+        return { sortBy: 'price', sortOrder: 'asc' };
+      case FOOD_SORT_OPTIONS.PRICE_HIGH_TO_LOW:
+        return { sortBy: 'price', sortOrder: 'desc' };
+      case FOOD_SORT_OPTIONS.NUTRITION_SCORE:
+        return { sortBy: 'nutritionscore', sortOrder: 'desc' };
+      case FOOD_SORT_OPTIONS.COST_TO_NUTRITION_RATIO:
+        // Cost-to-nutrition ratio: sort by price/nutritionScore ratio (ascending = best value)
+        return { sortBy: 'cost-nutrition-ratio', sortOrder: 'asc' };
+      default:
+        return {};
+    }
+  };
+  
+  // Check if backend sorting is active (all sort options are now handled by backend)
+  const isBackendSortingActive = useMemo(() => {
+    return Object.values(FOOD_SORT_OPTIONS).includes(sortOption as any);
+  }, [sortOption]);
+  
+  // Apply only client-side filters (dietary, price range, nutrition range) that aren't handled by backend
+  // Backend handles: category, name search, and sorting
+  const displayItems = useMemo(() => {
+    // If backend sorting is active, use the raw foodData (already sorted by backend)
+    // and only apply filters that backend doesn't handle
+    let result = isBackendSortingActive ? [...foodData] : [...clientFilteredItems];
+    
+    // Apply dietary options filter (not handled by backend)
+    if (filters.dietaryOptions && filters.dietaryOptions.length > 0) {
+      result = result.filter(item => 
+        item.dietaryOptions && 
+        filters.dietaryOptions?.some(option => 
+          item.dietaryOptions?.includes(option)
+        )
+      );
+    }
+    
+    // Apply price range filter (not handled by backend)
+    if (filters.minPrice !== undefined) {
+      result = result.filter(item => 
+        item.price !== undefined && item.price >= (filters.minPrice as number)
+      );
+    }
+    
+    if (filters.maxPrice !== undefined) {
+      result = result.filter(item => 
+        item.price !== undefined && item.price <= (filters.maxPrice as number)
+      );
+    }
+    
+    // Apply nutrition score range filter (not handled by backend)
+    if (filters.minNutritionScore !== undefined) {
+      result = result.filter(item => 
+        item.nutritionScore !== undefined && 
+        item.nutritionScore >= (filters.minNutritionScore as number)
+      );
+    }
+    
+    if (filters.maxNutritionScore !== undefined) {
+      result = result.filter(item => 
+        item.nutritionScore !== undefined && 
+        item.nutritionScore <= (filters.maxNutritionScore as number)
+      );
+    }
+    
+    return result;
+  }, [foodData, clientFilteredItems, filters, isBackendSortingActive]);
   
   // Fetch food data from API
   const fetchFoodData = useCallback(async (loadMore = false) => {
@@ -155,18 +229,23 @@ const FoodScreen: React.FC = () => {
       // Convert category filter to array if present
       const categoryFilters = filters.category ? [filters.category] : undefined;
       
+      // Map sort option to backend format
+      const { sortBy, sortOrder } = mapSortOptionToBackend(sortOption);
+      
       // Calculate request parameters
       // Use ref for current page to avoid stale closure issues
       const pageToFetch = loadMore ? currentPageRef.current : 1;
       const offset = (pageToFetch - 1) * pagination.limit;
       
-      console.log(`Fetching food data: loadMore=${loadMore}, page=${pageToFetch}, limit=${pagination.limit}`);
+      console.log(`Fetching food data: loadMore=${loadMore}, page=${pageToFetch}, limit=${pagination.limit}, sortBy=${sortBy}, sortOrder=${sortOrder}`);
       
       const response = await getFoodCatalog(
         pagination.limit, 
         offset, 
         categoryFilters,
-        filters.name // Pass the search term
+        filters.name, // Pass the search term
+        sortBy,       // Pass the sort field
+        sortOrder     // Pass the sort order
       );
       
       if (response.error) {
@@ -246,7 +325,7 @@ const FoodScreen: React.FC = () => {
       isFetchingRef.current = false;
     }
   // Only include stable dependencies to prevent infinite loops
-  }, [filters.category, filters.name, pagination.limit, pagination.hasMore, pagination.loading]);
+  }, [filters.category, filters.name, sortOption, pagination.limit, pagination.hasMore, pagination.loading]);
   
   // Load initial data
   useEffect(() => {
@@ -271,6 +350,23 @@ const FoodScreen: React.FC = () => {
     // Only depend on category filter
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters.category]);
+  
+  // Create a separate effect to handle sort option changes
+  useEffect(() => {
+    // Skip on initial mount since we already fetch data in the other useEffect
+    // Only refetch if we have already loaded initial data
+    if (foodData.length > 0 || !isLoading) {
+      console.log('Sort option changed, reloading data');
+      // Reset pagination when sorting changes
+      setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
+      currentPageRef.current = 1;
+      // Clear food data to avoid mixing results from different sorts
+      setFoodData([]);
+      fetchFoodData(false);
+    }
+    // Only depend on sort option
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sortOption]);
   
   // Handle load more when reaching end of list
   const handleLoadMore = useCallback(() => {
@@ -659,7 +755,7 @@ const FoodScreen: React.FC = () => {
         </View>
       ) : (
         <FlatList
-          data={filteredItems}
+          data={displayItems}
           renderItem={renderFoodItem}
           keyExtractor={keyExtractor}
           numColumns={layoutMode === 'grid' ? 2 : 1}
