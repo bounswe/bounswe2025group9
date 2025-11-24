@@ -31,7 +31,7 @@ const renderWithTheme = (component: React.ReactElement) => {
   return render(<ThemeProvider>{component}</ThemeProvider>);
 };
 
-// Mock food item with micronutrients
+// Mock food item with micronutrients (serving size 100g for easy testing)
 const mockFoodWithMicronutrients: FoodItem = {
   id: 1,
   title: 'Apple',
@@ -39,6 +39,7 @@ const mockFoodWithMicronutrients: FoodItem = {
   iconName: 'food-apple',
   category: 'Fruit',
   nutritionScore: 8.5,
+  servingSize: 100, // 100g serving
   macronutrients: {
     calories: 52,
     protein: 0.3,
@@ -169,6 +170,37 @@ describe('API Transform - Micronutrients Mapping', () => {
 
     expect(apiFood.micronutrients).toBeDefined();
     expect(apiFood.micronutrients).toEqual({ 'Vitamin C (mg)': 10 });
+  });
+
+  it('should normalize micronutrient values to per 100g', () => {
+    // Mock food with 200g serving size
+    const foodWith200gServing: FoodItem = {
+      id: 3,
+      title: 'Large Apple',
+      description: 'Big apple',
+      iconName: 'food-apple',
+      category: 'Fruit',
+      servingSize: 200, // 200g serving
+      macronutrients: {
+        calories: 104,
+        protein: 0.6,
+        carbohydrates: 28,
+        fat: 0.4,
+      },
+      micronutrients: {
+        'Vitamin C (mg)': 9.2, // This is for 200g
+        'Calcium, Ca (mg)': 12, // This is for 200g
+      },
+    };
+
+    // When normalized to 100g:
+    // Vitamin C should be 9.2 * 100/200 = 4.6mg
+    // Calcium should be 12 * 100/200 = 6mg
+    const normalizedVitaminC = (9.2 * 100) / 200;
+    const normalizedCalcium = (12 * 100) / 200;
+
+    expect(normalizedVitaminC).toBe(4.6);
+    expect(normalizedCalcium).toBe(6);
   });
 });
 

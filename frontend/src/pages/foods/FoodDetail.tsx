@@ -59,10 +59,18 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
   ];
 
   // Filter and display only priority micronutrients that exist in the food data, sorted by normalized amount
+  // Also normalize values to per 100g if servingSize is available
   const displayedMicronutrients = food.micronutrients 
     ? priorityMicronutrients
         .filter(nutrient => food.micronutrients && nutrient in food.micronutrients)
-        .map(nutrient => [nutrient, food.micronutrients![nutrient]] as [string, number])
+        .map(nutrient => {
+          let value = food.micronutrients![nutrient];
+          // Normalize to per 100g if servingSize is provided and not already 100g
+          if (food.servingSize && food.servingSize !== 100) {
+            value = (value * 100) / food.servingSize;
+          }
+          return [nutrient, value] as [string, number];
+        })
         .sort((a, b) => {
           const unitA = extractUnit(a[0]);
           const unitB = extractUnit(b[0]);
@@ -265,7 +273,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                     >
                       <span className="text-[var(--color-text-secondary)] text-sm">{nutrientName}</span>
                       <span className="font-semibold text-[var(--color-text-primary)] ml-2">
-                        {amount}{unit}
+                        {amount.toFixed(2)}{unit}
                       </span>
                     </div>
                   );

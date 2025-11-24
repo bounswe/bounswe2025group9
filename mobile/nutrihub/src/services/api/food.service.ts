@@ -77,6 +77,7 @@ const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
     category: apiFood.category as FoodCategoryType,
     imageUrl: normalizedImageUrl,
     nutritionScore: apiFood.nutritionScore,
+    servingSize: apiFood.servingSize,
     macronutrients: {
       calories: apiFood.caloriesPerServing,
       protein: apiFood.proteinContent,
