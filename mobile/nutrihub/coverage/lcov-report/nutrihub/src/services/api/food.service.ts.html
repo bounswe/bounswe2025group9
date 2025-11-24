@@ -652,6 +652,7 @@ const transformFoodItem = <span class="fstat-no" title="function not covered" >(
     category: apiFood.category as FoodCategoryType,
     imageUrl: normalizedImageUrl,
     nutritionScore: apiFood.nutritionScore,
+    servingSize: apiFood.servingSize, // Include serving size from API
     macronutrients: {
       calories: apiFood.caloriesPerServing,
       protein: apiFood.proteinContent,

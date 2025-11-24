@@ -24,7 +24,6 @@ export interface Food {
   dietaryOptions: string[];
   nutritionScore: number;
   imageUrl: string;
-  micronutrients?: Record<string, number>;
   base_price?: string | number | null;
   price_unit?: PriceUnit;
   price_category?: PriceCategory | null;
@@ -32,6 +31,7 @@ export interface Food {
   category_overridden_by?: number | null;
   category_override_reason?: string | null;
   category_overridden_at?: string | null;
+  micronutrients?: { [key: string]: number };
 }
 
 export interface FoodProposal {
@@ -49,6 +49,7 @@ export interface FoodProposal {
   base_price?: string | number | null;
   price_unit?: PriceUnit;
   currency?: string;
+  micronutrients?: { [key: string]: number };
 }
 
 export interface FoodProposalResponse {
@@ -411,6 +412,17 @@ export const apiClient = {
     fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
+    }, true),
+
+  // Get personalized daily intake recommendations (deprecated - use getNutritionTargets instead)
+  getDailyIntakeRecommendations: () =>
+    fetchJson<{
+      calories: number;
+      protein: number;
+      fat: number;
+      carbohydrates: number;
+    }>("/users/nutrition-targets/", {
+      method: "GET",
     }, true),
 
   // auth - use real backend

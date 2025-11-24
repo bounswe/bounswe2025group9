@@ -29,39 +29,46 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
 }) => {
   const { theme, textStyles } = useTheme();
   const [showInfoModal, setShowInfoModal] = useState(false);
-  
+
   // Format numbers to 1 decimal place if needed
-  const formatNumber = (num: number): string => {
-    return Number.isInteger(num) ? num.toString() : num.toFixed(1);
+  const formatNumber = (num: number | string | undefined | null): string => {
+    if (num === undefined || num === null) {
+      return '0';
+    }
+    const val = typeof num === 'string' ? parseFloat(num) : num;
+    if (isNaN(val)) {
+      return '0';
+    }
+    return Number.isInteger(val) ? val.toString() : val.toFixed(1);
   };
 
   const percentage = Math.round((current / target) * 100);
   const isOverTarget = percentage > 100;
   const isNearTarget = percentage >= 90 && percentage <= 100;
   const remaining = Math.max(0, target - current);
-  
+
   // Under-target severity levels
   const isVeryLow = percentage < 50;  // Less than 50% - concerning
   const isLow = percentage >= 50 && percentage < 70;  // 50-70% - needs attention
   const isFair = percentage >= 70 && percentage < 90;  // 70-90% - fair progress
-  
+
   // Over-target severity levels
   const isMinorOver = percentage > 100 && percentage <= 110;  // 0-10% over
   const isModerateOver = percentage > 110 && percentage <= 130;  // 10-30% over
   const isSevereOver = percentage > 130;  // 30%+ over
-  
+
   // Determine status color and icon based on nutrient type and percentage
   const getStatusColor = () => {
     // On target (90-100%)
     if (isNearTarget) return theme.success;
-    
+
     // Under target scenarios
     if (!isOverTarget) {
       if (isVeryLow) return theme.error;  // Red for very low
       if (isLow) return theme.warning;  // Orange for low
       return theme.warning;  // Orange for fair (70-90%)
     }
-    
+
     // Over target scenarios
     // For Calories, being over is generally not good
     if (name === 'Calories') {
@@ -69,20 +76,20 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
       if (isModerateOver) return theme.error;
       return '#dc2626'; // Dark red for severe
     }
-    
+
     // For Protein, slight over is often acceptable
     if (name === 'Protein') {
       if (isMinorOver) return theme.success; // Still good
       if (isModerateOver) return theme.warning;
       return theme.error;
     }
-    
+
     // For Carbs and Fat
     if (isMinorOver) return theme.warning;
     if (isModerateOver) return theme.error;
     return '#dc2626'; // Dark red for severe
   };
-  
+
   const statusColor = getStatusColor();
 
   const renderStatusBadge = (
@@ -95,34 +102,34 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
       <Text style={[styles.badgeText, { color }]}>{label}</Text>
     </View>
   );
-  
+
   const getStatusIcon = () => {
     // Only show checkmark when actually at 100% or met
     if (percentage >= 100 && percentage <= 100) return 'check-circle';
     if (name === 'Protein' && isMinorOver) return 'check-circle'; // Protein met in acceptable range
-    
+
     // 90-99% - close to target but not met
     if (isNearTarget) return 'chart-line'; // Progress indicator instead of checkmark
-    
+
     // Under target icons
     if (!isOverTarget) {
       if (isVeryLow) return 'alert-circle';  // Alert for very low
       if (isLow) return 'alert-outline';  // Outline alert for low
       return 'trending-up';  // Trending for fair
     }
-    
+
     // Over target icons (warnings only)
     if (isMinorOver || isModerateOver) return 'alert-circle';
     return 'close-circle'; // X for severe over
   };
-  
+
   const getStatusMessage = () => {
     if (!isOverTarget) {
       const remainingFormatted = formatNumber(remaining);
       if (isVeryLow) return `Only ${percentage}% of target - ${remainingFormatted}${unit} remaining`;
       return `${remainingFormatted}${unit} remaining to reach goal`;
     }
-    
+
     const overAmount = formatNumber(current - target);
     if (name === 'Protein' && isMinorOver) {
       return `${overAmount}${unit} over target (acceptable range)`;
@@ -157,7 +164,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
         message: `Great job! You've consumed ${formatNumber(current)}${unit}. Just ${formatNumber(remaining)}${unit} more to reach your ${formatNumber(target)}${unit} target.`
       };
     }
-    
+
     const overAmount = formatNumber(current - target);
     if (name === 'Protein' && isMinorOver) {
       return {
@@ -189,10 +196,10 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {icon && (
-            <View 
+            <View
               style={[
-                styles.iconContainer, 
-                { 
+                styles.iconContainer,
+                {
                   backgroundColor: theme.surface,
                   borderColor: `${color}50`,
                   borderWidth: 1,
@@ -209,23 +216,23 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
             </Text>
           </View>
         </View>
-        
+
         {/* Status Icon - Clickable for detailed info */}
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => setShowInfoModal(true)}
           activeOpacity={0.7}
           style={{ position: 'relative' }}
         >
-          <Icon 
-            name={getStatusIcon()} 
-            size={28} 
-            color={isOverTarget || isNearTarget ? statusColor : theme.textSecondary} 
+          <Icon
+            name={getStatusIcon()}
+            size={28}
+            color={isOverTarget || isNearTarget ? statusColor : theme.textSecondary}
             style={!isOverTarget && !isNearTarget ? { opacity: 0.4 } : undefined}
           />
-          <View style={{ 
-            position: 'absolute', 
-            bottom: -2, 
-            right: -2, 
+          <View style={{
+            position: 'absolute',
+            bottom: -2,
+            right: -2,
             backgroundColor: theme.surface,
             borderRadius: 8,
             padding: 1
@@ -241,9 +248,9 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           {formatNumber(current)}{unit}
         </Text>
         <View style={styles.percentageContainer}>
-          <Text 
+          <Text
             style={[
-              styles.percentage, 
+              styles.percentage,
               { color: statusColor }
             ]}
           >
@@ -259,7 +266,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
       <View style={styles.progressBarWrapper}>
         <View style={[styles.progressBarContainer, { backgroundColor: `${color}15` }]}>
           {/* Single progress bar - simple and clear */}
-          <View 
+          <View
             style={[
               styles.progressBar,
               {
@@ -269,19 +276,19 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
             ]}
           />
         </View>
-        
+
         {/* Visual indicator when over 100% - only for warnings, not acceptable protein */}
         {isOverTarget && !(name === 'Protein' && isMinorOver) && (
           <>
             {/* Small overflow extension beyond the bar */}
-            <View 
+            <View
               style={[
-                styles.overflowExtension, 
-                { 
+                styles.overflowExtension,
+                {
                   backgroundColor: statusColor,
                   width: Math.min((percentage - 100) * 0.5, 30) // Max 30px extension
                 }
-              ]} 
+              ]}
             />
             {/* Clear label showing how much over */}
             <View style={[styles.overflowBadge, { backgroundColor: statusColor }]}>
@@ -308,7 +315,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
             </Text>
           )}
         </View>
-        
+
         {/* Show badge based on status */}
         {percentage === 100 && renderStatusBadge('Met', theme.success, 'check-circle')}
         {isNearTarget && percentage < 100 && renderStatusBadge('Almost', theme.success, 'chart-line')}
@@ -354,11 +361,11 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
                 {getDetailedInfo().title}
               </Text>
             </View>
-            
+
             <Text style={[textStyles.body, { color: theme.textSecondary, lineHeight: 22, marginTop: SPACING.md }]}>
               {getDetailedInfo().message}
             </Text>
-            
+
             <View style={styles.modalStats}>
               <View style={styles.modalStatItem}>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Current</Text>
