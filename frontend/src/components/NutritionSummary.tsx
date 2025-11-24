@@ -15,10 +15,20 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
   const [loading, setLoading] = useState(true);
   const [metricsMissing, setMetricsMissing] = useState(false);
 
+  // Helper function to format date as YYYY-MM-DD in local timezone (not UTC)
+  const formatDateString = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const dateStr = new Date().toISOString().split('T')[0];
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize to midnight local time
+        const dateStr = formatDateString(today);
         const [log, targetsData] = await Promise.all([
           apiClient.getDailyLog(dateStr),
           apiClient.getNutritionTargets()
