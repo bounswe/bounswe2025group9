@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { PlusCircle, Heart, UserCircle, Sparkle, ArrowClockwise } from '@phosphor-icons/react';
+import { Heart, UserCircle, Sparkle, Scales } from '@phosphor-icons/react';
 import { apiClient, ForumPost } from '../lib/apiClient';
 import { useAuth } from '../context/AuthContext';
 import ForumPostCard from '../components/ForumPostCard';
 import { subscribeLikeChanges } from '../lib/likeNotifications';
+import DailyTargets from '../components/DailyTargets';
 
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
 const FEED_NEEDS_REFRESH_KEY = 'nutriHub_feedNeedsRefresh';
@@ -385,31 +386,6 @@ const PersonalizedFeed = () => {
                     {/* Main content */}
                     <div className="w-full md:w-3/5">
                         <div className="flex flex-col gap-4 mb-6">
-                            <div className="flex justify-between items-center">
-                                <h2 className="nh-title">Your Personalized Feed</h2>
-                                <div className="flex gap-2">
-                                    <button
-                                        onClick={() => {
-                                            setPage(1);
-                                            fetchFeed(1, false);
-                                        }}
-                                        className="nh-button nh-button-secondary flex items-center gap-2"
-                                        disabled={loading}
-                                        title="Refresh feed"
-                                    >
-                                        <ArrowClockwise size={20} weight="bold" />
-                                        Refresh
-                                    </button>
-                                    <Link 
-                                        to="/forum/create" 
-                                        className="nh-button nh-button-primary flex items-center gap-2"
-                                    >
-                                        <PlusCircle size={20} weight="fill" />
-                                        New Post
-                                    </Link>
-                                </div>
-                            </div>
-                            
                             {/* Filter toggle */}
                             <div className="flex items-center gap-3">
                                 <span className="nh-text text-sm">Show:</span>
@@ -643,17 +619,17 @@ const PersonalizedFeed = () => {
                         )}
                     </div>
 
-                    {/* Right sidebar - Quick actions */}
+                    {/* Right sidebar - Daily Targets */}
                     <div className="w-full md:w-1/5">
-                        <div className="sticky top-20 space-y-4">
-                            <Link to="/forum" className="nh-button nh-button-secondary w-full">
-                                Browse All Posts
-                            </Link>
-                            <Link to="/foods" className="nh-button nh-button-secondary w-full">
-                                Explore Foods
-                            </Link>
-                            <Link to="/mealplanner" className="nh-button nh-button-secondary w-full">
-                                Meal Planner
+                        <div className="sticky top-20 flex flex-col gap-4">
+                            <DailyTargets />
+                            <Link 
+                                to="/foods/compare" 
+                                className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium"
+                                style={{ display: 'flex' }}
+                            >
+                                <Scales size={20} weight="bold" />
+                                Compare Foods
                             </Link>
                         </div>
                     </div>

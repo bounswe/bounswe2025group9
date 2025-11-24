@@ -1,4 +1,4 @@
-import { Hamburger, Funnel, MagnifyingGlass, X, CaretLeft, CaretRight } from '@phosphor-icons/react'
+import { Hamburger, Funnel, MagnifyingGlass, X, CaretLeft, CaretRight, Scales } from '@phosphor-icons/react'
 import { apiClient , Food} from '../../lib/apiClient';
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
@@ -548,7 +548,7 @@ const Foods = () => {
                     {/* Right column - Actions */}
                     <div className="w-full md:w-1/5">
                         <div className="sticky top-20 flex flex-col gap-4">
-                            <Link to="/foods/propose" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium">
+                            <Link to="/foods/propose" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium" style={{ display: 'flex' }}>
                                 <div className="flex items-center justify-center w-full">
                                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
@@ -557,13 +557,9 @@ const Foods = () => {
                                 </div>
                             </Link>
 
-                            <Link to="/foods/compare" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium">
-                                <div className="flex items-center justify-center w-full">
-                                    <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
-                                    </svg>
-                                    Compare Foods
-                                </div>
+                            <Link to="/foods/compare" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium" style={{ display: 'flex' }}>
+                                <Scales size={20} weight="bold" />
+                                Compare Foods
                             </Link>
 
                             <div className="nh-card rounded-lg shadow-md">

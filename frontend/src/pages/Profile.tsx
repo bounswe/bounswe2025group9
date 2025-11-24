@@ -1,12 +1,15 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
 import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, ChartLineUp, CaretDown, CaretRight, Trash } from '@phosphor-icons/react'
+import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CalendarBlank, PencilSimple, Trash, ForkKnife, CaretDown, CaretRight } from '@phosphor-icons/react'
 import { apiClient, ForumPost, MealPlan } from '../lib/apiClient'
 import { UserMetrics } from '../types/nutrition'
 import NutritionSummary from '../components/NutritionSummary'
-import NutritionTracking from '../components/NutritionTracking'
+import MealPlanner from './mealplanner/MealPlanner'
+import MealPlannerSidebar from '../components/MealPlannerSidebar'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -58,8 +61,16 @@ const REPORT_OPTIONS: ReportOption[] = [
 
 const Profile = () => {
   const { user, fetchUserProfile } = useAuth()
+  const navigate = useNavigate()
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'nutrition' | 'metrics'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics'>('overview')
+  
+  // Meal Planner state (for sidebar in profile)
+  const [mealPlannerDietaryPreference, setMealPlannerDietaryPreference] = useState('high-protein')
+  const [mealPlannerDuration, setMealPlannerDuration] = useState<'weekly' | 'daily'>('weekly')
+  const mealPlannerSaveRef = useRef<(() => void) | null>(null)
+  const mealPlannerLogRef = useRef<(() => void) | null>(null)
+  const [isLoggingMeals, setIsLoggingMeals] = useState(false)
   const [selectedAllergens, setSelectedAllergens] = useState<AllergenData[]>([])
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
@@ -84,8 +95,12 @@ const Profile = () => {
   const [reportDescription, setReportDescription] = useState('')
 
   // States for saved meal plans
-  // const [savedMealPlans, setSavedMealPlans] = useState<MealPlan[]>([])
-  const [currentMealPlan, setCurrentMealPlan] = useState<MealPlan | null>()
+  const [allMealPlans, setAllMealPlans] = useState<MealPlan[]>([])
+  const [expandedMealPlans, setExpandedMealPlans] = useState<Set<number>>(new Set())
+  const [editingMealPlanId, setEditingMealPlanId] = useState<number | null>(null)
+  const [editedMealPlanName, setEditedMealPlanName] = useState('')
+  const [isLoggingMealPlan, setIsLoggingMealPlan] = useState(false)
+  const [loggingMealPlanId, setLoggingMealPlanId] = useState<number | null>(null)
 
   // Metrics state
   const [metrics, setMetrics] = useState<UserMetrics>({
@@ -105,69 +120,17 @@ const Profile = () => {
   const [hasMetrics, setHasMetrics] = useState(false)
   const [metricsUpdateKey, setMetricsUpdateKey] = useState(0) // Key to force NutritionTracking refresh
 
-  // Nutrition data for Daily Targets sidebar
-  const [nutritionData, setNutritionData] = useState<{
-    todayLog: import('../types/nutrition').DailyNutritionLog | null;
-    targets: import('../types/nutrition').NutritionTargets | null;
-  }>({ todayLog: null, targets: null })
-
-  // Expandable sections state
-  const [showVitamins, setShowVitamins] = useState(false)
-  const [showMinerals, setShowMinerals] = useState(false)
-
-  // Track selected date in nutrition tracking
-  const [selectedNutritionDate, setSelectedNutritionDate] = useState(new Date())
-
   // Load user data on mount
   useEffect(() => {
     loadUserData()
   }, [user])
 
-  // Helper function to format date as YYYY-MM-DD in local timezone (not UTC)
-  const formatDateString = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-
-  // Fetch nutrition data for sidebar
-  const fetchNutritionData = useCallback(async (date?: Date) => {
-    try {
-      // If no date provided, use selectedNutritionDate, or default to today
-      const dateToUse = date || selectedNutritionDate || new Date()
-      // Normalize to midnight local time to avoid timezone issues
-      dateToUse.setHours(0, 0, 0, 0);
-      const dateStr = formatDateString(dateToUse)
-      const [log, targets] = await Promise.all([
-        apiClient.getDailyLog(dateStr),
-        apiClient.getNutritionTargets()
-      ])
-      setNutritionData({ todayLog: log, targets })
-    } catch (error) {
-      console.error('Error fetching nutrition data:', error)
-    }
-  }, [selectedNutritionDate])
-
-  // Handle date change from NutritionTracking component
-  const handleNutritionDateChange = useCallback((date: Date) => {
-    setSelectedNutritionDate(date)
-    fetchNutritionData(date)
-  }, [fetchNutritionData])
-
   // Function to handle tab change
-  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'nutrition' | 'metrics') => {
+  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics') => {
     setActiveTab(tab)
   }
 
-  // Fetch nutrition data for sidebar only when needed (not on every tab switch)
-  // NutritionTracking component will fetch its own data
-  useEffect(() => {
-    // Only fetch sidebar data if we're on nutrition tab and data hasn't been loaded yet
-    if (activeTab === 'nutrition' && hasMetrics && !nutritionData.todayLog && !nutritionData.targets) {
-      fetchNutritionData()
-    }
-  }, [activeTab, hasMetrics, nutritionData.todayLog, nutritionData.targets, fetchNutritionData])
+  // Note: Nutrition tracking is now on a separate page (/nutrition)
 
   // Set up cross-tab like listener
   useEffect(() => {
@@ -425,21 +388,220 @@ const Profile = () => {
     }
   }
 
-  // New function: load saved meal plans
-  const loadCurrentMealPlan = async () => {
+  // Load all meal plans for user
+  const loadAllMealPlans = async () => {
     try {
-      const response = await apiClient.getCurrentMealPlan()
-      setCurrentMealPlan(response || [])
+      const response = await apiClient.getMealPlans()
+      // Store all meal plans
+      if (response.results && response.results.length > 0) {
+        setAllMealPlans(response.results)
+      }
     } catch (error) {
-      console.error('Error loading saved meal plans:', error)
-      setCurrentMealPlan(null)
+      console.error('Error loading meal plans:', error)
+      setAllMealPlans([])
     }
+  }
+
+  // Toggle expand/collapse meal plan
+  const toggleMealPlan = (planId: number) => {
+    const newExpanded = new Set(expandedMealPlans)
+    if (newExpanded.has(planId)) {
+      newExpanded.delete(planId)
+    } else {
+      newExpanded.add(planId)
+    }
+    setExpandedMealPlans(newExpanded)
+  }
+
+  // Handle delete meal plan
+  const handleDeleteMealPlan = async (planId: number, planName: string) => {
+    if (window.confirm(`Are you sure you want to delete "${planName}"?`)) {
+      try {
+        await apiClient.deleteMealPlan(planId)
+        // Remove from expanded set if it was expanded
+        const newExpanded = new Set(expandedMealPlans)
+        newExpanded.delete(planId)
+        setExpandedMealPlans(newExpanded)
+        await loadAllMealPlans() // Reload meal plans
+      } catch (error) {
+        console.error('Error deleting meal plan:', error)
+        alert('Failed to delete meal plan. Please try again.')
+      }
+    }
+  }
+
+  // Handle save edited meal plan name
+  const handleSaveMealPlanName = async () => {
+    if (!editingMealPlanId || !editedMealPlanName.trim()) return
+    
+    try {
+      await apiClient.updateMealPlan(editingMealPlanId, {
+        name: editedMealPlanName.trim()
+      })
+      setEditingMealPlanId(null)
+      await loadAllMealPlans() // Reload to get updated list
+    } catch (error) {
+      console.error('Error updating meal plan:', error)
+      alert('Failed to update meal plan name. Please try again.')
+    }
+  }
+
+  // Handle log meal plan to nutrition tracking
+  const handleLogMealPlan = async (planId: number) => {
+    setLoggingMealPlanId(planId)
+    setIsLoggingMealPlan(true)
+    try {
+      await apiClient.logMealPlanToNutrition(planId)
+      alert('Meal plan successfully logged to Nutrition Tracking!')
+    } catch (error) {
+      console.error('Error logging meal plan:', error)
+      alert('Failed to log meal plan to Nutrition Tracking. Please try again.')
+    } finally {
+      setIsLoggingMealPlan(false)
+      setLoggingMealPlanId(null)
+    }
+  }
+
+  // Render meal plan details
+  const renderMealPlanDetails = (mealPlan: MealPlan) => {
+    const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+    const mealTypesOrder = ["breakfast", "lunch", "dinner"];
+    const details = mealPlan.meals_details || [];
+    
+    // Meals are stored sequentially: Monday (breakfast, lunch, dinner), Tuesday (breakfast, lunch, dinner), etc.
+    // 3 meals per day, so we organize by day index
+    return days.map((day) => {
+      const dayIndex = days.indexOf(day);
+      const startIndex = dayIndex * 3; // Start index for this day's meals
+      const endIndex = startIndex + 3; // End index for this day's meals
+      
+      // Get meals for this day
+      const dayMealsArray = details.slice(startIndex, endIndex);
+      
+      // Organize meals by meal_type (breakfast, lunch, dinner)
+      // Create a map of meal_type -> meal
+      const mealsByType: { [key: string]: any } = {};
+      dayMealsArray.forEach((meal: any) => {
+        if (meal && meal.meal_type) {
+          const mealTypeLower = meal.meal_type.toLowerCase();
+          mealsByType[mealTypeLower] = meal;
+        }
+      });
+      
+      // If meals don't have meal_type, assign based on position
+      if (Object.keys(mealsByType).length === 0) {
+        dayMealsArray.forEach((meal: any, i: number) => {
+          if (meal && i < mealTypesOrder.length) {
+            mealsByType[mealTypesOrder[i]] = meal;
+          }
+        });
+      }
+      
+      // Get meals in order: breakfast, lunch, dinner
+      const orderedMeals = mealTypesOrder.map(mealType => mealsByType[mealType] || null).filter(Boolean);
+      
+      // Calculate daily macros from meals_details
+      let dayCalories = 0;
+      let dayProtein = 0;
+      let dayCarbs = 0;
+      let dayFat = 0;
+      
+      dayMealsArray.forEach((meal: any) => {
+        if (meal && meal.calculated_nutrition) {
+          dayCalories += meal.calculated_nutrition.calories || 0;
+          dayProtein += meal.calculated_nutrition.protein || 0;
+          dayCarbs += meal.calculated_nutrition.carbohydrates || 0;
+          dayFat += meal.calculated_nutrition.fat || 0;
+        }
+      });
+      
+      return (
+        <div key={day} className="nh-card">
+          <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+            <h3 className="nh-subtitle mb-0">{day}</h3>
+            {/* Daily Macro Values */}
+            <div className="flex items-center gap-3 text-xs nh-text opacity-75">
+              <span>Calories: <strong className="text-primary">{Math.round(dayCalories)}</strong></span>
+              <span>Protein: <strong className="text-primary">{Math.round(dayProtein)}g</strong></span>
+              <span>Carbs: <strong className="text-primary">{Math.round(dayCarbs)}g</strong></span>
+              <span>Fat: <strong className="text-primary">{Math.round(dayFat)}g</strong></span>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {orderedMeals.length > 0 ? (
+              mealTypesOrder.map((mealType) => {
+                const meal = mealsByType[mealType];
+                if (!meal) {
+                  return (
+                    <div 
+                      key={`${day}-${mealType}-empty`} 
+                      className="rounded-md p-3 border relative transition-all hover:shadow-sm flex items-center justify-center"
+                      style={{
+                        backgroundColor: 'var(--dietary-option-bg)',
+                        borderColor: 'var(--dietary-option-border)',
+                        minHeight: '150px'
+                      }}
+                    >
+                      <span className="text-xs nh-text opacity-50">No {mealType.charAt(0).toUpperCase() + mealType.slice(1)}</span>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div
+                    key={`${day}-${mealType}`}
+                    className="rounded-md p-3 border relative transition-all hover:shadow-sm"
+                    style={{
+                      backgroundColor: 'var(--dietary-option-bg)',
+                      borderColor: 'var(--dietary-option-border)'
+                    }}
+                  >
+                    <div
+                      className="text-xs font-medium mb-2"
+                      style={{ color: 'var(--color-light)' }}
+                    >
+                      {meal.meal_type ? meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1) : mealType.charAt(0).toUpperCase() + mealType.slice(1)}
+                    </div>
+
+                    <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
+                      {meal.food && meal.food.imageUrl ? (
+                        <img
+                          src={meal.food.imageUrl}
+                          alt={meal.food.name}
+                          className="object-contain max-h-14 max-w-full rounded"
+                          onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="food-image-placeholder w-full h-full flex items-center justify-center">
+                          <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="text-sm font-medium nh-text mb-1">
+                      {meal.food ? meal.food.name : 'No food selected'}
+                    </div>
+                    <div className="text-xs nh-text opacity-75">
+                      {meal.calculated_nutrition ? `${Math.round(meal.calculated_nutrition.calories)} kcal` : 'N/A'}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <div className="col-span-3 text-center py-4 nh-text opacity-50">
+                No meals planned for {day}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    });
   }
 
   // Fetch saved meal plans when 'mealPlans' tab is activated
   useEffect(() => {
     if (activeTab === 'mealPlans') {
-      loadCurrentMealPlan()
+      loadAllMealPlans()
     }
   }, [activeTab])
 
@@ -765,12 +927,8 @@ const Profile = () => {
         setHasMetrics(true)
       }
       showSuccess('Metrics saved successfully')
-      // Refresh targets and nutrition data after saving metrics
-      // This will update the Daily Targets sidebar immediately
-      await Promise.all([
-        loadUserMetrics(),
-        fetchNutritionData()
-      ])
+      // Refresh targets after saving metrics
+      await loadUserMetrics()
       // Force NutritionTracking and NutritionSummary to refresh by updating the key
       // This ensures today's nutrition values are updated immediately with new targets
       setMetricsUpdateKey(prev => prev + 1)
@@ -835,24 +993,24 @@ const Profile = () => {
                   }}
                 >
                   <User size={18} weight="fill" />
-                  <span className="flex-grow text-center">Overview</span>
+                  <span className="grow text-center">Overview</span>
                 </button>
 
-                {/* Nutrition Tracking Tab */}
+                {/* Meal Planner Tab */}
                 <button
-                  onClick={() => handleTabChange('nutrition')}
+                  onClick={() => handleTabChange('mealPlanner')}
                   className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
                   style={{
-                    backgroundColor: activeTab === 'nutrition'
+                    backgroundColor: activeTab === 'mealPlanner'
                       ? 'var(--forum-default-active-bg)'
                       : 'var(--forum-default-bg)',
-                    color: activeTab === 'nutrition'
+                    color: activeTab === 'mealPlanner'
                       ? 'var(--forum-default-active-text)'
                       : 'var(--forum-default-text)',
                   }}
                 >
-                  <ChartLineUp size={18} weight="fill" />
-                  <span className="flex-grow text-center">Nutrition Tracking</span>
+                  <CalendarBlank size={18} weight="fill" />
+                  <span className="grow text-center">Meal Planner</span>
                 </button>
 
                 <button
@@ -868,7 +1026,7 @@ const Profile = () => {
                   }}
                 >
                   <Warning size={18} weight="fill" />
-                  <span className="flex-grow text-center">Allergens</span>
+                  <span className="grow text-center">Allergens</span>
                 </button>
 
                 <button
@@ -884,7 +1042,7 @@ const Profile = () => {
                   }}
                 >
                   <Heart size={18} weight="fill" />
-                  <span className="flex-grow text-center">Liked Posts</span>
+                  <span className="grow text-center">Liked Posts</span>
                 </button>
 
                 <button
@@ -900,7 +1058,7 @@ const Profile = () => {
                   }}
                 >
                   <BookOpen size={18} weight="fill" />
-                  <span className="flex-grow text-center">Liked Recipes</span>
+                  <span className="grow text-center">Liked Recipes</span>
                 </button>
 
                 <button
@@ -916,7 +1074,7 @@ const Profile = () => {
                   }}
                 >
                   <Certificate size={18} weight="fill" />
-                  <span className="flex-grow text-center">Profession Tags</span>
+                  <span className="grow text-center">Profession Tags</span>
                 </button>
 
                 <button
@@ -928,7 +1086,7 @@ const Profile = () => {
                   }}
                 >
                   <Warning size={18} weight="fill" />
-                  <span className="flex-grow text-center">Report User</span>
+                  <span className="grow text-center">Report User</span>
                 </button>
 
                 {/* New button for Saved Meal Plans */}
@@ -945,7 +1103,7 @@ const Profile = () => {
                   }}
                 >
                   <BookmarkSimple size={18} weight="fill" />
-                  <span className="flex-grow text-center">Saved Meal Plans</span>
+                  <span className="grow text-center">Saved Meal Plans</span>
                 </button>
 
               </div>
@@ -1171,7 +1329,7 @@ const Profile = () => {
                 <NutritionSummary 
                   key={metricsUpdateKey} 
                   compact={true} 
-                  onNavigateToNutrition={() => handleTabChange('nutrition')}
+                  onNavigateToNutrition={() => navigate('/nutrition')}
                 />
               </div>
             )}
@@ -1486,68 +1644,107 @@ const Profile = () => {
 
             {/* Saved Meal Plans Tab */}
             {activeTab === 'mealPlans' && (
-              <div className="space-y-6">
-                <h2 className="nh-title">
-                  {currentMealPlan ? currentMealPlan.name : 'Saved Meal Plan'}
-                </h2>
-                {currentMealPlan ? (
-                  <div className="space-y-4">
-                    {(() => {
-                      const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-                      // Assume that currentMealPlan.meals_details has 21 items ordered as Monday-Breakfast, Monday-Lunch, Monday-Dinner, Tuesday-Breakfast, etc.
-                      const details = currentMealPlan.meals_details || [];
-                      return days.map((day, index) => {
-                        const start = index * 3;
-                        const dayMeals = details.slice(start, start + 3);
-                        return (
-                          <div key={day} className="nh-card">
-                            <h3 className="nh-subtitle mb-4">{day}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                              {dayMeals.map((meal, i) => (
-                                <div
-                                  key={`${day}-${i}`}
-                                  className="rounded-md p-3 border relative transition-all hover:shadow-sm"
-                                  style={{
-                                    backgroundColor: 'var(--dietary-option-bg)',
-                                    borderColor: 'var(--dietary-option-border)'
-                                  }}
-                                >
-                                  <div
-                                    className="text-xs font-medium mb-2"
-                                    style={{ color: 'var(--color-light)' }}
+              <div className="space-y-4">
+                <h2 className="nh-title">Saved Meal Plans</h2>
+                {allMealPlans.length > 0 ? (
+                  <div className="space-y-3">
+                    {allMealPlans.map((mealPlan) => {
+                      const isExpanded = expandedMealPlans.has(mealPlan.id)
+                      const isEditing = editingMealPlanId === mealPlan.id
+                      
+                      return (
+                        <div
+                          key={mealPlan.id}
+                          className="nh-card"
+                        >
+                          {/* Meal Plan Header */}
+                          <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-3 flex-1">
+                              <button
+                                onClick={() => toggleMealPlan(mealPlan.id)}
+                                className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded transition-colors"
+                              >
+                                {isExpanded ? (
+                                  <CaretDown size={20} className="text-primary" />
+                                ) : (
+                                  <CaretRight size={20} className="text-primary" />
+                                )}
+                              </button>
+                              
+                              {isEditing ? (
+                                <div className="flex items-center gap-2 flex-1">
+                                  <input
+                                    type="text"
+                                    value={editedMealPlanName}
+                                    onChange={(e) => setEditedMealPlanName(e.target.value)}
+                                    className="nh-input flex-1"
+                                    placeholder="Meal plan name"
+                                    autoFocus
+                                  />
+                                  <button
+                                    onClick={handleSaveMealPlanName}
+                                    className="nh-button nh-button-primary px-3 py-1 text-sm"
                                   >
-                                    {meal.meal_type.charAt(0).toUpperCase() + meal.meal_type.slice(1)}
-                                  </div>
-
-                                  {/* Food Image */}
-                                  <div className="food-image-container h-20 w-full flex justify-center items-center mb-2 overflow-hidden rounded">
-                                    {meal.food.imageUrl ? (
-                                      <img
-                                        src={meal.food.imageUrl}
-                                        alt={meal.food.name}
-                                        className="object-contain max-h-14 max-w-full rounded"
-                                        onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                                      />
-                                    ) : (
-                                      <div className="food-image-placeholder w-full h-full flex items-center justify-center">
-                                        <Hamburger size={28} weight="fill" className="text-primary opacity-50" />
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  <div className="text-sm font-medium nh-text mb-1">
-                                    {meal.food.name}
-                                  </div>
-                                  <div className="text-xs nh-text opacity-75">
-                                    {meal.calculated_nutrition.calories} kcal
-                                  </div>
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => {
+                                      setEditingMealPlanId(null)
+                                      setEditedMealPlanName('')
+                                    }}
+                                    className="nh-button nh-button-secondary px-3 py-1 text-sm"
+                                  >
+                                    Cancel
+                                  </button>
                                 </div>
-                              ))}
+                              ) : (
+                                <h3 className="nh-subtitle mb-0">{mealPlan.name}</h3>
+                              )}
                             </div>
+                            
+                            {!isEditing && (
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleLogMealPlan(mealPlan.id)}
+                                  disabled={isLoggingMealPlan && loggingMealPlanId === mealPlan.id}
+                                  className="nh-button nh-button-primary flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg shadow-md hover:shadow-lg transition-all text-xs font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                                  style={{ display: 'flex' }}
+                                >
+                                  <ForkKnife size={16} weight="fill" />
+                                  {isLoggingMealPlan && loggingMealPlanId === mealPlan.id ? 'Logging...' : 'Log'}
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setEditingMealPlanId(mealPlan.id)
+                                    setEditedMealPlanName(mealPlan.name)
+                                  }}
+                                  className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                                  title="Edit meal plan name"
+                                >
+                                  <PencilSimple size={18} className="text-primary" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMealPlan(mealPlan.id, mealPlan.name)}
+                                  className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+                                  title="Delete meal plan"
+                                >
+                                  <Trash size={18} className="text-red-500" />
+                                </button>
+                              </div>
+                            )}
                           </div>
-                        );
-                      });
-                    })()}
+                          
+                          {/* Meal Plan Details (Expanded) */}
+                          {isExpanded && (
+                            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                              <div className="space-y-4">
+                                {renderMealPlanDetails(mealPlan)}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )
+                    })}
                   </div>
                 ) : (
                   <div className="nh-card text-center py-12">
@@ -1558,123 +1755,18 @@ const Profile = () => {
               </div>
             )}
 
-            {/* Nutrition Tracking Tab */}
-            {activeTab === 'nutrition' && (
+            {/* Meal Planner Tab */}
+            {activeTab === 'mealPlanner' && (
               <div className="space-y-6">
-                {/* Body Metrics Form - Only show if metrics are not set */}
-                {!hasMetrics && (
-                  <div className="nh-card">
-                    <h3 className="nh-subtitle mb-2">Body Metrics</h3>
-                    <p className="nh-text mb-4 text-sm">
-                      Set your body metrics to get personalized nutrition targets.
-                    </p>
-
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Height (cm)</label>
-                        <input
-                          type="number"
-                          value={metrics.height || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setMetrics({ ...metrics, height: value === '' ? 0 : Number(value) });
-                          }}
-                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
-                          style={{
-                            border: '2px solid var(--dietary-option-border)'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Weight (kg)</label>
-                        <input
-                          type="number"
-                          value={metrics.weight || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setMetrics({ ...metrics, weight: value === '' ? 0 : Number(value) });
-                          }}
-                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
-                          style={{
-                            border: '2px solid var(--dietary-option-border)'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Age</label>
-                        <input
-                          type="number"
-                          value={metrics.age || ''}
-                          onChange={(e) => {
-                            const value = e.target.value;
-                            setMetrics({ ...metrics, age: value === '' ? 0 : Number(value) });
-                          }}
-                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
-                          style={{
-                            border: '2px solid var(--dietary-option-border)'
-                          }}
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs font-medium mb-1">Gender</label>
-                        <select
-                          value={metrics.gender}
-                          onChange={(e) => setMetrics({ ...metrics, gender: e.target.value as 'M' | 'F' })}
-                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
-                          style={{
-                            border: '2px solid var(--dietary-option-border)'
-                          }}
-                        >
-                          <option value="M">Male</option>
-                          <option value="F">Female</option>
-                        </select>
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="block text-xs font-medium mb-1">Activity Level</label>
-                        <select
-                          value={metrics.activity_level}
-                          onChange={(e) => setMetrics({ ...metrics, activity_level: e.target.value as any })}
-                          className="w-full px-3 py-2 text-sm rounded-lg input-white-bg"
-                          style={{
-                            border: '2px solid var(--dietary-option-border)'
-                          }}
-                        >
-                          <option value="sedentary">Sedentary (little or no exercise)</option>
-                          <option value="light">Lightly active (light exercise/sports 1-3 days/week)</option>
-                          <option value="moderate">Moderately active (moderate exercise/sports 3-5 days/week)</option>
-                          <option value="active">Active (hard exercise/sports 6-7 days/week)</option>
-                          <option value="very_active">Very active (very hard exercise/sports & physical job)</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex justify-end">
-                      <button
-                        onClick={saveMetrics}
-                        className="nh-button nh-button-primary text-sm"
-                        disabled={isLoading}
-                      >
-                        {isLoading ? 'Saving...' : 'Save Metrics'}
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Only show NutritionTracking when metrics are set */}
-                {hasMetrics && (
-                  <NutritionTracking 
-                    key={metricsUpdateKey} // Force remount when metrics are updated
-                    onDateChange={handleNutritionDateChange}
-                    onDataChange={() => {
-                      // Only fetch sidebar data when nutrition data changes (after add/edit/delete)
-                      fetchNutritionData()
-                    }}
-                  />
-                )}
+                <MealPlanner 
+                  profileLayout={true}
+                  dietaryPreference={mealPlannerDietaryPreference}
+                  setDietaryPreference={setMealPlannerDietaryPreference}
+                  planDuration={mealPlannerDuration}
+                  setPlanDuration={setMealPlannerDuration}
+                  onSaveRef={mealPlannerSaveRef}
+                  onLogRef={mealPlannerLogRef}
+                />
               </div>
             )}
 
@@ -1682,319 +1774,41 @@ const Profile = () => {
           {/* Right column - Stats & Info */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">
-              {/* Profile Info / Daily Targets */}
-              <div className="nh-card rounded-lg shadow-md">
-                {activeTab === 'nutrition' ? (
-                  hasMetrics ? (
-                    <>
-                      <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
-                    <div className="space-y-2">
-                      {/* Calories */}
-                      <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Calories</span>
-                          <span className="text-xs font-bold text-orange-600">
-                            {nutritionData.todayLog?.total_calories || 0} / {nutritionData.targets?.calories || 0}
-                          </span>
-                        </div>
-                        <div 
-                          className="w-full rounded-full h-1.5"
-                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                        >
-                          <div
-                            className="bg-orange-500 h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(
-                                ((nutritionData.todayLog?.total_calories || 0) / (nutritionData.targets?.calories || 1)) * 100,
-                                100
-                              )}%`
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Protein */}
-                      <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Protein</span>
-                          <span className="text-xs font-bold text-blue-600">
-                            {nutritionData.todayLog?.total_protein || 0}g / {nutritionData.targets?.protein || 0}g
-                          </span>
-                        </div>
-                        <div 
-                          className="w-full rounded-full h-1.5"
-                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                        >
-                          <div
-                            className="bg-blue-500 h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(
-                                ((nutritionData.todayLog?.total_protein || 0) / (nutritionData.targets?.protein || 1)) * 100,
-                                100
-                              )}%`
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Carbs */}
-                      <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Carbs</span>
-                          <span className="text-xs font-bold text-green-600">
-                            {nutritionData.todayLog?.total_carbohydrates || 0}g / {nutritionData.targets?.carbohydrates || 0}g
-                          </span>
-                        </div>
-                        <div 
-                          className="w-full rounded-full h-1.5"
-                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                        >
-                          <div
-                            className="bg-green-500 h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(
-                                ((nutritionData.todayLog?.total_carbohydrates || 0) / (nutritionData.targets?.carbohydrates || 1)) * 100,
-                                100
-                              )}%`
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-
-                      {/* Fat */}
-                      <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Fat</span>
-                          <span className="text-xs font-bold text-yellow-600">
-                            {nutritionData.todayLog?.total_fat || 0}g / {nutritionData.targets?.fat || 0}g
-                          </span>
-                        </div>
-                        <div 
-                          className="w-full rounded-full h-1.5"
-                          style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                        >
-                          <div
-                            className="bg-yellow-500 h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(
-                                ((nutritionData.todayLog?.total_fat || 0) / (nutritionData.targets?.fat || 1)) * 100,
-                                100
-                              )}%`
-                            }}
-                          ></div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Micronutrients Section */}
-                    {nutritionData.targets?.micronutrients && Object.keys(nutritionData.targets.micronutrients).length > 0 && (
-                      <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
-                        {/* Helper function to categorize and format micronutrients */}
-                        {(() => {
-                          // Get all micronutrients from targets (not just from log)
-                          const targetMicronutrients = nutritionData.targets.micronutrients || {};
-                          // Get current values from log (if available)
-                          const logMicronutrients = nutritionData.todayLog?.micronutrients_summary || {};
-                          
-                          // Extract unit from key name (e.g., "Vitamin A, RAE (µg)" -> "µg")
-                          const extractUnit = (key: string): string => {
-                            const match = key.match(/\(([^)]+)\)$/);
-                            return match ? match[1] : '';
-                          };
-                          
-                          // Extract name without unit (e.g., "Vitamin A, RAE (µg)" -> "Vitamin A, RAE")
-                          const extractName = (key: string): string => {
-                            return key.replace(/\s*\([^)]+\)$/, '');
-                          };
-                          
-                          // Categorize micronutrients
-                          const isVitamin = (name: string): boolean => {
-                            const lowerName = name.toLowerCase();
-                            return lowerName.includes('vitamin') || 
-                                   lowerName.includes('thiamin') || 
-                                   lowerName.includes('riboflavin') || 
-                                   lowerName.includes('niacin') || 
-                                   lowerName.includes('folate') || 
-                                   lowerName.includes('folic acid') ||
-                                   lowerName.includes('choline') ||
-                                   lowerName.includes('carotene') ||
-                                   lowerName.includes('lycopene') ||
-                                   lowerName.includes('lutein');
-                          };
-                          
-                          const isMineral = (name: string): boolean => {
-                            const lowerName = name.toLowerCase();
-                            return lowerName.includes('calcium') || 
-                                   lowerName.includes('iron') || 
-                                   lowerName.includes('magnesium') || 
-                                   lowerName.includes('phosphorus') || 
-                                   lowerName.includes('potassium') || 
-                                   lowerName.includes('sodium') || 
-                                   lowerName.includes('zinc') || 
-                                   lowerName.includes('copper') || 
-                                   lowerName.includes('manganese') || 
-                                   lowerName.includes('selenium');
-                          };
-                          
-                          // Get all vitamins from targets
-                          const vitamins = Object.entries(targetMicronutrients)
-                            .filter(([name]) => isVitamin(name))
-                            .sort(([a], [b]) => a.localeCompare(b));
-                          
-                          // Get all minerals from targets
-                          const minerals = Object.entries(targetMicronutrients)
-                            .filter(([name]) => isMineral(name))
-                            .sort(([a], [b]) => a.localeCompare(b));
-                          
-                          return (
-                            <>
-                              {/* Vitamins */}
-                              {vitamins.length > 0 && (
-                                <div className="mb-2">
-                                  <button
-                                    onClick={() => setShowVitamins(!showVitamins)}
-                                    className="w-full flex items-center justify-between p-2 rounded transition-colors"
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'transparent';
-                                    }}
-                                  >
-                                    <span className="text-xs font-semibold">Vitamins</span>
-                                    {showVitamins ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                                  </button>
-                                  {showVitamins && (
-                                    <div className="mt-2 space-y-1.5 pl-2">
-                                      {vitamins.map(([key, target]) => {
-                                        const name = extractName(key);
-                                        const unit = extractUnit(key);
-                                        // Get current value from log (if available), otherwise 0
-                                        const currentValue = typeof logMicronutrients[key] === 'number' 
-                                          ? logMicronutrients[key] 
-                                          : 0;
-                                        // Get target value
-                                        let targetValue = 0;
-                                        if (typeof target === 'number') {
-                                          targetValue = target;
-                                        } else if (target && typeof target === 'object' && 'target' in target) {
-                                          targetValue = (target as { target: number }).target;
-                                        }
-                                        
-                                        return (
-                                          <div key={key} className="p-2 rounded text-xs" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                                            <div className="flex items-center justify-between mb-0.5">
-                                              <span className="capitalize">{name}</span>
-                                              <span className="font-medium">
-                                                {currentValue.toFixed(1)}{unit ? ` ${unit}` : ''} 
-                                                {targetValue > 0 ? ` / ${targetValue.toFixed(1)}${unit ? ` ${unit}` : ''}` : ''}
-                                              </span>
-                                            </div>
-                                            {targetValue > 0 && (
-                                              <div 
-                                                className="w-full rounded-full h-1"
-                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                              >
-                                                <div
-                                                  className="bg-purple-500 h-1 rounded-full transition-all"
-                                                  style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
-                                                ></div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Minerals */}
-                              {minerals.length > 0 && (
-                                <div>
-                                  <button
-                                    onClick={() => setShowMinerals(!showMinerals)}
-                                    className="w-full flex items-center justify-between p-2 rounded transition-colors"
-                                    onMouseEnter={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
-                                    }}
-                                    onMouseLeave={(e) => {
-                                      e.currentTarget.style.backgroundColor = 'transparent';
-                                    }}
-                                  >
-                                    <span className="text-xs font-semibold">Minerals</span>
-                                    {showMinerals ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                                  </button>
-                                  {showMinerals && (
-                                    <div className="mt-2 space-y-1.5 pl-2">
-                                      {minerals.map(([key, target]) => {
-                                        const name = extractName(key);
-                                        const unit = extractUnit(key);
-                                        // Get current value from log (if available), otherwise 0
-                                        const currentValue = typeof logMicronutrients[key] === 'number' 
-                                          ? logMicronutrients[key] 
-                                          : 0;
-                                        // Get target value
-                                        let targetValue = 0;
-                                        if (typeof target === 'number') {
-                                          targetValue = target;
-                                        } else if (target && typeof target === 'object' && 'target' in target) {
-                                          targetValue = (target as { target: number }).target;
-                                        }
-                                        
-                                        return (
-                                          <div key={key} className="p-2 rounded text-xs" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                                            <div className="flex items-center justify-between mb-0.5">
-                                              <span className="capitalize">{name}</span>
-                                              <span className="font-medium">
-                                                {currentValue.toFixed(1)}{unit ? ` ${unit}` : ''} 
-                                                {targetValue > 0 ? ` / ${targetValue.toFixed(1)}${unit ? ` ${unit}` : ''}` : ''}
-                                              </span>
-                                            </div>
-                                            {targetValue > 0 && (
-                                              <div 
-                                                className="w-full rounded-full h-1"
-                                                style={{ backgroundColor: 'var(--color-bg-secondary)' }}
-                                              >
-                                                <div
-                                                  className="bg-teal-500 h-1 rounded-full transition-all"
-                                                  style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
-                                                ></div>
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
-                    )}
-                  </>
-                  ) : (
-                    <>
-                      <h3 className="nh-subtitle mb-3 text-sm">Setup Required</h3>
-                      <p className="nh-text text-xs mb-3">
-                        Set your body metrics above to see your daily nutrition targets and start tracking your nutrition.
-                      </p>
-                    </>
-                  )
-                ) : (
-                  <>
-                    <h3 className="nh-subtitle mb-3 text-sm">Profile Tips</h3>
-                    <ul className="nh-text text-xs space-y-2">
-                      <li>• Keep your allergen list updated</li>
-                      <li>• Upload certificates for verification</li>
-                      <li>• Review your liked content</li>
-                      <li>• Report inappropriate behavior</li>
-                    </ul>
-                  </>
-                )}
-              </div>
+              {/* Profile Info / Meal Planner Sidebar */}
+              {activeTab === 'mealPlanner' ? (
+                <MealPlannerSidebar
+                  dietaryPreference={mealPlannerDietaryPreference}
+                  setDietaryPreference={setMealPlannerDietaryPreference}
+                  planDuration={mealPlannerDuration}
+                  setPlanDuration={setMealPlannerDuration}
+                  onSave={() => {
+                    if (mealPlannerSaveRef.current) {
+                      mealPlannerSaveRef.current()
+                    }
+                  }}
+                  onLogToNutrition={async () => {
+                    if (mealPlannerLogRef.current) {
+                      setIsLoggingMeals(true)
+                      try {
+                        await mealPlannerLogRef.current()
+                      } finally {
+                        setIsLoggingMeals(false)
+                      }
+                    }
+                  }}
+                  isLogging={isLoggingMeals}
+                />
+              ) : (
+                <div className="nh-card rounded-lg shadow-md">
+                  <h3 className="nh-subtitle mb-3 text-sm">Profile Tips</h3>
+                  <ul className="nh-text text-xs space-y-2">
+                    <li>• Keep your allergen list updated</li>
+                    <li>• Upload certificates for verification</li>
+                    <li>• Review your liked content</li>
+                    <li>• Report inappropriate behavior</li>
+                  </ul>
+                </div>
+              )}
             </div>
           </div>
         </div>
