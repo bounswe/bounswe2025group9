@@ -1,7 +1,7 @@
 from django.contrib import admin
 from rest_framework import viewsets, status, serializers
 from rest_framework.permissions import BasePermission
-from .models import Post, Tag, Comment, Like
+from .models import Post, Tag, Comment, Like, Recipe, RecipeIngredient
 
 
 @admin.register(Post)
@@ -36,6 +36,38 @@ class LikeAdmin(admin.ModelAdmin):
     list_display = ("id", "post", "user", "created_at")
     list_filter = ("created_at",)
     search_fields = ("user__username", "post__title")
+
+
+@admin.register(Recipe)
+class RecipeAdmin(admin.ModelAdmin):
+    list_display = ("id", "post", "total_cost", "currency", "price_category", "created_at", "total_calories_display")
+    list_filter = ("currency", "price_category", "created_at")
+    search_fields = ("post__title",)
+    readonly_fields = ("created_at", "updated_at", "total_protein_display", "total_fat_display", "total_carbohydrates_display", "total_calories_display")
+    
+    def total_protein_display(self, obj):
+        return f"{obj.total_protein:.2f}g"
+    total_protein_display.short_description = "Total Protein"
+    
+    def total_fat_display(self, obj):
+        return f"{obj.total_fat:.2f}g"
+    total_fat_display.short_description = "Total Fat"
+    
+    def total_carbohydrates_display(self, obj):
+        return f"{obj.total_carbohydrates:.2f}g"
+    total_carbohydrates_display.short_description = "Total Carbohydrates"
+    
+    def total_calories_display(self, obj):
+        return f"{obj.total_calories:.2f} cal"
+    total_calories_display.short_description = "Total Calories"
+
+
+@admin.register(RecipeIngredient)
+class RecipeIngredientAdmin(admin.ModelAdmin):
+    list_display = ("id", "recipe", "food", "amount", "calorie_content", "protein_content")
+    list_filter = ("recipe__post__title",)
+    search_fields = ("recipe__post__title", "food__name")
+    readonly_fields = ("protein_content", "fat_content", "carbohydrate_content", "calorie_content", "estimated_cost")
 
 
 class IsAdminUser(BasePermission):
