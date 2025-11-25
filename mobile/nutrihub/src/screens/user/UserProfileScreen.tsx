@@ -94,6 +94,24 @@ const UserProfileScreen: React.FC = () => {
   }, [viewMode, canShowLiked, likedFilter, likedPosts, canShowPosts, userPosts]);
 
   // Fetch ALL posts and filter by username to avoid filter dependency
+  const fetchFollowStats = useCallback(async () => {
+    try {
+      const [followers, following] = await Promise.all([
+        userService.getFollowers(username),
+        userService.getFollowing(username),
+      ]);
+      setFollowersCount(followers.length);
+      setFollowingCount(following.length);
+      if (!isOwner && currentUser) {
+        const currentUsername = currentUser.username.toLowerCase();
+        const follows = followers.some(f => f.username.toLowerCase() === currentUsername);
+        setIsFollowing(follows);
+      }
+    } catch (statsError) {
+      console.error('Error fetching follow stats:', statsError);
+    }
+  }, [username, currentUser, isOwner]);
+
   const fetchUserData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -108,8 +126,6 @@ const UserProfileScreen: React.FC = () => {
         // Set follow state if available from profile
         if (fetchedProfile) {
           setIsFollowing(fetchedProfile.is_following || false);
-          setFollowersCount(fetchedProfile.followers_count || 0);
-          setFollowingCount(fetchedProfile.following_count || 0);
         }
       } catch (e) {
         console.error('Error fetching user profile:', e);
@@ -149,13 +165,15 @@ const UserProfileScreen: React.FC = () => {
       const likedIds: number[] = likedIdsRaw ? JSON.parse(likedIdsRaw) : [];
       const liked = allPosts.filter(p => likedIds.includes(p.id));
       setLikedPosts(liked);
+
+      await fetchFollowStats();
     } catch (err) {
       console.error('Error fetching user profile:', err);
       setError('Failed to load user profile');
     } finally {
       setLoading(false);
     }
-  }, [username]);
+  }, [username, fetchFollowStats]);
 
   // Fetch user data on mount
   useEffect(() => {
@@ -172,10 +190,11 @@ const UserProfileScreen: React.FC = () => {
           const likedIds: number[] = likedIdsRaw ? JSON.parse(likedIdsRaw) : [];
           const liked = allPosts.filter(p => likedIds.includes(p.id));
           setLikedPosts(liked);
+          await fetchFollowStats();
         } catch {}
       };
       refreshLiked();
-    }, [])
+    }, [fetchFollowStats])
   );
 
   useEffect(() => {
@@ -232,8 +251,9 @@ const UserProfileScreen: React.FC = () => {
       const newIsFollowing = !isFollowing;
       setIsFollowing(newIsFollowing);
       
-      // Update followers count
+      // Update followers count optimistically, then refresh from source
       setFollowersCount(prev => newIsFollowing ? prev + 1 : Math.max(0, prev - 1));
+      await fetchFollowStats();
       
       Alert.alert('Success', response.message);
     } catch (err) {
@@ -339,6 +359,7 @@ const UserProfileScreen: React.FC = () => {
               <ProfilePhotoPicker
                 uri={userProfile?.profile_image || null}
                 editable={isOwner}
+                showFormatInfo={isOwner}
                 onUploaded={async (localUri) => {
                   try {
                     const name = localUri.split('/').pop() || 'profile.jpg';
