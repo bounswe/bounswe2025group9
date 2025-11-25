@@ -11,12 +11,29 @@ jobs:
     runs-on: ubuntu-latest
     container: reactnativecommunity/react-native-android
     steps:
-    - uses: actions/checkout@v2
-    - name: Envinfo
-      run: npx envinfo
-    - name: Build application
-      run: |
-        cd mobile/nutrihub
-        npm install
-        npx expo prebuild --platform android --clean
-        cd android && chmod +x gradlew && ./gradlew assembleRelease
+      - uses: actions/checkout@v2
+
+      - name: Envinfo
+        run: npx envinfo
+
+      - name: Install dependencies
+        run: |
+          cd mobile/nutrihub
+          npm install
+
+      - name: Prebuild Android
+        run: |
+          cd mobile/nutrihub
+          npx expo prebuild --platform android --clean
+
+      - name: Build release APK
+        run: |
+          cd mobile/nutrihub/android
+          chmod +x gradlew
+          ./gradlew assembleRelease
+
+      - name: Upload APK artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: nutrihub-apk
+          path: mobile/nutrihub/android/app/build/outputs/apk/release/app-release.apk
