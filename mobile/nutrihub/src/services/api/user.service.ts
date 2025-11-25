@@ -59,6 +59,17 @@ const normalizeUserProfile = (data: any): User => {
     profession_tags: normalizedTags,
     recipes: normalizeRecipes(data?.recipes),
     allergens: data?.allergens,
+    followers_count: typeof data?.followers_count === 'number'
+      ? data.followers_count
+      : Array.isArray(data?.followers)
+        ? data.followers.length
+        : 0,
+    following_count: typeof data?.following_count === 'number'
+      ? data.following_count
+      : Array.isArray(data?.following)
+        ? data.following.length
+        : 0,
+    is_following: Boolean(data?.is_following),
   };
 
   return normalized;
