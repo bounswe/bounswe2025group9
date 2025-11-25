@@ -184,19 +184,6 @@ const FoodCompareScreen: React.FC = () => {
           )}
         </View>
 
-        {/* Tips Section */}
-        <View style={[styles.tipsCard, { backgroundColor: theme.card }]}>
-          <Text style={[styles.tipsTitle, textStyles.heading4]}>
-            Comparison Tips
-          </Text>
-          <View style={styles.tipsList}>
-            <TipItem icon="check-circle" text="Compare up to 2 foods side by side" />
-            <TipItem icon="star" text="Check nutrition scores for health value" />
-            <TipItem icon="food-apple" text="Compare macronutrients (protein, carbs, fats)" />
-            <TipItem icon="fire" text="View calorie content per serving" />
-            <TipItem icon="leaf" text="Check dietary compatibility" />
-          </View>
-        </View>
       </ScrollView>
 
       {/* Food Selector Modal */}
@@ -206,25 +193,6 @@ const FoodCompareScreen: React.FC = () => {
         onSelect={handleFoodSelect}
       />
     </SafeAreaView>
-  );
-};
-
-// Helper component for tips
-const TipItem: React.FC<{ icon: string; text: string }> = ({ icon, text }) => {
-  const { theme, textStyles } = useTheme();
-  
-  return (
-    <View style={styles.tipItem}>
-      <Icon 
-        name={icon as any} 
-        size={16} 
-        color={theme.primary} 
-        style={styles.tipIcon}
-      />
-      <Text style={[styles.tipText, textStyles.caption, { color: theme.text }]}>
-        {text}
-      </Text>
-    </View>
   );
 };
 
@@ -356,32 +324,6 @@ const styles = StyleSheet.create({
   comparisonEmptyText: {
     marginTop: SPACING.md,
     textAlign: 'center',
-  },
-  tipsCard: {
-    borderRadius: 12,
-    padding: SPACING.md,
-    marginBottom: SPACING.md,
-    elevation: 2,
-    shadowColor: PALETTE.NEUTRAL.BLACK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  tipsTitle: {
-    marginBottom: SPACING.md,
-  },
-  tipsList: {
-    gap: SPACING.sm,
-  },
-  tipItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  tipIcon: {
-    marginRight: SPACING.sm,
-  },
-  tipText: {
-    flex: 1,
   },
 });
 

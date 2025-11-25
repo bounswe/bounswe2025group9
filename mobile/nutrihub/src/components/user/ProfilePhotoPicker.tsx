@@ -13,12 +13,21 @@ export interface ProfilePhotoPickerProps {
   uploading?: boolean;
   removable?: boolean;
   editable?: boolean; // Hide actions if false
+  showFormatInfo?: boolean;
 }
 
 const MAX_SIZE_BYTES = 5 * 1024 * 1024; // 5MB
 const SUPPORTED_FORMATS = ['jpeg', 'jpg', 'png'];
 
-const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded, onRemoved, uploading, removable = true, editable = true }) => {
+const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({
+  uri,
+  onUploaded,
+  onRemoved,
+  uploading,
+  removable = true,
+  editable = true,
+  showFormatInfo = true,
+}) => {
   const { theme, textStyles } = useTheme();
   const [localUploading, setLocalUploading] = useState(false);
 
@@ -118,9 +127,11 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({ uri, onUploaded
       </View>
       
       {/* File format and size information */}
-      <Text style={[textStyles.small, { color: theme.textSecondary, textAlign: 'center', marginTop: SPACING.xs }]}>
-        Supported formats: JPEG, PNG. Maximum size: 5MB
-      </Text>
+      {showFormatInfo && (
+        <Text style={[textStyles.small, { color: theme.textSecondary, textAlign: 'center', marginTop: SPACING.xs }]}>
+          Supported formats: JPEG, PNG. Maximum size: 5MB
+        </Text>
+      )}
       
       {editable && (
         <View style={styles.actions}>
