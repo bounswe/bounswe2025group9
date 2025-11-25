@@ -1,10 +1,7 @@
 name: Apk Builder
 
 on:
-  push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+  workflow_dispatch:  # triggers only when manually requested
 
 jobs:
   build:
@@ -33,7 +30,7 @@ jobs:
           ./gradlew assembleRelease
 
       - name: Upload APK artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: nutrihub-apk
           path: mobile/nutrihub/android/app/build/outputs/apk/release/app-release.apk
