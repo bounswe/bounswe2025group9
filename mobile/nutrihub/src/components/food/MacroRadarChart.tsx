@@ -30,14 +30,19 @@ const getNormalizedMacros = (food: FoodItem) => {
   if (!macros) {
     return { protein: 0, fat: 0, carbs: 0, calories: 0, fiber: 0, sugar: 0 };
   }
+
+  const servingSize = food.servingSize && food.servingSize > 0 ? food.servingSize : 100;
+  const scaleFactor = servingSize !== 100 ? (100 / servingSize) : 1;
+  const scaleValue = (value?: number) => toSigFigs((value || 0) * scaleFactor);
+  const scaleValueRaw = (value?: number) => (value || 0) * scaleFactor;
   
   return {
-    protein: toSigFigs(macros.protein || 0),
-    fat: toSigFigs(macros.fat || 0),
-    carbs: toSigFigs(macros.carbohydrates || 0),
-    calories: macros.calories || 0,
-    fiber: macros.fiber || 0,
-    sugar: macros.sugar || 0,
+    protein: scaleValue(macros.protein),
+    fat: scaleValue(macros.fat),
+    carbs: scaleValue(macros.carbohydrates),
+    calories: Math.round(scaleValueRaw(macros.calories)),
+    fiber: scaleValue(macros.fiber),
+    sugar: scaleValue(macros.sugar),
   };
 };
 
@@ -209,10 +214,14 @@ const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2 }) => {
   const macros1 = getNormalizedMacros(food1);
   const macros2 = getNormalizedMacros(food2);
   
-  // Find max values for scaling
-  const maxProtein = Math.max(macros1.protein, macros2.protein, 30);
-  const maxFat = Math.max(macros1.fat, macros2.fat, 30);
-  const maxCarbs = Math.max(macros1.carbs, macros2.carbs, 30);
+  // Find max values for scaling (avoid flat bars when nutrient values are small)
+  const getScaleMax = (val1: number, val2: number) => {
+    const maxVal = Math.max(val1, val2);
+    return maxVal > 0 ? maxVal : 1;
+  };
+  const maxProtein = getScaleMax(macros1.protein, macros2.protein);
+  const maxFat = getScaleMax(macros1.fat, macros2.fat);
+  const maxCarbs = getScaleMax(macros1.carbs, macros2.carbs);
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
