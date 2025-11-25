@@ -170,6 +170,17 @@ const FoodScreen: React.FC = () => {
       );
     }
     
+    // Apply price category filter (not handled by backend)
+    if (filters.priceCategory) {
+      result = result.filter(item => {
+        if (!item.priceCategory) return false;
+        // Normalize category (handle both $ and ₺ symbols, remove spaces)
+        const normalizedItemCategory = item.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+        const normalizedFilterCategory = filters.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+        return normalizedItemCategory === normalizedFilterCategory;
+      });
+    }
+    
     // Apply price range filter (not handled by backend)
     if (filters.minPrice !== undefined) {
       result = result.filter(item => 
@@ -403,17 +414,30 @@ const FoodScreen: React.FC = () => {
 
   // Handle filter application
   const handleApplyFilters = useCallback((newFilters: FoodFilters) => {
+    const categoryChanged = filters.category !== newFilters.category;
+    const nameChanged = filters.name !== newFilters.name;
+    
+    // Update all filter states
     setCategoryFilter(newFilters.category);
     setDietaryOptions(newFilters.dietaryOptions || []);
     setPriceCategory(newFilters.priceCategory);
     setNutritionScoreRange(newFilters.minNutritionScore, newFilters.maxNutritionScore);
+    // Note: name filter is updated via TextInput onChangeText, not here
 
-    // Reset pagination when filters change
-    setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
-    currentPageRef.current = 1;
-    // Clear food data to avoid mixing results from different filters
-    setFoodData([]);
-  }, [setCategoryFilter, setDietaryOptions, setPriceCategory, setNutritionScoreRange]);
+    // Only clear and refetch data if backend-dependent filters changed
+    // Client-side filters (price category, dietary options, nutrition score) will work immediately
+    if (categoryChanged || nameChanged) {
+      // Reset pagination when backend filters change
+      setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
+      currentPageRef.current = 1;
+      // Clear food data to avoid mixing results from different filters
+      setFoodData([]);
+      // Trigger refetch for backend-dependent filters
+      // Category filter has its own useEffect that will trigger refetch
+      // Name filter changes are handled via TextInput and will trigger refetch via fetchFoodData dependencies
+    }
+    // For client-side filters, the displayItems memo will handle filtering immediately
+  }, [filters.category, filters.name, setCategoryFilter, setDietaryOptions, setPriceCategory, setNutritionScoreRange]);
 
   // Handle propose food submission
   const handleProposeFoodSubmit = useCallback(async (data: FoodProposalData) => {
