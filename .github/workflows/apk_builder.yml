@@ -1,0 +1,22 @@
+name: Apk Builder
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: reactnativecommunity/react-native-android
+    steps:
+    - uses: actions/checkout@v2
+    - name: Envinfo
+      run: npx envinfo
+    - name: Build application
+      run: |
+        cd mobile/nutrihub
+        npm install
+        npx expo prebuild --platform android --clean
+        cd android && chmod +x gradlew && ./gradlew assembleRelease
