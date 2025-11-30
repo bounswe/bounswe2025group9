@@ -1,0 +1,25 @@
+name: Deploy Nutrihub
+
+on:
+  workflow_dispatch:  # triggers only when manually requested
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: SSH into server and deploy
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd bounswe2025group9/
+            git pull origin main
+            echo "$(date '+%Y-%m-%d %H:%M:%S') | $(git log -1 --pretty=%h) | $(git log -1 --pretty=%s)" >> deployment_history.txt
+            docker-compose down
+            docker-compose up --build -d
