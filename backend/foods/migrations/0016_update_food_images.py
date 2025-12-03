@@ -19,8 +19,8 @@ def update_images(apps, schema_editor):
 
     print(f"Loaded {len(mapping)} image mappings.")
     
-    # Fetch foods with missing images
-    foods = FoodEntry.objects.filter(imageUrl__isnull=True) | FoodEntry.objects.filter(imageUrl='')
+    # Fetch all foods to update their images from the mapping
+    foods = FoodEntry.objects.all()
     
     updated_count = 0
     for food in foods:
@@ -35,9 +35,11 @@ def update_images(apps, schema_editor):
         safe_name = base_name.replace(" ", "_").replace(",", "").replace("/", "_").replace("(", "").replace(")", "")
         
         if safe_name in mapping:
-            food.imageUrl = mapping[safe_name]
-            food.save()
-            updated_count += 1
+            # Only update if the URL is different to avoid unnecessary writes
+            if food.imageUrl != mapping[safe_name]:
+                food.imageUrl = mapping[safe_name]
+                food.save()
+                updated_count += 1
             
     print(f"Updated {updated_count} food items with new images.")
 
