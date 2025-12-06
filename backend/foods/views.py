@@ -39,6 +39,7 @@ from urllib.parse import unquote
 from concurrent.futures import ThreadPoolExecutor
 from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
+import re
 
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "api", "db_initialization")
@@ -257,6 +258,261 @@ class FoodCatalog(ListAPIView):
                 data = {"warning": warning, "results": data, "status": 206}
             return Response(data)
         # Always add status to response
+        if isinstance(data, dict):
+            data["status"] = 200
+        else:
+            data = {"results": data, "status": 200}
+        return Response(data)
+    
+    def post(self, request, *args, **kwargs):
+        queryset = FoodEntry.objects.all()
+        available_categories = list(
+            FoodEntry.objects.values_list("category", flat=True).distinct()
+        )
+        available_categories_lc = [cat.lower() for cat in available_categories]
+
+        self.warning = None
+        self.empty = False
+
+        # ==========================
+        # 🔍 Search Filtering (POST)
+        # ==========================
+        search_term = request.data.get("search", "").strip()
+        if search_term:
+            queryset = queryset.filter(Q(name__icontains=search_term))
+            queryset = queryset.annotate(
+                relevance=Case(
+                    When(name__iexact=search_term, then=Value(1)),
+                    When(name__istartswith=search_term, then=Value(2)),
+                    default=Value(3),
+                    output_field=IntegerField(),
+                )
+            )
+            if queryset.count() == 0:
+                self.warning = f'No records found for search term: "{search_term}"'
+
+        # ==========================
+        # 🧂 Category Filtering (POST)
+        # ==========================
+        categories_param = request.data.get("category", None)
+        if categories_param is None:
+            categories_param = request.data.get("categories", "")
+
+        if categories_param == "":
+            categories = available_categories
+        else:
+            requested_categories = [
+                cat.strip().lower()
+                for cat in categories_param.split(",")
+                if cat.strip()
+            ]
+            categories = [
+                available_categories[i]
+                for i, cat in enumerate(available_categories_lc)
+                if cat in requested_categories
+            ]
+            invalid_categories = [
+                cat for cat in requested_categories
+                if cat not in available_categories_lc
+            ]
+            if invalid_categories:
+                self.warning = f"Some categories are not available: {', '.join(invalid_categories)}"
+
+            if not categories:
+                self.empty = True
+                return Response({"warning": self.warning, "results": [], "status": 206})
+
+        queryset = queryset.filter(category__in=categories)
+
+        # ==========================
+        # 🔽 Sorting / Ordering (POST)
+        # ==========================
+        sort_by = request.data.get("sort_by", "").strip()
+        order = request.data.get("order", "").strip().lower()
+
+        # Combined format: "name-asc"
+        if "-" in sort_by and not order:
+            parts = sort_by.split("-", 1)
+            if len(parts) == 2:
+                sort_by = parts[0].strip()
+                order = parts[1].strip().lower()
+
+        if not order:
+            order = "desc"
+        if order not in ["asc", "desc"]:
+            order = "desc"
+
+        valid_sort_fields = {
+            "nutritionscore": "nutritionScore",
+            "nutrition-score": "nutritionScore",
+            "nutrition": "nutritionScore",
+            "carbohydratecontent": "carbohydrateContent",
+            "carbohydrate": "carbohydrateContent",
+            "proteincontent": "proteinContent",
+            "protein": "proteinContent",
+            "fatcontent": "fatContent",
+            "fat": "fatContent",
+            "name": "name",
+            "price": "base_price",
+            "cost-nutrition-ratio": "cost_nutrition_ratio",
+            "costnutritionratio": "cost_nutrition_ratio",
+        }
+
+        sort_by_lower = sort_by.lower() if sort_by else ""
+
+        if sort_by_lower in valid_sort_fields:
+            sort_field = valid_sort_fields[sort_by_lower]
+
+            if sort_field == "cost_nutrition_ratio":
+                queryset = queryset.annotate(
+                    cost_nutrition_ratio=Case(
+                        When(
+                            base_price__isnull=False,
+                            nutritionScore__gt=0,
+                            then=ExpressionWrapper(
+                                Cast(F("base_price"), FloatField())
+                                / Cast(F("nutritionScore"), FloatField()),
+                                output_field=FloatField(),
+                            ),
+                        ),
+                        When(
+                            base_price__isnull=False,
+                            nutritionScore__lte=0,
+                            then=Value(999999.0, output_field=FloatField()),
+                        ),
+                        default=Value(999999.0, output_field=FloatField()),
+                        output_field=FloatField(),
+                    )
+                )
+                sort_field = "cost_nutrition_ratio"
+        else:
+            sort_field = None
+
+        # Apply ordering (before micronutrient filtering so ordering is preserved)
+        if search_term:
+            if sort_field:
+                if order == "asc":
+                    queryset = queryset.order_by("relevance", sort_field, Length("name"))
+                else:
+                    queryset = queryset.order_by("relevance", f"-{sort_field}", Length("name"))
+            else:
+                queryset = queryset.order_by("relevance", Length("name"), "name")
+        else:
+            if sort_field:
+                queryset = queryset.order_by(sort_field if order == "asc" else f"-{sort_field}")
+            else:
+                queryset = queryset.order_by("id")
+
+        # ==========================
+        # 🧪 Micronutrient Filtering (Python)
+        # ==========================
+        micronutrient_filters = request.data.get("micronutrients", [])
+
+        if micronutrient_filters:
+            objs = list(queryset)  # evaluate queryset once
+
+            def match_micronutrients(obj):
+                micro = getattr(obj, "micronutrients", {}) or {}
+                # micro is something like:
+                # {"Water (g)": 8.2, "Vitamin C, total ascorbic acid (mg)": 7.2, ...}
+
+                for mf in micronutrient_filters:
+                    name = (mf.get("Micronutrient") or "").strip()
+                    if not name:
+                        continue
+
+                    max_val = mf.get("MaxValue") or []
+                    min_val = mf.get("MinValue") or []
+                    per_grams = mf.get("PerHowmanyGrams") or "100 gr"
+
+                    # Parse "150 gr" → 150.0 (default 100.0)
+                    try:
+                        grams = float(re.findall(r"\d+\.?\d*", str(per_grams))[0])
+                    except (IndexError, ValueError):
+                        grams = 100.0
+
+                    # Parse numeric bounds
+                    max_num = None
+                    if max_val:
+                        try:
+                            max_num = float(max_val[0])
+                        except (TypeError, ValueError):
+                            pass
+
+                    min_num = None
+                    if min_val:
+                        try:
+                            min_num = float(min_val[0])
+                        except (TypeError, ValueError):
+                            pass
+
+                    # Find matching key in JSON (case-insensitive substring)
+                    key_match = None
+                    name_lc = name.lower()
+                    for k in micro.keys():
+                        try:
+                            if name_lc in k.lower():
+                                key_match = k
+                                break
+                        except AttributeError:
+                            continue
+
+                    # If the requested micronutrient is not present, fail this food
+                    if key_match is None:
+                        return False
+
+                    # DB values are per 100 g
+                    try:
+                        base_val = float(micro[key_match])
+                    except (TypeError, ValueError):
+                        return False
+
+                    # Scale from per 100g to per requested grams
+                    scaled = base_val * (grams / 100.0)
+
+                    if max_num is not None and scaled > max_num:
+                        return False
+                    if min_num is not None and scaled < min_num:
+                        return False
+
+                # All micronutrient filters passed
+                return True
+
+            filtered_objs = [obj for obj in objs if match_micronutrients(obj)]
+            queryset = filtered_objs  # now a list, not a QuerySet
+
+        # ==========================
+        # 📤 Response Handling
+        # ==========================
+        if isinstance(queryset, list):
+            total_count = len(queryset)
+        else:
+            total_count = queryset.count()
+
+        if total_count == 0:
+            warning = getattr(self, "warning", None)
+            if warning:
+                return Response({"warning": warning, "results": [], "status": 204})
+            return Response({"results": [], "status": 204})
+
+        # Pagination works on lists too
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            data = self.get_paginated_response(serializer.data).data
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+            data = serializer.data
+
+        warning = getattr(self, "warning", None)
+        if warning:
+            if isinstance(data, dict):
+                data["warning"] = warning
+                data["status"] = 206
+            else:
+                data = {"warning": warning, "results": data, "status": 206}
+            return Response(data)
+
         if isinstance(data, dict):
             data["status"] = 200
         else:
