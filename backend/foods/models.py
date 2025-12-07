@@ -9,6 +9,32 @@ class Allergen(models.Model):
     name = models.CharField(max_length=100)
 
 
+class Micronutrient(models.Model):
+    name = models.CharField(max_length=255, unique=True)
+
+    def __str__(self):
+        return self.name
+
+
+class FoodEntryMicronutrient(models.Model):
+    food_entry = models.ForeignKey(
+        'FoodEntry',
+        on_delete=models.CASCADE,
+        related_name='micronutrient_values',
+    )
+    micronutrient = models.ForeignKey(
+        Micronutrient,
+        on_delete=models.CASCADE,
+        related_name='entries',
+    )
+    value = models.FloatField()
+
+    class Meta:
+        unique_together = ('food_entry', 'micronutrient')
+
+    def __str__(self):
+        return f'{self.food_entry} – {self.micronutrient.name}: {self.value}'
+
 # Create your models here.
 class FoodEntry(models.Model):
     name = models.CharField(max_length=100)
@@ -43,11 +69,6 @@ class FoodEntry(models.Model):
     )
     category_overridden_at = models.DateTimeField(null=True, blank=True)
     category_override_reason = models.TextField(blank=True)
-    micronutrients = models.JSONField(
-        default=dict,
-        blank=True,
-        help_text="Micronutrient content (vitamins, minerals) per serving"
-    )
 
 
 
