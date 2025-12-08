@@ -257,8 +257,8 @@ const NutritionTrackingPage = () => {
                                   {showVitamins && (
                                     <div className="mt-2 space-y-1.5 pl-2">
                                       {vitamins.map(([key, target]) => {
-                                        const name = key;
-                                        const unit = target.unit;
+                                        const name = extractName(key);
+                                        const unit = extractUnit(key);
                                         const currentValue = typeof logMicronutrients[key] === 'number' 
                                           ? logMicronutrients[key] 
                                           : 0;
@@ -315,8 +315,8 @@ const NutritionTrackingPage = () => {
                                   {showMinerals && (
                                     <div className="mt-2 space-y-1.5 pl-2">
                                       {minerals.map(([key, target]) => {
-                                        const name = key;
-                                        const unit = target.unit;
+                                        const name = extractName(key);
+                                        const unit = extractUnit(key);
                                         const currentValue = typeof logMicronutrients[key] === 'number' 
                                           ? logMicronutrients[key] 
                                           : 0;
