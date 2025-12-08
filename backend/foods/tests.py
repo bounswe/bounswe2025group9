@@ -287,7 +287,7 @@ class GetOrFetchFoodEntryTests(APITestCase):
     def setUp(self):
         self.client = APIClient()
         self.url = reverse("get_or_fetch_food")
-        
+
         # Create user and get authentication token
         self.user = User.objects.create_user(
             username="testuser",
@@ -405,7 +405,7 @@ class FoodProposalTests(APITestCase):
         )
         self.token_url = reverse("token_obtain_pair")
         self.proposal_url = reverse("submit_food_proposal")
-        
+
         # Create some allergens for testing
         self.allergen1 = Allergen.objects.create(name="Peanuts", common=True)
         self.allergen2 = Allergen.objects.create(name="Dairy", common=True)
@@ -419,7 +419,7 @@ class FoodProposalTests(APITestCase):
     def test_submit_food_proposal_success(self):
         """Test successful food proposal submission"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Organic Quinoa",
             "category": "Grains",
@@ -429,12 +429,12 @@ class FoodProposalTests(APITestCase):
             "fatContent": 3.55,
             "carbohydrateContent": 39.4,
             "dietaryOptions": ["Vegetarian", "Gluten-Free"],
-            "imageUrl": "https://example.com/quinoa.jpg"
+            "imageUrl": "https://example.com/quinoa.jpg",
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         # Verify proposal was created
         self.assertTrue(FoodProposal.objects.filter(name="Organic Quinoa").exists())
         proposal = FoodProposal.objects.get(name="Organic Quinoa")
@@ -445,7 +445,7 @@ class FoodProposalTests(APITestCase):
     def test_submit_food_proposal_minimal_data(self):
         """Test submitting proposal with only required fields"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Simple Food",
             "category": "Other",
@@ -453,19 +453,19 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 150,
             "proteinContent": 5,
             "fatContent": 3,
-            "carbohydrateContent": 20
+            "carbohydrateContent": 20,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         proposal = FoodProposal.objects.get(name="Simple Food")
         self.assertIsNotNone(proposal.nutritionScore)
 
     def test_submit_food_proposal_with_multiple_allergens(self):
         """Test submitting proposal with multiple allergens"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Peanut Butter",
             "category": "Fats & Oils",
@@ -473,12 +473,12 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 188,
             "proteinContent": 8,
             "fatContent": 16,
-            "carbohydrateContent": 7
+            "carbohydrateContent": 7,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         proposal = FoodProposal.objects.get(name="Peanut Butter")
         # Note: M2M fields need to be set after creation
         self.assertIsNotNone(proposal)
@@ -486,19 +486,19 @@ class FoodProposalTests(APITestCase):
     def test_submit_food_proposal_missing_required_fields(self):
         """Test submitting proposal without required fields"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Incomplete Food",
             # Missing required nutrition fields
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_submit_food_proposal_negative_values(self):
         """Test submitting proposal with negative values (currently accepted)"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Invalid Food",
             "category": "Other",
@@ -506,18 +506,20 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 150,
             "proteinContent": 5,
             "fatContent": 3,
-            "carbohydrateContent": 20
+            "carbohydrateContent": 20,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         # Note: Current implementation accepts negative values
         # This test documents current behavior
-        self.assertIn(response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST])
+        self.assertIn(
+            response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST]
+        )
 
     def test_submit_food_proposal_zero_serving_size(self):
         """Test submitting proposal with zero serving size (currently accepted)"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Zero Serving",
             "category": "Other",
@@ -525,13 +527,15 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 150,
             "proteinContent": 5,
             "fatContent": 3,
-            "carbohydrateContent": 20
+            "carbohydrateContent": 20,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         # Note: Current implementation accepts zero values
         # This test documents current behavior
-        self.assertIn(response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST])
+        self.assertIn(
+            response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST]
+        )
 
     def test_submit_food_proposal_no_auth(self):
         """Test that unauthenticated users cannot submit proposals"""
@@ -542,16 +546,16 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 150,
             "proteinContent": 5,
             "fatContent": 3,
-            "carbohydrateContent": 20
+            "carbohydrateContent": 20,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     def test_submit_food_proposal_with_dietary_options(self):
         """Test submitting proposal with dietary options"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Vegan Protein Bar",
             "category": "Sweets & Snacks",
@@ -560,19 +564,19 @@ class FoodProposalTests(APITestCase):
             "proteinContent": 15,
             "fatContent": 8,
             "carbohydrateContent": 25,
-            "dietaryOptions": ["Vegan", "Gluten-Free", "High-Protein"]
+            "dietaryOptions": ["Vegan", "Gluten-Free", "High-Protein"],
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         proposal = FoodProposal.objects.get(name="Vegan Protein Bar")
         self.assertEqual(len(proposal.dietaryOptions), 3)
 
     def test_submit_duplicate_food_proposal(self):
         """Test submitting proposal for food that already exists"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         # Create existing food entry
         FoodEntry.objects.create(
             name="Existing Food",
@@ -582,9 +586,9 @@ class FoodProposalTests(APITestCase):
             proteinContent=5,
             fatContent=3,
             carbohydrateContent=20,
-            nutritionScore=5.0
+            nutritionScore=5.0,
         )
-        
+
         # Try to propose it again
         data = {
             "name": "Existing Food",
@@ -593,17 +597,17 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 150,
             "proteinContent": 5,
             "fatContent": 3,
-            "carbohydrateContent": 20
+            "carbohydrateContent": 20,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         # Should still accept the proposal (proposals can be duplicates)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_nutrition_score_calculation(self):
         """Test that nutrition score is calculated for proposals"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Healthy Food",
             "category": "Vegetable",
@@ -611,10 +615,10 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 50,
             "proteinContent": 3,
             "fatContent": 0.5,
-            "carbohydrateContent": 10
+            "carbohydrateContent": 10,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertIn("nutritionScore", response.data)
         self.assertGreater(response.data["nutritionScore"], 0)
@@ -622,7 +626,7 @@ class FoodProposalTests(APITestCase):
     def test_submit_food_proposal_long_name(self):
         """Test submitting proposal with very long name"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "A" * 300,  # Very long name
             "category": "Other",
@@ -630,17 +634,19 @@ class FoodProposalTests(APITestCase):
             "caloriesPerServing": 150,
             "proteinContent": 5,
             "fatContent": 3,
-            "carbohydrateContent": 20
+            "carbohydrateContent": 20,
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         # Should either accept or reject based on model field max_length
-        self.assertIn(response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST])
+        self.assertIn(
+            response.status_code, [status.HTTP_201_CREATED, status.HTTP_400_BAD_REQUEST]
+        )
 
     def test_submit_food_proposal_with_image_url(self):
         """Test submitting proposal with custom image URL"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         data = {
             "name": "Custom Image Food",
             "category": "Other",
@@ -649,12 +655,12 @@ class FoodProposalTests(APITestCase):
             "proteinContent": 5,
             "fatContent": 3,
             "carbohydrateContent": 20,
-            "imageUrl": "https://example.com/custom-food.jpg"
+            "imageUrl": "https://example.com/custom-food.jpg",
         }
-        response = self.client.post(self.proposal_url, data, format='json')
-        
+        response = self.client.post(self.proposal_url, data, format="json")
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         proposal = FoodProposal.objects.get(name="Custom Image Food")
         self.assertEqual(proposal.imageUrl, "https://example.com/custom-food.jpg")
 
@@ -670,7 +676,7 @@ class FoodNutritionInfoTests(APITestCase):
         )
         self.token_url = reverse("token_obtain_pair")
         self.nutrition_info_url = reverse("food_nutrition_info")
-        
+
         # Get authentication token
         token_res = self.client.post(
             self.token_url, {"username": "testuser", "password": "testpass123"}
@@ -681,7 +687,7 @@ class FoodNutritionInfoTests(APITestCase):
     def test_get_nutrition_info_success(self, mock_get):
         """Test successful nutrition info fetch from Open Food Facts API"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
+
         # Mock successful API response
         mock_response = {
             "products": [
@@ -691,18 +697,18 @@ class FoodNutritionInfoTests(APITestCase):
                         "proteins_100g": 0.3,
                         "fat_100g": 0.2,
                         "carbohydrates_100g": 14,
-                        "fiber_100g": 2.4
+                        "fiber_100g": 2.4,
                     }
                 }
             ]
         }
-        
+
         mock_get.return_value.json.return_value = mock_response
         mock_get.return_value.status_code = 200
         mock_get.return_value.raise_for_status = lambda: None
-        
+
         response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIn("food", response.data)
         self.assertIn("calories", response.data)
@@ -717,14 +723,14 @@ class FoodNutritionInfoTests(APITestCase):
         """Test request without name parameter"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         response = self.client.get(self.nutrition_info_url)
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertIn("error", response.data)
-    
+
     def test_get_nutrition_info_no_auth(self):
         """Test that endpoint requires authentication"""
         response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-        
+
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
 
     @patch("requests.get")
@@ -732,13 +738,15 @@ class FoodNutritionInfoTests(APITestCase):
         """Test when no products are found in API"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         mock_response = {"products": []}
-        
+
         mock_get.return_value.json.return_value = mock_response
         mock_get.return_value.status_code = 200
         mock_get.return_value.raise_for_status = lambda: None
-        
-        response = self.client.get(self.nutrition_info_url, {"name": "nonexistentfood12345"})
-        
+
+        response = self.client.get(
+            self.nutrition_info_url, {"name": "nonexistentfood12345"}
+        )
+
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertIn("warning", response.data)
 
@@ -747,9 +755,9 @@ class FoodNutritionInfoTests(APITestCase):
         """Test handling of API errors"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         mock_get.side_effect = Exception("API Error")
-        
+
         response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-        
+
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertIn("error", response.data)
 
@@ -767,13 +775,13 @@ class FoodNutritionInfoTests(APITestCase):
                 }
             ]
         }
-        
+
         mock_get.return_value.json.return_value = mock_response
         mock_get.return_value.status_code = 200
         mock_get.return_value.raise_for_status = lambda: None
-        
+
         response = self.client.get(self.nutrition_info_url, {"name": "test"})
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         # Should still return structure with None values
         self.assertIsNone(response.data.get("protein"))
@@ -784,9 +792,9 @@ class FoodNutritionInfoTests(APITestCase):
         """Test handling of timeout errors"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         mock_get.side_effect = requests.Timeout("Timeout")
-        
+
         response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-        
+
         self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
         self.assertIn("error", response.data)
 
@@ -795,7 +803,7 @@ class FoodNutritionInfoTests(APITestCase):
         """Test with empty name parameter"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         response = self.client.get(self.nutrition_info_url, {"name": ""})
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     @patch("requests.get")
@@ -810,18 +818,20 @@ class FoodNutritionInfoTests(APITestCase):
                         "proteins_100g": 5,
                         "fat_100g": 3,
                         "carbohydrates_100g": 20,
-                        "fiber_100g": 2
+                        "fiber_100g": 2,
                     }
                 }
             ]
         }
-        
+
         mock_get.return_value.json.return_value = mock_response
         mock_get.return_value.status_code = 200
         mock_get.return_value.raise_for_status = lambda: None
-        
-        response = self.client.get(self.nutrition_info_url, {"name": "peanut-butter & jelly"})
-        
+
+        response = self.client.get(
+            self.nutrition_info_url, {"name": "peanut-butter & jelly"}
+        )
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
@@ -939,9 +949,7 @@ class FoodProposalApprovalTests(TestCase):
     def test_approve_food_proposal_assigns_category_and_creates_audit(self):
         proposal = self._create_proposal(Decimal("32.50"))
 
-        proposal, entry = approve_food_proposal(
-            proposal, changed_by=self.moderator
-        )
+        proposal, entry = approve_food_proposal(proposal, changed_by=self.moderator)
 
         self.assertTrue(proposal.isApproved)
         self.assertIsNotNone(entry)
@@ -1021,7 +1029,7 @@ class ModeratorWorkflowTests(APITestCase):
         response = self.client.post(url, {"approved": False}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         proposal.refresh_from_db()
         self.assertFalse(proposal.isApproved)
         self.assertTrue(proposal.is_private)
@@ -1030,14 +1038,10 @@ class ModeratorWorkflowTests(APITestCase):
 class UserFoodProposalListTests(APITestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="proposer",
-            email="proposer@example.com",
-            password="password123"
+            username="proposer", email="proposer@example.com", password="password123"
         )
         self.other_user = User.objects.create_user(
-            username="other",
-            email="other@example.com",
-            password="password123"
+            username="other", email="other@example.com", password="password123"
         )
         self.client.force_authenticate(user=self.user)
         self.url = reverse("my_food_proposals")
@@ -1047,32 +1051,41 @@ class UserFoodProposalListTests(APITestCase):
         FoodProposal.objects.create(
             name="My Pending",
             proposedBy=self.user,
-            servingSize=100, caloriesPerServing=100,
-            proteinContent=10, fatContent=10, carbohydrateContent=10,
-            nutritionScore=5.0
+            servingSize=100,
+            caloriesPerServing=100,
+            proteinContent=10,
+            fatContent=10,
+            carbohydrateContent=10,
+            nutritionScore=5.0,
         )
         FoodProposal.objects.create(
             name="My Private",
             proposedBy=self.user,
             isApproved=False,
             is_private=True,
-            servingSize=100, caloriesPerServing=100,
-            proteinContent=10, fatContent=10, carbohydrateContent=10,
-            nutritionScore=5.0
+            servingSize=100,
+            caloriesPerServing=100,
+            proteinContent=10,
+            fatContent=10,
+            carbohydrateContent=10,
+            nutritionScore=5.0,
         )
-        
+
         # Create proposal for other user
         FoodProposal.objects.create(
             name="Other's Proposal",
             proposedBy=self.other_user,
-            servingSize=100, caloriesPerServing=100,
-            proteinContent=10, fatContent=10, carbohydrateContent=10,
-            nutritionScore=5.0
+            servingSize=100,
+            caloriesPerServing=100,
+            proteinContent=10,
+            fatContent=10,
+            carbohydrateContent=10,
+            nutritionScore=5.0,
         )
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         results = response.data.get("results", [])
         self.assertEqual(len(results), 2)
         names = [p["name"] for p in results]
@@ -1081,3 +1094,77 @@ class UserFoodProposalListTests(APITestCase):
         self.assertNotIn("Other's Proposal", names)
 
 
+class FoodProposalUpdateTests(APITestCase):
+    """Tests for food proposal update endpoint"""
+
+    def setUp(self):
+        # Create admin user
+        self.admin = User.objects.create_user(
+            username="admin", email="admin@test.com", password="admin123", is_staff=True
+        )
+
+        # Create regular user
+        self.user = User.objects.create_user(
+            username="testuser", email="user@test.com", password="user123"
+        )
+
+        # Create a food proposal
+        self.proposal = FoodProposal.objects.create(
+            name="Test Food",
+            category="Grains",
+            servingSize=100,
+            caloriesPerServing=200,
+            proteinContent=10,
+            fatContent=5,
+            carbohydrateContent=30,
+            dietaryOptions=["Vegan"],
+            nutritionScore=5.0,
+            imageUrl="",
+            proposedBy=self.user,
+        )
+
+        # Get auth token for admin
+        token_url = reverse("token_obtain_pair")
+        response = self.client.post(
+            token_url, {"username": "admin", "password": "admin123"}
+        )
+        self.admin_token = response.data["access"]
+
+    def test_update_proposal_macronutrients(self):
+        """Test updating macronutrient values"""
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.admin_token}")
+
+        url = f"/api/foods/moderation/food-proposals/{self.proposal.id}/"
+        data = {"proteinContent": 15, "fatContent": 8, "carbohydrateContent": 35}
+
+        response = self.client.patch(url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify changes
+        self.proposal.refresh_from_db()
+        self.assertEqual(float(self.proposal.proteinContent), 15.0)
+        self.assertEqual(float(self.proposal.fatContent), 8.0)
+        self.assertEqual(float(self.proposal.carbohydrateContent), 35.0)
+
+        # Verify nutrition score was recalculated
+        self.assertIsNotNone(self.proposal.nutritionScore)
+
+    def test_update_proposal_requires_admin(self):
+        """Test that non-admin users cannot update proposals"""
+        # Login as regular user
+        token_url = reverse("token_obtain_pair")
+        response = self.client.post(
+            token_url, {"username": "testuser", "password": "user123"}
+        )
+        user_token = response.data["access"]
+
+        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {user_token}")
+
+        url = f"/api/foods/moderation/food-proposals/{self.proposal.id}/"
+        data = {"proteinContent": 20}
+
+        response = self.client.patch(url, data, format="json")
+
+        # Should be forbidden for non-admin
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
