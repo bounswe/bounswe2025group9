@@ -520,6 +520,25 @@ class FoodCatalog(ListAPIView):
         return Response(data)
 
 
+class AvailableMicronutrientsView(APIView):
+    """
+    Returns a list of all available micronutrients that have at least one entry in the database.
+    Each micronutrient includes its name and unit.
+    """
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        # Get all micronutrients that have at least one food entry
+        micronutrients = Micronutrient.objects.filter(
+            entries__isnull=False
+        ).distinct().values('name', 'unit').order_by('name')
+
+        return Response({
+            'micronutrients': list(micronutrients),
+            'count': len(micronutrients)
+        }, status=status.HTTP_200_OK)
+
+
 class GetOrFetchFoodEntry(APIView):
     def get(self, request):
         food_name = request.query_params.get("name")
