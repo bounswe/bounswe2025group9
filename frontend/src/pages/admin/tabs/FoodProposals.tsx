@@ -1,43 +1,21 @@
 import { useState, useEffect } from 'react';
-import { ForkKnife, Check, X, Eye } from '@phosphor-icons/react';
-import { apiClient, PriceUnit } from '../../../lib/apiClient';
+import { ForkKnife, Check, X, Eye, PencilSimple } from '@phosphor-icons/react';
+import { apiClient, PriceUnit, FoodProposal } from '../../../lib/apiClient';
 
 const PRICE_UNIT_LABELS: Record<PriceUnit, string> = {
   per_100g: 'Per 100g',
   per_unit: 'Per Unit',
 };
 
-interface FoodProposal {
-  id: number;
-  name: string;
-  category: string;
-  servingSize: number;
-  caloriesPerServing: number;
-  proteinContent: number;
-  fatContent: number;
-  carbohydrateContent: number;
-  nutritionScore: number;
-  imageUrl?: string;
-  isApproved: boolean | null;
-  proposedBy: {
-    id: number;
-    username: string;
-  };
-  createdAt: string;
-  allergens?: string[];
-  dietaryOptions?: string[];
-  base_price?: string | number | null;
-  price_unit?: PriceUnit | null;
-  currency?: string | null;
-  micronutrients?: Record<string, number>;
-  is_private?: boolean;
-}
 
 const FoodProposals = () => {
   const [proposals, setProposals] = useState<FoodProposal[]>([]);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState<FoodProposal | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editedProposal, setEditedProposal] = useState<Partial<FoodProposal>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchProposals();
@@ -73,10 +51,64 @@ const FoodProposals = () => {
       // Refresh the list
       fetchProposals();
       setSelectedProposal(null);
+      setIsEditMode(false);
     } catch (error) {
       console.error('Failed to update proposal:', error);
       alert('Failed to update proposal. Please try again.');
     }
+  };
+
+  const handleEditClick = () => {
+    if (selectedProposal) {
+      setEditedProposal({
+        name: selectedProposal.name,
+        category: selectedProposal.category,
+        servingSize: selectedProposal.servingSize,
+        caloriesPerServing: selectedProposal.caloriesPerServing,
+        proteinContent: selectedProposal.proteinContent,
+        fatContent: selectedProposal.fatContent,
+        carbohydrateContent: selectedProposal.carbohydrateContent,
+        imageUrl: selectedProposal.imageUrl,
+        base_price: selectedProposal.base_price,
+        price_unit: selectedProposal.price_unit,
+        currency: selectedProposal.currency,
+        dietaryOptions: selectedProposal.dietaryOptions,
+      });
+      setIsEditMode(true);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditMode(false);
+    setEditedProposal({});
+  };
+
+  const handleSaveEdit = async () => {
+    if (!selectedProposal) return;
+
+    setSaving(true);
+    try {
+      const updated = await apiClient.moderation.updateFoodProposal(selectedProposal.id, editedProposal);
+
+      // Update the selected proposal with the new data
+      setSelectedProposal(updated);
+
+      // Update the proposal in the list
+      setProposals(proposals.map(p => p.id === updated.id ? updated : p));
+
+      setIsEditMode(false);
+      setEditedProposal({});
+      alert('Proposal updated successfully!');
+    } catch (error) {
+      console.error('Failed to save proposal:', error);
+      alert('Failed to save changes. Please try again.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleInputChange = (field: keyof FoodProposal, value: any) => {
+    setEditedProposal(prev => ({ ...prev, [field]: value }));
   };
 
   if (loading) {
@@ -254,7 +286,11 @@ const FoodProposals = () => {
       {selectedProposal && (
         <div
           className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
-          onClick={() => setSelectedProposal(null)}
+          onClick={() => {
+            setSelectedProposal(null);
+            setIsEditMode(false);
+            setEditedProposal({});
+          }}
         >
           <div
             className="bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[90vh] overflow-auto"
@@ -262,10 +298,14 @@ const FoodProposals = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-[var(--color-text-primary)]">
-                {selectedProposal.name}
+                {isEditMode ? 'Edit Food Proposal' : selectedProposal.name}
               </h3>
               <button
-                onClick={() => setSelectedProposal(null)}
+                onClick={() => {
+                  setSelectedProposal(null);
+                  setIsEditMode(false);
+                  setEditedProposal({});
+                }}
                 className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
               >
                 <X size={24} />
@@ -276,11 +316,21 @@ const FoodProposals = () => {
               {selectedProposal.imageUrl && (
                 <div>
                   <h4 className="font-medium text-gray-900 dark:text-white mb-2">Image</h4>
-                  <img
-                    src={selectedProposal.imageUrl}
-                    alt={selectedProposal.name}
-                    className="w-full max-h-64 object-cover rounded-lg text-gray-900 dark:text-white"
-                  />
+                  {isEditMode ? (
+                    <input
+                      type="text"
+                      value={editedProposal.imageUrl || ''}
+                      onChange={(e) => handleInputChange('imageUrl', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Image URL"
+                    />
+                  ) : (
+                    <img
+                      src={selectedProposal.imageUrl}
+                      alt={selectedProposal.name}
+                      className="w-full max-h-64 object-cover rounded-lg text-gray-900 dark:text-white"
+                    />
+                  )}
                 </div>
               )}
 
@@ -289,12 +339,43 @@ const FoodProposals = () => {
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Basic Information</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">Name:</span>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        value={editedProposal.name || ''}
+                        onChange={(e) => handleInputChange('name', e.target.value)}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.name}</span>
+                    )}
+                  </div>
+                  <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Category:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.category}</span>
+                    {isEditMode ? (
+                      <input
+                        type="text"
+                        value={editedProposal.category || ''}
+                        onChange={(e) => handleInputChange('category', e.target.value)}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.category}</span>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Serving Size:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.servingSize}g</span>
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        value={editedProposal.servingSize || ''}
+                        onChange={(e) => handleInputChange('servingSize', parseFloat(e.target.value))}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-20"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.servingSize}g</span>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Nutrition Score:</span>
@@ -308,7 +389,6 @@ const FoodProposals = () => {
                     <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">
                       {selectedProposal.isApproved === null ? 'Pending' : selectedProposal.isApproved ? 'Approved' : 'Rejected'}
-                      {selectedProposal.is_private && ' (Private)'}
                     </span>
                   </div>
                 </div>
@@ -320,19 +400,55 @@ const FoodProposals = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Calories:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.caloriesPerServing} kcal</span>
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        value={editedProposal.caloriesPerServing || ''}
+                        onChange={(e) => handleInputChange('caloriesPerServing', parseFloat(e.target.value))}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-24"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.caloriesPerServing} kcal</span>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Protein:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.proteinContent}g</span>
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        value={editedProposal.proteinContent || ''}
+                        onChange={(e) => handleInputChange('proteinContent', parseFloat(e.target.value))}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-24"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.proteinContent}g</span>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Fat:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.fatContent}g</span>
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        value={editedProposal.fatContent || ''}
+                        onChange={(e) => handleInputChange('fatContent', parseFloat(e.target.value))}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-24"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.fatContent}g</span>
+                    )}
                   </div>
                   <div>
                     <span className="text-sm text-gray-600 dark:text-gray-400">Carbohydrates:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.carbohydrateContent}g</span>
+                    {isEditMode ? (
+                      <input
+                        type="number"
+                        value={editedProposal.carbohydrateContent || ''}
+                        onChange={(e) => handleInputChange('carbohydrateContent', parseFloat(e.target.value))}
+                        className="ml-2 px-2 py-1 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white w-24"
+                      />
+                    ) : (
+                      <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.carbohydrateContent}g</span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -394,7 +510,32 @@ const FoodProposals = () => {
               {/* Pricing */}
               <div>
                 <h4 className="font-medium text-gray-900 dark:text-white mb-2">Pricing Details</h4>
-                {selectedProposal.base_price ? (
+                {isEditMode ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    <input
+                      type="number"
+                      value={editedProposal.base_price || ''}
+                      onChange={(e) => handleInputChange('base_price', e.target.value)}
+                      placeholder="Price"
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                    <select
+                      value={editedProposal.price_unit || 'per_100g'}
+                      onChange={(e) => handleInputChange('price_unit', e.target.value as PriceUnit)}
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="per_100g">Per 100g</option>
+                      <option value="per_unit">Per Unit</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={editedProposal.currency || 'TRY'}
+                      onChange={(e) => handleInputChange('currency', e.target.value)}
+                      placeholder="Currency"
+                      className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    />
+                  </div>
+                ) : selectedProposal.base_price ? (
                   <div className="p-3 rounded-md border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-sm">
                     <div>
                       <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
@@ -421,25 +562,51 @@ const FoodProposals = () => {
                 </div>
               </div>
 
-              {/* Action Buttons - Only show for pending proposals */}
-              {selectedProposal.isApproved === null && (
-                <div className="flex gap-2 pt-4">
-                  <button
-                    onClick={() => handleApprove(selectedProposal.id, true)}
-                    className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    <Check size={20} weight="bold" />
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => handleApprove(selectedProposal.id, false)}
-                    className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-                  >
-                    <X size={20} weight="bold" />
-                    Reject
-                  </button>
-                </div>
-              )}
+              {/* Action Buttons */}
+              <div className="flex gap-2 pt-4">
+                {isEditMode ? (
+                  <>
+                    <button
+                      onClick={handleCancelEdit}
+                      className="flex-1 px-4 py-2 bg-gray-300 dark:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-500 transition-colors"
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSaveEdit}
+                      className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </>
+                ) : selectedProposal.isApproved === null ? (
+                  <>
+                    <button
+                      onClick={handleEditClick}
+                      className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    >
+                      <PencilSimple size={20} weight="bold" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleApprove(selectedProposal.id, true)}
+                      className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                    >
+                      <Check size={20} weight="bold" />
+                      Approve
+                    </button>
+                    <button
+                      onClick={() => handleApprove(selectedProposal.id, false)}
+                      className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+                    >
+                      <X size={20} weight="bold" />
+                      Reject
+                    </button>
+                  </>
+                ) : null}
+              </div>
             </div>
           </div>
         </div>
