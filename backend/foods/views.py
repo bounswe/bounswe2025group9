@@ -8,6 +8,7 @@ from foods.models import (
     PriceAudit,
     PriceCategoryThreshold,
     PriceReport,
+    Micronutrient,
 )
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from foods.serializers import (
@@ -24,8 +25,8 @@ from foods.serializers import (
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework import status, generics
 from django.db import transaction
-from django.db.models import Q, F, Case, When, FloatField, Value, ExpressionWrapper, IntegerField
-from django.db.models.functions import Cast, Length
+from django.db.models import Q, F, Case, When, FloatField, Value, ExpressionWrapper, IntegerField, OuterRef, Subquery, Max
+from django.db.models.functions import Cast, Length, Coalesce
 import requests
 import sys
 import os
@@ -66,7 +67,7 @@ class FoodCatalog(ListAPIView):
     serializer_class = FoodEntrySerializer
 
     def get_queryset(self):
-        queryset = FoodEntry.objects.all()
+        queryset = FoodEntry.objects.all().prefetch_related('micronutrient_values__micronutrient')
         available_categories = list(
             FoodEntry.objects.values_list("category", flat=True).distinct()
         )
@@ -127,6 +128,100 @@ class FoodCatalog(ListAPIView):
         
         # Apply category filter
         queryset = queryset.filter(category__in=categories)
+
+        # --- MICRONUTRIENT RANGE FILTERING (NEW) ---
+        #
+        # Query parameter: `micronutrient`
+        #
+        # Syntax (comma-separated list):
+        #
+        #     micronutrient=<name>:<low>-<high>,<name>:<low>-,<name>:-<high>,...
+        #
+        # Rules:
+        #   • <name> is case-insensitive and matched with `icontains`
+        #   • <low> and <high> are numeric (float); invalid values are ignored
+        #   • Ranges support:
+        #         low-high   → bounded range
+        #         low-       → lower-bounded (>= low)
+        #         -high      → upper-bounded (<= high)
+        #   • Each item creates an AND constraint:
+        #         iron:3-10,zinc:1-5  → must satisfy both
+        #
+        # Examples:
+        #     micronutrient=iron:3-10
+        #     micronutrient=vit c:20-
+        #     micronutrient=-potassium:0.5
+        #     micronutrient=iron:3-10,zinc:1-,vitamin c:-40
+        #
+        # Invalid components (e.g. missing numbers) are skipped.
+        micronutrient_param = self.request.query_params.get("micronutrient", "")
+        if micronutrient_param.strip():
+            parts = [p.strip() for p in micronutrient_param.split(",") if p.strip()]
+
+            for part in parts:
+                if ":" not in part or "-" not in part:
+                    continue
+
+                name, rng = part.split(":", 1)
+                low_str, high_str = rng.split("-", 1)
+
+                name = name.strip()
+
+                # Parse numbers only if they exist
+                low = None
+                high = None
+
+                if low_str.strip():
+                    try:
+                        low = float(low_str)
+                    except ValueError:
+                        continue
+
+                if high_str.strip():
+                    try:
+                        high = float(high_str)
+                    except ValueError:
+                        continue
+
+                # Build filter that treats missing micronutrients as having value 0
+                # This ensures foods without a micronutrient entry are included when appropriate
+
+                # Base condition: has the micronutrient with matching name
+                has_micronutrient = Q(micronutrient_values__micronutrient__name__icontains=name)
+
+                # Build value range conditions
+                value_conditions = Q()
+                if low is not None:
+                    value_conditions &= Q(micronutrient_values__value__gte=low)
+                if high is not None:
+                    value_conditions &= Q(micronutrient_values__value__lte=high)
+
+                # Condition for foods that have the micronutrient within range
+                has_nutrient_in_range = has_micronutrient & value_conditions
+
+                # Condition for foods without this micronutrient (treated as 0)
+                # Include them only if the range allows 0
+                lacks_micronutrient = ~Q(micronutrient_values__micronutrient__name__icontains=name)
+
+                # Determine if 0 falls within the specified range
+                zero_in_range = True
+                if low is not None and low > 0:
+                    zero_in_range = False
+                if high is not None and high < 0:
+                    zero_in_range = False
+
+                # Combine conditions
+                if zero_in_range:
+                    # Include foods with nutrient in range OR without the nutrient
+                    filter_condition = has_nutrient_in_range | lacks_micronutrient
+                else:
+                    # Only include foods with nutrient in range
+                    filter_condition = has_nutrient_in_range
+
+                queryset = queryset.filter(filter_condition)
+
+            # Use distinct() to avoid duplicate results from join
+            queryset = queryset.distinct()
 
         # --- Sorting support ---
         # Support both separate parameters (sort_by + order) and combined format (sort_by="name-asc")

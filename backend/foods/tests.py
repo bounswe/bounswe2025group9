@@ -7,7 +7,7 @@ from rest_framework import status
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
-from foods.models import FoodEntry, FoodProposal, PriceAudit
+from foods.models import FoodEntry, FoodProposal, PriceAudit, Micronutrient, FoodEntryMicronutrient
 from foods.serializers import FoodEntrySerializer
 from foods.services import (
     approve_food_proposal,
@@ -1021,10 +1021,68 @@ class ModeratorWorkflowTests(APITestCase):
         response = self.client.post(url, {"approved": False}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         proposal.refresh_from_db()
         self.assertFalse(proposal.isApproved)
         self.assertTrue(proposal.is_private)
+
+    def test_approve_proposal_with_micronutrients_with_units_in_name(self):
+        """Test that approving a proposal with micronutrients that have units in the name works"""
+        proposal = FoodProposal.objects.create(
+            name="Spinach with Micronutrients",
+            category="Vegetables",
+            servingSize=100,
+            caloriesPerServing=23,
+            proteinContent=2.9,
+            fatContent=0.4,
+            carbohydrateContent=3.6,
+            nutritionScore=8.5,
+            micronutrients={
+                "Manganese, Mn (mg)": 0.07,
+                "Vitamin C (mg)": 28.1,
+                "Iron, Fe (mg)": 2.71,
+                "Calcium, Ca (mg)": 99.0,
+            },
+            proposedBy=self.proposer,
+        )
+
+        url = reverse("moderation-food-proposals-approve", args=[proposal.id])
+        response = self.client.post(url, {"approved": True}, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Verify the food entry was created
+        entry = FoodEntry.objects.get(name=proposal.name)
+        self.assertIsNotNone(entry)
+
+        # Verify micronutrients were copied correctly
+        from foods.models import FoodEntryMicronutrient, Micronutrient
+
+        # Check that micronutrients were created/found
+        manganese = Micronutrient.objects.filter(name="Manganese, Mn").first()
+        self.assertIsNotNone(manganese, "Manganese micronutrient should be created")
+        self.assertEqual(manganese.unit, "mg")
+
+        vitamin_c = Micronutrient.objects.filter(name="Vitamin C").first()
+        self.assertIsNotNone(vitamin_c, "Vitamin C micronutrient should be created")
+        self.assertEqual(vitamin_c.unit, "mg")
+
+        # Verify the values were copied to the food entry
+        manganese_entry = FoodEntryMicronutrient.objects.filter(
+            food_entry=entry, micronutrient=manganese
+        ).first()
+        self.assertIsNotNone(manganese_entry)
+        self.assertAlmostEqual(manganese_entry.value, 0.07, places=2)
+
+        vitamin_c_entry = FoodEntryMicronutrient.objects.filter(
+            food_entry=entry, micronutrient=vitamin_c
+        ).first()
+        self.assertIsNotNone(vitamin_c_entry)
+        self.assertAlmostEqual(vitamin_c_entry.value, 28.1, places=1)
+
+        # Verify all micronutrients were copied
+        entry_micronutrients = FoodEntryMicronutrient.objects.filter(food_entry=entry)
+        self.assertEqual(entry_micronutrients.count(), 4, "All 4 micronutrients should be copied")
 
 
 class UserFoodProposalListTests(APITestCase):
@@ -1060,7 +1118,7 @@ class UserFoodProposalListTests(APITestCase):
             proteinContent=10, fatContent=10, carbohydrateContent=10,
             nutritionScore=5.0
         )
-        
+
         # Create proposal for other user
         FoodProposal.objects.create(
             name="Other's Proposal",
@@ -1072,12 +1130,424 @@ class UserFoodProposalListTests(APITestCase):
 
         response = self.client.get(self.url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        
+
         results = response.data.get("results", [])
         self.assertEqual(len(results), 2)
         names = [p["name"] for p in results]
         self.assertIn("My Pending", names)
         self.assertIn("My Private", names)
         self.assertNotIn("Other's Proposal", names)
+
+
+class MicronutrientFilteringTests(TestCase):
+    """Tests for micronutrient filtering in FoodCatalog"""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Create micronutrients with units
+        self.iron = Micronutrient.objects.create(name="Iron", unit="mg")
+        self.vitamin_c = Micronutrient.objects.create(name="Vitamin C", unit="mg")
+        self.zinc = Micronutrient.objects.create(name="Zinc", unit="mg")
+        self.calcium = Micronutrient.objects.create(name="Calcium", unit="mg")
+
+        # Create food entries with different micronutrient values
+        # Food 1: High iron (8mg), medium vitamin C (30mg)
+        self.food1 = FoodEntry.objects.create(
+            name="Spinach",
+            category="Vegetable",
+            servingSize=100,
+            caloriesPerServing=23,
+            proteinContent=2.9,
+            fatContent=0.4,
+            carbohydrateContent=3.6,
+            nutritionScore=8.5,
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food1, micronutrient=self.iron, value=8.0
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food1, micronutrient=self.vitamin_c, value=30.0
+        )
+
+        # Food 2: Low iron (2mg), high vitamin C (80mg), medium zinc (1.5mg)
+        self.food2 = FoodEntry.objects.create(
+            name="Orange",
+            category="Fruit",
+            servingSize=100,
+            caloriesPerServing=47,
+            proteinContent=0.9,
+            fatContent=0.1,
+            carbohydrateContent=12,
+            nutritionScore=7.0,
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food2, micronutrient=self.iron, value=2.0
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food2, micronutrient=self.vitamin_c, value=80.0
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food2, micronutrient=self.zinc, value=1.5
+        )
+
+        # Food 3: Medium iron (5mg), low vitamin C (10mg), high zinc (3mg)
+        self.food3 = FoodEntry.objects.create(
+            name="Beef",
+            category="Meat",
+            servingSize=100,
+            caloriesPerServing=250,
+            proteinContent=26,
+            fatContent=17,
+            carbohydrateContent=0,
+            nutritionScore=6.0,
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food3, micronutrient=self.iron, value=5.0
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food3, micronutrient=self.vitamin_c, value=10.0
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food3, micronutrient=self.zinc, value=3.0
+        )
+
+        # Food 4: No micronutrients
+        self.food4 = FoodEntry.objects.create(
+            name="Plain Water",
+            category="Beverages",
+            servingSize=100,
+            caloriesPerServing=0,
+            proteinContent=0,
+            fatContent=0,
+            carbohydrateContent=0,
+            nutritionScore=5.0,
+        )
+
+        # Food 5: Only calcium (200mg)
+        self.food5 = FoodEntry.objects.create(
+            name="Milk",
+            category="Dairy",
+            servingSize=100,
+            caloriesPerServing=42,
+            proteinContent=3.4,
+            fatContent=1.0,
+            carbohydrateContent=5.0,
+            nutritionScore=7.5,
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food5, micronutrient=self.calcium, value=200.0
+        )
+
+    def test_bounded_range_filtering(self):
+        """Test filtering with bounded range (low-high)"""
+        response = self.client.get(reverse("get_foods"), {"micronutrient": "iron:3-7"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Beef (5mg) but not Spinach (8mg) or Orange (2mg)
+        self.assertIn("Beef", names)
+        self.assertNotIn("Spinach", names)
+        self.assertNotIn("Orange", names)
+
+    def test_lower_bounded_filtering(self):
+        """Test filtering with lower bound only (low-)"""
+        response = self.client.get(reverse("get_foods"), {"micronutrient": "iron:6-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include only Spinach (8mg)
+        self.assertIn("Spinach", names)
+        self.assertNotIn("Beef", names)
+        self.assertNotIn("Orange", names)
+
+    def test_upper_bounded_filtering(self):
+        """Test filtering with upper bound only (-high)"""
+        response = self.client.get(reverse("get_foods"), {"micronutrient": "iron:-3"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Orange should be included (2mg <= 3)
+        # May include other foods from database with iron <= 3mg
+        # The key is: Spinach (8mg) and Beef (5mg) should NOT be in results
+        self.assertNotIn("Spinach", names)
+        self.assertNotIn("Beef", names)
+
+        # Check that if Orange is in the database, it should be in results
+        all_foods = [food["name"] for food in self.client.get(reverse("get_foods")).data.get("results", [])]
+        if "Orange" in all_foods:
+            self.assertIn("Orange", names)
+
+    def test_case_insensitive_micronutrient_name(self):
+        """Test that micronutrient name matching is case-insensitive"""
+        # Test with different cases
+        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "IRON:5-10"})
+        response2 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:5-10"})
+        response3 = self.client.get(reverse("get_foods"), {"micronutrient": "IrOn:5-10"})
+
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        results3 = [f["name"] for f in response3.data.get("results", [])]
+
+        # All should return the same results
+        self.assertEqual(set(results1), set(results2))
+        self.assertEqual(set(results2), set(results3))
+
+    def test_partial_name_matching(self):
+        """Test that micronutrient name uses icontains (partial matching)"""
+        # "vit" should match "Vitamin C"
+        response = self.client.get(reverse("get_foods"), {"micronutrient": "vit:50-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Orange (80mg Vitamin C)
+        self.assertIn("Orange", names)
+        self.assertNotIn("Spinach", names)  # 30mg
+
+    def test_multiple_micronutrient_filters_and(self):
+        """Test that multiple filters create AND constraints"""
+        # Filter for iron >= 4 AND vitamin C >= 25
+        response = self.client.get(
+            reverse("get_foods"),
+            {"micronutrient": "iron:4-,vitamin c:25-"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include only Spinach (iron=8, vit_c=30)
+        # Beef has iron=5 but vit_c=10
+        # Orange has vit_c=80 but iron=2
+        self.assertIn("Spinach", names)
+        self.assertNotIn("Beef", names)
+        self.assertNotIn("Orange", names)
+
+    def test_invalid_format_skipped(self):
+        """Test that invalid filter formats are gracefully skipped"""
+        # Missing colon
+        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "iron5-10"})
+        # Missing dash
+        response2 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:510"})
+        # Both numbers missing
+        response3 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:-"})
+
+        # All should return all foods (filter skipped)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK)
+
+        # Should return all foods since filter is invalid
+        self.assertGreaterEqual(len(response1.data.get("results", [])), 4)
+        self.assertGreaterEqual(len(response2.data.get("results", [])), 4)
+
+    def test_invalid_numbers_skipped(self):
+        """Test that invalid numeric values are gracefully skipped"""
+        # Non-numeric values
+        response = self.client.get(reverse("get_foods"), {"micronutrient": "iron:abc-xyz"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Should return all foods since filter is invalid
+        self.assertGreaterEqual(len(response.data.get("results", [])), 4)
+
+    def test_nonexistent_micronutrient(self):
+        """Test filtering by micronutrient that doesn't exist"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"micronutrient": "nonexistent:5-10"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        # Should return empty or no results since no food has this micronutrient
+        self.assertEqual(len(results), 0)
+
+    def test_zero_values(self):
+        """Test filtering with zero as a boundary value"""
+        # Create food with very low iron using unique name
+        unique_name = "Test_Low_Iron_Food_Unique_12345"
+        food_low = FoodEntry.objects.create(
+            name=unique_name,
+            category="Test",
+            servingSize=100,
+            caloriesPerServing=100,
+            proteinContent=5,
+            fatContent=5,
+            carbohydrateContent=10,
+            nutritionScore=5.0,
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=food_low, micronutrient=self.iron, value=0.5
+        )
+
+        # Search for our specific food with the filter to avoid pagination issues
+        response = self.client.get(
+            reverse("get_foods"),
+            {"micronutrient": "iron:0-1", "search": unique_name}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Our test food should be included (0.5mg is in range 0-1)
+        self.assertIn(unique_name, names)
+
+        # Test that Orange (2mg) is excluded when we search for it
+        response2 = self.client.get(
+            reverse("get_foods"),
+            {"micronutrient": "iron:0-1", "search": "Orange"}
+        )
+        results2 = response2.data.get("results", [])
+        # Should be empty or not contain Orange since it has 2mg
+        orange_in_results = any(f["name"] == "Orange" for f in results2)
+        self.assertFalse(orange_in_results)
+
+    def test_combined_with_other_filters(self):
+        """Test micronutrient filter combined with category filter"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {
+                "category": "Fruit,Vegetable",
+                "micronutrient": "vitamin c:20-"
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Spinach (veg, 30mg) and Orange (fruit, 80mg)
+        # Should not include Beef (meat category)
+        self.assertIn("Spinach", names)
+        self.assertIn("Orange", names)
+        self.assertNotIn("Beef", names)
+
+    def test_combined_with_search(self):
+        """Test micronutrient filter combined with search"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {
+                "search": "e",  # Matches Orange, Beef
+                "micronutrient": "zinc:1-"
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Orange (zinc=1.5) and Beef (zinc=3)
+        # Should not include Spinach (no zinc)
+        self.assertIn("Orange", names)
+        self.assertIn("Beef", names)
+        self.assertNotIn("Spinach", names)
+
+    def test_exact_boundary_values(self):
+        """Test that boundary values are inclusive"""
+        # Test lower boundary
+        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:5-10"})
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        self.assertIn("Beef", results1)  # Exactly 5mg
+
+        # Test upper boundary
+        response2 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:1-5"})
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        self.assertIn("Beef", results2)  # Exactly 5mg
+
+    def test_foods_without_micronutrient_treated_as_zero(self):
+        """Test that foods without a micronutrient entry are treated as having 0"""
+        # Create a food without any Alcohol micronutrient
+        apple = create_food_entry("Apple")
+        # Note: Apple has NO alcohol entry at all
+
+        # Create Alcohol micronutrient
+        alcohol = Micronutrient.objects.create(name="Alcohol", unit="g")
+
+        # Create a food WITH alcohol
+        beer = create_food_entry("Beer")
+        FoodEntryMicronutrient.objects.create(food_entry=beer, micronutrient=alcohol, value=5.0)
+
+        # Test 1: Filter for alcohol <= 0 should include Apple (no entry = 0)
+        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:-0"})
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        self.assertIn("Apple", results1, "Apple (no alcohol entry) should match alcohol:-0")
+        self.assertNotIn("Beer", results1, "Beer (5g alcohol) should NOT match alcohol:-0")
+
+        # Test 2: Filter for alcohol >= 1 should NOT include Apple
+        response2 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:1-"})
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        self.assertNotIn("Apple", results2, "Apple (no alcohol entry = 0) should NOT match alcohol:1-")
+        self.assertIn("Beer", results2, "Beer (5g alcohol) should match alcohol:1-")
+
+        # Test 3: Filter for 0 <= alcohol <= 10 should include both
+        response3 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:0-10"})
+        results3 = [f["name"] for f in response3.data.get("results", [])]
+        self.assertIn("Apple", results3, "Apple (no alcohol entry = 0) should match alcohol:0-10")
+        self.assertIn("Beer", results3, "Beer (5g alcohol) should match alcohol:0-10")
+
+        # Test 4: Filter for alcohol <= 3 should include Apple but not Beer
+        response4 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:-3"})
+        results4 = [f["name"] for f in response4.data.get("results", [])]
+        self.assertIn("Apple", results4, "Apple (no alcohol entry = 0) should match alcohol:-3")
+        self.assertNotIn("Beer", results4, "Beer (5g alcohol) should NOT match alcohol:-3")
+
+    def test_empty_micronutrient_param(self):
+        """Test with empty micronutrient parameter"""
+        response = self.client.get(reverse("get_foods"), {"micronutrient": ""})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Should return all foods
+        self.assertGreaterEqual(len(response.data.get("results", [])), 4)
+
+    def test_whitespace_handling(self):
+        """Test that whitespace in filter is handled correctly"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"micronutrient": " iron : 5 - 10 , vitamin c : 20 - "}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should still work despite extra spaces
+        self.assertIn("Spinach", names)  # iron=8, vit_c=30
+
+    def test_serializer_includes_micronutrients(self):
+        """Test that the serializer includes micronutrients in response"""
+        response = self.client.get(reverse("get_foods"), {"micronutrient": "iron:5-10"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+
+        # Find Beef in results
+        beef = next((f for f in results if f["name"] == "Beef"), None)
+        self.assertIsNotNone(beef)
+
+        # Check that micronutrients are included
+        self.assertIn("micronutrients", beef)
+        self.assertIsInstance(beef["micronutrients"], dict)
+
+        # Check specific values with new structure
+        self.assertIn("Iron", beef["micronutrients"])
+        self.assertEqual(beef["micronutrients"]["Iron"]["value"], 5.0)
+        self.assertIn("unit", beef["micronutrients"]["Iron"])
+
+        self.assertIn("Vitamin C", beef["micronutrients"])
+        self.assertEqual(beef["micronutrients"]["Vitamin C"]["value"], 10.0)
+        self.assertIn("unit", beef["micronutrients"]["Vitamin C"])
+
+        self.assertIn("Zinc", beef["micronutrients"])
+        self.assertEqual(beef["micronutrients"]["Zinc"]["value"], 3.0)
+        self.assertIn("unit", beef["micronutrients"]["Zinc"])
 
 
