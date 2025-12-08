@@ -1145,6 +1145,11 @@ class MicronutrientFilteringTests(TestCase):
     def setUp(self):
         self.client = APIClient()
 
+        # Clear all existing food and micronutrient data to ensure clean test state
+        FoodEntry.objects.all().delete()
+        Micronutrient.objects.all().delete()
+
+
         # Create micronutrients with units
         self.iron = Micronutrient.objects.create(name="Iron", unit="mg")
         self.vitamin_c = Micronutrient.objects.create(name="Vitamin C", unit="mg")

@@ -201,7 +201,12 @@ class FoodCatalog(ListAPIView):
 
                 # Condition for foods without this micronutrient (treated as 0)
                 # Include them only if the range allows 0
-                lacks_micronutrient = ~Q(micronutrient_values__micronutrient__name__icontains=name)
+                # Note: We can't use ~Q(...) on related fields because it checks if ANY related object
+                # doesn't match, not if NO related objects match. Use a subquery instead.
+                foods_with_nutrient = FoodEntry.objects.filter(
+                    micronutrient_values__micronutrient__name__icontains=name
+                ).values_list('id', flat=True)
+                lacks_micronutrient = ~Q(id__in=foods_with_nutrient)
 
                 # Determine if 0 falls within the specified range
                 zero_in_range = True
