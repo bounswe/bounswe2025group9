@@ -53,7 +53,10 @@ class FoodEntrySerializer(serializers.ModelSerializer):
 
     def get_micronutrients(self, obj):
         return {
-            link.micronutrient.name: link.value
+            link.micronutrient.name: {
+                'value': round(link.value,2),
+                'unit': link.micronutrient.unit
+            }
             for link in obj.micronutrient_values.all()
         }
 

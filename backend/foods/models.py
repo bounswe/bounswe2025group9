@@ -11,6 +11,7 @@ class Allergen(models.Model):
 
 class Micronutrient(models.Model):
     name = models.CharField(max_length=255, unique=True)
+    unit = models.CharField(max_length=2, blank=False, default='g')
 
     def __str__(self):
         return self.name

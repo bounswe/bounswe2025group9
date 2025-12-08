@@ -187,11 +187,6 @@ const DailyTargets = () => {
             // Get current values from log (if available)
             const logMicronutrients = todayLog?.micronutrients_summary || {};
             
-            // Extract unit from key name (e.g., "Vitamin A, RAE (µg)" -> "µg")
-            const extractUnit = (key: string): string => {
-              const match = key.match(/\(([^)]+)\)$/);
-              return match ? match[1] : '';
-            };
             
             // Extract name without unit (e.g., "Vitamin A, RAE (µg)" -> "Vitamin A, RAE")
             const extractName = (key: string): string => {
@@ -262,8 +257,8 @@ const DailyTargets = () => {
                     {showVitamins && (
                       <div className="mt-2 space-y-1.5 pl-2">
                         {vitamins.map(([key, target]) => {
-                          const name = extractName(key);
-                          const unit = extractUnit(key);
+                          const name = key;
+                          const unit = target.unit;
                           // Get current value from log (if available), otherwise 0
                           const currentValue = typeof logMicronutrients[key] === 'number' 
                             ? logMicronutrients[key] 
@@ -327,8 +322,8 @@ const DailyTargets = () => {
                     {showMinerals && (
                       <div className="mt-2 space-y-1.5 pl-2">
                         {minerals.map(([key, target]) => {
-                          const name = extractName(key);
-                          const unit = extractUnit(key);
+                          const name = key;
+                          const unit = target.unit;
                           // Get current value from log (if available), otherwise 0
                           const currentValue = typeof logMicronutrients[key] === 'number' 
                             ? logMicronutrients[key] 

@@ -23,20 +23,20 @@ def forwards(apps, schema_editor):
             # unit is one of {'(mg)', '(g)', '(µg)'}
             if name.endswith('(mg)'):
                 name = name[:-4].strip()
-                value = float(value) / 1000.0  # convert to grams
+                unit = 'mg'
             elif name.endswith('(µg)'):
                 name = name[:-4].strip()
-                value = float(value) / 1_000_000.0  # convert to grams
+                unit = 'ug'
             else:
                 name = name.rstrip('(g)').strip()
-                value = float(value)
+                unit = 'g'
 
-            value = value / fe.servingSize * 100.0  # per 100g
+            value = float(value)
 
             # get or create in-memory
             mn = micronutrient_cache.get(name)
             if mn is None:
-                mn = Micronutrient.objects.create(name=name)
+                mn = Micronutrient.objects.create(name=name, unit=unit )
                 micronutrient_cache[name] = mn
 
             batch.append(
@@ -84,6 +84,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(primary_key=True, serialize=False)),
                 ('name', models.CharField(max_length=255, unique=True)),
+                ("unit", models.CharField(max_length=2)),
             ],
         ),
 

@@ -11,6 +11,11 @@ export interface PaginatedResponseWithStatus<T> {
 export type PriceUnit = 'per_100g' | 'per_unit';
 export type PriceCategory = '₺' | '₺ ₺' | '₺ ₺₺';
 
+export interface Micronutrient {
+  value: number;
+  unit: 'mg' | 'ug' | 'g';
+}
+
 export interface Food {
   id: number;
   name: string;
@@ -31,7 +36,7 @@ export interface Food {
   category_overridden_by?: number | null;
   category_override_reason?: string | null;
   category_overridden_at?: string | null;
-  micronutrients?: { [key: string]: number };
+  micronutrients?: { [key: string]: Micronutrient };
 }
 
 export interface FoodProposal {
