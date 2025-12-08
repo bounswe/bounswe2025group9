@@ -59,6 +59,9 @@ export interface FoodProposal {
   createdAt: string;
 }
 
+// Type for creating a new food proposal (omits backend-generated fields)
+export type CreateFoodProposalRequest = Omit<FoodProposal, 'id' | 'proposedBy' | 'createdAt' | 'isApproved'>;
+
 export interface FoodProposalResponse {
   message: string;
   proposalId: number;
@@ -415,7 +418,7 @@ export const apiClient = {
     }, true);
   },
 
-  proposeFood: (proposal: FoodProposal) =>
+  proposeFood: (proposal: CreateFoodProposalRequest) =>
     fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
