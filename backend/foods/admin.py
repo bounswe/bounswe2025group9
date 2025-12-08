@@ -102,7 +102,7 @@ class IsAdminUser(BasePermission):
 
 
 class FoodProposalModerationSerializer(serializers.ModelSerializer):
-    """Serializer for listing food proposals."""
+    """Serializer for listing and updating food proposals."""
 
     proposedBy = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(read_only=True)
@@ -132,6 +132,15 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "micronutrients",
             "is_private",
         ]
+        read_only_fields = [
+            "id",
+            "proposedBy",
+            "createdAt",
+            "isApproved",
+            "nutritionScore",
+        ]
+        # isAproved field should only be modified via approve endpoint.
+        # nutritionScore should be calculated automatically, hence should not be editable.
 
     def get_proposedBy(self, obj):
         return {"id": obj.proposedBy.id, "username": obj.proposedBy.username}
@@ -146,10 +155,10 @@ class FoodProposalActionSerializer(serializers.Serializer):
     approved = serializers.BooleanField(required=True)
 
 
-class FoodProposalModerationViewSet(viewsets.ReadOnlyModelViewSet):
+class FoodProposalModerationViewSet(viewsets.ModelViewSet):
     """
     ViewSet for food proposal moderation.
-    Allows admins to list and approve/reject food proposals.
+    Allows admins to list, update, and approve/reject food proposals.
     """
 
     queryset = (
@@ -178,6 +187,36 @@ class FoodProposalModerationViewSet(viewsets.ReadOnlyModelViewSet):
         # If is_approved not specified, return all
 
         return queryset.order_by("-createdAt")
+
+    def update(self, request, *args, **kwargs):
+        """
+        Update a food proposal and recalculate nutrition score.
+        PATCH/PUT /api/foods/moderation/food-proposals/{id}/
+        """
+        partial = kwargs.pop("partial", False)
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+
+        # Save the instance
+        self.perform_update(serializer)
+
+        # Recalculate nutrition score
+        from api.db_initialization.nutrition_score import calculate_nutrition_score
+
+        instance.refresh_from_db()
+        nutrition_score = calculate_nutrition_score(
+            {
+                "caloriesPerServing": instance.caloriesPerServing,
+                "proteinContent": instance.proteinContent,
+                "fatContent": instance.fatContent,
+                "carbohydrateContent": instance.carbohydrateContent,
+            }
+        )
+        instance.nutritionScore = nutrition_score
+        instance.save(update_fields=["nutritionScore"])
+
+        return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
