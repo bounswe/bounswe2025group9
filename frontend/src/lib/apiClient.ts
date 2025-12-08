@@ -389,7 +389,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string }) => {
+  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string, micronutrient?: string }) => {
     let url = "/foods/";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
@@ -404,6 +404,9 @@ export const apiClient = {
     if (params && params.order) {
       queryParams.append('order', params.order);
     }
+    if (params && params.micronutrient) {
+      queryParams.append('micronutrient', params.micronutrient);
+    }
     const queryString = queryParams.toString();
     if (queryString) {
       url += `?${queryString}`;
@@ -417,6 +420,14 @@ export const apiClient = {
     fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
+    }, true),
+
+  getAvailableMicronutrients: () =>
+    fetchJson<{
+      micronutrients: Array<{ name: string; unit: string }>;
+      count: number;
+    }>("/foods/available-micronutrients/", {
+      method: "GET",
     }, true),
 
   // Get personalized daily intake recommendations (deprecated - use getNutritionTargets instead)
