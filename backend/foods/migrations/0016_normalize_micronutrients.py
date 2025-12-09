@@ -36,7 +36,7 @@ def forwards(apps, schema_editor):
             # get or create in-memory
             mn = micronutrient_cache.get(name)
             if mn is None:
-                mn = Micronutrient.objects.create(name=name, unit=unit )
+                mn, created = Micronutrient.objects.get_or_create(name=name, unit=unit)
                 micronutrient_cache[name] = mn
 
             batch.append(
