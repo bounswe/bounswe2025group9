@@ -55,9 +55,13 @@ def load_food_data(apps, schema_editor):
     if not os.path.exists(json_path):
         raise FileNotFoundError(f"JSON file not found: {json_path}")
 
-    # Create loader instance and load foods
+    # Get historical models - these will have the fields as they existed at this migration
+    FoodEntry = apps.get_model('foods', 'FoodEntry')
+    Allergen = apps.get_model('foods', 'Allergen')
+
+    # Create loader instance with historical models and load foods
     # Use skip_errors=True to continue even if some items fail
-    loader = FoodLoader(skip_errors=True)
+    loader = FoodLoader(skip_errors=True, food_entry_model=FoodEntry, allergen_model=Allergen)
 
     try:
         # Load all foods from the JSON file

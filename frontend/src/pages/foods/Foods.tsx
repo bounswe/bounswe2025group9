@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 import NutritionScore from '../../components/NutritionScore';
+import { MicronutrientFilter, MicronutrientFilterItem, buildMicronutrientQuery } from '../../components/MicronutrientFilter';
 
 export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
@@ -83,14 +84,17 @@ const Foods = () => {
     const [warning, setWarning] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState<string>('');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [micronutrientFilters, setMicronutrientFilters] = useState<MicronutrientFilterItem[]>([]);
 
-    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder) => {
+    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder, microFilters = micronutrientFilters) => {
         setLoading(true);
         try {
-            const params: any = { 
-                page: pageNum, 
+            const micronutrientQuery = microFilters.length > 0 ? buildMicronutrientQuery(microFilters) : undefined;
+            const params: any = {
+                page: pageNum,
                 search,
-                ...(sortByParam && { sort_by: sortByParam, order: sortOrderParam })
+                ...(sortByParam && { sort_by: sortByParam, order: sortOrderParam }),
+                ...(micronutrientQuery && { micronutrient: micronutrientQuery })
             };
             console.log("API request params:", params);
             const response = await apiClient.getFoods(params);
@@ -147,6 +151,13 @@ const Foods = () => {
             fetchFoods(page, searchTerm);
         }
     }, [sortBy, sortOrder]);
+
+    // Refetch when micronutrient filters change
+    useEffect(() => {
+        setPage(1);
+        setLoading(true);
+        fetchFoods(1, searchTerm);
+    }, [micronutrientFilters]);
 
     const pageSize = foods.length
     const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
@@ -255,6 +266,14 @@ const Foods = () => {
                                         </span>
                                     </button>
                                 ))}
+                            </div>
+
+                            {/* Micronutrient Filters */}
+                            <div className="mt-8">
+                                <MicronutrientFilter
+                                    filters={micronutrientFilters}
+                                    onChange={setMicronutrientFilters}
+                                />
                             </div>
                         </div>
                     </div>

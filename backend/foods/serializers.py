@@ -15,6 +15,7 @@ from foods.models import (
 # Serializer for FoodEntry model
 class FoodEntrySerializer(serializers.ModelSerializer):
     imageUrl = serializers.SerializerMethodField()
+    micronutrients = serializers.SerializerMethodField()
 
     class Meta:
         model = FoodEntry
@@ -49,6 +50,15 @@ class FoodEntrySerializer(serializers.ModelSerializer):
         # without the correct port (http://localhost instead of http://localhost:8080)
         encoded_url = quote(obj.imageUrl, safe="")
         return f"/api/foods/image-proxy/?url={encoded_url}"
+
+    def get_micronutrients(self, obj):
+        return {
+            link.micronutrient.name: {
+                'value': round(link.value,2),
+                'unit': link.micronutrient.unit
+            }
+            for link in obj.micronutrient_values.all()
+        }
 
 
 class FoodProposalSerializer(serializers.ModelSerializer):

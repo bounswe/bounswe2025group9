@@ -106,7 +106,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
       default:
         // Check if it's a micronutrient
         if (food.micronutrients && food.micronutrients[nutrient]) {
-          return food.micronutrients[nutrient];
+          return food.micronutrients[nutrient].value;
         }
         return 0;
     }
@@ -210,12 +210,6 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
 
   if (!food) return null;
 
-  // Helper function to extract unit from nutrient name (last parentheses only)
-  const extractUnit = (nutrientName: string): string => {
-    // Match the last set of parentheses at the end of the string
-    const match = nutrientName.match(/\(([^()]+)\)$/);
-    return match ? match[1] : '';
-  };
 
   // Helper function to convert amount to comparable value (in micrograms)
   const normalizeAmount = (amount: number, unit: string): number => {
@@ -228,44 +222,45 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
 
   // Define priority micronutrients to display
   const priorityMicronutrients = [
-    "Water (g)",
-    "Niacin (mg)",
-    "Thiamin (mg)",
-    "Retinol (g)",
-    "Zinc, Zn (mg)",
-    "Copper, Cu (mg)",
-    "Riboflavin (mg)",
-    "Sodium, Na (mg)",
-    "Calcium, Ca (mg)",
-    "Cholesterol (mg)",
-    "Total Sugars (g)",
-    "Vitamin B-6 (mg)",
-    "Potassium, K (mg)",
-    "Magnesium, Mg (mg)",
-    "Phosphorus, P (mg)",
-    "Selenium, Se (g)",
-    "Vitamin B-12 (g)",
-    "Choline, total (mg)",
-    "Carotene, beta (g)",
-    "Vitamin A, RAE (g)",
-    "Vitamin D (D2 + D3) (g)",
-    "Vitamin K (phylloquinone) (g)",
-    "Fatty acids, total saturated (g)",
-    "Vitamin E (alpha-tocopherol) (mg)",
-    "Fatty acids, total monounsaturated (g)",
-    "Fatty acids, total polyunsaturated (g)"
+    "Water",
+    "Niacin",
+    "Thiamin",
+    "Retinol",
+    "Zinc, Zn)",
+    "Copper, Cu",
+    "Riboflavin",
+    "Sodium, Na",
+    "Calcium, Ca",
+    "Cholesterol",
+    "Total Sugars",
+    "Vitamin B-6",
+    "Potassium, K",
+    "Magnesium, Mg",
+    "Phosphorus, P",
+    "Selenium, Se",
+    "Vitamin B-12",
+    "Choline, total",
+    "Carotene, beta",
+    "Vitamin A, RAE",
+    "Vitamin D (D2 + D3)",
+    "Vitamin K (phylloquinone)",
+    "Fatty acids, total saturated",
+    "Vitamin E (alpha-tocopherol)",
+    "Fatty acids, total monounsaturated",
+    "Fatty acids, total polyunsaturated"
   ];
 
   // Filter and display only priority micronutrients that exist in the food data, sorted by normalized amount
-  const displayedMicronutrients = food.micronutrients 
+  const displayedMicronutrients = food.micronutrients
     ? priorityMicronutrients
         .filter(nutrient => food.micronutrients && nutrient in food.micronutrients)
-        .map(nutrient => [nutrient, food.micronutrients![nutrient]] as [string, number])
+        .map(nutrient => {
+          const micronutrient = food.micronutrients![nutrient];
+          return [nutrient, micronutrient.value, micronutrient.unit] as [string, number, string];
+        })
         .sort((a, b) => {
-          const unitA = extractUnit(a[0]);
-          const unitB = extractUnit(b[0]);
-          const normalizedA = normalizeAmount(a[1], unitA);
-          const normalizedB = normalizeAmount(b[1], unitB);
+          const normalizedA = normalizeAmount(a[1], a[2]);
+          const normalizedB = normalizeAmount(b[1], b[2]);
           return normalizedB - normalizedA;
         })
     : [];
@@ -507,13 +502,12 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                {displayedMicronutrients.map(([nutrient, amount]) => {
-                  const unit = extractUnit(nutrient);
+                {displayedMicronutrients.map(([nutrient, amount, unit]) => {
                   // Remove only the unit part (last parentheses) from the name
                   const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
-                  
+
                   return (
-                    <div 
+                    <div
                       key={nutrient}
                       className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center relative"
                     >
