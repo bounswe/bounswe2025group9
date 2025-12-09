@@ -19,13 +19,23 @@ from api.db_initialization.nutrition_score import calculate_nutrition_score
 class FoodLoader:
     """Standalone food loader for USDA FDC JSON format."""
 
-    def __init__(self, skip_errors=False):
+    def __init__(self, skip_errors=False, food_entry_model=None, allergen_model=None):
         self.skip_errors = skip_errors
         self.count = 0
         self.failed = 0
         self.skipped = 0  # Track skipped items due to inputFoods filter
         # Collect failures as dicts: {index, name, error, trace}
         self.failures = []
+
+        # Allow passing models for use in migrations (historical models)
+        # If not provided, use the current models from foods.models
+        if food_entry_model is None or allergen_model is None:
+            from foods.models import FoodEntry, Allergen
+            self.FoodEntry = FoodEntry
+            self.Allergen = Allergen
+        else:
+            self.FoodEntry = food_entry_model
+            self.Allergen = allergen_model
 
     def load_foods(self, json_file, limit=None):
         """Main entry point: load foods from JSON file."""
@@ -365,7 +375,7 @@ class FoodLoader:
         # Pre-fetch allergen objects
         allergen_objects = []
         for allergen_name in allergen_names:
-            allergen, _ = Allergen.objects.get_or_create(name=allergen_name)
+            allergen, _ = self.Allergen.objects.get_or_create(name=allergen_name)
             allergen_objects.append(allergen)
 
         # Calculate nutrition score first
@@ -384,7 +394,7 @@ class FoodLoader:
             raise ValueError(f"Nutrition score out of bounds: {score}")
 
         # Create or update the FoodEntry
-        food_entry, created = FoodEntry.objects.update_or_create(
+        food_entry, created = self.FoodEntry.objects.update_or_create(
             name=name,
             defaults={
                 "category": category,
