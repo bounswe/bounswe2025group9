@@ -41,6 +41,34 @@ export interface FoodItem {
   priceUnit?: 'per_100g' | 'per_unit'; // Price unit (per 100g or per unit)
   priceCategory?: string | null; // Price category ('$', '$$', '$$$')
   currency?: string; // Currency code (e.g., 'USD', 'TRY')
+  isPrivate?: boolean; // Flag for private foods
+}
+
+/**
+ * Private food item - locally stored custom food
+ */
+export interface PrivateFoodItem extends Omit<FoodItem, 'isPrivate'> {
+  isPrivate: true;
+  createdAt: string; // ISO date string
+  updatedAt?: string; // ISO date string
+}
+
+/**
+ * Private food log entry - locally stored food entry
+ */
+export interface PrivateFoodLogEntry {
+  id: number; // Negative ID for local entries
+  privateFoodId: number; // Reference to private food
+  food_name: string;
+  serving_size: number;
+  serving_unit: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  date: string; // ISO date string (YYYY-MM-DD)
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  logged_at: string;
 }
 
 /**

@@ -153,7 +153,7 @@ const FoodScreen: React.FC = () => {
     return Object.values(FOOD_SORT_OPTIONS).includes(sortOption as any);
   }, [sortOption]);
   
-  // Apply only client-side filters (dietary, price range, nutrition range) that aren't handled by backend
+  // Apply only client-side filters (dietary, price category, price range, nutrition range) that aren't handled by backend
   // Backend handles: category, name search, and sorting
   const displayItems = useMemo(() => {
     // If backend sorting is active, use the raw foodData (already sorted by backend)
@@ -168,6 +168,18 @@ const FoodScreen: React.FC = () => {
           item.dietaryOptions?.includes(option)
         )
       );
+    }
+    
+    // Apply price category filter (not handled by backend)
+    // Normalize category to handle both $ and ₺ symbols, and handle spaces
+    if (filters.priceCategory) {
+      result = result.filter(item => {
+        if (!item.priceCategory) return false;
+        // Normalize both values: replace ₺ with $, remove all spaces
+        const normalizedItemCategory = item.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '');
+        const normalizedFilterCategory = filters.priceCategory!.replace(/₺/g, '$').replace(/\s+/g, '');
+        return normalizedItemCategory === normalizedFilterCategory;
+      });
     }
     
     // Apply price range filter (not handled by backend)
@@ -403,17 +415,24 @@ const FoodScreen: React.FC = () => {
 
   // Handle filter application
   const handleApplyFilters = useCallback((newFilters: FoodFilters) => {
+    // Check if category filter changed (this requires backend refetch)
+    const categoryChanged = newFilters.category !== filters.category;
+    
+    // Update all filters
     setCategoryFilter(newFilters.category);
     setDietaryOptions(newFilters.dietaryOptions || []);
     setPriceCategory(newFilters.priceCategory);
     setNutritionScoreRange(newFilters.minNutritionScore, newFilters.maxNutritionScore);
 
-    // Reset pagination when filters change
-    setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
-    currentPageRef.current = 1;
-    // Clear food data to avoid mixing results from different filters
-    setFoodData([]);
-  }, [setCategoryFilter, setDietaryOptions, setPriceCategory, setNutritionScoreRange]);
+    // Only reset pagination and clear data when backend-relevant filters change (category)
+    // Client-side filters (priceCategory, dietaryOptions, nutritionScoreRange) work immediately
+    // on existing data via displayItems, so no need to clear and refetch
+    if (categoryChanged) {
+      setPagination(prev => ({ ...prev, page: 1, hasMore: true }));
+      currentPageRef.current = 1;
+      setFoodData([]);
+    }
+  }, [filters.category, setCategoryFilter, setDietaryOptions, setPriceCategory, setNutritionScoreRange]);
 
   // Handle propose food submission
   const handleProposeFoodSubmit = useCallback(async (data: FoodProposalData) => {
