@@ -451,9 +451,48 @@ def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
         base_price=proposal.base_price,
         price_unit=proposal.price_unit or PriceUnit.PER_100G,
         currency=proposal.currency or DEFAULT_CURRENCY,
-        micronutrients=proposal.micronutrients,
     )
     entry.allergens.set(proposal.allergens.all())
+
+    # Copy micronutrients from proposal to entry using normalized model
+    from foods.models import Micronutrient, FoodEntryMicronutrient
+    import re
+    if proposal.micronutrients:
+        for name, value in proposal.micronutrients.items():
+            if value is None or value == "":
+                continue  # Skip empty values
+
+            # Try exact match first
+            micronutrient = Micronutrient.objects.filter(name=name).first()
+
+            # If not found, try extracting unit from name and creating/finding micronutrient
+            if not micronutrient:
+                # Extract unit from name like "Manganese, Mn (mg)" -> name="Manganese, Mn", unit="mg"
+                match = re.match(r'^(.+?)\s*\(([^)]+)\)$', name)
+                if match:
+                    base_name = match.group(1).strip()
+                    unit = match.group(2).strip()
+
+                    # Try to find by base name
+                    micronutrient = Micronutrient.objects.filter(name=base_name).first()
+
+                    # If still not found, create it
+                    if not micronutrient:
+                        micronutrient = Micronutrient.objects.create(name=base_name, unit=unit)
+                else:
+                    # No unit in parentheses, create with default unit
+                    micronutrient = Micronutrient.objects.create(name=name, unit='g')
+
+            # Create the food entry micronutrient
+            try:
+                FoodEntryMicronutrient.objects.create(
+                    food_entry=entry,
+                    micronutrient=micronutrient,
+                    value=float(value)
+                )
+            except (ValueError, TypeError):
+                # Skip invalid numeric values
+                continue
 
     if entry.base_price is not None:
         entry.price_category = assign_price_category_value(
