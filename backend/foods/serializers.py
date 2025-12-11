@@ -65,7 +65,7 @@ class FoodProposalSerializer(serializers.ModelSerializer):
     class Meta:
         model = FoodProposal
         fields = "__all__"
-        read_only_fields = ("proposedBy", "nutritionScore", "is_private")
+        read_only_fields = ("proposedBy", "nutritionScore")
 
 
 class FoodPriceUpdateSerializer(serializers.Serializer):

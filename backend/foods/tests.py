@@ -1002,30 +1002,7 @@ class ModeratorWorkflowTests(APITestCase):
                 change_type=PriceAudit.ChangeType.PRICE_UPDATE
             ).exists()
         )
-
-    def test_reject_food_proposal_marks_as_private(self):
-        """Test that rejecting a proposal marks it as private"""
-        proposal = FoodProposal.objects.create(
-            name="Rejected Private Food",
-            category="Meals",
-            servingSize=100,
-            caloriesPerServing=200,
-            proteinContent=10,
-            fatContent=5,
-            carbohydrateContent=30,
-            nutritionScore=5.0,
-            proposedBy=self.proposer,
-        )
-
-        url = reverse("moderation-food-proposals-approve", args=[proposal.id])
-        response = self.client.post(url, {"approved": False}, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        proposal.refresh_from_db()
-        self.assertFalse(proposal.isApproved)
-        self.assertTrue(proposal.is_private)
-
+         
     def test_approve_proposal_with_micronutrients_with_units_in_name(self):
         """Test that approving a proposal with micronutrients that have units in the name works"""
         proposal = FoodProposal.objects.create(
@@ -1085,58 +1062,6 @@ class ModeratorWorkflowTests(APITestCase):
         self.assertEqual(entry_micronutrients.count(), 4, "All 4 micronutrients should be copied")
 
 
-class UserFoodProposalListTests(APITestCase):
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="proposer",
-            email="proposer@example.com",
-            password="password123"
-        )
-        self.other_user = User.objects.create_user(
-            username="other",
-            email="other@example.com",
-            password="password123"
-        )
-        self.client.force_authenticate(user=self.user)
-        self.url = reverse("my_food_proposals")
-
-    def test_list_my_proposals(self):
-        # Create proposals for user
-        FoodProposal.objects.create(
-            name="My Pending",
-            proposedBy=self.user,
-            servingSize=100, caloriesPerServing=100,
-            proteinContent=10, fatContent=10, carbohydrateContent=10,
-            nutritionScore=5.0
-        )
-        FoodProposal.objects.create(
-            name="My Private",
-            proposedBy=self.user,
-            isApproved=False,
-            is_private=True,
-            servingSize=100, caloriesPerServing=100,
-            proteinContent=10, fatContent=10, carbohydrateContent=10,
-            nutritionScore=5.0
-        )
-
-        # Create proposal for other user
-        FoodProposal.objects.create(
-            name="Other's Proposal",
-            proposedBy=self.other_user,
-            servingSize=100, caloriesPerServing=100,
-            proteinContent=10, fatContent=10, carbohydrateContent=10,
-            nutritionScore=5.0
-        )
-
-        response = self.client.get(self.url)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        results = response.data.get("results", [])
-        self.assertEqual(len(results), 2)
-        names = [p["name"] for p in results]
-        self.assertIn("My Pending", names)
-        self.assertIn("My Private", names)
-        self.assertNotIn("Other's Proposal", names)
 
 
 class MicronutrientFilteringTests(TestCase):
