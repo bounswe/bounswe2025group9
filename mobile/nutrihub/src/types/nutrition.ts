@@ -90,3 +90,28 @@ export interface MealTotals {
   fat: number;
 }
 
+/**
+ * Private Food - User's custom food items stored locally
+ * These foods are not synced to the backend and can be used immediately
+ * in nutrition tracking without admin approval.
+ */
+export interface PrivateFood {
+  id: string; // UUID for local identification
+  name: string;
+  category: string;
+  servingSize: number; // in grams
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  fiber?: number;
+  sugar?: number;
+  micronutrients?: Record<string, number>;
+  dietaryOptions?: string[];
+  createdAt: string;
+  updatedAt: string;
+  // Flag to track origin
+  sourceType: 'custom' | 'modified_proposal';
+  originalFoodId?: number; // If modified from a proposal
+}
+
