@@ -25,6 +25,7 @@ import TextInput from '../../components/common/TextInput';
 import { FoodLogEntry, MealTotals, DailyNutritionLog, NutritionTargets, UserMetrics, MicroNutrient, PrivateFood } from '../../types/nutrition';
 import { FoodItem } from '../../types/types';
 import { nutritionService } from '../../services/api/nutrition.service';
+import { privateFoodService } from '../../services/api/privateFood.service';
 
 // Helper functions to categorize and extract info from micronutrient keys (matching frontend logic)
 const extractUnit = (key: string): string => {
@@ -184,14 +185,19 @@ const NutritionTrackingScreen: React.FC = () => {
 
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
+
+      // Load private food entries from AsyncStorage for this date
+      const storedPrivateEntries = await privateFoodService.getPrivateFoodEntries(dateStr);
+      setPrivateFoodEntries(storedPrivateEntries as FoodLogEntry[]);
+
       const log = await nutritionService.getDailyLog(dateStr);
 
       // Merge backend entries with local private food entries
-      if (log && privateFoodEntries.length > 0) {
-        const mergedEntries = [...(log.entries || []), ...privateFoodEntries];
+      if (log && storedPrivateEntries.length > 0) {
+        const mergedEntries = [...(log.entries || []), ...(storedPrivateEntries as FoodLogEntry[])];
 
         // Recalculate totals including private food entries
-        const privateTotals = privateFoodEntries.reduce(
+        const privateTotals = storedPrivateEntries.reduce(
           (acc, entry) => ({
             calories: acc.calories + (entry.calories || 0),
             protein: acc.protein + (entry.protein || 0),
@@ -214,9 +220,8 @@ const NutritionTrackingScreen: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching daily log:', error);
-      // If 404, it might just mean no log exists yet, which is fine
     }
-  }, [selectedDate, metrics, privateFoodEntries]);
+  }, [selectedDate, metrics]);
 
   // Fetch weekly logs
   const fetchWeeklyLogs = useCallback(async () => {
@@ -337,11 +342,11 @@ const NutritionTrackingScreen: React.FC = () => {
 
       // Check if this is a private food (negative ID)
       if (isSelectedFoodPrivate || selectedFood.id < 0) {
-        // Private foods can't be sent to backend - add to separate state
-        // Calculate nutritional values based on serving size
+        // Private foods can't be sent to backend - save to AsyncStorage
         const macros = selectedFood.macronutrients;
-        const calculatedEntry: FoodLogEntry = {
-          id: -Date.now(), // Unique negative ID for local entry
+        const dateStr = selectedDate.toISOString().split('T')[0];
+
+        const entryData = {
           food_id: selectedFood.id,
           food_name: selectedFood.title + ' (Private)',
           serving_size: numServingSize,
@@ -352,27 +357,32 @@ const NutritionTrackingScreen: React.FC = () => {
           carbohydrates: Math.round((macros?.carbohydrates || 0) * multiplier * 10) / 10,
           fat: Math.round((macros?.fat || 0) * multiplier * 10) / 10,
           logged_at: new Date().toISOString(),
+          date: dateStr,
         };
 
-        // Add to privateFoodEntries state (persists across fetchDailyLog calls)
-        setPrivateFoodEntries(prev => [...prev, calculatedEntry]);
+        // Save to AsyncStorage
+        const savedEntry = await privateFoodService.addPrivateFoodEntry(entryData);
+
+        // Update local state and UI
+        const newEntry = savedEntry as FoodLogEntry;
+        setPrivateFoodEntries(prev => [...prev, newEntry]);
 
         // Also update dailyLog immediately for instant UI feedback
         if (dailyLog) {
-          const updatedEntries = [...(dailyLog.entries || []), calculatedEntry];
+          const updatedEntries = [...(dailyLog.entries || []), newEntry];
           setDailyLog({
             ...dailyLog,
             entries: updatedEntries,
-            total_calories: parseFloat(String(dailyLog.total_calories || 0)) + calculatedEntry.calories,
-            total_protein: parseFloat(String(dailyLog.total_protein || 0)) + calculatedEntry.protein,
-            total_carbohydrates: parseFloat(String(dailyLog.total_carbohydrates || 0)) + calculatedEntry.carbohydrates,
-            total_fat: parseFloat(String(dailyLog.total_fat || 0)) + calculatedEntry.fat,
+            total_calories: parseFloat(String(dailyLog.total_calories || 0)) + newEntry.calories,
+            total_protein: parseFloat(String(dailyLog.total_protein || 0)) + newEntry.protein,
+            total_carbohydrates: parseFloat(String(dailyLog.total_carbohydrates || 0)) + newEntry.carbohydrates,
+            total_fat: parseFloat(String(dailyLog.total_fat || 0)) + newEntry.fat,
           });
         }
 
         Alert.alert(
           'Private Food Added',
-          'Private food added to your log for this session.',
+          'Private food saved to your log.',
           [{ text: 'OK' }]
         );
       } else {

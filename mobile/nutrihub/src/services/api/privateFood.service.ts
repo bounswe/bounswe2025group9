@@ -188,6 +188,96 @@ export const clearAllPrivateFoods = async (): Promise<void> => {
     }
 };
 
+// ============ Private Food Entries (Log Entries) ============
+const PRIVATE_FOOD_ENTRIES_KEY = 'nutrihub_private_food_entries';
+
+interface PrivateFoodEntry {
+    id: number;
+    food_id: number;
+    food_name: string;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+    calories: number;
+    protein: number;
+    carbohydrates: number;
+    fat: number;
+    logged_at: string;
+    date: string; // Date string for filtering (YYYY-MM-DD)
+}
+
+/**
+ * Get private food entries for a specific date
+ */
+export const getPrivateFoodEntries = async (date: string): Promise<PrivateFoodEntry[]> => {
+    try {
+        const data = await AsyncStorage.getItem(PRIVATE_FOOD_ENTRIES_KEY);
+        if (!data) return [];
+
+        const allEntries: PrivateFoodEntry[] = JSON.parse(data);
+        return allEntries.filter(entry => entry.date === date);
+    } catch (error) {
+        console.error('Error getting private food entries:', error);
+        return [];
+    }
+};
+
+/**
+ * Add a private food entry
+ */
+export const addPrivateFoodEntry = async (entry: Omit<PrivateFoodEntry, 'id'>): Promise<PrivateFoodEntry> => {
+    try {
+        const data = await AsyncStorage.getItem(PRIVATE_FOOD_ENTRIES_KEY);
+        const allEntries: PrivateFoodEntry[] = data ? JSON.parse(data) : [];
+
+        const newEntry: PrivateFoodEntry = {
+            ...entry,
+            id: -Date.now(), // Unique negative ID
+        };
+
+        allEntries.push(newEntry);
+        await AsyncStorage.setItem(PRIVATE_FOOD_ENTRIES_KEY, JSON.stringify(allEntries));
+
+        return newEntry;
+    } catch (error) {
+        console.error('Error adding private food entry:', error);
+        throw error;
+    }
+};
+
+/**
+ * Delete a private food entry
+ */
+export const deletePrivateFoodEntry = async (id: number): Promise<boolean> => {
+    try {
+        const data = await AsyncStorage.getItem(PRIVATE_FOOD_ENTRIES_KEY);
+        if (!data) return false;
+
+        const allEntries: PrivateFoodEntry[] = JSON.parse(data);
+        const filtered = allEntries.filter(entry => entry.id !== id);
+
+        if (filtered.length === allEntries.length) return false;
+
+        await AsyncStorage.setItem(PRIVATE_FOOD_ENTRIES_KEY, JSON.stringify(filtered));
+        return true;
+    } catch (error) {
+        console.error('Error deleting private food entry:', error);
+        throw error;
+    }
+};
+
+/**
+ * Clear all private food entries (for testing/debugging)
+ */
+export const clearAllPrivateFoodEntries = async (): Promise<void> => {
+    try {
+        await AsyncStorage.removeItem(PRIVATE_FOOD_ENTRIES_KEY);
+    } catch (error) {
+        console.error('Error clearing private food entries:', error);
+        throw error;
+    }
+};
+
 export const privateFoodService = {
     getPrivateFoods,
     addPrivateFood,
@@ -197,4 +287,10 @@ export const privateFoodService = {
     getPrivateFoodById,
     searchPrivateFoods,
     clearAllPrivateFoods,
+    // Entry functions
+    getPrivateFoodEntries,
+    addPrivateFoodEntry,
+    deletePrivateFoodEntry,
+    clearAllPrivateFoodEntries,
 };
+
