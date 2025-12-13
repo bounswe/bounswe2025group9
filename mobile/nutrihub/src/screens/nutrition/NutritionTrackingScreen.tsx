@@ -20,10 +20,12 @@ import MacronutrientCard from '../../components/nutrition/MacronutrientCard';
 import MicronutrientPanel from '../../components/nutrition/MicronutrientPanel';
 import UserMetricsModal from '../../components/nutrition/UserMetricsModal';
 import FoodSelectorModal from '../../components/food/FoodSelectorModal';
+import PrivateFoodModal from '../../components/food/PrivateFoodModal';
 import TextInput from '../../components/common/TextInput';
-import { FoodLogEntry, MealTotals, DailyNutritionLog, NutritionTargets, UserMetrics, MicroNutrient } from '../../types/nutrition';
+import { FoodLogEntry, MealTotals, DailyNutritionLog, NutritionTargets, UserMetrics, MicroNutrient, PrivateFood } from '../../types/nutrition';
 import { FoodItem } from '../../types/types';
 import { nutritionService } from '../../services/api/nutrition.service';
+import { privateFoodService } from '../../services/api/privateFood.service';
 
 // Helper functions to categorize and extract info from micronutrient keys (matching frontend logic)
 const extractUnit = (key: string): string => {
@@ -39,43 +41,43 @@ const extractName = (key: string): string => {
   // "Vitamin A, RAE (µg)" -> "Vitamin A, RAE"
   // "Vitamin D (D2 + D3) (µg)" -> "Vitamin D"
   // "Vitamin E (alpha-tocopherol) (mg)" -> "Vitamin E"
-  
+
   // First, remove the unit (last parentheses)
   let name = key.replace(/\s*\([^)]+\)$/, '').trim();
-  
+
   // Then, remove any remaining parenthetical clarifications
   // This handles cases like "Vitamin K (phylloquinone)" -> "Vitamin K"
   name = name.replace(/\s*\([^)]+\)/g, '').trim();
-  
+
   return name;
 };
 
 const isVitamin = (name: string): boolean => {
   const lowerName = name.toLowerCase();
-  return lowerName.includes('vitamin') || 
-         lowerName.includes('thiamin') || 
-         lowerName.includes('riboflavin') || 
-         lowerName.includes('niacin') || 
-         lowerName.includes('folate') || 
-         lowerName.includes('folic acid') ||
-         lowerName.includes('choline') ||
-         lowerName.includes('carotene') ||
-         lowerName.includes('lycopene') ||
-         lowerName.includes('lutein');
+  return lowerName.includes('vitamin') ||
+    lowerName.includes('thiamin') ||
+    lowerName.includes('riboflavin') ||
+    lowerName.includes('niacin') ||
+    lowerName.includes('folate') ||
+    lowerName.includes('folic acid') ||
+    lowerName.includes('choline') ||
+    lowerName.includes('carotene') ||
+    lowerName.includes('lycopene') ||
+    lowerName.includes('lutein');
 };
 
 const isMineral = (name: string): boolean => {
   const lowerName = name.toLowerCase();
-  return lowerName.includes('calcium') || 
-         lowerName.includes('iron') || 
-         lowerName.includes('magnesium') || 
-         lowerName.includes('phosphorus') || 
-         lowerName.includes('potassium') || 
-         lowerName.includes('sodium') || 
-         lowerName.includes('zinc') || 
-         lowerName.includes('copper') || 
-         lowerName.includes('manganese') || 
-         lowerName.includes('selenium');
+  return lowerName.includes('calcium') ||
+    lowerName.includes('iron') ||
+    lowerName.includes('magnesium') ||
+    lowerName.includes('phosphorus') ||
+    lowerName.includes('potassium') ||
+    lowerName.includes('sodium') ||
+    lowerName.includes('zinc') ||
+    lowerName.includes('copper') ||
+    lowerName.includes('manganese') ||
+    lowerName.includes('selenium');
 };
 
 const NutritionTrackingScreen: React.FC = () => {
@@ -96,13 +98,17 @@ const NutritionTrackingScreen: React.FC = () => {
   const [servingSize, setServingSize] = useState<number | string>(100);
   const [servingUnit, setServingUnit] = useState('g');
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null);
+  const [isSelectedFoodPrivate, setIsSelectedFoodPrivate] = useState(false);
+  const [selectedPrivateFoodData, setSelectedPrivateFoodData] = useState<PrivateFood | null>(null);
 
   // Data state
   const [dailyLog, setDailyLog] = useState<DailyNutritionLog | null>(null);
+  const [privateFoodEntries, setPrivateFoodEntries] = useState<FoodLogEntry[]>([]); // Separate state for private food entries
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [metrics, setMetrics] = useState<UserMetrics | null>(null);
   const [weeklyLogs, setWeeklyLogs] = useState<DailyNutritionLog[]>([]);
   const [showMetricsModal, setShowMetricsModal] = useState(false);
+  const [showPrivateFoodModal, setShowPrivateFoodModal] = useState(false);
 
   // Format numbers to 1 decimal place
   const formatNumber = (num: number | string | undefined | null): string => {
@@ -179,13 +185,41 @@ const NutritionTrackingScreen: React.FC = () => {
 
     try {
       const dateStr = selectedDate.toISOString().split('T')[0];
+
+      // Load private food entries from AsyncStorage for this date
+      const storedPrivateEntries = await privateFoodService.getPrivateFoodEntries(dateStr);
+      setPrivateFoodEntries(storedPrivateEntries as FoodLogEntry[]);
+
       const log = await nutritionService.getDailyLog(dateStr);
-      setDailyLog(log);
+
+      // Merge backend entries with local private food entries
+      if (log && storedPrivateEntries.length > 0) {
+        const mergedEntries = [...(log.entries || []), ...(storedPrivateEntries as FoodLogEntry[])];
+
+        // Recalculate totals including private food entries
+        const privateTotals = storedPrivateEntries.reduce(
+          (acc, entry) => ({
+            calories: acc.calories + (entry.calories || 0),
+            protein: acc.protein + (entry.protein || 0),
+            carbs: acc.carbs + (entry.carbohydrates || 0),
+            fat: acc.fat + (entry.fat || 0),
+          }),
+          { calories: 0, protein: 0, carbs: 0, fat: 0 }
+        );
+
+        setDailyLog({
+          ...log,
+          entries: mergedEntries,
+          total_calories: parseFloat(String(log.total_calories || 0)) + privateTotals.calories,
+          total_protein: parseFloat(String(log.total_protein || 0)) + privateTotals.protein,
+          total_carbohydrates: parseFloat(String(log.total_carbohydrates || 0)) + privateTotals.carbs,
+          total_fat: parseFloat(String(log.total_fat || 0)) + privateTotals.fat,
+        });
+      } else {
+        setDailyLog(log);
+      }
     } catch (error) {
       console.error('Error fetching daily log:', error);
-      // If 404, it might just mean no log exists yet, which is fine
-      // The service should handle creating one or returning empty structure if needed
-      // But if it throws, we might want to set a default empty log
     }
   }, [selectedDate, metrics]);
 
@@ -263,8 +297,10 @@ const NutritionTrackingScreen: React.FC = () => {
   };
 
   // Handle food selection from FoodSelectorModal
-  const handleFoodSelect = (food: FoodItem) => {
+  const handleFoodSelect = (food: FoodItem, isPrivate?: boolean, privateFoodData?: PrivateFood) => {
     setSelectedFood(food);
+    setIsSelectedFoodPrivate(isPrivate || false);
+    setSelectedPrivateFoodData(privateFoodData || null);
     setServingSize(1); // Default to 1 serving
     setServingUnit('serving');
     setShowAddFood(false);
@@ -304,23 +340,72 @@ const NutritionTrackingScreen: React.FC = () => {
         return;
       }
 
-      await nutritionService.addFoodEntry({
-        date: dateStr,
-        food_id: selectedFood.id,
-        serving_size: multiplier,
-        serving_unit: servingUnit,
-        meal_type: selectedMeal,
-      });
+      // Check if this is a private food (negative ID)
+      if (isSelectedFoodPrivate || selectedFood.id < 0) {
+        // Private foods can't be sent to backend - save to AsyncStorage
+        const macros = selectedFood.macronutrients;
+        const dateStr = selectedDate.toISOString().split('T')[0];
 
-      // Refresh both daily and weekly logs to keep them in sync
-      // Use Promise.all to ensure both refresh before continuing
-      await Promise.all([
-        fetchDailyLog(),
-        fetchWeeklyLogs()
-      ]);
+        const entryData = {
+          food_id: selectedFood.id,
+          food_name: selectedFood.title + ' (Private)',
+          serving_size: numServingSize,
+          serving_unit: servingUnit,
+          meal_type: selectedMeal,
+          calories: Math.round((macros?.calories || 0) * multiplier),
+          protein: Math.round((macros?.protein || 0) * multiplier * 10) / 10,
+          carbohydrates: Math.round((macros?.carbohydrates || 0) * multiplier * 10) / 10,
+          fat: Math.round((macros?.fat || 0) * multiplier * 10) / 10,
+          logged_at: new Date().toISOString(),
+          date: dateStr,
+        };
+
+        // Save to AsyncStorage
+        const savedEntry = await privateFoodService.addPrivateFoodEntry(entryData);
+
+        // Update local state and UI
+        const newEntry = savedEntry as FoodLogEntry;
+        setPrivateFoodEntries(prev => [...prev, newEntry]);
+
+        // Also update dailyLog immediately for instant UI feedback
+        if (dailyLog) {
+          const updatedEntries = [...(dailyLog.entries || []), newEntry];
+          setDailyLog({
+            ...dailyLog,
+            entries: updatedEntries,
+            total_calories: parseFloat(String(dailyLog.total_calories || 0)) + newEntry.calories,
+            total_protein: parseFloat(String(dailyLog.total_protein || 0)) + newEntry.protein,
+            total_carbohydrates: parseFloat(String(dailyLog.total_carbohydrates || 0)) + newEntry.carbohydrates,
+            total_fat: parseFloat(String(dailyLog.total_fat || 0)) + newEntry.fat,
+          });
+        }
+
+        Alert.alert(
+          'Private Food Added',
+          'Private food saved to your log.',
+          [{ text: 'OK' }]
+        );
+      } else {
+        // Regular food - send to backend
+        await nutritionService.addFoodEntry({
+          date: dateStr,
+          food_id: selectedFood.id,
+          serving_size: multiplier,
+          serving_unit: servingUnit,
+          meal_type: selectedMeal,
+        });
+
+        // Refresh both daily and weekly logs to keep them in sync
+        await Promise.all([
+          fetchDailyLog(),
+          fetchWeeklyLogs()
+        ]);
+      }
 
       setShowServingDialog(false);
       setSelectedFood(null);
+      setIsSelectedFoodPrivate(false);
+      setSelectedPrivateFoodData(null);
       setServingSize(1); // Reset to default 1 serving
       setServingUnit('serving');
       setEditingEntry(null);
@@ -668,7 +753,7 @@ const NutritionTrackingScreen: React.FC = () => {
         const currentValue = dailyLog.micronutrients_summary[key] || 0;
         const name = extractName(key);
         const unit = extractUnit(key) || '';
-        
+
         // Categorize based on name (matching frontend logic)
         let category: 'vitamin' | 'mineral' = 'vitamin'; // Default
         if (isMineral(name)) {
@@ -1198,7 +1283,7 @@ const NutritionTrackingScreen: React.FC = () => {
             <View style={styles.mealsSection}>
               <View style={styles.sectionHeader}>
                 <Icon name="silverware-fork-knife" size={28} color={theme.primary} />
-                <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm }]}>
+                <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm, flex: 1 }]}>
                   {isToday ? "Today's Meals" : "Meals"}
                 </Text>
               </View>
@@ -1227,6 +1312,18 @@ const NutritionTrackingScreen: React.FC = () => {
         visible={showAddFood}
         onClose={() => setShowAddFood(false)}
         onSelect={handleFoodSelect}
+        onCreatePrivateFood={() => setShowPrivateFoodModal(true)}
+      />
+
+      {/* Private Food Modal */}
+      <PrivateFoodModal
+        visible={showPrivateFoodModal}
+        onClose={() => setShowPrivateFoodModal(false)}
+        onSave={() => {
+          setShowPrivateFoodModal(false);
+          // Re-open food selector to use the newly created food
+          setTimeout(() => setShowAddFood(true), 100);
+        }}
       />
 
       {/* Serving Size Dialog */}
@@ -1831,6 +1928,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  createPrivateFoodButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: SPACING.sm,
+    paddingVertical: SPACING.xs,
+    borderRadius: BORDER_RADIUS.sm,
+    borderWidth: 1,
   },
 });
 
