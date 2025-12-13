@@ -1,6 +1,6 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
-from foods.models import FoodProposal
+from foods.models import FoodEntry, FoodProposal
 from accounts.services import get_user_badges, BADGE_RULES
 
 User = get_user_model()
@@ -19,27 +19,42 @@ class FoodProposalBadgeTests(TestCase):
             surname="User"
         )
 
+    def make_proposal(self, user, status, **food_kwargs):
+        food_entry = FoodEntry.objects.create(
+            **food_kwargs,
+            category="Test",
+            servingSize=100,
+            caloriesPerServing=100,
+            proteinContent=10,
+            fatContent=5,
+            carbohydrateContent=20,
+            nutritionScore=7.5,
+            createdBy=user,
+            validated=(status == 'approved')
+        )
+        return FoodProposal.objects.create(
+            food_entry=food_entry,
+            proposedBy=user,
+            isApproved=(status == 'approved' if status in ['approved', 'rejected'] else None)
+        )
+
+
     def test_no_badges_with_zero_approved_proposals(self):
         """Test that no food proposal badges are awarded when user has no approved proposals."""
         badges = get_user_badges(self.user)
         food_badges = [b for b in badges if b["type"] == "food_proposals"]
         self.assertEqual(len(food_badges), 0)
 
+
     def test_no_badges_with_only_pending_proposals(self):
         """Test that pending proposals (isApproved=None) don't count toward badges."""
         # Create 10 pending proposals
         for i in range(10):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='pending',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=None,  # Pending
-                proposedBy=self.user
+
             )
 
         badges = get_user_badges(self.user)
@@ -50,17 +65,10 @@ class FoodProposalBadgeTests(TestCase):
         """Test that rejected proposals (isApproved=False) don't count toward badges."""
         # Create 10 rejected proposals
         for i in range(10):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='rejected',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=False,  # Rejected
-                proposedBy=self.user
             )
 
         badges = get_user_badges(self.user)
@@ -71,17 +79,10 @@ class FoodProposalBadgeTests(TestCase):
         """Test that the first badge (5 approved proposals) is awarded correctly."""
         # Create exactly 5 approved proposals
         for i in range(5):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,  # Approved
-                proposedBy=self.user
             )
 
         badges = get_user_badges(self.user)
@@ -95,17 +96,10 @@ class FoodProposalBadgeTests(TestCase):
         """Test that badges accumulate correctly at 15 approved proposals."""
         # Create 15 approved proposals
         for i in range(15):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=self.user
             )
 
         badges = get_user_badges(self.user)
@@ -120,17 +114,10 @@ class FoodProposalBadgeTests(TestCase):
         """Test that all three badges are awarded with 30 approved proposals."""
         # Create 30 approved proposals
         for i in range(30):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=self.user
             )
 
         badges = get_user_badges(self.user)
@@ -146,45 +133,24 @@ class FoodProposalBadgeTests(TestCase):
         """Test that only approved proposals count when there's a mix of approved, pending, and rejected."""
         # Create 20 approved, 10 pending, 10 rejected
         for i in range(20):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"Approved Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=self.user
             )
         
         for i in range(10):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='pending',
                 name=f"Pending Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=None,  # Pending
-                proposedBy=self.user
             )
         
         for i in range(10):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='rejected',
                 name=f"Rejected Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=False,  # Rejected
-                proposedBy=self.user
             )
 
         # Total: 40 proposals, but only 20 are approved
@@ -201,17 +167,10 @@ class FoodProposalBadgeTests(TestCase):
     def test_user_with_4_approved_proposals_gets_no_badge(self):
         """Test edge case: 4 approved proposals (just below threshold) earns no badge."""
         for i in range(4):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=self.user
             )
 
         badges = get_user_badges(self.user)
@@ -221,18 +180,12 @@ class FoodProposalBadgeTests(TestCase):
     def test_user_with_14_approved_proposals_gets_one_badge(self):
         """Test edge case: 14 approved proposals earns only the first badge."""
         for i in range(14):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=self.user
             )
+
 
         badges = get_user_badges(self.user)
         food_badges = [b for b in badges if b["type"] == "food_proposals"]
@@ -261,32 +214,19 @@ class FoodProposalBadgeTests(TestCase):
 
         # User 1 has 15 approved proposals
         for i in range(15):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=self.user,
+                status='approved',
                 name=f"User1 Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=self.user
             )
+
 
         # User 2 has 5 approved proposals
         for i in range(5):
-            FoodProposal.objects.create(
+            self.make_proposal(
+                user=user2,
+                status='approved',
                 name=f"User2 Food {i}",
-                category="Test",
-                servingSize=100,
-                caloriesPerServing=100,
-                proteinContent=10,
-                fatContent=5,
-                carbohydrateContent=20,
-                nutritionScore=7.5,
-                isApproved=True,
-                proposedBy=user2
             )
 
         user1_badges = get_user_badges(self.user)

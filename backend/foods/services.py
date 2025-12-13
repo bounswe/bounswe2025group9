@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Iterable, Optional, Tuple
 
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
@@ -31,6 +32,87 @@ CATEGORY_SCORES = {
 }
 
 
+class FoodAccessService:
+    """
+    Service for managing FoodEntry access control.
+
+    Users can access:
+    - All validated (public) FoodEntries
+    - Their own private (unvalidated) FoodEntries
+    """
+
+    @staticmethod
+    def get_accessible_foods(user=None, queryset=None):
+        """
+        Get FoodEntry queryset filtered by access rules.
+
+        Args:
+            user: The user requesting access (optional, None for anonymous users)
+            queryset: Base queryset to filter (optional, defaults to FoodEntry.objects.all())
+
+        Returns:
+            Filtered queryset containing only accessible FoodEntries
+        """
+        if queryset is None:
+            queryset = FoodEntry.objects.all()
+
+        if user is None or not user.is_authenticated:
+            # Anonymous users can only see validated foods
+            return queryset.filter(validated=True)
+
+        # Authenticated users can see validated foods OR their own private foods
+        return queryset.filter(
+            Q(validated=True) | Q(createdBy=user)
+        )
+
+    @staticmethod
+    def can_access_food(food, user=None):
+        """
+        Check if a user can access a specific FoodEntry.
+
+        Args:
+            food: FoodEntry instance to check
+            user: The user requesting access (optional, None for anonymous users)
+
+        Returns:
+            Boolean indicating whether the user can access the food
+        """
+        if food.validated:
+            return True
+
+        if user is None or not user.is_authenticated:
+            return False
+
+        return food.createdBy == user
+
+    @staticmethod
+    def create_food_entry(**kwargs) -> FoodEntry:
+        """
+        Create a new FoodEntry.
+
+        Args:
+            kwargs: Fields for the new FoodEntry
+
+        Returns:
+            The created FoodEntry instance
+        """
+        return FoodEntry.objects.create(**kwargs)
+
+    @staticmethod
+    def create_validated_food_entry(**kwargs) -> FoodEntry:
+        """
+        Create a new validated (public) FoodEntry.
+
+        Args:
+            kwargs: Fields for the new FoodEntry
+
+        Returns:
+            The created validated FoodEntry instance
+        """
+        kwargs['validated'] = True
+        return FoodEntry.objects.create(**kwargs)
+
+
 def _as_decimal(value) -> Optional[Decimal]:
     if value is None:
         return None
@@ -48,6 +130,7 @@ def _fetch_sorted_prices(price_unit: str, currency: str) -> Iterable[Decimal]:
             price_unit=price_unit,
             currency=currency,
             base_price__isnull=False,
+            validated=True,  # Only use public foods for price calculations
         )
         .order_by("base_price")
         .values_list("base_price", flat=True)
@@ -428,72 +511,22 @@ def clear_food_price_override(entry: FoodEntry, *, changed_by=None) -> FoodEntry
 @transaction.atomic
 def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
     """
-    Approve a food proposal and create a corresponding FoodEntry.
+    Approve a food proposal by setting the FoodEntry to validated=True (public).
     Returns (proposal, food_entry).
     """
     if proposal.isApproved:
-        return proposal, None
+        return proposal, proposal.food_entry
 
+    # Mark proposal as approved
     proposal.isApproved = True
     proposal.save(update_fields=["isApproved"])
 
-    entry = FoodEntry.objects.create(
-        name=proposal.name,
-        category=proposal.category,
-        servingSize=proposal.servingSize,
-        caloriesPerServing=proposal.caloriesPerServing,
-        proteinContent=proposal.proteinContent,
-        fatContent=proposal.fatContent,
-        carbohydrateContent=proposal.carbohydrateContent,
-        dietaryOptions=proposal.dietaryOptions,
-        nutritionScore=proposal.nutritionScore,
-        imageUrl=proposal.imageUrl,
-        base_price=proposal.base_price,
-        price_unit=proposal.price_unit or PriceUnit.PER_100G,
-        currency=proposal.currency or DEFAULT_CURRENCY,
-    )
-    entry.allergens.set(proposal.allergens.all())
+    # Make the food entry public
+    entry = proposal.food_entry
+    entry.validated = True
+    entry.save(update_fields=["validated"])
 
-    # Copy micronutrients from proposal to entry using normalized model
-    from foods.models import Micronutrient, FoodEntryMicronutrient
-    import re
-    if proposal.micronutrients:
-        for name, value in proposal.micronutrients.items():
-            if value is None or value == "":
-                continue  # Skip empty values
-
-            # Try exact match first
-            micronutrient = Micronutrient.objects.filter(name=name).first()
-
-            # If not found, try extracting unit from name and creating/finding micronutrient
-            if not micronutrient:
-                # Extract unit from name like "Manganese, Mn (mg)" -> name="Manganese, Mn", unit="mg"
-                match = re.match(r'^(.+?)\s*\(([^)]+)\)$', name)
-                if match:
-                    base_name = match.group(1).strip()
-                    unit = match.group(2).strip()
-
-                    # Try to find by base name
-                    micronutrient = Micronutrient.objects.filter(name=base_name).first()
-
-                    # If still not found, create it
-                    if not micronutrient:
-                        micronutrient = Micronutrient.objects.create(name=base_name, unit=unit)
-                else:
-                    # No unit in parentheses, create with default unit
-                    micronutrient = Micronutrient.objects.create(name=name, unit='g')
-
-            # Create the food entry micronutrient
-            try:
-                FoodEntryMicronutrient.objects.create(
-                    food_entry=entry,
-                    micronutrient=micronutrient,
-                    value=float(value)
-                )
-            except (ValueError, TypeError):
-                # Skip invalid numeric values
-                continue
-
+    # Handle price category if price is set
     if entry.base_price is not None:
         entry.price_category = assign_price_category_value(
             entry.base_price,
@@ -509,7 +542,7 @@ def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
             currency=entry.currency,
             food=entry,
             changed_by=changed_by,
-            reason="Proposal approved and price recorded",
+            reason="Proposal approved and made public",
             old_price=None,
             new_price=entry.base_price,
             old_category=None,
@@ -522,7 +555,11 @@ def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
 
 @transaction.atomic
 def reject_food_proposal(proposal: FoodProposal):
+    """
+    Reject a food proposal. The FoodEntry remains private (validated=False).
+    User can still use their private entry.
+    """
     proposal.isApproved = False
-    proposal.is_private = True  # Automatically mark as private for user
-    proposal.save(update_fields=["isApproved", "is_private"])
+    proposal.save(update_fields=["isApproved"])
+    # Note: FoodEntry stays private (validated=False), user can still use it
     return proposal

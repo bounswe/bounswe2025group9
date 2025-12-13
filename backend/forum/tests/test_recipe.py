@@ -10,7 +10,7 @@ from rest_framework.views import Response
 from forum.models import Post, Recipe, RecipeIngredient
 from foods.constants import DEFAULT_CURRENCY, PriceUnit
 from foods.models import FoodEntry, PriceAudit
-from foods.services import recalculate_recipes_for_food, update_food_price
+from foods.services import recalculate_recipes_for_food, update_food_price, FoodAccessService
 
 User = get_user_model()
 
@@ -31,7 +31,7 @@ class RecipeTests(TestCase):
         )
 
         # Create food entries for ingredients
-        self.food1 = FoodEntry.objects.create(
+        self.food1 = FoodAccessService.create_validated_food_entry(
             name="Chicken Breast",
             category="Protein",
             servingSize=100.0,
@@ -45,7 +45,7 @@ class RecipeTests(TestCase):
         self.food1.dietaryOptions = []
         self.food1.save()
 
-        self.food2 = FoodEntry.objects.create(
+        self.food2 = FoodAccessService.create_validated_food_entry(
             name="Brown Rice",
             category="Grain",
             servingSize=100.0,

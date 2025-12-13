@@ -5,12 +5,8 @@ from rest_framework.routers import DefaultRouter
 
 from .views import (
     FoodCatalog,
-    GetOrFetchFoodEntry,
     FoodProposalSubmitView,
     UserFoodProposalListView,
-    suggest_recipe,
-    get_random_meal,
-    food_nutrition_info,
     image_proxy,
     FoodPriceUpdateView,
     PriceThresholdListView,
@@ -46,12 +42,8 @@ urlpatterns = [
         UserFoodProposalListView.as_view(),
         name="my_food_proposals",
     ),
-    path("get-or-fetch/", GetOrFetchFoodEntry.as_view(), name="get_or_fetch_food"),
-    path("suggest_recipe/", suggest_recipe, name="suggest_recipe"),
-    path("random-meal/", get_random_meal, name="random-meal"),
     path("", FoodCatalog.as_view(), name="get_foods"),
     path("catalog/", FoodCatalog.as_view(), name="food-catalog"),
-    path("food/nutrition-info/", food_nutrition_info, name="food_nutrition_info"),
     path("image-proxy/", image_proxy, name="image_proxy"),
     path(
         "<int:pk>/price/",
