@@ -60,6 +60,7 @@ class RecipeIngredient(models.Model):
     )
     food = models.ForeignKey("foods.FoodEntry", on_delete=models.CASCADE)
     amount = models.FloatField(help_text="Amount in grams")
+    customUnit = models.TextField(help_text="Traditional unit of measurement (e.g. tablespoon, cup, etc.) this will be used in UI.")
 
     def __str__(self):
         return f"{self.amount}g of {self.food.name}"
