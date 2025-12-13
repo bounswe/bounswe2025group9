@@ -27,6 +27,7 @@ import TextInput from '../common/TextInput';
 import useForm from '../../hooks/useForm';
 import { FoodCategoryType } from '../../types/types';
 import { FOOD_CATEGORIES } from '../../constants/foodConstants';
+import { privateFoodService } from '../../services/api/privateFood.service';
 
 interface ProposeFoodModalProps {
   visible: boolean;
@@ -262,9 +263,9 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
   return (
     <Modal
       visible={visible}
-      transparent
       animationType="slide"
       onRequestClose={handleClose}
+      presentationStyle="pageSheet"
     >
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <KeyboardAvoidingView
@@ -640,15 +641,51 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
               title="Cancel"
               variant="outline"
               onPress={handleClose}
-              style={styles.footerButton}
+              style={styles.footerButtonSmall}
             />
             <Button
-              title="Submit Proposal"
+              title="Save Private"
+              variant="outline"
+              onPress={async () => {
+                if (!isFormValid()) {
+                  Alert.alert('Error', 'Please fill in all required fields');
+                  return;
+                }
+                try {
+                  await privateFoodService.addPrivateFood({
+                    name: values.name,
+                    category: values.category || 'Other',
+                    servingSize: parseFloat(values.servingSize),
+                    calories: parseFloat(values.calories),
+                    protein: parseFloat(values.protein),
+                    carbohydrates: parseFloat(values.carbohydrates),
+                    fat: parseFloat(values.fat),
+                    fiber: values.fiber ? parseFloat(values.fiber) : undefined,
+                    sugar: values.sugar ? parseFloat(values.sugar) : undefined,
+                    dietaryOptions: selectedDietaryOptions,
+                    micronutrients: Object.entries(values.micronutrients || {}).reduce((acc, [key, val]) => {
+                      acc[key] = parseFloat(val as string);
+                      return acc;
+                    }, {} as Record<string, number>),
+                    sourceType: 'modified_proposal',
+                  });
+                  Alert.alert('Success', 'Food saved as private food. You can use it immediately in nutrition tracking!');
+                  handleClose();
+                } catch (error) {
+                  console.error('Error saving private food:', error);
+                  Alert.alert('Error', 'Failed to save private food');
+                }
+              }}
+              disabled={!isFormValid() || isSubmitting}
+              style={styles.footerButtonSmall}
+            />
+            <Button
+              title="Submit"
               variant="primary"
               onPress={handleSubmit}
               disabled={!isFormValid() || isSubmitting}
               loading={isSubmitting}
-              style={styles.footerButton}
+              style={styles.footerButtonSmall}
             />
           </View>
         </KeyboardAvoidingView>
@@ -868,6 +905,10 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     flex: 1,
+  },
+  footerButtonSmall: {
+    flex: 1,
+    minWidth: 0,
   },
   modalOverlay: {
     flex: 1,

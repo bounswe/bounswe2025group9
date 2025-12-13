@@ -133,6 +133,8 @@ class UserSerializer(serializers.ModelSerializer):
         extra_kwargs = {
             "address": {"required": False},
             "password": {"write_only": True},
+            "is_staff": {"read_only": True},
+            "is_superuser": {"read_only": True},
         }
 
     def get_profile_image(self, obj):

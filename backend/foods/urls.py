@@ -18,6 +18,7 @@ from .views import (
     PriceAuditListView,
     PriceReportListCreateView,
     PriceReportDetailView,
+    AvailableMicronutrientsView,
 )
 from .admin import FoodProposalModerationViewSet
 
@@ -30,6 +31,11 @@ moderation_router.register(
 
 urlpatterns = [
     path("", FoodCatalog.as_view(), name="get_foods"),
+    path(
+        "available-micronutrients/",
+        AvailableMicronutrientsView.as_view(),
+        name="available_micronutrients",
+    ),
     path(
         "manual-proposal/",
         FoodProposalSubmitView.as_view(),

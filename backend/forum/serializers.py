@@ -109,6 +109,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
             "food_id",
             "food_name",
             "amount",
+            "customUnit",
+            "customAmount",
             "protein",
             "fat",
             "carbs",
