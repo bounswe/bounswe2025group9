@@ -1286,14 +1286,6 @@ const NutritionTrackingScreen: React.FC = () => {
                 <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm, flex: 1 }]}>
                   {isToday ? "Today's Meals" : "Meals"}
                 </Text>
-                <TouchableOpacity
-                  style={[styles.createPrivateFoodButton, { backgroundColor: `${theme.success}15`, borderColor: `${theme.success}30` }]}
-                  onPress={() => setShowPrivateFoodModal(true)}
-                  activeOpacity={0.7}
-                >
-                  <Icon name="lock-plus" size={16} color={theme.success} />
-                  <Text style={[textStyles.caption, { color: theme.success, fontWeight: '600', marginLeft: 4 }]}>Private</Text>
-                </TouchableOpacity>
               </View>
 
               {renderMealSection('breakfast', breakfastEntries)}

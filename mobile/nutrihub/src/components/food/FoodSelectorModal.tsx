@@ -272,6 +272,27 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
         );
     };
 
+    // Render create button as first item in private foods list
+    const renderPrivateListHeader = () => (
+        <TouchableOpacity
+            style={[styles.foodItem, styles.createFoodItem, { backgroundColor: `${theme.primary}10`, borderColor: theme.primary, borderStyle: 'dashed' }]}
+            onPress={() => setShowCreatePrivateFood(true)}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.foodIcon, { backgroundColor: `${theme.primary}20` }]}>
+                <Icon name="plus" size={24} color={theme.primary} />
+            </View>
+            <View style={styles.foodInfo}>
+                <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+                    Create Private Food
+                </Text>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                    Add custom food with your own values
+                </Text>
+            </View>
+        </TouchableOpacity>
+    );
+
     return (
         <>
             <Modal
@@ -284,19 +305,9 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     {/* Header */}
                     <View style={[styles.header, { borderBottomColor: theme.border }]}>
                         <Text style={[textStyles.heading3, { color: theme.text }]}>{title}</Text>
-                        <View style={styles.headerRight}>
-                            {activeTab === 'private' && (
-                                <TouchableOpacity
-                                    onPress={() => setShowCreatePrivateFood(true)}
-                                    style={[styles.createButton, { backgroundColor: `${theme.success}15` }]}
-                                >
-                                    <Icon name="plus" size={20} color={theme.success} />
-                                </TouchableOpacity>
-                            )}
-                            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-                                <Icon name="close" size={24} color={theme.text} />
-                            </TouchableOpacity>
-                        </View>
+                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                            <Icon name="close" size={24} color={theme.text} />
+                        </TouchableOpacity>
                     </View>
 
                     {/* Search */}
@@ -390,7 +401,8 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                             keyExtractor={(item) => `private-${item.id}`}
                             contentContainerStyle={styles.listContent}
                             showsVerticalScrollIndicator={false}
-                            ListEmptyComponent={renderPrivateEmpty}
+                            ListHeaderComponent={renderPrivateListHeader}
+                            ListEmptyComponent={null}
                             refreshControl={
                                 <RefreshControl
                                     refreshing={refreshing}
@@ -501,6 +513,9 @@ const styles = StyleSheet.create({
     footer: {
         paddingVertical: SPACING.lg,
         alignItems: 'center',
+    },
+    createFoodItem: {
+        borderWidth: 1.5,
     },
 });
 
