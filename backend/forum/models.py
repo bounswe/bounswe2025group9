@@ -6,6 +6,7 @@ from django.db.models import Sum
 from decimal import Decimal
 
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
+from forum.constants import DEFAULT_CUSTOM_UNIT
 
 
 class Tag(models.Model):
@@ -62,13 +63,10 @@ class RecipeIngredient(models.Model):
     amount = models.FloatField(help_text="Amount in grams")
     customUnit = models.TextField(
         help_text="Traditional unit of measurement (e.g. tablespoon, cup, etc.) this will be used in UI.",
-        default="g"
+        default=DEFAULT_CUSTOM_UNIT,
     )
-    customAmount = models.FloatField(
-        help_text="Amount in custom unit",
-        default=0.0
-    )
-    
+    customAmount = models.FloatField(help_text="Amount in custom unit", default=0.0)
+
     def __str__(self):
         return f"{self.amount}g of {self.food.name}"
 
