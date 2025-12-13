@@ -4,6 +4,7 @@ import { ArrowLeft, WarningCircle, Plus, X } from '@phosphor-icons/react'
 import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest, RecipeIngredient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import { Tag } from '@phosphor-icons/react'
+import { CUSTOM_UNITS, DEFAULT_CUSTOM_UNIT, UNIT_TO_GRAMS_CONVERSION } from './constants'
 
 // required post types
 const POST_TYPES = {
@@ -99,9 +100,8 @@ const CreatePost = () => {
     const [loadingFoods, setLoadingFoods] = useState(false);
     const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
     const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
-    const [selectedFoodAmount, setSelectedFoodAmount] = useState<number>(100);
-    const [selectedFoodCustomAmount, setSelectedFoodCustomAmount] = useState<number>(0);
-    const [selectedFoodCustomUnit, setSelectedFoodCustomUnit] = useState<string>('g');
+    const [selectedFoodCustomAmount, setSelectedFoodCustomAmount] = useState<number>(1);
+    const [selectedFoodCustomUnit, setSelectedFoodCustomUnit] = useState<string>(DEFAULT_CUSTOM_UNIT);
     const [foodSearchTerm, setFoodSearchTerm] = useState('');
 
     // Check authentication status when component mounts
@@ -213,10 +213,27 @@ const CreatePost = () => {
             return;
         }
 
+        if (selectedFoodCustomAmount <= 0) {
+            setValidationError('Please enter a valid amount');
+            return;
+        }
+
         const selectedFood = foodOptions.find(food => food.id === selectedFoodId);
         if (!selectedFood) {
             setValidationError('Selected food not found');
             return;
+        }
+
+        // Calculate amount in grams from customAmount and customUnit
+        let amountInGrams: number;
+        
+        if (selectedFoodCustomUnit === 'serving') {
+            // For 'serving' unit, use the food item's servingSize
+            amountInGrams = selectedFoodCustomAmount * selectedFood.servingSize;
+        } else {
+            // For other units, use the standard conversion
+            const conversionRate = UNIT_TO_GRAMS_CONVERSION[selectedFoodCustomUnit as keyof typeof UNIT_TO_GRAMS_CONVERSION];
+            amountInGrams = selectedFoodCustomAmount * conversionRate;
         }
 
         // Check if ingredient already exists
@@ -224,7 +241,8 @@ const CreatePost = () => {
         if (existingIndex >= 0) {
             // Update existing ingredient
             const updatedIngredients = [...ingredients];
-            updatedIngredients[existingIndex].amount += selectedFoodAmount;
+            updatedIngredients[existingIndex].amount += amountInGrams;
+            updatedIngredients[existingIndex].customAmount += selectedFoodCustomAmount;
             setIngredients(updatedIngredients);
         } else {
             // Add new ingredient
@@ -233,7 +251,7 @@ const CreatePost = () => {
                 {
                     food_id: selectedFoodId,
                     food_name: selectedFood.name,
-                    amount: selectedFoodAmount,
+                    amount: amountInGrams,
                     customAmount: selectedFoodCustomAmount,
                     customUnit: selectedFoodCustomUnit
                 }
@@ -242,7 +260,7 @@ const CreatePost = () => {
 
         // Reset selection
         setSelectedFoodId(null);
-        setSelectedFoodAmount(100);
+        setSelectedFoodCustomAmount(1);
         setFoodSearchTerm('');
         setValidationError('');
     };
@@ -615,31 +633,27 @@ const CreatePost = () => {
                                                             <input
                                                                 type="number"
                                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                placeholder="custom amount"
+                                                                placeholder="Quantity"
                                                                 value={selectedFoodCustomAmount}
-                                                                onChange={(e) => setSelectedFoodCustomAmount(parseInt(e.target.value))}
-                                                                min={1}
+                                                                onChange={(e) => setSelectedFoodCustomAmount(parseFloat(e.target.value))}
+                                                                min={0.01}
+                                                                step={0.01}
                                                             />
                                                         </div>
                                                         <div className="flex-grow-0">
-                                                            <input
-                                                                type="text"
+                                                            <select
                                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                placeholder="custom unit (teaspoon)"
                                                                 value={selectedFoodCustomUnit}
                                                                 onChange={(e) => setSelectedFoodCustomUnit(e.target.value)}
-                                                            />
+                                                            >
+                                                                {CUSTOM_UNITS.map((unit) => (
+                                                                    <option key={unit} value={unit}>
+                                                                        {unit}
+                                                                    </option>
+                                                                ))}
+                                                            </select>
                                                         </div>
-                                                        <div className="flex-grow-0">
-                                                            <input
-                                                                type="number"
-                                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                placeholder="Amount (g)"
-                                                                value={selectedFoodAmount}
-                                                                onChange={(e) => setSelectedFoodAmount(parseInt(e.target.value))}
-                                                                min={1}
-                                                            />
-                                                        </div>
+
                                                         <button
                                                             type="button"
                                                             className="nh-button-square nh-button-primary"
