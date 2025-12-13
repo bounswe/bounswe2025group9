@@ -83,7 +83,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("foods", "0018_merge_20251209_1248"),
+        ("foods", "0019_merge_conflicting"),
     ]
 
     operations = [
