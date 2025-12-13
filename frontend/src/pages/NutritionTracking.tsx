@@ -57,21 +57,12 @@ const NutritionTrackingPage = () => {
   })();
   const waterActual = nutritionData.todayLog?.micronutrients_summary?.['Water (g)'] ?? 0;
   const waterRatio = waterTarget > 0 ? waterActual / waterTarget : 0;
-  const waterPercent = Math.min(200, Math.round(waterRatio * 100));
-  const waterRemaining = waterTarget > 0 ? Math.max(0, waterTarget - waterActual) : 0;
   const waterBarColor =
     waterRatio === 0
       ? 'var(--color-text-secondary)'
       : waterRatio >= 1
         ? 'var(--color-success)'
         : 'var(--color-primary)';
-  const waterPenalty =
-    nutritionData.todayLog?.hydration_penalty ??
-    (waterTarget > 0 ? -2 * Math.max(0, 1 - waterRatio) : 0);
-  const waterAdjustedScore =
-    nutritionData.todayLog?.hydration_adjusted_score ??
-    nutritionData.todayLog?.base_nutrition_score ??
-    null;
 
   return (
     <div className="w-full py-12">

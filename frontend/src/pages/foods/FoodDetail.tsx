@@ -18,7 +18,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     carbohydrates: number;
     fat: number;
     micronutrients: {
-      [key: string]: number | { target: number; maximum: number };
+      [key: string]: number | { target: number; maximum?: number };
     };
   } | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -130,7 +130,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     // For micronutrients, check the micronutrients object
     const micronutrient = recommendations.micronutrients?.[nutrient];
     if (micronutrient && typeof micronutrient === 'object' && 'maximum' in micronutrient) {
-      return micronutrient.maximum;
+      return micronutrient.maximum ?? null;
     }
     
     return null;
