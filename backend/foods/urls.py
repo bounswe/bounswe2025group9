@@ -46,6 +46,7 @@ urlpatterns = [
         UserFoodProposalListView.as_view(),
         name="my_food_proposals",
     ),
+    path("get-proposal-status/", FoodProposalSubmitView.as_view(), name="get_food_proposal"),
     path("get-or-fetch/", GetOrFetchFoodEntry.as_view(), name="get_or_fetch_food"),
     path("suggest_recipe/", suggest_recipe, name="suggest_recipe"),
     path("random-meal/", get_random_meal, name="random-meal"),
