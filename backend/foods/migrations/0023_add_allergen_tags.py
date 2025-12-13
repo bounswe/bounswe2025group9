@@ -115,7 +115,7 @@ def reverse_migration(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("foods", "0018_alter_micronutrient_unit"),
+        ("foods", "0022_refactor_food_proposal"),
     ]
 
     operations = [
