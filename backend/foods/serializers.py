@@ -2,6 +2,7 @@ from urllib.parse import quote
 
 from rest_framework import serializers
 
+from api.db_initialization.nutrition_score import calculate_nutrition_score
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
 from foods.models import (
     FoodEntry,
@@ -62,10 +63,103 @@ class FoodEntrySerializer(serializers.ModelSerializer):
 
 
 class FoodProposalSerializer(serializers.ModelSerializer):
+    food_entry_id = serializers.PrimaryKeyRelatedField(
+        queryset=FoodEntry.objects.all(),
+        source="food_entry",
+        write_only=True,
+        required=False,
+    )
+
+    # Flat FoodEntry fields (optional)
+    name = serializers.CharField(source="food_entry.name", required=False)
+    category = serializers.CharField(source="food_entry.category", required=False)
+    servingSize = serializers.FloatField(source="food_entry.servingSize", required=False)
+    caloriesPerServing = serializers.FloatField(
+        source="food_entry.caloriesPerServing", required=False
+    )
+    proteinContent = serializers.FloatField(
+        source="food_entry.proteinContent", required=False
+    )
+    fatContent = serializers.FloatField(
+        source="food_entry.fatContent", required=False
+    )
+    carbohydrateContent = serializers.FloatField(
+        source="food_entry.carbohydrateContent", required=False
+    )
+    dietaryOptions = serializers.ListField(
+        child=serializers.CharField(),
+        source="food_entry.dietaryOptions",
+        required=False,
+    )
+    nutritionScore = serializers.FloatField(
+        source="food_entry.nutritionScore", required=False
+    )
+
     class Meta:
         model = FoodProposal
-        fields = "__all__"
-        read_only_fields = ("proposedBy", "nutritionScore", "is_private")
+        fields = [
+            "id",
+            "food_entry_id",
+            "name",
+            "category",
+            "servingSize",
+            "caloriesPerServing",
+            "proteinContent",
+            "fatContent",
+            "carbohydrateContent",
+            "dietaryOptions",
+            "nutritionScore",
+            "isApproved",
+            "createdAt",
+            "proposedBy",
+        ]
+        read_only_fields = [
+            "id",
+            "isApproved",
+            "createdAt",
+            "proposedBy",
+        ]
+
+    def validate(self, attrs):
+        data = self.initial_data
+
+        # FK provided → accept, ignore flat fields
+        if "food_entry_id" in data:
+            return attrs
+
+        # No FK → require enough flat data to build FoodEntry
+        if "food_entry" not in attrs or not isinstance(attrs["food_entry"], dict):
+            raise serializers.ValidationError(
+                "food_entry_id is required when food entry fields are not provided."
+            )
+
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context["request"]
+
+        food_entry = validated_data.get("food_entry")
+
+        # FK path (wins)
+        if isinstance(food_entry, FoodEntry):
+            return FoodProposal.objects.create(
+                food_entry=food_entry,
+                proposedBy=request.user,
+            )
+
+        # Flat fields path
+        food_entry_data = validated_data.pop("food_entry")
+
+        food_entry_data['nutritionScore']= calculate_nutrition_score(food_entry_data)
+        food_entry = FoodEntry.objects.create(
+            **food_entry_data,
+            validated=False,
+            createdBy=request.user,
+        )
+        return FoodProposal.objects.create(
+            food_entry=food_entry,
+            proposedBy=request.user,
+        )
 
 class FoodProposalStatusSerializer(serializers.ModelSerializer):
     class Meta:
