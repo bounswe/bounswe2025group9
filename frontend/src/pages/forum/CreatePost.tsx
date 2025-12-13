@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, WarningCircle, Plus, X } from '@phosphor-icons/react'
-import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest } from '../../lib/apiClient'
+import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest, RecipeIngredient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import { Tag } from '@phosphor-icons/react'
 
@@ -97,9 +97,11 @@ const CreatePost = () => {
     const [recipeInstructions, setRecipeInstructions] = useState('');
     const [foodOptions, setFoodOptions] = useState<Food[]>([]);
     const [loadingFoods, setLoadingFoods] = useState(false);
-    const [ingredients, setIngredients] = useState<{ food_id: number; food_name: string; amount: number }[]>([]);
+    const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
     const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
     const [selectedFoodAmount, setSelectedFoodAmount] = useState<number>(100);
+    const [selectedFoodCustomAmount, setSelectedFoodCustomAmount] = useState<number>(0);
+    const [selectedFoodCustomUnit, setSelectedFoodCustomUnit] = useState<string>('g');
     const [foodSearchTerm, setFoodSearchTerm] = useState('');
 
     // Check authentication status when component mounts
@@ -231,7 +233,9 @@ const CreatePost = () => {
                 {
                     food_id: selectedFoodId,
                     food_name: selectedFood.name,
-                    amount: selectedFoodAmount
+                    amount: selectedFoodAmount,
+                    customAmount: selectedFoodCustomAmount,
+                    customUnit: selectedFoodCustomUnit
                 }
             ]);
         }
@@ -317,7 +321,9 @@ const CreatePost = () => {
                         instructions: recipeInstructions,
                         ingredients: ingredients.map(item => ({
                             food_id: item.food_id,
-                            amount: item.amount
+                            amount: item.amount,
+                            customAmount: item.customAmount,
+                            customUnit: item.customUnit
                         }))
                     };
 
@@ -609,6 +615,25 @@ const CreatePost = () => {
                                                             <input
                                                                 type="number"
                                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                                                placeholder="custom amount"
+                                                                value={selectedFoodCustomAmount}
+                                                                onChange={(e) => setSelectedFoodCustomAmount(parseInt(e.target.value))}
+                                                                min={1}
+                                                            />
+                                                        </div>
+                                                        <div className="flex-grow-0">
+                                                            <input
+                                                                type="text"
+                                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                                                placeholder="custom unit (teaspoon)"
+                                                                value={selectedFoodCustomUnit}
+                                                                onChange={(e) => setSelectedFoodCustomUnit(e.target.value)}
+                                                            />
+                                                        </div>
+                                                        <div className="flex-grow-0">
+                                                            <input
+                                                                type="number"
+                                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
                                                                 placeholder="Amount (g)"
                                                                 value={selectedFoodAmount}
                                                                 onChange={(e) => setSelectedFoodAmount(parseInt(e.target.value))}
@@ -677,7 +702,7 @@ const CreatePost = () => {
                                                                     key={index}
                                                                     className="flex justify-between items-center p-2 border border-[var(--forum-search-border)] rounded-md"
                                                                 >
-                                                                    <span>{ingredient.food_name} ({ingredient.amount}g)</span>
+                                                                    <span>{ingredient.food_name} ({ingredient.customAmount} {ingredient.customUnit})</span>
                                                                     <button
                                                                         type="button"
                                                                         className="text-red-500 hover:text-red-700 p-1"

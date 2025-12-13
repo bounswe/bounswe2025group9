@@ -172,6 +172,8 @@ export interface RecipeIngredient {
   food_id: number;
   food_name?: string;
   amount: number;
+  customUnit: string; 
+  customAmount: number;
   protein?: number;
   fat?: number;
   carbs?: number;
@@ -199,6 +201,8 @@ export interface CreateRecipeRequest {
   ingredients: {
     food_id: number;
     amount: number;
+    customUnit: string;
+    customAmount: number;
   }[];
 }
 
