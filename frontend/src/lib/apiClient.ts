@@ -57,6 +57,16 @@ export interface FoodProposal {
   micronutrients?: { [key: string]: number };
 }
 
+export interface FoodProposalStatus {
+  id: number;              // strongly recommended
+  name: string;
+  category: string;
+  servingSize: number;
+  isApproved: boolean | null;
+  imageUrl: string;
+  createdAt: string;
+}
+
 export interface FoodProposalResponse {
   message: string;
   proposalId: number;
@@ -422,6 +432,10 @@ export const apiClient = {
       body: JSON.stringify(proposal),
     }, true),
 
+    getFoodProposals: () =>
+    fetchJson<FoodProposalStatus[]>("/foods/get-proposal-status/", {
+      method: "GET",
+    }, true),
   getAvailableMicronutrients: () =>
     fetchJson<{
       micronutrients: Array<{ name: string; unit: string }>;

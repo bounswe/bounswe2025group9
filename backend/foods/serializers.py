@@ -67,7 +67,20 @@ class FoodProposalSerializer(serializers.ModelSerializer):
         fields = "__all__"
         read_only_fields = ("proposedBy", "nutritionScore", "is_private")
 
-
+class FoodProposalStatusSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FoodProposal
+        fields = (
+            "id",
+            "name",
+            "category",
+            "servingSize",
+            "imageUrl",
+            "createdAt",
+            "isApproved",
+        )
+        read_only_fields = fields
+        
 class FoodPriceUpdateSerializer(serializers.Serializer):
     base_price = serializers.DecimalField(max_digits=10, decimal_places=2)
     price_unit = serializers.ChoiceField(choices=PriceUnit.choices)
