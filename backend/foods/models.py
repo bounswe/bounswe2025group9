@@ -107,7 +107,7 @@ class FoodProposal(models.Model):
         help_text="If True, this rejected proposal is kept as a private food for the user"
     )
     createdAt = models.DateTimeField(default=django.utils.timezone.now)
-    proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
+    proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
 
 class PriceCategoryThreshold(models.Model):

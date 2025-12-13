@@ -27,38 +27,11 @@ from .serializers import (
     NutritionTargetsSerializer,
 )
 
-from .services import register_user, list_users, update_user, delete_user_account
+from .services import register_user, list_users, update_user
 from .models import User, Allergen, Tag, UserTag, Follow
 from forum.models import Like, Post, Recipe
 from forum.serializers import PostSerializer, RecipeSerializer
 import os
-
-
-class DeleteAccountView(APIView):
-    """
-    DELETE /users/delete/
-    Permanently delete the current user's account.
-    """
-    authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
-
-    def delete(self, request):
-        user = request.user
-        reason = request.data.get("reason", "")
-        
-        try:
-            delete_user_account(user, reason=reason)
-            return Response(
-                {"detail": "Account deleted successfully."},
-                status=status.HTTP_200_OK
-            )
-        except Exception as e:
-            # Log the error properly in production
-            return Response(
-                {"detail": f"An error occurred during deletion: {str(e)}"},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
 
 
 class UserListView(APIView):

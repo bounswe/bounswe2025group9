@@ -282,18 +282,3 @@ class NutritionTargets(models.Model):
         )
         
         return targets
-
-
-class AccountDeletionLog(models.Model):
-    """
-    Audit log for account deletions.
-    Stores minimal information to verify deletion compliance.
-    """
-    user_identifier = models.CharField(max_length=150, help_text="Username or ID of the deleted user")
-    email = models.EmailField(help_text="Email of the deleted user (hashed or raw depending on policy)")
-    reason = models.TextField(blank=True, help_text="Reason for deletion if provided")
-    deleted_at = models.DateTimeField(auto_now_add=True)
-    details = models.JSONField(default=dict, blank=True, help_text="Summary of deleted/anonymized counts")
-
-    def __str__(self):
-        return f"Deletion Log: {self.user_identifier} at {self.deleted_at}"
