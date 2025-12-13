@@ -72,8 +72,8 @@ class RecipeTests(TestCase):
                     "post_id": self.post.id,
                     "instructions": "1. Cook chicken. 2. Cook rice. 3. Serve together.",
                     "ingredients": [
-                        {"food_id": self.food1.id, "amount": 200},
-                        {"food_id": self.food2.id, "amount": 150},
+                        {"food_id": self.food1.id, "amount": 200, "customUnit": "g", "customAmount": 200},
+                        {"food_id": self.food2.id, "amount": 150, "customUnit": "g", "customAmount": 150},
                     ],
                 },
                 format="json",
@@ -170,9 +170,9 @@ class RecipeTests(TestCase):
                 {
                     "instructions": "Updated instructions",
                     "ingredients": [
-                        {"food_id": self.food1.id, "amount": 150},
-                        {"food_id": self.food2.id, "amount": 100},
-                    ],
+                        {"food_id": self.food1.id, "amount": 150, "customUnit": "g", "customAmount": 150},
+                        {"food_id": self.food2.id, "amount": 100, "customUnit": "g", "customAmount": 100},
+                     ],
                 },
                 format="json",
             ),
