@@ -1,393 +1,490 @@
 /**
- * FoodSelectorModal
+ * FoodSelectorModal Component
  * 
- * Modal component for searching and selecting food items.
- * Features:
- * - Search functionality with debouncing
- * - Display food items with images and nutrition info
- * - Pagination support
- * - Loading and error states
+ * A modal for selecting foods from the catalog or private foods.
+ * Used in NutritionTrackingScreen, ForumScreen, and FoodCompareScreen.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Modal,
-  TouchableOpacity,
-  FlatList,
-  ActivityIndicator,
-  Image,
-  ListRenderItemInfo,
+    View,
+    Text,
+    StyleSheet,
+    Modal,
+    FlatList,
+    TouchableOpacity,
+    ActivityIndicator,
+    RefreshControl,
 } from 'react-native';
-import { PALETTE, SPACING } from '../../constants/theme';
-import { useTheme } from '../../context/ThemeContext';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { FoodItem } from '../../types/types';
+
+import { useTheme } from '../../context/ThemeContext';
+import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import TextInput from '../common/TextInput';
+import { FoodItem } from '../../types/types';
+import { PrivateFood } from '../../types/nutrition';
 import { getFoodCatalog } from '../../services/api/food.service';
+import { privateFoodService } from '../../services/api/privateFood.service';
 
 interface FoodSelectorModalProps {
-  visible: boolean;
-  onClose: () => void;
-  onSelect: (food: FoodItem) => void;
+    visible: boolean;
+    onClose: () => void;
+    onSelect: (food: FoodItem, isPrivate?: boolean, privateFoodData?: PrivateFood) => void;
+    onCreatePrivateFood?: () => void;
+    title?: string;
 }
 
+type TabType = 'catalog' | 'private';
+
 const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
-  visible,
-  onClose,
-  onSelect,
+    visible,
+    onClose,
+    onSelect,
+    onCreatePrivateFood,
+    title = 'Select Food',
 }) => {
-  const { theme, textStyles } = useTheme();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchResults, setSearchResults] = useState<FoodItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const debounceRef = useRef<NodeJS.Timeout | null>(null);
+    const { theme, textStyles } = useTheme();
 
-  useEffect(() => {
-    // Debounce search
-    if (debounceRef.current) {
-      clearTimeout(debounceRef.current);
-    }
+    // State
+    const [activeTab, setActiveTab] = useState<TabType>('catalog');
+    const [searchQuery, setSearchQuery] = useState('');
+    const [catalogFoods, setCatalogFoods] = useState<FoodItem[]>([]);
+    const [privateFoods, setPrivateFoods] = useState<PrivateFood[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
+    const [hasMore, setHasMore] = useState(true);
+    const [offset, setOffset] = useState(0);
+    const PAGE_SIZE = 20;
 
-    if (searchTerm.trim().length === 0) {
-      setSearchResults([]);
-      setError(null);
-      setLoading(false);
-      return;
-    }
+    // Load catalog foods
+    const loadCatalogFoods = useCallback(async (reset = false) => {
+        if (loading || (!hasMore && !reset)) return;
 
-    debounceRef.current = setTimeout(async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const response = await getFoodCatalog(20, 0, undefined, searchTerm);
-        
-        if (response.error) {
-          setError(response.error);
-          setSearchResults([]);
-        } else {
-          const foods = response.data || [];
-          setSearchResults(foods);
-          if (foods.length === 0) {
-            setError(`No foods found for "${searchTerm}".`);
-          }
+        setLoading(true);
+        try {
+            const currentOffset = reset ? 0 : offset;
+            const result = await getFoodCatalog(
+                PAGE_SIZE,
+                currentOffset,
+                undefined,
+                searchQuery.trim() || undefined
+            );
+
+            if (result.data) {
+                if (reset) {
+                    setCatalogFoods(result.data);
+                    setOffset(PAGE_SIZE);
+                } else {
+                    setCatalogFoods(prev => [...prev, ...result.data!]);
+                    setOffset(prev => prev + PAGE_SIZE);
+                }
+                setHasMore(result.hasMore);
+            }
+        } catch (error) {
+            console.error('Error loading catalog foods:', error);
+        } finally {
+            setLoading(false);
+            setRefreshing(false);
         }
-      } catch (err) {
-        console.error('Error searching foods:', err);
-        setError('Error searching for foods.');
-        setSearchResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
+    }, [loading, hasMore, offset, searchQuery]);
 
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current);
+    // Load private foods
+    const loadPrivateFoods = useCallback(async () => {
+        try {
+            const foods = searchQuery.trim()
+                ? await privateFoodService.searchPrivateFoods(searchQuery)
+                : await privateFoodService.getPrivateFoods();
+            setPrivateFoods(foods);
+        } catch (error) {
+            console.error('Error loading private foods:', error);
+        }
+    }, [searchQuery]);
+
+    // Initial load when modal opens
+    useEffect(() => {
+        if (visible) {
+            setOffset(0);
+            setHasMore(true);
+            loadCatalogFoods(true);
+            loadPrivateFoods();
+        }
+    }, [visible]);
+
+    // Search effect
+    useEffect(() => {
+        const debounce = setTimeout(() => {
+            if (activeTab === 'catalog') {
+                setOffset(0);
+                setHasMore(true);
+                loadCatalogFoods(true);
+            } else {
+                loadPrivateFoods();
+            }
+        }, 300);
+
+        return () => clearTimeout(debounce);
+    }, [searchQuery, activeTab]);
+
+    // Handle refresh
+    const handleRefresh = () => {
+        setRefreshing(true);
+        if (activeTab === 'catalog') {
+            setOffset(0);
+            setHasMore(true);
+            loadCatalogFoods(true);
+        } else {
+            loadPrivateFoods();
+            setRefreshing(false);
+        }
     };
-  }, [searchTerm]);
 
-  const handleClose = () => {
-    setSearchTerm('');
-    setSearchResults([]);
-    setError(null);
-    onClose();
-  };
+    // Handle tab change
+    const handleTabChange = (tab: TabType) => {
+        setActiveTab(tab);
+        setSearchQuery('');
+    };
 
-  const handleSelectFood = (food: FoodItem) => {
-    onSelect(food);
-    handleClose();
-  };
+    // Handle food selection
+    const handleFoodSelect = (food: FoodItem | PrivateFood) => {
+        if ('id' in food && typeof food.id === 'string') {
+            // It's a PrivateFood, convert it and mark as private
+            const convertedFood = privateFoodService.convertToFoodItem(food as PrivateFood);
+            onSelect(convertedFood, true, food as PrivateFood);
+        } else {
+            // It's already a FoodItem
+            onSelect(food as FoodItem, false);
+        }
+        onClose();
+    };
 
-  const renderFoodItem = ({ item }: ListRenderItemInfo<FoodItem>) => (
-    <TouchableOpacity
-      style={[styles.foodItem, { backgroundColor: theme.surface }]}
-      onPress={() => handleSelectFood(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.foodImageContainer}>
-        {item.imageUrl ? (
-          <Image 
-            source={{ uri: item.imageUrl }} 
-            style={styles.foodItemImage}
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.foodItemImagePlaceholder, { backgroundColor: theme.card }]}>
-            <Icon name={item.iconName} size={32} color={theme.textSecondary} />
-          </View>
-        )}
-      </View>
-
-      <View style={styles.foodItemInfo}>
-        <Text style={[styles.foodItemName, textStyles.body]} numberOfLines={2}>
-          {item.title}
-        </Text>
-        <Text style={[styles.foodItemCategory, textStyles.caption, { color: theme.textSecondary }]}>
-          Category: {item.category}
-        </Text>
-        
-        {item.nutritionScore !== undefined && (
-          <View style={styles.nutritionScoreContainer}>
-            <Text style={[styles.nutritionScoreLabel, textStyles.caption, { color: theme.textSecondary }]}>
-              Nutrition Score:
-            </Text>
-            <View style={[styles.nutritionScoreBadge, { 
-              backgroundColor: getNutritionScoreColor(item.nutritionScore) 
-            }]}>
-              <Text style={[styles.nutritionScoreValue, { color: PALETTE.NEUTRAL.WHITE }]}>
-                {item.nutritionScore.toFixed(1)}
-              </Text>
+    // Render catalog food item
+    const renderCatalogItem = ({ item }: { item: FoodItem }) => (
+        <TouchableOpacity
+            style={[styles.foodItem, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            onPress={() => handleFoodSelect(item)}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.foodIcon, { backgroundColor: `${theme.primary}15` }]}>
+                <Icon name={item.iconName as any || 'food'} size={24} color={theme.primary} />
             </View>
-          </View>
-        )}
-        
-        {item.macronutrients && (
-          <Text style={[styles.foodItemCalories, textStyles.caption, { color: theme.textSecondary }]}>
-            {item.macronutrients.calories} kcal
-          </Text>
-        )}
-
-        {item.dietaryOptions && item.dietaryOptions.length > 0 && (
-          <View style={styles.dietaryOptionsContainer}>
-            {item.dietaryOptions.slice(0, 3).map((option, index) => (
-              <View 
-                key={index} 
-                style={[styles.dietaryTag, { backgroundColor: theme.primary + '20' }]}
-              >
-                <Text style={[styles.dietaryTagText, { color: theme.primary }]}>
-                  {option}
+            <View style={styles.foodInfo}>
+                <Text style={[textStyles.body, { color: theme.text, fontWeight: '500' }]} numberOfLines={1}>
+                    {item.title}
                 </Text>
-              </View>
-            ))}
-          </View>
-        )}
-      </View>
-    </TouchableOpacity>
-  );
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                    {item.macronutrients?.calories || 0} kcal • {item.servingSize || 100}g
+                </Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={theme.textSecondary} />
+        </TouchableOpacity>
+    );
 
-  const getNutritionScoreColor = (score: number): string => {
-    if (score >= 8) return PALETTE.SUCCESS.DEFAULT;
-    if (score >= 6) return PALETTE.WARNING.DEFAULT;
-    return PALETTE.ERROR.DEFAULT;
-  };
+    // Render private food item
+    const renderPrivateItem = ({ item }: { item: PrivateFood }) => (
+        <TouchableOpacity
+            style={[styles.foodItem, { backgroundColor: theme.surface, borderColor: theme.border }]}
+            onPress={() => handleFoodSelect(item)}
+            activeOpacity={0.7}
+        >
+            <View style={[styles.foodIcon, { backgroundColor: `${theme.success}15` }]}>
+                <Icon name="lock" size={24} color={theme.success} />
+            </View>
+            <View style={styles.foodInfo}>
+                <View style={styles.foodNameRow}>
+                    <Text style={[textStyles.body, { color: theme.text, fontWeight: '500', flex: 1 }]} numberOfLines={1}>
+                        {item.name}
+                    </Text>
+                    <View style={[styles.privateBadge, { backgroundColor: `${theme.success}20` }]}>
+                        <Text style={[textStyles.small, { color: theme.success, fontWeight: '600' }]}>Private</Text>
+                    </View>
+                </View>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                    {item.calories} kcal • {item.servingSize}g
+                </Text>
+            </View>
+            <Icon name="chevron-right" size={20} color={theme.textSecondary} />
+        </TouchableOpacity>
+    );
 
-  return (
-    <Modal
-      visible={visible}
-      animationType="slide"
-      transparent={true}
-      onRequestClose={handleClose}
-    >
-      <View style={styles.modalOverlay}>
-        <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
-          {/* Header */}
-          <View style={[styles.modalHeader, { borderBottomColor: theme.border }]}>
-            <Text style={[styles.modalTitle, textStyles.heading3]}>
-              Select Food Item
-            </Text>
+    // Render empty state for catalog
+    const renderCatalogEmpty = () => {
+        if (loading) return null;
+
+        return (
+            <View style={styles.emptyContainer}>
+                <Icon
+                    name="food-off"
+                    size={64}
+                    color={theme.textSecondary}
+                    style={{ opacity: 0.3 }}
+                />
+                <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.md, textAlign: 'center' }]}>
+                    No foods found. Try a different search.
+                </Text>
+            </View>
+        );
+    };
+
+    // Render footer (loading indicator for pagination)
+    const renderFooter = () => {
+        if (!loading || catalogFoods.length === 0) return null;
+
+        return (
+            <View style={styles.footer}>
+                <ActivityIndicator size="small" color={theme.primary} />
+            </View>
+        );
+    };
+
+    // Render create button as first item in private foods list
+    const renderPrivateListHeader = () => {
+        const handleCreatePress = () => {
+            if (onCreatePrivateFood) {
+                onClose(); // Close this modal first
+                setTimeout(() => {
+                    onCreatePrivateFood(); // Then open the create modal
+                }, 100);
+            }
+        };
+
+        return (
             <TouchableOpacity
-              onPress={handleClose}
-              style={styles.closeButton}
-              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                style={[styles.foodItem, styles.createFoodItem, { backgroundColor: `${theme.primary}10`, borderColor: theme.primary, borderStyle: 'dashed' }]}
+                onPress={handleCreatePress}
+                activeOpacity={0.7}
             >
-              <Icon name="close" size={24} color={theme.text} />
+                <View style={[styles.foodIcon, { backgroundColor: `${theme.primary}20` }]}>
+                    <Icon name="plus" size={24} color={theme.primary} />
+                </View>
+                <View style={styles.foodInfo}>
+                    <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+                        Create Private Food
+                    </Text>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                        Add custom food with your own values
+                    </Text>
+                </View>
             </TouchableOpacity>
-          </View>
+        );
+    };
 
-          {/* Search Input */}
-          <View style={styles.searchContainer}>
-            <TextInput
-              placeholder="Search foods..."
-              onChangeText={setSearchTerm}
-              value={searchTerm}
-              iconName="magnify"
-              clearButton
-              onClear={() => setSearchTerm('')}
-            />
-          </View>
+    return (
+        <>
+            <Modal
+                visible={visible}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={onClose}
+            >
+                <View style={[styles.container, { backgroundColor: theme.background }]}>
+                    {/* Header */}
+                    <View style={[styles.header, { borderBottomColor: theme.border }]}>
+                        <Text style={[textStyles.heading3, { color: theme.text }]}>{title}</Text>
+                        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+                            <Icon name="close" size={24} color={theme.text} />
+                        </TouchableOpacity>
+                    </View>
 
-          {/* Results List */}
-          <View style={styles.resultsContainer}>
-            {loading && (
-              <View style={styles.centerContainer}>
-                <ActivityIndicator size="large" color={theme.primary} />
-                <Text style={[styles.loadingText, textStyles.body, { color: theme.textSecondary }]}>
-                  Searching...
-                </Text>
-              </View>
-            )}
+                    {/* Search */}
+                    <View style={styles.searchContainer}>
+                        <TextInput
+                            placeholder="Search foods..."
+                            value={searchQuery}
+                            onChangeText={setSearchQuery}
+                        />
+                    </View>
 
-            {!loading && searchResults.length > 0 && (
-              <FlatList
-                data={searchResults}
-                renderItem={renderFoodItem}
-                keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={true}
-              />
-            )}
+                    {/* Tabs */}
+                    <View style={[styles.tabContainer, { borderBottomColor: theme.border }]}>
+                        <TouchableOpacity
+                            style={[
+                                styles.tab,
+                                activeTab === 'catalog' && [styles.activeTab, { borderBottomColor: theme.primary }]
+                            ]}
+                            onPress={() => handleTabChange('catalog')}
+                        >
+                            <Icon
+                                name="food-apple"
+                                size={18}
+                                color={activeTab === 'catalog' ? theme.primary : theme.textSecondary}
+                            />
+                            <Text
+                                style={[
+                                    textStyles.body,
+                                    {
+                                        color: activeTab === 'catalog' ? theme.primary : theme.textSecondary,
+                                        fontWeight: activeTab === 'catalog' ? '600' : '400',
+                                        marginLeft: SPACING.xs
+                                    }
+                                ]}
+                            >
+                                Food Catalog
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={[
+                                styles.tab,
+                                activeTab === 'private' && [styles.activeTab, { borderBottomColor: theme.primary }]
+                            ]}
+                            onPress={() => handleTabChange('private')}
+                        >
+                            <Icon
+                                name="lock"
+                                size={18}
+                                color={activeTab === 'private' ? theme.primary : theme.textSecondary}
+                            />
+                            <Text
+                                style={[
+                                    textStyles.body,
+                                    {
+                                        color: activeTab === 'private' ? theme.primary : theme.textSecondary,
+                                        fontWeight: activeTab === 'private' ? '600' : '400',
+                                        marginLeft: SPACING.xs
+                                    }
+                                ]}
+                            >
+                                Private ({privateFoods.length})
+                            </Text>
+                        </TouchableOpacity>
+                    </View>
 
-            {!loading && searchResults.length === 0 && searchTerm.trim().length > 0 && (
-              <View style={styles.centerContainer}>
-                <Icon name="food-off" size={64} color={theme.textSecondary} />
-                <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
-                  No foods found matching your search.
-                </Text>
-              </View>
-            )}
-
-            {!loading && searchTerm.trim().length === 0 && (
-              <View style={styles.centerContainer}>
-                <Icon name="magnify" size={64} color={theme.textSecondary} />
-                <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
-                  Start typing to search for foods
-                </Text>
-              </View>
-            )}
-
-            {!loading && error && searchResults.length === 0 && (
-              <View style={styles.centerContainer}>
-                <Icon name="alert-circle" size={64} color={theme.error} />
-                <Text style={[styles.errorText, textStyles.body, { color: theme.error }]}>
-                  {error}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-      </View>
-    </Modal>
-  );
+                    {/* Content */}
+                    {activeTab === 'catalog' ? (
+                        <FlatList
+                            data={catalogFoods}
+                            renderItem={renderCatalogItem}
+                            keyExtractor={(item) => `catalog-${item.id}`}
+                            contentContainerStyle={styles.listContent}
+                            showsVerticalScrollIndicator={false}
+                            ListEmptyComponent={renderCatalogEmpty}
+                            ListFooterComponent={renderFooter}
+                            onEndReached={() => loadCatalogFoods(false)}
+                            onEndReachedThreshold={0.3}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={handleRefresh}
+                                    colors={[theme.primary]}
+                                    tintColor={theme.primary}
+                                />
+                            }
+                        />
+                    ) : (
+                        <FlatList
+                            data={privateFoods}
+                            renderItem={renderPrivateItem}
+                            keyExtractor={(item) => `private-${item.id}`}
+                            contentContainerStyle={styles.listContent}
+                            showsVerticalScrollIndicator={false}
+                            ListHeaderComponent={renderPrivateListHeader}
+                            ListEmptyComponent={null}
+                            refreshControl={
+                                <RefreshControl
+                                    refreshing={refreshing}
+                                    onRefresh={handleRefresh}
+                                    colors={[theme.primary]}
+                                    tintColor={theme.primary}
+                                />
+                            }
+                        />
+                    )}
+                </View>
+            </Modal>
+        </>
+    );
 };
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    height: '85%',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    overflow: 'hidden',
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: SPACING.md,
-    borderBottomWidth: 1,
-  },
-  modalTitle: {
-    flex: 1,
-  },
-  closeButton: {
-    padding: SPACING.xs,
-  },
-  searchContainer: {
-    padding: SPACING.md,
-    paddingBottom: SPACING.sm,
-  },
-  resultsContainer: {
-    flex: 1,
-  },
-  listContent: {
-    padding: SPACING.md,
-    paddingTop: SPACING.sm,
-  },
-  foodItem: {
-    flexDirection: 'row',
-    padding: SPACING.md,
-    borderRadius: 12,
-    marginBottom: SPACING.md,
-    elevation: 2,
-    shadowColor: PALETTE.NEUTRAL.BLACK,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-  },
-  foodImageContainer: {
-    marginRight: SPACING.md,
-  },
-  foodItemImage: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-  },
-  foodItemImagePlaceholder: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  foodItemInfo: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  foodItemName: {
-    fontWeight: '600',
-    marginBottom: SPACING.xs,
-  },
-  foodItemCategory: {
-    marginBottom: SPACING.xs,
-  },
-  nutritionScoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: SPACING.xs,
-  },
-  nutritionScoreLabel: {
-    marginRight: SPACING.xs,
-  },
-  nutritionScoreBadge: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  nutritionScoreValue: {
-    fontSize: 12,
-    fontWeight: 'bold',
-  },
-  foodItemCalories: {
-    marginBottom: SPACING.xs,
-  },
-  dietaryOptionsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
-    marginTop: SPACING.xs,
-  },
-  dietaryTag: {
-    paddingHorizontal: SPACING.sm,
-    paddingVertical: 2,
-    borderRadius: 4,
-  },
-  dietaryTagText: {
-    fontSize: 10,
-    fontWeight: '600',
-  },
-  centerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: SPACING.xl,
-  },
-  loadingText: {
-    marginTop: SPACING.md,
-  },
-  emptyText: {
-    marginTop: SPACING.md,
-    textAlign: 'center',
-  },
-  errorText: {
-    marginTop: SPACING.md,
-    textAlign: 'center',
-  },
+    container: {
+        flex: 1,
+    },
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.md,
+        borderBottomWidth: 1,
+    },
+    headerRight: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.sm,
+    },
+    createButton: {
+        padding: SPACING.xs,
+        borderRadius: BORDER_RADIUS.sm,
+    },
+    closeButton: {
+        padding: SPACING.xs,
+    },
+    searchContainer: {
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+    },
+    tabContainer: {
+        flexDirection: 'row',
+        borderBottomWidth: 1,
+        paddingHorizontal: SPACING.md,
+    },
+    tab: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: SPACING.md,
+        borderBottomWidth: 2,
+        borderBottomColor: 'transparent',
+    },
+    activeTab: {
+        borderBottomWidth: 2,
+    },
+    listContent: {
+        padding: SPACING.md,
+        flexGrow: 1,
+    },
+    foodItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        borderRadius: BORDER_RADIUS.md,
+        borderWidth: 1,
+        marginBottom: SPACING.sm,
+    },
+    foodIcon: {
+        width: 48,
+        height: 48,
+        borderRadius: BORDER_RADIUS.md,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: SPACING.md,
+    },
+    foodInfo: {
+        flex: 1,
+    },
+    foodNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: SPACING.xs,
+    },
+    privateBadge: {
+        paddingHorizontal: SPACING.xs,
+        paddingVertical: 2,
+        borderRadius: BORDER_RADIUS.sm,
+    },
+    emptyContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: SPACING.xl,
+    },
+    footer: {
+        paddingVertical: SPACING.lg,
+        alignItems: 'center',
+    },
+    createFoodItem: {
+        borderWidth: 1.5,
+    },
 });
 
 export default FoodSelectorModal;
