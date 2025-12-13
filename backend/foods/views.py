@@ -655,11 +655,21 @@ class AvailableMicronutrientsView(APIView):
 
 @permission_classes([IsAuthenticated])
 class FoodProposalSubmitView(APIView):
+    """
+    Submit a private FoodEntry for approval/validation.
+
+    POST /api/foods/proposals/submit/
+    Body: {"food_entry_id": 123}
+
+    The food_entry must be:
+    - Created by the requesting user (createdBy=request.user)
+    - Private (validated=False)
+    - Not already proposed
+    """
     def post(self, request):
-        serializer = FoodProposalSerializer(data=request.data)
+        serializer = FoodProposalSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            nutrition_score = calculate_nutrition_score(serializer.validated_data)
-            serializer.save(proposedBy=request.user, nutritionScore=nutrition_score)
+            serializer.save(proposedBy=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
@@ -667,14 +677,19 @@ class FoodProposalSubmitView(APIView):
 class UserFoodProposalListView(ListAPIView):
     """
     List all food proposals created by the authenticated user.
-    This includes pending, approved, and rejected (private) proposals.
+    This includes pending, approved, and rejected proposals.
     """
     permission_classes = [IsAuthenticated]
     serializer_class = FoodProposalSerializer
-    
+
     def get_queryset(self):
         # Return all proposals by the user, ordered by creation date (newest first)
-        return FoodProposal.objects.filter(proposedBy=self.request.user).order_by('-createdAt')
+        return FoodProposal.objects.filter(proposedBy=self.request.user).select_related('food_entry').order_by('-createdAt')
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 def _download_and_cache_image(image_url, url_hash):
     """

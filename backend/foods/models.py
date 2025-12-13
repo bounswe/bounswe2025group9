@@ -80,30 +80,22 @@ class FoodEntry(models.Model):
     )
 
 class FoodProposal(models.Model):
-    name = models.CharField(max_length=100)
-    category = models.CharField(max_length=100)
-    servingSize = models.FloatField()
-    caloriesPerServing = models.FloatField()
-    proteinContent = models.FloatField()
-    fatContent = models.FloatField()
-    carbohydrateContent = models.FloatField()
-    allergens = models.ManyToManyField(
-        Allergen, related_name="food_proposals", blank=True
-    )
-    dietaryOptions = models.JSONField(default=list)
-    nutritionScore = models.FloatField()
-    imageUrl = models.URLField(blank=True)
-    base_price = models.DecimalField(
-        max_digits=10, decimal_places=2, null=True, blank=True
-    )
-    price_unit = models.CharField(
-        max_length=20, choices=PriceUnit.choices, default=PriceUnit.PER_100G
-    )
-    currency = models.CharField(max_length=3, default=DEFAULT_CURRENCY)
-    micronutrients = models.JSONField(
-        default=dict,
+    """
+    Represents a request to make a private FoodEntry public.
+
+    Flow:
+    1. User creates a private FoodEntry (validated=False, createdBy=user)
+    2. User submits it for approval → creates FoodProposal
+    3. When approved → FoodEntry.validated = True (becomes public)
+    4. When rejected → FoodEntry stays private (user can still use it)
+    """
+    food_entry = models.OneToOneField(
+        FoodEntry,
+        on_delete=models.CASCADE,
+        related_name='proposal',
+        null=True,  # Temporarily nullable for data migration
         blank=True,
-        help_text="Micronutrient content (vitamins, minerals) per serving"
+        help_text="The private FoodEntry being proposed for public validation"
     )
     isApproved = models.BooleanField(
         null=True, blank=True, default=None

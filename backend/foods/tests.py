@@ -7,7 +7,7 @@ from rest_framework import status
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
-from foods.models import FoodEntry, FoodProposal, PriceAudit, Micronutrient, FoodEntryMicronutrient
+from foods.models import FoodEntry, FoodProposal, PriceAudit, Micronutrient, FoodEntryMicronutrient, Allergen
 from foods.serializers import FoodEntrySerializer
 from foods.services import (
     approve_food_proposal,
@@ -16,7 +16,6 @@ from foods.services import (
     update_food_price,
     FoodAccessService
 )
-from accounts.models import Allergen
 from unittest.mock import patch
 import requests
 
@@ -204,10 +203,10 @@ class FoodProposalTests(APITestCase):
         )
         self.token_url = reverse("token_obtain_pair")
         self.proposal_url = reverse("submit_food_proposal")
-        
+
         # Create some allergens for testing
-        self.allergen1 = Allergen.objects.create(name="Peanuts", common=True)
-        self.allergen2 = Allergen.objects.create(name="Dairy", common=True)
+        self.allergen1 = Allergen.objects.create(name="Peanuts")
+        self.allergen2 = Allergen.objects.create(name="Dairy")
 
         # Get authentication token
         token_res = self.client.post(
@@ -215,83 +214,105 @@ class FoodProposalTests(APITestCase):
         )
         self.access_token = token_res.data["access"]
 
+    def _create_private_food(self, **kwargs):
+        """Helper to create a private FoodEntry"""
+        defaults = {
+            "name": "Test Food",
+            "category": "Test",
+            "servingSize": 100,
+            "caloriesPerServing": 100,
+            "proteinContent": 10,
+            "fatContent": 5,
+            "carbohydrateContent": 15,
+            "nutritionScore": 5.0,
+            "validated": False,
+            "createdBy": self.user,
+        }
+        defaults.update(kwargs)
+        return FoodEntry.objects.create(**defaults)
+
     def test_submit_food_proposal_success(self):
         """Test successful food proposal submission"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Organic Quinoa",
-            "category": "Grains",
-            "servingSize": 185,
-            "caloriesPerServing": 222,
-            "proteinContent": 8.14,
-            "fatContent": 3.55,
-            "carbohydrateContent": 39.4,
-            "dietaryOptions": ["Vegetarian", "Gluten-Free"],
-            "imageUrl": "https://example.com/quinoa.jpg"
-        }
+
+        # First create a private food entry
+        food_entry = self._create_private_food(
+            name="Organic Quinoa",
+            category="Grains",
+            servingSize=185,
+            caloriesPerServing=222,
+            proteinContent=8.14,
+            fatContent=3.55,
+            carbohydrateContent=39.4,
+            dietaryOptions=["Vegetarian", "Gluten-Free"],
+            imageUrl="https://example.com/quinoa.jpg"
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
+
         # Verify proposal was created
-        self.assertTrue(FoodProposal.objects.filter(name="Organic Quinoa").exists())
-        proposal = FoodProposal.objects.get(name="Organic Quinoa")
+        self.assertTrue(FoodProposal.objects.filter(food_entry=food_entry).exists())
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
         self.assertEqual(proposal.proposedBy, self.user)
-        self.assertEqual(proposal.category, "Grains")
-        self.assertEqual(float(proposal.servingSize), 185.0)
+        self.assertEqual(proposal.food_entry.name, "Organic Quinoa")
+        self.assertEqual(proposal.food_entry.category, "Grains")
 
     def test_submit_food_proposal_minimal_data(self):
         """Test submitting proposal with only required fields"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Simple Food",
-            "category": "Other",
-            "servingSize": 100,
-            "caloriesPerServing": 150,
-            "proteinContent": 5,
-            "fatContent": 3,
-            "carbohydrateContent": 20
-        }
+
+        # Create a private food entry
+        food_entry = self._create_private_food(name="Simple Food")
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        proposal = FoodProposal.objects.get(name="Simple Food")
-        self.assertIsNotNone(proposal.nutritionScore)
+
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertIsNotNone(proposal.food_entry.nutritionScore)
 
     def test_submit_food_proposal_with_multiple_allergens(self):
         """Test submitting proposal with multiple allergens"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Peanut Butter",
-            "category": "Fats & Oils",
-            "servingSize": 32,
-            "caloriesPerServing": 188,
-            "proteinContent": 8,
-            "fatContent": 16,
-            "carbohydrateContent": 7
-        }
+
+        # Create a private food entry with allergens
+        food_entry = self._create_private_food(
+            name="Peanut Butter",
+            category="Fats & Oils",
+            servingSize=32,
+            caloriesPerServing=188,
+            proteinContent=8,
+            fatContent=16,
+            carbohydrateContent=7
+        )
+        # Set allergens on the food entry
+        food_entry.allergens.set([self.allergen1, self.allergen2])
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        proposal = FoodProposal.objects.get(name="Peanut Butter")
-        # Note: M2M fields need to be set after creation
+
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
         self.assertIsNotNone(proposal)
+        # Verify allergens are on the food entry
+        self.assertEqual(proposal.food_entry.allergens.count(), 2)
 
     def test_submit_food_proposal_missing_required_fields(self):
         """Test submitting proposal without required fields"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Incomplete Food",
-            # Missing required nutrition fields
-        }
+
+        # Try to submit without food_entry_id
+        data = {}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_submit_food_proposal_negative_values(self):
@@ -350,29 +371,33 @@ class FoodProposalTests(APITestCase):
     def test_submit_food_proposal_with_dietary_options(self):
         """Test submitting proposal with dietary options"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Vegan Protein Bar",
-            "category": "Sweets & Snacks",
-            "servingSize": 60,
-            "caloriesPerServing": 200,
-            "proteinContent": 15,
-            "fatContent": 8,
-            "carbohydrateContent": 25,
-            "dietaryOptions": ["Vegan", "Gluten-Free", "High-Protein"]
-        }
+
+        # Create a private food entry with dietary options
+        food_entry = self._create_private_food(
+            name="Vegan Protein Bar",
+            category="Sweets & Snacks",
+            servingSize=60,
+            caloriesPerServing=200,
+            proteinContent=15,
+            fatContent=8,
+            carbohydrateContent=25,
+            dietaryOptions=["Vegan", "Gluten-Free", "High-Protein"]
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        proposal = FoodProposal.objects.get(name="Vegan Protein Bar")
-        self.assertEqual(len(proposal.dietaryOptions), 3)
+
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertEqual(len(proposal.food_entry.dietaryOptions), 3)
 
     def test_submit_duplicate_food_proposal(self):
         """Test submitting proposal for food that already exists"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        # Create existing food entry
+
+        # Create existing validated food entry
         FoodAccessService.create_validated_food_entry(
             name="Existing Food",
             category="Other",
@@ -383,40 +408,48 @@ class FoodProposalTests(APITestCase):
             carbohydrateContent=20,
             nutritionScore=5.0
         )
-        
-        # Try to propose it again
-        data = {
-            "name": "Existing Food",
-            "category": "Other",
-            "servingSize": 100,
-            "caloriesPerServing": 150,
-            "proteinContent": 5,
-            "fatContent": 3,
-            "carbohydrateContent": 20
-        }
+
+        # Create a private food entry with similar data
+        food_entry = self._create_private_food(
+            name="Existing Food",
+            category="Other",
+            servingSize=100,
+            caloriesPerServing=150,
+            proteinContent=5,
+            fatContent=3,
+            carbohydrateContent=20
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         # Should still accept the proposal (proposals can be duplicates)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_nutrition_score_calculation(self):
         """Test that nutrition score is calculated for proposals"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Healthy Food",
-            "category": "Vegetable",
-            "servingSize": 100,
-            "caloriesPerServing": 50,
-            "proteinContent": 3,
-            "fatContent": 0.5,
-            "carbohydrateContent": 10
-        }
+
+        # Create a private food entry (nutrition score is set in _create_private_food)
+        food_entry = self._create_private_food(
+            name="Healthy Food",
+            category="Vegetable",
+            servingSize=100,
+            caloriesPerServing=50,
+            proteinContent=3,
+            fatContent=0.5,
+            carbohydrateContent=10
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("nutritionScore", response.data)
-        self.assertGreater(response.data["nutritionScore"], 0)
+
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertGreater(proposal.food_entry.nutritionScore, 0)
 
     def test_submit_food_proposal_long_name(self):
         """Test submitting proposal with very long name"""
@@ -439,23 +472,27 @@ class FoodProposalTests(APITestCase):
     def test_submit_food_proposal_with_image_url(self):
         """Test submitting proposal with custom image URL"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        
-        data = {
-            "name": "Custom Image Food",
-            "category": "Other",
-            "servingSize": 100,
-            "caloriesPerServing": 150,
-            "proteinContent": 5,
-            "fatContent": 3,
-            "carbohydrateContent": 20,
-            "imageUrl": "https://example.com/custom-food.jpg"
-        }
+
+        # Create a private food entry with custom image URL
+        food_entry = self._create_private_food(
+            name="Custom Image Food",
+            category="Other",
+            servingSize=100,
+            caloriesPerServing=150,
+            proteinContent=5,
+            fatContent=3,
+            carbohydrateContent=20,
+            imageUrl="https://example.com/custom-food.jpg"
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format='json')
-        
+
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        
-        proposal = FoodProposal.objects.get(name="Custom Image Food")
-        self.assertEqual(proposal.imageUrl, "https://example.com/custom-food.jpg")
+
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertEqual(proposal.food_entry.imageUrl, "https://example.com/custom-food.jpg")
 
 
 class PriceCategorizationTests(TestCase):
@@ -552,7 +589,8 @@ class FoodProposalApprovalTests(TestCase):
         seed_price_entries([12, 18, 30, 45, 60, 72])
 
     def _create_proposal(self, base_price: Decimal) -> FoodProposal:
-        return FoodProposal.objects.create(
+        # Create a private FoodEntry first
+        food_entry = FoodEntry.objects.create(
             name="Approved Food",
             category="Snacks",
             servingSize=100,
@@ -566,6 +604,12 @@ class FoodProposalApprovalTests(TestCase):
             base_price=base_price,
             price_unit=PriceUnit.PER_100G,
             currency=DEFAULT_CURRENCY,
+            validated=False,
+            createdBy=self.proposer,
+        )
+        # Create FoodProposal with reference to the food_entry
+        return FoodProposal.objects.create(
+            food_entry=food_entry,
             proposedBy=self.proposer,
         )
 
@@ -607,7 +651,8 @@ class ModeratorWorkflowTests(APITestCase):
         self.client.force_authenticate(user=self.moderator)
 
     def test_full_moderation_flow_records_price_audit(self):
-        proposal = FoodProposal.objects.create(
+        # Create a private FoodEntry first
+        food_entry = FoodEntry.objects.create(
             name="API Approved Food",
             category="Meals",
             servingSize=150,
@@ -621,6 +666,13 @@ class ModeratorWorkflowTests(APITestCase):
             base_price=Decimal("38.00"),
             price_unit=PriceUnit.PER_100G,
             currency=DEFAULT_CURRENCY,
+            validated=False,
+            createdBy=self.proposer,
+        )
+
+        # Create FoodProposal with reference to the food_entry
+        proposal = FoodProposal.objects.create(
+            food_entry=food_entry,
             proposedBy=self.proposer,
         )
 
@@ -628,7 +680,7 @@ class ModeratorWorkflowTests(APITestCase):
         response = self.client.post(url, {"approved": True}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        entry = FoodEntry.objects.get(name=proposal.name)
+        entry = FoodEntry.objects.get(name=proposal.food_entry.name)
         self.assertEqual(entry.price_category, PriceCategory.MID)
         self.assertTrue(
             entry.price_audits.filter(
@@ -638,7 +690,8 @@ class ModeratorWorkflowTests(APITestCase):
          
     def test_approve_proposal_with_micronutrients_with_units_in_name(self):
         """Test that approving a proposal with micronutrients that have units in the name works"""
-        proposal = FoodProposal.objects.create(
+        # Create a private FoodEntry first
+        food_entry = FoodEntry.objects.create(
             name="Spinach with Micronutrients",
             category="Vegetables",
             servingSize=100,
@@ -647,12 +700,40 @@ class ModeratorWorkflowTests(APITestCase):
             fatContent=0.4,
             carbohydrateContent=3.6,
             nutritionScore=8.5,
-            micronutrients={
-                "Manganese, Mn (mg)": 0.07,
-                "Vitamin C (mg)": 28.1,
-                "Iron, Fe (mg)": 2.71,
-                "Calcium, Ca (mg)": 99.0,
-            },
+            validated=False,
+            createdBy=self.proposer,
+        )
+
+        # Create micronutrients and associate them with the food entry
+        micronutrient_data = {
+            "Manganese, Mn (mg)": 0.07,
+            "Vitamin C (mg)": 28.1,
+            "Iron, Fe (mg)": 2.71,
+            "Calcium, Ca (mg)": 99.0,
+        }
+
+        for micro_name, value in micronutrient_data.items():
+            # Parse name and unit from the string (e.g., "Vitamin C (mg)" -> "Vitamin C", "mg")
+            if "(" in micro_name and ")" in micro_name:
+                name_part = micro_name.split("(")[0].strip()
+                unit_part = micro_name.split("(")[1].split(")")[0].strip()
+            else:
+                name_part = micro_name
+                unit_part = "g"
+
+            micronutrient, _ = Micronutrient.objects.get_or_create(
+                name=name_part,
+                defaults={"unit": unit_part}
+            )
+            FoodEntryMicronutrient.objects.create(
+                food_entry=food_entry,
+                micronutrient=micronutrient,
+                value=value
+            )
+
+        # Create FoodProposal with reference to the food_entry
+        proposal = FoodProposal.objects.create(
+            food_entry=food_entry,
             proposedBy=self.proposer,
         )
 
@@ -661,13 +742,12 @@ class ModeratorWorkflowTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Verify the food entry was created
-        entry = FoodEntry.objects.get(name=proposal.name)
+        # Verify the food entry was validated (made public)
+        entry = FoodEntry.objects.get(name=proposal.food_entry.name)
         self.assertIsNotNone(entry)
+        self.assertTrue(entry.validated)
 
-        # Verify micronutrients were copied correctly
-        from foods.models import FoodEntryMicronutrient, Micronutrient
-
+        # Verify micronutrients were copied correctly (already present since they're on the food entry)
         # Check that micronutrients were created/found
         manganese = Micronutrient.objects.filter(name="Manganese, Mn").first()
         self.assertIsNotNone(manganese, "Manganese micronutrient should be created")

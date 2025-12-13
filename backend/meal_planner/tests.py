@@ -5,7 +5,7 @@ from rest_framework import status
 from django.urls import reverse
 
 from .models import MealPlan
-from foods.models import FoodEntry
+from foods.services import FoodAccessService
 
 
 def create_user(username="alice", email="alice@example.com", password="pass12345"):
@@ -26,7 +26,7 @@ def create_food(
     nutritionScore=80.0,
     imageUrl="https://example.com/chicken.jpg",
 ):
-    return FoodEntry.objects.create(
+    return FoodAccessService.create_validated_food_entry(
         name=name,
         category=category,
         servingSize=servingSize,

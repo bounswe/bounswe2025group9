@@ -62,10 +62,57 @@ class FoodEntrySerializer(serializers.ModelSerializer):
 
 
 class FoodProposalSerializer(serializers.ModelSerializer):
+    """
+    Serializer for creating a FoodProposal from a private FoodEntry.
+
+    The user must first create a private FoodEntry (validated=False),
+    then submit it for approval by creating a FoodProposal.
+    """
+    food_entry_id = serializers.PrimaryKeyRelatedField(
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
+        source='food_entry',
+        write_only=True
+    )
+
+    # For read operations, include the full food entry
+    food_entry = FoodEntrySerializer(read_only=True)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        request = self.context.get('request')
+        if request and request.user.is_authenticated:
+            # User can only propose their own private food entries
+            self.fields['food_entry_id'].queryset = FoodEntry.objects.filter(
+                createdBy=request.user,
+                validated=False
+            )
+
+    def validate_food_entry(self, food_entry):
+        """Ensure the food entry is private and owned by the user."""
+        request = self.context.get('request')
+
+        if food_entry.validated:
+            raise serializers.ValidationError(
+                "Cannot propose a food entry that is already validated (public)."
+            )
+
+        if food_entry.createdBy != request.user:
+            raise serializers.ValidationError(
+                "You can only propose your own food entries."
+            )
+
+        # Check if already has a pending proposal
+        if hasattr(food_entry, 'proposal') and food_entry.proposal.isApproved is None:
+            raise serializers.ValidationError(
+                "This food entry already has a pending proposal."
+            )
+
+        return food_entry
+
     class Meta:
         model = FoodProposal
-        fields = "__all__"
-        read_only_fields = ("proposedBy", "nutritionScore")
+        fields = ["id", "food_entry_id", "food_entry", "isApproved", "createdAt", "proposedBy"]
+        read_only_fields = ["id", "food_entry", "isApproved", "createdAt", "proposedBy"]
 
 
 class FoodPriceUpdateSerializer(serializers.Serializer):
