@@ -17,22 +17,20 @@ import {
     RefreshControl,
 } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
-import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useTheme } from '../../context/ThemeContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import TextInput from '../common/TextInput';
-import Button from '../common/Button';
 import { FoodItem } from '../../types/types';
 import { PrivateFood } from '../../types/nutrition';
 import { getFoodCatalog } from '../../services/api/food.service';
 import { privateFoodService } from '../../services/api/privateFood.service';
-import PrivateFoodModal from './PrivateFoodModal';
 
 interface FoodSelectorModalProps {
     visible: boolean;
     onClose: () => void;
     onSelect: (food: FoodItem, isPrivate?: boolean, privateFoodData?: PrivateFood) => void;
+    onCreatePrivateFood?: () => void;
     title?: string;
 }
 
@@ -42,6 +40,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     visible,
     onClose,
     onSelect,
+    onCreatePrivateFood,
     title = 'Select Food',
 }) => {
     const { theme, textStyles } = useTheme();
@@ -55,7 +54,6 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     const [refreshing, setRefreshing] = useState(false);
     const [hasMore, setHasMore] = useState(true);
     const [offset, setOffset] = useState(0);
-    const [showCreatePrivateFood, setShowCreatePrivateFood] = useState(false);
     const PAGE_SIZE = 20;
 
     // Load catalog foods
@@ -159,12 +157,6 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
         onClose();
     };
 
-    // Handle private food created
-    const handlePrivateFoodCreated = (food: PrivateFood) => {
-        loadPrivateFoods();
-        setShowCreatePrivateFood(false);
-    };
-
     // Render catalog food item
     const renderCatalogItem = ({ item }: { item: FoodItem }) => (
         <TouchableOpacity
@@ -214,34 +206,6 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
         </TouchableOpacity>
     );
 
-    // Render empty state for private foods with create button
-    const renderPrivateEmpty = () => {
-        if (loading) return null;
-
-        return (
-            <View style={styles.emptyContainer}>
-                <Icon
-                    name="lock-open-outline"
-                    size={64}
-                    color={theme.textSecondary}
-                    style={{ opacity: 0.3 }}
-                />
-                <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.md, textAlign: 'center' }]}>
-                    No private foods yet.
-                </Text>
-                <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.xs, textAlign: 'center' }]}>
-                    Create custom foods with your own nutritional values.
-                </Text>
-                <Button
-                    title="Create Private Food"
-                    variant="primary"
-                    onPress={() => setShowCreatePrivateFood(true)}
-                    style={{ marginTop: SPACING.lg }}
-                />
-            </View>
-        );
-    };
-
     // Render empty state for catalog
     const renderCatalogEmpty = () => {
         if (loading) return null;
@@ -273,35 +237,46 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     };
 
     // Render create button as first item in private foods list
-    const renderPrivateListHeader = () => (
-        <TouchableOpacity
-            style={[styles.foodItem, styles.createFoodItem, { backgroundColor: `${theme.primary}10`, borderColor: theme.primary, borderStyle: 'dashed' }]}
-            onPress={() => setShowCreatePrivateFood(true)}
-            activeOpacity={0.7}
-        >
-            <View style={[styles.foodIcon, { backgroundColor: `${theme.primary}20` }]}>
-                <Icon name="plus" size={24} color={theme.primary} />
-            </View>
-            <View style={styles.foodInfo}>
-                <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                    Create Private Food
-                </Text>
-                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                    Add custom food with your own values
-                </Text>
-            </View>
-        </TouchableOpacity>
-    );
+    const renderPrivateListHeader = () => {
+        const handleCreatePress = () => {
+            if (onCreatePrivateFood) {
+                onClose(); // Close this modal first
+                setTimeout(() => {
+                    onCreatePrivateFood(); // Then open the create modal
+                }, 100);
+            }
+        };
+
+        return (
+            <TouchableOpacity
+                style={[styles.foodItem, styles.createFoodItem, { backgroundColor: `${theme.primary}10`, borderColor: theme.primary, borderStyle: 'dashed' }]}
+                onPress={handleCreatePress}
+                activeOpacity={0.7}
+            >
+                <View style={[styles.foodIcon, { backgroundColor: `${theme.primary}20` }]}>
+                    <Icon name="plus" size={24} color={theme.primary} />
+                </View>
+                <View style={styles.foodInfo}>
+                    <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+                        Create Private Food
+                    </Text>
+                    <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                        Add custom food with your own values
+                    </Text>
+                </View>
+            </TouchableOpacity>
+        );
+    };
 
     return (
         <>
             <Modal
                 visible={visible}
                 animationType="slide"
-                transparent={false}
+                presentationStyle="pageSheet"
                 onRequestClose={onClose}
             >
-                <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['top']}>
+                <View style={[styles.container, { backgroundColor: theme.background }]}>
                     {/* Header */}
                     <View style={[styles.header, { borderBottomColor: theme.border }]}>
                         <Text style={[textStyles.heading3, { color: theme.text }]}>{title}</Text>
@@ -413,15 +388,8 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                             }
                         />
                     )}
-                </SafeAreaView>
+                </View>
             </Modal>
-
-            {/* Private Food Modal - rendered outside the main modal */}
-            <PrivateFoodModal
-                visible={showCreatePrivateFood}
-                onClose={() => setShowCreatePrivateFood(false)}
-                onSave={handlePrivateFoodCreated}
-            />
         </>
     );
 };

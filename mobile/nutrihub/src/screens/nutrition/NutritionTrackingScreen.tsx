@@ -1312,12 +1312,18 @@ const NutritionTrackingScreen: React.FC = () => {
         visible={showAddFood}
         onClose={() => setShowAddFood(false)}
         onSelect={handleFoodSelect}
+        onCreatePrivateFood={() => setShowPrivateFoodModal(true)}
       />
 
       {/* Private Food Modal */}
       <PrivateFoodModal
         visible={showPrivateFoodModal}
         onClose={() => setShowPrivateFoodModal(false)}
+        onSave={() => {
+          setShowPrivateFoodModal(false);
+          // Re-open food selector to use the newly created food
+          setTimeout(() => setShowAddFood(true), 100);
+        }}
       />
 
       {/* Serving Size Dialog */}
