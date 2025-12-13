@@ -170,6 +170,7 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
     food_id = serializers.IntegerField(required=False, allow_null=True, read_only=False)
     private_food_id = serializers.IntegerField(required=False, allow_null=True, read_only=False)
+    water_grams = serializers.SerializerMethodField(read_only=True)
     
     def to_internal_value(self, data):
         """Convert food_id/private_food_id to food/private_food objects."""
@@ -215,10 +216,10 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'food_id',  'private_food_id','food_name', 'food_serving_size', 'image_url',
             'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
-            'carbohydrates', 'fat', 'micronutrients', 'logged_at'
+            'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at'
         ]
         read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
-                           'protein', 'carbohydrates', 'fat', 'micronutrients', 'logged_at']
+                           'protein', 'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at']
     
     def get_food_name(self, obj):
         """Get food name from either food or private_food."""
@@ -227,6 +228,13 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         elif obj.private_food:
             return obj.private_food.name
         return None
+
+    def get_water_grams(self, obj):
+        """Return water contribution for this entry (g), to support hydration UI/what-if scenarios."""
+        try:
+            return round(float(obj.micronutrients.get("Water (g)", 0) or 0), 2)
+        except Exception:
+            return 0.0
 
     def validate_serving_size(self, value):
         """Validate serving size is positive."""
@@ -286,6 +294,12 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
     entries = FoodLogEntrySerializer(many=True, read_only=True)
     targets = serializers.SerializerMethodField(read_only=True)
     adherence = serializers.SerializerMethodField(read_only=True)
+    hydration_actual = serializers.SerializerMethodField(read_only=True)
+    hydration_target = serializers.SerializerMethodField(read_only=True)
+    hydration_ratio = serializers.SerializerMethodField(read_only=True)
+    hydration_penalty = serializers.SerializerMethodField(read_only=True)
+    base_nutrition_score = serializers.SerializerMethodField(read_only=True)
+    hydration_adjusted_score = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         from .models import DailyNutritionLog
@@ -293,6 +307,8 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
         fields = [
             'date', 'total_calories', 'total_protein', 'total_carbohydrates',
             'total_fat', 'micronutrients_summary', 'entries', 'targets', 'adherence',
+            'hydration_actual', 'hydration_target', 'hydration_ratio', 'hydration_penalty',
+            'base_nutrition_score', 'hydration_adjusted_score',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -327,6 +343,97 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
             return adherence
         except:
             return None
+
+    # --- Hydration & score helpers -----------------------------------------------------
+    def _get_water_values(self, obj):
+        """Return (actual_water_g, target_water_g)."""
+        actual = 0.0
+        target = 0.0
+
+        try:
+            actual = float(obj.micronutrients_summary.get("Water (g)", 0) or 0)
+        except (TypeError, ValueError):
+            actual = 0.0
+
+        try:
+            targets = obj.user.nutrition_targets
+            water_target = targets.micronutrients.get("Water (g)")
+            if isinstance(water_target, dict):
+                target = float(water_target.get("target", 0) or 0)
+            else:
+                target = float(water_target or 0)
+        except Exception:
+            target = 0.0
+
+        return actual, target
+
+    def get_hydration_actual(self, obj):
+        actual, _ = self._get_water_values(obj)
+        return round(actual, 2)
+
+    def get_hydration_target(self, obj):
+        _, target = self._get_water_values(obj)
+        return round(target, 2)
+
+    def get_hydration_ratio(self, obj):
+        actual, target = self._get_water_values(obj)
+        if target <= 0:
+            return 1.0
+        ratio = actual / target
+        # Cap at 1.0 so meeting/exceeding target keeps the score stable
+        return round(min(ratio, 1.0), 3)
+
+    def _compute_base_nutrition_score(self, obj):
+        """
+        Compute a daily base nutrition score as a calorie-weighted average of
+        logged foods' nutritionScore (0-10 scale). This stays aligned with the
+        existing food-level scoring and avoids changing macro/micro totals.
+        """
+        entries = obj.entries.select_related("food", "private_food")
+        total_weight = 0.0
+        weighted_score = 0.0
+
+        for entry in entries:
+            food = entry.food or entry.private_food
+            if not food or food.nutritionScore is None:
+                continue
+            try:
+                calories = float(entry.calories)
+            except (TypeError, ValueError):
+                calories = 0.0
+            total_weight += max(calories, 0.0)
+            weighted_score += max(calories, 0.0) * float(food.nutritionScore)
+
+        if total_weight == 0.0:
+            return None
+        return round(weighted_score / total_weight, 2)
+
+    def get_base_nutrition_score(self, obj):
+        base = self._compute_base_nutrition_score(obj)
+        return base
+
+    def get_hydration_penalty(self, obj):
+        """
+        Hydration weighting:
+        - No penalty when hydration meets/exceeds target.
+        - Linear penalty up to -2.0 points when hydration is at 0%.
+        """
+        ratio = self.get_hydration_ratio(obj)
+        penalty = -2.0 * max(0.0, 1.0 - ratio)
+        return round(penalty, 2)
+
+    def get_hydration_adjusted_score(self, obj):
+        """
+        Final score = base_nutrition_score + hydration_penalty
+        - Keeps existing macro/micro calculations intact.
+        - Ensures hydration shortfall directly lowers the score.
+        """
+        base = self._compute_base_nutrition_score(obj)
+        if base is None:
+            return None
+        adjusted = base + self.get_hydration_penalty(obj)
+        # Clamp to 0-10
+        return round(max(0.0, min(10.0, adjusted)), 2)
 
 
 class DailyNutritionLogListSerializer(serializers.ModelSerializer):
