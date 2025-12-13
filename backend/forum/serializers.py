@@ -107,7 +107,6 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     def __init__(self, *args, **kwargs):
         """Initialize and set accessible foods queryset based on user context"""
         super().__init__(*args, **kwargs)
-
         # Get user from context
         request = self.context.get('request')
         user = request.user if request and request.user.is_authenticated else None
@@ -194,6 +193,17 @@ class RecipeSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["ingredients"] = RecipeIngredientSerializer(
+            many=True,
+            context=self.context
+        )
+        return fields
 
     def create(self, validated_data):
         ingredients_data = validated_data.pop("ingredients", [])

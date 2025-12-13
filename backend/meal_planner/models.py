@@ -193,12 +193,12 @@ class FoodLogEntry(models.Model):
         self.protein = float(self.food.proteinContent) * multiplier
         self.carbohydrates = float(self.food.carbohydrateContent) * multiplier
         self.fat = float(self.food.fatContent) * multiplier
-        
+        food_source = self.food
         # Calculate micronutrients
-        if self.food.micronutrients:
+        if self.food.micronutrient_values.exists():
             self.micronutrients = {
-                nutrient: value * multiplier
-                for nutrient, value in self.food.micronutrients.items()
+                mv.micronutrient.name: mv.value * multiplier
+                for mv in self.food.micronutrient_values.select_related("micronutrient")
             }
         
         if food_source:
