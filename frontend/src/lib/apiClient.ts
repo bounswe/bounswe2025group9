@@ -40,6 +40,7 @@ export interface Food {
 }
 
 export interface FoodProposal {
+  id: number;
   name: string;
   category: string;
   servingSize: number;
@@ -47,7 +48,7 @@ export interface FoodProposal {
   proteinContent: number;
   fatContent: number;
   carbohydrateContent: number;
-  allergens?: number[];
+  allergens?: string[];
   dietaryOptions?: string[];
   nutritionScore: number;
   imageUrl?: string;
@@ -55,7 +56,16 @@ export interface FoodProposal {
   price_unit?: PriceUnit;
   currency?: string;
   micronutrients?: { [key: string]: number };
+  isApproved?: boolean;
+  proposedBy: {
+    id: number;
+    username: string;
+  };
+  createdAt: string;
 }
+
+// Type for creating a new food proposal (omits backend-generated fields)
+export type CreateFoodProposalRequest = Omit<FoodProposal, 'id' | 'proposedBy' | 'createdAt' | 'isApproved'>;
 
 export interface FoodProposalResponse {
   message: string;
@@ -416,7 +426,7 @@ export const apiClient = {
     }, true);
   },
 
-  proposeFood: (proposal: FoodProposal) =>
+  proposeFood: (proposal: CreateFoodProposalRequest) =>
     fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
@@ -1275,6 +1285,12 @@ export const apiClient = {
 
       return fetchJson<any>(url, { method: "GET" }, true);
     },
+
+    updateFoodProposal: (proposalId: number, data: Partial<FoodProposal>) =>
+fetchJson<any>(`/foods/moderation/food-proposals/${proposalId}/`, {
+method: "PATCH",
+body: JSON.stringify(data),
+}, true),
 
     approveFoodProposal: (proposalId: number, approved: boolean) =>
       fetchJson<{ message: string }>(`/foods/moderation/food-proposals/${proposalId}/approve/`, {
