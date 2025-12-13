@@ -15,11 +15,11 @@
  */
 export const CUSTOM_UNITS = [
     'serving',
+    'gram',
     'teaspoon',
     'tablespoon',
     'cup',
     'stick',
-    'gram',
     'ounce',
     'pound',
     'pinch',
@@ -39,11 +39,11 @@ export type CustomUnit = typeof CUSTOM_UNITS[number];
  */
 export const UNIT_TO_GRAMS_CONVERSION: Record<CustomUnit, number> = {
     'serving': 0,         // Dynamic: Uses food item's servingSize (handled separately)
+    'gram': 1.0,          // Direct conversion
     'teaspoon': 5.0,      // FDA: 1 tsp = 5 mL ≈ 5 g (water equivalent)
     'tablespoon': 15.0,   // FDA: 1 tbsp = 15 mL ≈ 15 g (water equivalent)
     'cup': 240.0,         // FDA: 1 cup = 240 mL ≈ 240 g (water equivalent)
     'stick': 113.0,       // Standard butter stick = 113 g (1/2 cup)
-    'gram': 1.0,          // Direct conversion
     'ounce': 28.35,       // USDA: 1 oz = 28.35 g
     'pound': 453.6,       // USDA: 1 lb = 453.6 g
     'pinch': 0.36,        // Approximately 1/16 tsp ≈ 0.36 g
@@ -53,4 +53,4 @@ export const UNIT_TO_GRAMS_CONVERSION: Record<CustomUnit, number> = {
 /**
  * Default custom unit for new recipe ingredients
  */
-export const DEFAULT_CUSTOM_UNIT: CustomUnit = 'gram';
+export const DEFAULT_CUSTOM_UNIT: CustomUnit = 'serving';

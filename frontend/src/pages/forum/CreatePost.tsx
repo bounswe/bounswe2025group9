@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, WarningCircle, Plus, X } from '@phosphor-icons/react'
 import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest, RecipeIngredient } from '../../lib/apiClient'
@@ -102,7 +102,9 @@ const CreatePost = () => {
     const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
     const [selectedFoodCustomAmount, setSelectedFoodCustomAmount] = useState<number>(1);
     const [selectedFoodCustomUnit, setSelectedFoodCustomUnit] = useState<string>(DEFAULT_CUSTOM_UNIT);
+    const [showUnitDropdown, setShowUnitDropdown] = useState(false);
     const [foodSearchTerm, setFoodSearchTerm] = useState('');
+    const unitDropdownRef = useRef<HTMLDivElement>(null);
 
     // Check authentication status when component mounts
     useEffect(() => {
@@ -112,6 +114,20 @@ const CreatePost = () => {
             user
         });
     }, [isAuthenticated, user]);
+
+    // Handle click outside for unit dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (unitDropdownRef.current && !unitDropdownRef.current.contains(event.target as Node)) {
+                setShowUnitDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Fetch tags when component mounts
     useEffect(() => {
@@ -640,18 +656,57 @@ const CreatePost = () => {
                                                                 step={0.01}
                                                             />
                                                         </div>
-                                                        <div className="flex-grow-0">
-                                                            <select
-                                                                className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                value={selectedFoodCustomUnit}
-                                                                onChange={(e) => setSelectedFoodCustomUnit(e.target.value)}
+                                                        <div className="flex-grow-0 relative" ref={unitDropdownRef}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowUnitDropdown(!showUnitDropdown)}
+                                                                className="w-full px-3 py-2 border rounded-lg text-left focus:ring-primary focus:border-primary nh-forum-search cursor-pointer flex items-center justify-between"
                                                             >
-                                                                {CUSTOM_UNITS.map((unit) => (
-                                                                    <option key={unit} value={unit}>
-                                                                        {unit}
-                                                                    </option>
-                                                                ))}
-                                                            </select>
+                                                                <span>{selectedFoodCustomUnit}</span>
+                                                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            </button>
+
+                                                            {/* Unit dropdown */}
+                                                            {showUnitDropdown && (
+                                                                <div
+                                                                    className="absolute z-10 w-full mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                                                                    style={{
+                                                                        backgroundColor: 'var(--color-bg-primary)',
+                                                                        border: '1px solid var(--color-border)'
+                                                                    }}
+                                                                >
+                                                                    {CUSTOM_UNITS.map((unit, index) => (
+                                                                        <button
+                                                                            key={unit}
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setSelectedFoodCustomUnit(unit);
+                                                                                setShowUnitDropdown(false);
+                                                                            }}
+                                                                            className="w-full px-3 py-2 text-left focus:outline-none transition-colors"
+                                                                            style={{
+                                                                                color: 'var(--color-text-primary)',
+                                                                                borderBottom: index < CUSTOM_UNITS.length - 1 ? '1px solid var(--color-border)' : 'none',
+                                                                                backgroundColor: selectedFoodCustomUnit === unit ? 'var(--color-bg-secondary)' : 'transparent'
+                                                                            }}
+                                                                            onMouseEnter={(e) => {
+                                                                                if (selectedFoodCustomUnit !== unit) {
+                                                                                    e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+                                                                                }
+                                                                            }}
+                                                                            onMouseLeave={(e) => {
+                                                                                if (selectedFoodCustomUnit !== unit) {
+                                                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <span className="text-sm font-medium capitalize">{unit}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
                                                         </div>
 
                                                         <button

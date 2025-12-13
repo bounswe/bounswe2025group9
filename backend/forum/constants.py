@@ -42,7 +42,7 @@ UNIT_TO_GRAMS_CONVERSION = {
 }
 
 # Default custom unit for new recipe ingredients
-DEFAULT_CUSTOM_UNIT = "gram"
+DEFAULT_CUSTOM_UNIT = "serving"
 
 
 def convert_to_grams(
