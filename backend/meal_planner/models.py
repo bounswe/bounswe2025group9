@@ -40,21 +40,24 @@ class MealPlan(models.Model):
         total_protein = 0.0
         total_fat = 0.0
         total_carbs = 0.0
-        
+
         for meal in self.meals:
             # Assuming meal structure: {'food_id': int, 'serving_size': float, 'meal_type': str}
             from foods.models import FoodEntry
+            from foods.services import FoodAccessService
             try:
-                food_entry = FoodEntry.objects.get(id=meal.get('food_id'))
+                # Get accessible foods for this meal plan's owner
+                accessible_foods = FoodAccessService.get_accessible_foods(user=self.user)
+                food_entry = accessible_foods.get(id=meal.get('food_id'))
                 serving_size = meal.get('serving_size', 1.0)
-                
+
                 total_calories += food_entry.caloriesPerServing * serving_size
                 total_protein += food_entry.proteinContent * serving_size
                 total_fat += food_entry.fatContent * serving_size
                 total_carbs += food_entry.carbohydrateContent * serving_size
             except FoodEntry.DoesNotExist:
                 continue
-        
+
         # Update the total nutrition fields
         self.total_calories = total_calories
         self.total_protein = total_protein

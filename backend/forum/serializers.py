@@ -3,7 +3,7 @@ from decimal import Decimal
 from rest_framework import serializers
 from .models import Post, Tag, Comment, Recipe, RecipeIngredient
 from foods.models import FoodEntry
-from foods.services import recalculate_recipes_for_food
+from foods.services import recalculate_recipes_for_food, FoodAccessService
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -93,7 +93,9 @@ class CommentSerializer(serializers.ModelSerializer):
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     food_id = serializers.PrimaryKeyRelatedField(
-        queryset=FoodEntry.objects.all(), source="food", write_only=True
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
+        source="food",
+        write_only=True
     )
     food_name = serializers.StringRelatedField(source="food.name", read_only=True)
     protein = serializers.FloatField(source="protein_content", read_only=True)
@@ -101,6 +103,17 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     carbs = serializers.FloatField(source="carbohydrate_content", read_only=True)
     calories = serializers.FloatField(source="calorie_content", read_only=True)
     cost = serializers.SerializerMethodField()
+
+    def __init__(self, *args, **kwargs):
+        """Initialize and set accessible foods queryset based on user context"""
+        super().__init__(*args, **kwargs)
+
+        # Get user from context
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Set queryset to only accessible foods for this user
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         model = RecipeIngredient

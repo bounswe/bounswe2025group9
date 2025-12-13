@@ -14,6 +14,7 @@ from foods.services import (
     override_food_price_category,
     recalculate_price_thresholds,
     update_food_price,
+    FoodAccessService
 )
 from accounts.models import Allergen
 from unittest.mock import patch
@@ -45,7 +46,7 @@ def create_food_entry(
     }
     if base_price is not None:
         data["base_price"] = Decimal(str(base_price))
-    entry = FoodEntry.objects.create(**data)
+    entry = FoodAccessService.create_validated_food_entry(**data)
     entry.allergens.set([])
     return entry
 
@@ -63,7 +64,7 @@ class FoodCatalogTests(TestCase):
         self.client = APIClient()
         # Create sample FoodEntry objects
         for i in range(15):
-            food = FoodEntry.objects.create(
+            food = FoodAccessService.create_validated_food_entry(
                 name=f"Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
@@ -78,7 +79,7 @@ class FoodCatalogTests(TestCase):
             food.save()
         # Create 2 FoodEntry objects with category "Fruit"
         for i in range(2):
-            food = FoodEntry.objects.create(
+            food = FoodAccessService.create_validated_food_entry(
                 name=f"Fruit Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
@@ -96,7 +97,7 @@ class FoodCatalogTests(TestCase):
 
         # Create 13 FoodEntry objects with category "Vegetable"
         for i in range(13):
-            food = FoodEntry.objects.create(
+            food = FoodAccessService.create_validated_food_entry(
                 name=f"Vegetable Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
@@ -372,7 +373,7 @@ class FoodProposalTests(APITestCase):
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
         
         # Create existing food entry
-        FoodEntry.objects.create(
+        FoodAccessService.create_validated_food_entry(
             name="Existing Food",
             category="Other",
             servingSize=100,
@@ -715,7 +716,7 @@ class MicronutrientFilteringTests(TestCase):
 
         # Create food entries with different micronutrient values
         # Food 1: High iron (8mg), medium vitamin C (30mg)
-        self.food1 = FoodEntry.objects.create(
+        self.food1 = FoodAccessService.create_validated_food_entry(
             name="Spinach",
             category="Vegetable",
             servingSize=100,
@@ -733,7 +734,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 2: Low iron (2mg), high vitamin C (80mg), medium zinc (1.5mg)
-        self.food2 = FoodEntry.objects.create(
+        self.food2 = FoodAccessService.create_validated_food_entry(
             name="Orange",
             category="Fruit",
             servingSize=100,
@@ -754,7 +755,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 3: Medium iron (5mg), low vitamin C (10mg), high zinc (3mg)
-        self.food3 = FoodEntry.objects.create(
+        self.food3 = FoodAccessService.create_validated_food_entry(
             name="Beef",
             category="Meat",
             servingSize=100,
@@ -775,7 +776,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 4: No micronutrients
-        self.food4 = FoodEntry.objects.create(
+        self.food4 = FoodAccessService.create_validated_food_entry(
             name="Plain Water",
             category="Beverages",
             servingSize=100,
@@ -787,7 +788,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 5: Only calcium (200mg)
-        self.food5 = FoodEntry.objects.create(
+        self.food5 = FoodAccessService.create_validated_food_entry(
             name="Milk",
             category="Dairy",
             servingSize=100,
@@ -936,7 +937,7 @@ class MicronutrientFilteringTests(TestCase):
         """Test filtering with zero as a boundary value"""
         # Create food with very low iron using unique name
         unique_name = "Test_Low_Iron_Food_Unique_12345"
-        food_low = FoodEntry.objects.create(
+        food_low = FoodAccessService.create_validated_food_entry(
             name=unique_name,
             category="Test",
             servingSize=100,
@@ -1111,5 +1112,84 @@ class MicronutrientFilteringTests(TestCase):
         self.assertIn("Zinc", beef["micronutrients"])
         self.assertEqual(beef["micronutrients"]["Zinc"]["value"], 3.0)
         self.assertIn("unit", beef["micronutrients"]["Zinc"])
+
+
+class PrivateFoodAccessTest(TestCase):
+    """Tests for private food functionality and access control"""
+
+    def setUp(self):
+        """Set up test users and food entries"""
+        # Create test users
+        self.user1 = User.objects.create_user(username='user1', email='user1@test.com', password='pass123')
+        self.user2 = User.objects.create_user(username='user2', email='user2@test.com', password='pass123')
+
+        # Create public (validated) food
+        self.public_food = FoodEntry.objects.create(
+            name='Public Apple',
+            category='Fruits',
+            servingSize=100,
+            caloriesPerServing=52,
+            proteinContent=0.3,
+            fatContent=0.2,
+            carbohydrateContent=14,
+            nutritionScore=8.5,
+            validated=True,
+            createdBy=None  # System food
+        )
+
+        # Create private food for user1
+        self.user1_private_food = FoodEntry.objects.create(
+            name='User1 Custom Protein Shake',
+            category='Beverages',
+            servingSize=250,
+            caloriesPerServing=200,
+            proteinContent=30,
+            fatContent=5,
+            carbohydrateContent=10,
+            nutritionScore=7.0,
+            validated=False,  # Private
+            createdBy=self.user1
+        )
+
+        # Create private food for user2
+        self.user2_private_food = FoodEntry.objects.create(
+            name='User2 Custom Salad',
+            category='Vegetables',
+            servingSize=200,
+            caloriesPerServing=150,
+            proteinContent=5,
+            fatContent=10,
+            carbohydrateContent=12,
+            nutritionScore=8.0,
+            validated=False,  # Private
+            createdBy=self.user2
+        )
+
+    def test_anonymous_user_sees_only_public_foods(self):
+        """Test that anonymous users can only see validated foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=None)
+
+        # Should see public food but not private foods
+        self.assertIn(self.public_food, accessible)
+        self.assertNotIn(self.user1_private_food, accessible)
+        self.assertNotIn(self.user2_private_food, accessible)
+
+    def test_user1_sees_public_and_own_private_foods(self):
+        """Test that user1 sees public foods and their own private foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=self.user1)
+
+        # Should see public food + their own private food, but not user2's private food
+        self.assertIn(self.public_food, accessible)
+        self.assertIn(self.user1_private_food, accessible)
+        self.assertNotIn(self.user2_private_food, accessible)
+
+    def test_user2_sees_public_and_own_private_foods(self):
+        """Test that user2 sees public foods and their own private foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=self.user2)
+
+        # Should see public food + their own private food, but not user1's private food
+        self.assertIn(self.public_food, accessible)
+        self.assertNotIn(self.user1_private_food, accessible)
+        self.assertIn(self.user2_private_food, accessible)
 
 

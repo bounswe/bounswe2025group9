@@ -12,6 +12,7 @@ from decimal import Decimal, InvalidOperation
 from typing import Iterable, Optional, Tuple
 
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
@@ -31,6 +32,87 @@ CATEGORY_SCORES = {
 }
 
 
+class FoodAccessService:
+    """
+    Service for managing FoodEntry access control.
+
+    Users can access:
+    - All validated (public) FoodEntries
+    - Their own private (unvalidated) FoodEntries
+    """
+
+    @staticmethod
+    def get_accessible_foods(user=None, queryset=None):
+        """
+        Get FoodEntry queryset filtered by access rules.
+
+        Args:
+            user: The user requesting access (optional, None for anonymous users)
+            queryset: Base queryset to filter (optional, defaults to FoodEntry.objects.all())
+
+        Returns:
+            Filtered queryset containing only accessible FoodEntries
+        """
+        if queryset is None:
+            queryset = FoodEntry.objects.all()
+
+        if user is None or not user.is_authenticated:
+            # Anonymous users can only see validated foods
+            return queryset.filter(validated=True)
+
+        # Authenticated users can see validated foods OR their own private foods
+        return queryset.filter(
+            Q(validated=True) | Q(createdBy=user)
+        )
+
+    @staticmethod
+    def can_access_food(food, user=None):
+        """
+        Check if a user can access a specific FoodEntry.
+
+        Args:
+            food: FoodEntry instance to check
+            user: The user requesting access (optional, None for anonymous users)
+
+        Returns:
+            Boolean indicating whether the user can access the food
+        """
+        if food.validated:
+            return True
+
+        if user is None or not user.is_authenticated:
+            return False
+
+        return food.createdBy == user
+
+    @staticmethod
+    def create_food_entry(**kwargs) -> FoodEntry:
+        """
+        Create a new FoodEntry.
+
+        Args:
+            kwargs: Fields for the new FoodEntry
+
+        Returns:
+            The created FoodEntry instance
+        """
+        return FoodEntry.objects.create(**kwargs)
+
+    @staticmethod
+    def create_validated_food_entry(**kwargs) -> FoodEntry:
+        """
+        Create a new validated (public) FoodEntry.
+
+        Args:
+            kwargs: Fields for the new FoodEntry
+
+        Returns:
+            The created validated FoodEntry instance
+        """
+        kwargs['validated'] = True
+        return FoodEntry.objects.create(**kwargs)
+
+
 def _as_decimal(value) -> Optional[Decimal]:
     if value is None:
         return None
@@ -48,6 +130,7 @@ def _fetch_sorted_prices(price_unit: str, currency: str) -> Iterable[Decimal]:
             price_unit=price_unit,
             currency=currency,
             base_price__isnull=False,
+            validated=True,  # Only use public foods for price calculations
         )
         .order_by("base_price")
         .values_list("base_price", flat=True)
@@ -451,6 +534,8 @@ def approve_food_proposal(proposal: FoodProposal, *, changed_by=None):
         base_price=proposal.base_price,
         price_unit=proposal.price_unit or PriceUnit.PER_100G,
         currency=proposal.currency or DEFAULT_CURRENCY,
+        validated=True,  # Approved proposals become public
+        createdBy=proposal.proposedBy,  # Track the creator
     )
     entry.allergens.set(proposal.allergens.all())
 

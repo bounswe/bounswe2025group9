@@ -70,8 +70,14 @@ class FoodEntry(models.Model):
     )
     category_overridden_at = models.DateTimeField(null=True, blank=True)
     category_override_reason = models.TextField(blank=True)
-
-
+    validated = models.BooleanField(default=False)
+    createdBy = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="created_food_entries",
+    )
 
 class FoodProposal(models.Model):
     name = models.CharField(max_length=100)

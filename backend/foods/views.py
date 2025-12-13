@@ -54,6 +54,7 @@ from foods.services import (
     override_food_price_category,
     clear_food_price_override,
     recalculate_price_thresholds,
+    FoodAccessService,
 )
 
 # Global thread pool for background image caching (max 5 concurrent downloads)
@@ -67,9 +68,14 @@ class FoodCatalog(ListAPIView):
     serializer_class = FoodEntrySerializer
 
     def get_queryset(self):
-        queryset = FoodEntry.objects.all().prefetch_related('micronutrient_values__micronutrient')
+        # Get accessible foods for the current user (validated + their own private foods)
+        user = self.request.user if self.request.user.is_authenticated else None
+        queryset = FoodAccessService.get_accessible_foods(user=user)
+        queryset = queryset.prefetch_related("micronutrient_values__micronutrient")
+
+        # Get available categories from accessible foods
         available_categories = list(
-            FoodEntry.objects.values_list("category", flat=True).distinct()
+            FoodAccessService.get_accessible_foods(user=user).values_list("category", flat=True).distinct()
         )
         available_categories_lc = [cat.lower() for cat in available_categories]
 
@@ -365,9 +371,13 @@ class FoodCatalog(ListAPIView):
         return Response(data)
     
     def post(self, request, *args, **kwargs):
-        queryset = FoodEntry.objects.all()
+        # Get accessible foods for the current user (validated + their own private foods)
+        user = request.user if request.user.is_authenticated else None
+        queryset = FoodAccessService.get_accessible_foods(user=user)
+
+        # Get available categories from accessible foods
         available_categories = list(
-            FoodEntry.objects.values_list("category", flat=True).distinct()
+            FoodAccessService.get_accessible_foods(user=user).values_list("category", flat=True).distinct()
         )
         available_categories_lc = [cat.lower() for cat in available_categories]
 
@@ -622,15 +632,19 @@ class FoodCatalog(ListAPIView):
 
 class AvailableMicronutrientsView(APIView):
     """
-    Returns a list of all available micronutrients that have at least one entry in the database.
+    Returns a list of all available micronutrients that have at least one entry in accessible foods.
     Each micronutrient includes its name and unit.
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # Get all micronutrients that have at least one food entry
+        # Get accessible food IDs for the current user
+        user = request.user if request.user.is_authenticated else None
+        accessible_food_ids = FoodAccessService.get_accessible_foods(user=user).values_list('id', flat=True)
+
+        # Get all micronutrients that have at least one entry in accessible foods
         micronutrients = Micronutrient.objects.filter(
-            entries__isnull=False
+            entries__food_entry_id__in=accessible_food_ids
         ).distinct().values('name', 'unit').order_by('name')
 
         return Response({

@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import MealPlan
 from foods.models import FoodEntry
 from foods.serializers import FoodEntrySerializer
+from foods.services import FoodAccessService
 
 
 class MealSerializer(serializers.Serializer):
@@ -11,9 +12,15 @@ class MealSerializer(serializers.Serializer):
     meal_type = serializers.CharField(max_length=50, default='meal')
     
     def validate_food_id(self, value):
-        """Validate that the food entry exists"""
-        if not FoodEntry.objects.filter(id=value).exists():
-            raise serializers.ValidationError("Food entry with this ID does not exist.")
+        """Validate that the food entry exists and is accessible to the user"""
+        # Get user from context (passed from the view)
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Check if food exists and is accessible
+        accessible_foods = FoodAccessService.get_accessible_foods(user=user)
+        if not accessible_foods.filter(id=value).exists():
+            raise serializers.ValidationError("Food entry with this ID does not exist or is not accessible.")
         return value
 
 
@@ -73,10 +80,17 @@ class MealPlanSerializer(serializers.ModelSerializer):
     
     def get_meals_details(self, obj):
         """Get detailed food information for each meal"""
+        # Get user from context
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Get accessible foods for the user
+        accessible_foods = FoodAccessService.get_accessible_foods(user=user)
+
         meals_details = []
         for meal in obj.meals:
             try:
-                food_entry = FoodEntry.objects.get(id=meal.get('food_id'))
+                food_entry = accessible_foods.get(id=meal.get('food_id'))
                 food_serializer = FoodEntrySerializer(food_entry)
                 meal_detail = {
                     'food': food_serializer.data,
@@ -109,9 +123,20 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
     food_id = serializers.PrimaryKeyRelatedField(
         source='food',
-        queryset=FoodEntry.objects.all(),
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
         write_only=True
     )
+
+    def __init__(self, *args, **kwargs):
+        """Initialize and set accessible foods queryset based on user context"""
+        super().__init__(*args, **kwargs)
+
+        # Get user from context
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Set queryset to only accessible foods for this user
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         from .models import FoodLogEntry
