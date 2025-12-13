@@ -104,26 +104,62 @@ class IsAdminUser(BasePermission):
 
 
 class FoodProposalModerationSerializer(serializers.ModelSerializer):
-    """Serializer for listing food proposals."""
-
-    from foods.serializers import FoodEntrySerializer
+    # ---- FoodEntry fields (flat, read-only) ----
+    name = serializers.CharField(source="food_entry.name", read_only=True)
+    category = serializers.CharField(source="food_entry.category", read_only=True)
+    servingSize = serializers.FloatField(source="food_entry.servingSize", read_only=True)
+    caloriesPerServing = serializers.FloatField(
+        source="food_entry.caloriesPerServing", read_only=True
+    )
+    proteinContent = serializers.FloatField(
+        source="food_entry.proteinContent", read_only=True
+    )
+    fatContent = serializers.FloatField(
+        source="food_entry.fatContent", read_only=True
+    )
+    carbohydrateContent = serializers.FloatField(
+        source="food_entry.carbohydrateContent", read_only=True
+    )
+    dietaryOptions = serializers.ListField(
+        source="food_entry.dietaryOptions",
+        child=serializers.CharField(),
+        read_only=True,
+    )
+    nutritionScore = serializers.FloatField(
+        source="food_entry.nutritionScore", read_only=True
+    )
 
     proposedBy = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(read_only=True)
-    food_entry = FoodEntrySerializer(read_only=True)
 
     class Meta:
         model = FoodProposal
         fields = [
             "id",
-            "food_entry",
+
+            # flat food fields
+            "name",
+            "category",
+            "servingSize",
+            "caloriesPerServing",
+            "proteinContent",
+            "fatContent",
+            "carbohydrateContent",
+            "dietaryOptions",
+            "nutritionScore",
+
+            # proposal fields
             "isApproved",
             "proposedBy",
             "createdAt",
         ]
 
     def get_proposedBy(self, obj):
-        return {"id": obj.proposedBy.id, "username": obj.proposedBy.username}
+        return {
+            "id": obj.proposedBy.id,
+            "username": obj.proposedBy.username,
+        }
+
 
 
 class FoodProposalActionSerializer(serializers.Serializer):

@@ -62,58 +62,64 @@ class FoodEntrySerializer(serializers.ModelSerializer):
 
 
 class FoodProposalSerializer(serializers.ModelSerializer):
-    """
-    Serializer for creating a FoodProposal from a private FoodEntry.
-
-    The user must first create a private FoodEntry (validated=False),
-    then submit it for approval by creating a FoodProposal.
-    """
-    food_entry_id = serializers.PrimaryKeyRelatedField(
-        queryset=FoodEntry.objects.none(),  # Will be set in __init__
-        source='food_entry',
-        write_only=True
+    # ---- FoodEntry fields (flat, read + write) ----
+    name = serializers.CharField(source="food_entry.name")
+    category = serializers.CharField(source="food_entry.category")
+    servingSize = serializers.FloatField(source="food_entry.servingSize")
+    caloriesPerServing = serializers.FloatField(source="food_entry.caloriesPerServing")
+    proteinContent = serializers.FloatField(source="food_entry.proteinContent")
+    fatContent = serializers.FloatField(source="food_entry.fatContent")
+    carbohydrateContent = serializers.FloatField(source="food_entry.carbohydrateContent")
+    dietaryOptions = serializers.ListField(
+        child=serializers.CharField(),
+        source="food_entry.dietaryOptions",
+        required=False,
     )
-
-    # For read operations, include the full food entry
-    food_entry = FoodEntrySerializer(read_only=True)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        request = self.context.get('request')
-        if request and request.user.is_authenticated:
-            # User can only propose their own private food entries
-            self.fields['food_entry_id'].queryset = FoodEntry.objects.filter(
-                createdBy=request.user,
-                validated=False
-            )
-
-    def validate_food_entry(self, food_entry):
-        """Ensure the food entry is private and owned by the user."""
-        request = self.context.get('request')
-
-        if food_entry.validated:
-            raise serializers.ValidationError(
-                "Cannot propose a food entry that is already validated (public)."
-            )
-
-        if food_entry.createdBy != request.user:
-            raise serializers.ValidationError(
-                "You can only propose your own food entries."
-            )
-
-        # Check if already has a pending proposal
-        if hasattr(food_entry, 'proposal') and food_entry.proposal.isApproved is None:
-            raise serializers.ValidationError(
-                "This food entry already has a pending proposal."
-            )
-
-        return food_entry
+    nutritionScore = serializers.FloatField(source="food_entry.nutritionScore")
 
     class Meta:
         model = FoodProposal
-        fields = ["id", "food_entry_id", "food_entry", "isApproved", "createdAt", "proposedBy"]
-        read_only_fields = ["id", "food_entry", "isApproved", "createdAt", "proposedBy"]
+        fields = [
+            "id",
 
+            # Flat FoodEntry fields
+            "name",
+            "category",
+            "servingSize",
+            "caloriesPerServing",
+            "proteinContent",
+            "fatContent",
+            "carbohydrateContent",
+            "dietaryOptions",
+            "nutritionScore",
+
+            # Proposal fields
+            "isApproved",
+            "createdAt",
+            "proposedBy",
+        ]
+        read_only_fields = [
+            "id",
+            "isApproved",
+            "createdAt",
+            "proposedBy",
+        ]
+
+    def create(self, validated_data):
+        request = self.context["request"]
+
+        food_entry_data = validated_data.pop("food_entry")
+
+        food_entry = FoodEntry.objects.create(
+            **food_entry_data,
+            validated=False,
+            createdBy=request.user,
+        )
+
+        return FoodProposal.objects.create(
+            food_entry=food_entry,
+            proposedBy=request.user,
+        )
 
 class FoodPriceUpdateSerializer(serializers.Serializer):
     base_price = serializers.DecimalField(max_digits=10, decimal_places=2)
