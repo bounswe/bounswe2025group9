@@ -162,6 +162,11 @@ class FoodProposalSerializer(serializers.ModelSerializer):
         )
 
 class FoodProposalStatusSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="food_entry.name", read_only=True)
+    category = serializers.CharField(source="food_entry.category", read_only=True)
+    servingSize = serializers.FloatField(source="food_entry.servingSize", read_only=True)
+    imageUrl = serializers.URLField(source="food_entry.imageUrl", read_only=True)
+
     class Meta:
         model = FoodProposal
         fields = (
