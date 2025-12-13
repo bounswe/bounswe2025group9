@@ -42,6 +42,8 @@ urlpatterns = [
         UserFoodProposalListView.as_view(),
         name="my_food_proposals",
     ),
+
+    path("get-proposal-status/", FoodProposalSubmitView.as_view(), name="get_food_proposal"),
     path("", FoodCatalog.as_view(), name="get_foods"),
     path("catalog/", FoodCatalog.as_view(), name="food-catalog"),
     path("image-proxy/", image_proxy, name="image_proxy"),

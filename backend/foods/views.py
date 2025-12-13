@@ -21,6 +21,7 @@ from foods.serializers import (
     PriceReportCreateSerializer,
     PriceReportUpdateSerializer,
     PriceThresholdRecalculateSerializer,
+    FoodProposalStatusSerializer,
 )
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework import status, generics
@@ -672,6 +673,11 @@ class FoodProposalSubmitView(APIView):
             serializer.save(proposedBy=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    def get(self, request):
+        proposals = FoodProposal.objects.filter(proposedBy=request.user).order_by('-createdAt')
+        serializer = FoodProposalStatusSerializer(proposals, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserFoodProposalListView(ListAPIView):

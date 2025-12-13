@@ -161,7 +161,25 @@ class FoodProposalSerializer(serializers.ModelSerializer):
             proposedBy=request.user,
         )
 
+class FoodProposalStatusSerializer(serializers.ModelSerializer):
+    name = serializers.CharField(source="food_entry.name", read_only=True)
+    category = serializers.CharField(source="food_entry.category", read_only=True)
+    servingSize = serializers.FloatField(source="food_entry.servingSize", read_only=True)
+    imageUrl = serializers.URLField(source="food_entry.imageUrl", read_only=True)
 
+    class Meta:
+        model = FoodProposal
+        fields = (
+            "id",
+            "name",
+            "category",
+            "servingSize",
+            "imageUrl",
+            "createdAt",
+            "isApproved",
+        )
+        read_only_fields = fields
+        
 class FoodPriceUpdateSerializer(serializers.Serializer):
     base_price = serializers.DecimalField(max_digits=10, decimal_places=2)
     price_unit = serializers.ChoiceField(choices=PriceUnit.choices)
