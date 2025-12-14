@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.contrib.auth import get_user_model
 from accounts.models import AccountDeletionLog, Recipe as PersonalRecipe
-from foods.models import FoodProposal
+from foods.models import FoodEntry, FoodProposal
 from forum.models import Post, Comment
 from meal_planner.models import MealPlan, DailyNutritionLog
 from accounts.services import delete_user_account
@@ -10,6 +10,18 @@ import datetime
 User = get_user_model()
 
 class AccountDeletionTest(TestCase):
+    def make_proposal(self, user, status, **food_kwargs):
+        food_entry = FoodEntry.objects.create(
+            **food_kwargs,
+            createdBy=user,
+            validated=(status == 'approved')
+        )
+        return FoodProposal.objects.create(
+            food_entry=food_entry,
+            proposedBy=user,
+            isApproved=(status == 'approved' if status in ['approved', 'rejected'] else None)
+        )
+
     def setUp(self):
         self.user = User.objects.create_user(username='todelete', email='delete@example.com', password='password')
         
@@ -17,18 +29,19 @@ class AccountDeletionTest(TestCase):
         self.meal_plan = MealPlan.objects.create(user=self.user, name="My Plan")
         self.log = DailyNutritionLog.objects.create(user=self.user, date=datetime.date.today())
         self.personal_recipe = PersonalRecipe.objects.create(owner=self.user, name="My Secret Recipe")
-        self.rejected_proposal = FoodProposal.objects.create(
-            proposedBy=self.user, 
-            name="Bad Food", 
-            isApproved=False,
+
+        self.rejected_proposal = self.make_proposal(
+            user=self.user,
+            status='rejected',
+            name="Bad Food",
             category="Test", servingSize=1, caloriesPerServing=1, proteinContent=1, fatContent=1, carbohydrateContent=1, nutritionScore=1
         )
         
         # Create Shared Data
-        self.approved_proposal = FoodProposal.objects.create(
-            proposedBy=self.user, 
-            name="Good Food", 
-            isApproved=True,
+        self.approved_proposal = self.make_proposal(
+            user=self.user,
+            status='approved',
+            name="Good Food",
             category="Test", servingSize=1, caloriesPerServing=1, proteinContent=1, fatContent=1, carbohydrateContent=1, nutritionScore=1
         )
         self.post = Post.objects.create(author=self.user, title="My Post", body="Content")

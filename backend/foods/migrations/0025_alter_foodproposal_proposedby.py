@@ -8,7 +8,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('foods', '0018_alter_micronutrient_unit'),
+        ('foods', '0024_update_food_images'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
