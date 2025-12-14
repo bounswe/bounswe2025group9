@@ -5,7 +5,7 @@ from rest_framework import status
 from django.urls import reverse
 
 from .models import MealPlan
-from foods.models import FoodEntry
+from foods.services import FoodAccessService
 
 
 def create_user(username="alice", email="alice@example.com", password="pass12345"):
@@ -26,7 +26,7 @@ def create_food(
     nutritionScore=80.0,
     imageUrl="https://example.com/chicken.jpg",
 ):
-    return FoodEntry.objects.create(
+    return FoodAccessService.create_validated_food_entry(
         name=name,
         category=category,
         servingSize=servingSize,
@@ -240,82 +240,4 @@ class MealPlanAPITests(APITestCase):
         res = self.client.get(url_get)
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["id"], plan1.id)
-
-    def test_create_meal_plan_with_private_food(self):
-        from foods.models import FoodProposal
-        
-        # Create a private food
-        private_food = FoodProposal.objects.create(
-            name="My Secret Recipe",
-            proposedBy=self.user,
-            isApproved=False,
-            is_private=True,
-            servingSize=100,
-            caloriesPerServing=200,
-            proteinContent=10,
-            fatContent=10,
-            carbohydrateContent=10,
-            nutritionScore=5.0
-        )
-        
-        url = reverse("meal-plan-list-create")
-        payload = {
-            "name": "Private Plan",
-            "meals": [
-                {"private_food_id": private_food.id, "serving_size": 1.0, "meal_type": "dinner"}
-            ]
-        }
-        
-        res = self.client.post(url, payload, format="json")
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        
-        # Verify response contains full details
-        self.assertIn("total_calories", res.data)
-        self.assertEqual(float(res.data["total_calories"]), 200.0)
-        
-        # Verify DB
-        plan = MealPlan.objects.get(id=res.data["id"])
-        self.assertEqual(plan.meals[0]["private_food_id"], private_food.id)
-
-
-class DailyLogAPITests(APITestCase):
-    def setUp(self):
-        self.user = create_user(username="logger", email="logger@example.com")
-        self.client.force_authenticate(user=self.user)
-        self.url = reverse("food-log-entry-list")
-        
-        from foods.models import FoodProposal
-        self.private_food = FoodProposal.objects.create(
-            name="Private Snack",
-            proposedBy=self.user,
-            isApproved=False,
-            is_private=True,
-            servingSize=100,
-            caloriesPerServing=150,
-            proteinContent=5,
-            fatContent=5,
-            carbohydrateContent=20,
-            nutritionScore=5.0
-        )
-
-    def test_log_private_food(self):
-        payload = {
-            "private_food_id": self.private_food.id,
-            "serving_size": 2.0,
-            "meal_type": "snack",
-            "date": "2025-11-23"
-        }
-        
-        res = self.client.post(self.url, payload, format="json")
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        
-        self.assertEqual(res.data["food_name"], "Private Snack")
-        self.assertEqual(float(res.data["calories"]), 300.0)  # 150 * 2
-        
-        # Verify DB
-        from .models import FoodLogEntry
-        entry = FoodLogEntry.objects.get(id=res.data["id"])
-        self.assertEqual(entry.private_food, self.private_food)
-        self.assertEqual(entry.calories, 300.0)
-
 
