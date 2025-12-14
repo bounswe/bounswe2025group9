@@ -304,8 +304,8 @@ const NutritionTrackingPage = () => {
                                       {vitamins.map(([key, target]) => {
                                         const name = extractName(key);
                                         const unit = extractUnit(key);
-                                        const currentValue = typeof logMicronutrients[key] === 'number' 
-                                          ? logMicronutrients[key] 
+                                        const currentValue = typeof logMicronutrients[name] === 'number' 
+                                          ? logMicronutrients[name] 
                                           : 0;
                                         let targetValue = 0;
                                         if (typeof target === 'number') {
@@ -362,8 +362,8 @@ const NutritionTrackingPage = () => {
                                       {minerals.map(([key, target]) => {
                                         const name = extractName(key);
                                         const unit = extractUnit(key);
-                                        const currentValue = typeof logMicronutrients[key] === 'number' 
-                                          ? logMicronutrients[key] 
+                                        const currentValue = typeof logMicronutrients[name] === 'number' 
+                                          ? logMicronutrients[name] 
                                           : 0;
                                         let targetValue = 0;
                                         if (typeof target === 'number') {
