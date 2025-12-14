@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CaretDown, CaretRight, Trash, CalendarBlank, PencilSimple, ForkKnife } from '@phosphor-icons/react'
-import { apiClient, FoodProposalStatus, ForumPost, MealPlan } from '../lib/apiClient'
+import { Lock, User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CaretDown, CaretRight, Trash, CalendarBlank, PencilSimple, ForkKnife } from '@phosphor-icons/react'
+import { apiClient, Food, FoodProposalStatus, ForumPost, MealPlan } from '../lib/apiClient'
 import { UserMetrics } from '../types/nutrition'
 import NutritionSummary from '../components/NutritionSummary'
 import MealPlanner from './mealplanner/MealPlanner'
 import MealPlannerSidebar from '../components/MealPlannerSidebar'
+import { FoodItem } from './foods/Foods'
+import PrivateFoodDetail from './foods/PrivateFoodDetail'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -62,7 +64,7 @@ const Profile = () => {
   const { user, fetchUserProfile } = useAuth()
   const navigate = useNavigate()
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics' | 'foodProposals'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics' | 'foodProposals'| 'privateFoods'>('overview')
   
   // Meal Planner state (for sidebar in profile)
   const [mealPlannerDietaryPreference, setMealPlannerDietaryPreference] = useState('high-protein')
@@ -75,6 +77,8 @@ const Profile = () => {
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
   const [likedRecipes, setLikedRecipes] = useState<ForumPost[]>([])
   const [foodProposals, setFoodProposals] = useState<FoodProposalStatus[]>([])
+  const [privateFoods, setPrivateFoods] = useState<Food[]>([])
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [likedPostsMap, setLikedPostsMap] = useState<{ [key: number]: boolean }>({})
   const [professionTags, setProfessionTags] = useState<ProfessionTag[]>([])
   const [selectedProfession, setSelectedProfession] = useState('')
@@ -126,7 +130,7 @@ const Profile = () => {
   }, [user])
 
   // Function to handle tab change
-  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics'| 'foodProposals') => {
+  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics'| 'foodProposals' | 'privateFoods') => {
     setActiveTab(tab)
   }
 
@@ -183,6 +187,7 @@ const Profile = () => {
       await loadLikedRecipes()
 
       await loadFoodProposals()
+      await loadPrivateFoods()
 
       // Load profile picture if available
       if (user.profile_image) {
@@ -309,6 +314,17 @@ const Profile = () => {
     catch (error) {
       console.error('Error loading food proposals:', error)
       setFoodProposals([])
+    } 
+  }
+
+  const loadPrivateFoods = async () => {
+    try {
+      const response = await apiClient.getPrivateFoods()
+      setPrivateFoods(response || [])
+    } 
+    catch (error) {
+      console.error('Error loading private foods:', error)
+      setPrivateFoods([])
     } 
   }
 
@@ -1135,6 +1151,22 @@ const Profile = () => {
                   <span className="grow text-center">Food Proposals</span>
                 </button>
 
+                <button
+                  onClick={() => handleTabChange('privateFoods')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'privateFoods'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'privateFoods'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <Lock size={18} weight="fill" />
+                  <span className="grow text-center">Private Foods</span>
+                </button>
+
               </div>
             </div>
           </div>
@@ -1784,7 +1816,7 @@ const Profile = () => {
               </div>
             )}
 
-            {
+            { activeTab === 'foodProposals' &&
               <div className="mt-8 space-y-4">
               <h2 className="nh-title">My Food Proposals</h2>
 
@@ -1869,6 +1901,32 @@ const Profile = () => {
 
           }
 
+          {activeTab === 'privateFoods' && (
+            <div className="space-y-6">
+              <h2 className="nh-title">My Private Foods</h2>
+
+              {privateFoods.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {privateFoods.map(food => (
+                    <FoodItem
+                      key={food.id}
+                      item={food}
+                      onClick={() => {
+                        setSelectedFood(food)
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="nh-card text-center py-8">
+                  <p className="nh-text opacity-60">
+                    You have not created any private foods yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
             {/* Meal Planner Tab */}
             {activeTab === 'mealPlanner' && (
               <div className="space-y-6">
@@ -1926,6 +1984,12 @@ const Profile = () => {
             </div>
           </div>
         </div>
+        <PrivateFoodDetail 
+            food={selectedFood}
+            open={!!selectedFood}
+            onClose={() => setSelectedFood(null)}
+            onChanged={() => loadPrivateFoods()}
+        />
       </div>
     </div>
   )

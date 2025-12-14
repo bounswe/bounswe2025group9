@@ -7,9 +7,10 @@ interface FoodDetailProps {
   food: Food | null;
   open: boolean;
   onClose: () => void;
+  actions?: React.ReactNode;
 }
 
-const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
+const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions }) => {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [selectedNutrient, setSelectedNutrient] = useState<string | null>(null);
   const [recommendations, setRecommendations] = useState<{
@@ -304,6 +305,8 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
           {/* Food title */}
           <h2 className="flex-1 text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{food.name}</h2>
 
+          {/* Optional actions (edit/delete) */}
+          {actions}
           {/* Close button */}
           <button 
             onClick={onClose}
