@@ -39,6 +39,7 @@ function App() {
               <Route path="home" element={<Home />} />
               <Route path="foods" element={<Foods />} />
               <Route path="foods/propose" element={<ProposeNewFood />} />
+              <Route path="/foods/private/:id/edit" element={<ProposeNewFood />} />
               <Route path="foods/compare" element={<FoodCompare />} />
               <Route path="forum" element={<Forum />} />
               <Route path="forum/post/:postId" element={<PostDetail />} />

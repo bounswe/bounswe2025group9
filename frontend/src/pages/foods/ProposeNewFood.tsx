@@ -1,6 +1,6 @@
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import { ArrowLeft, WarningCircle } from '@phosphor-icons/react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { FoodProposal, apiClient } from '../../lib/apiClient';
 
 // Available dietary options
@@ -18,7 +18,11 @@ const dietaryOptions = [
 ];
 
 const ProposeNewFood: React.FC = () => {
+  const { id } = useParams<{ id: string }>();
+  const foodId = id ? Number(id) : null;
+  const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const [isPrivate, setIsPrivate] = useState(false);
   const [foodName, setFoodName] = useState('');
   const [category, setCategory] = useState('');
   const [servingSize, setServingSize] = useState('');
@@ -62,6 +66,42 @@ const ProposeNewFood: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isEditMode) return;
+
+    const fetchFood = async () => {
+      try {
+        const food = await apiClient.getPrivateFood(foodId!);
+
+        // Basic fields
+        setFoodName(food.name);
+        setCategory(food.category);
+        setServingSize(String(food.servingSize));
+        setCalories(String(food.caloriesPerServing));
+        setProtein(String(food.proteinContent));
+        setCarbs(String(food.carbohydrateContent));
+        setFat(String(food.fatContent));
+        setImageUrl(food.imageUrl || '');
+        setIsPrivate(true);
+
+        // Dietary options
+        setSelectedDietaryOptions(food.dietaryOptions || []);
+
+        // Micronutrients
+        const microState: { [key: string]: string } = {};
+        Object.entries(food.micronutrients || {}).forEach(([k, v]) => {
+          microState[k] = String(v.value ?? v);
+        });
+        setMicronutrients(prev => ({ ...prev, ...microState }));
+      } catch (err) {
+        console.error('Failed to load food for edit', err);
+        setError('Failed to load food data.');
+      }
+    };
+
+    fetchFood();
+  }, [id]);
 
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
@@ -219,14 +259,26 @@ const ProposeNewFood: React.FC = () => {
         nutritionScore: nutritionScore,
         imageUrl: imageUrl || undefined,
         micronutrients: Object.keys(filteredMicronutrients).length > 0 ? filteredMicronutrients : undefined,
+        isPrivate,
       };
       
-      await apiClient.proposeFood(proposal);
+      if (isEditMode) {
+        await apiClient.updatePrivateFood(foodId!, proposal);
+        setSuccess('Food updated successfully!');
+      } else {
+        const propose = isPrivate
+          ? apiClient.proposePrivateFood
+          : apiClient.proposeFood;
+
+        await propose(proposal);
+        setSuccess('Food proposal submitted successfully!');
+      }
+
       setSuccess('Food proposal submitted successfully!');
       
       // Clear form or redirect after success
       setTimeout(() => {
-        navigate('/foods');
+        navigate(-1);
       }, 2000);
     } catch (err) {
       console.error('Error submitting food proposal:', err);
@@ -248,14 +300,14 @@ const ProposeNewFood: React.FC = () => {
             <div className="nh-card">
               <div className="flex justify-start items-center gap-6 mb-2">
                 <button 
-                  onClick={() => navigate('/foods')}
+                  onClick={() => navigate(-1)}
                   className="nh-button-square nh-button-primary flex items-center gap-2 px-2 py-2"
                 >
                   <ArrowLeft size={20} weight="bold" /> 
                 </button>
-                <div className="flex justify-center items-center">
-                  <h1 className="nh-title-custom">Propose New Food</h1>
-                </div>
+                <h1 className="nh-title-custom">
+                  {isEditMode ? 'Edit Food' : 'Propose New Food'}
+                </h1>
               </div>
 
               {/* Display success message if present */}
@@ -418,6 +470,28 @@ const ProposeNewFood: React.FC = () => {
                     </div>
                   </div>
                 </div>
+                
+                {/* Visibility */}
+                <div className="mb-6">
+                  <h2 className="nh-subtitle mb-4">Visibility</h2>
+
+                  <label className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={isPrivate}
+                      onChange={(e) => setIsPrivate(e.target.checked)}
+                      className="h-4 w-4 accent-[var(--color-primary)] cursor-pointer"
+                    />
+                    <span className="font-medium">
+                      Save as private food (only visible to me)
+                    </span>
+                  </label>
+
+                  <p className="mt-1 text-sm text-gray-500">
+                    If unchecked, the food will be submitted for public review.
+                  </p>
+                </div>
+
 
                 {/* Micronutrients */}
                 <div className="mb-6">
@@ -542,7 +616,7 @@ const ProposeNewFood: React.FC = () => {
                 <div className="flex justify-end items-center mt-6 gap-3">
                   <button
                     type="button"
-                    onClick={() => navigate('/foods')}
+                    onClick={() => navigate(-1)}
                     className="nh-button nh-button-secondary flex items-center gap-2 px-6 py-2"
                     disabled={isSubmitting}
                   >
@@ -553,7 +627,11 @@ const ProposeNewFood: React.FC = () => {
                     className="nh-button nh-button-primary flex items-center gap-2 px-6 py-2"
                     disabled={isSubmitting}
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Proposal'}
+                    {isSubmitting
+                      ? 'Saving...'
+                      : isEditMode
+                      ? 'Save Changes'
+                      : 'Submit Proposal'}
                   </button>
                 </div>
               </form>
