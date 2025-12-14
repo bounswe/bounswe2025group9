@@ -631,6 +631,104 @@ class FoodCatalog(ListAPIView):
         return Response(data)
 
 
+class PrivateFoodView(APIView):
+    """
+    CRUD for user's private foods.
+
+    - LIST   /api/foods/private/
+    - CREATE /api/foods/private/
+    - GET    /api/foods/private/<id>/
+    - UPDATE /api/foods/private/<id>/
+    - DELETE /api/foods/private/<id>/
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    # ------------------------
+    # GET (LIST / RETRIEVE)
+    # ------------------------
+    def get(self, request, pk=None):
+        user = request.user
+
+        if pk:
+            food = get_object_or_404(
+                FoodEntry.objects.prefetch_related("micronutrient_values__micronutrient"),
+                id=pk,
+                createdBy=user,
+                validated=False,
+            )
+            serializer = FoodEntrySerializer(food, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        foods = FoodEntry.objects.filter(
+            createdBy=user,
+            validated=False,
+        ).prefetch_related("micronutrient_values__micronutrient")
+
+        serializer = FoodEntrySerializer(
+            foods, many=True, context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # ------------------------
+    # POST (CREATE)
+    # ------------------------
+    def post(self, request):
+        serializer = FoodEntrySerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save(
+                createdBy=request.user,
+                validated=False,  # 🔒 private by default
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # ------------------------
+    # PUT / PATCH (UPDATE)
+    # ------------------------
+    def put(self, request, pk):
+        return self._update(request, pk)
+
+    def patch(self, request, pk):
+        return self._update(request, pk, partial=True)
+
+    def _update(self, request, pk, partial=False):
+        food = get_object_or_404(
+            FoodEntry,
+            id=pk,
+            createdBy=request.user,
+            validated=False,
+        )
+
+        serializer = FoodEntrySerializer(
+            food,
+            data=request.data,
+            partial=partial,
+            context={'request': request},
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # ------------------------
+    # DELETE
+    # ------------------------
+    def delete(self, request, pk):
+        food = get_object_or_404(
+            FoodEntry,
+            id=pk,
+            createdBy=request.user,
+            validated=False,
+        )
+        food.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
 class AvailableMicronutrientsView(APIView):
     """
     Returns a list of all available micronutrients that have at least one entry in accessible foods.
