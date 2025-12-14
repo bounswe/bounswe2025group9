@@ -70,12 +70,13 @@ class MealPlanSerializer(serializers.ModelSerializer):
         model = MealPlan
         fields = [
             'id', 'name', 'total_calories', 'total_protein', 
-            'total_fat', 'total_carbohydrates', 'meals', 
-            'meals_details', 'created_at', 'updated_at', 'is_active'
+            'total_fat', 'total_carbohydrates', 'micronutrients_summary',
+            'meals', 'meals_details', 'created_at', 'updated_at', 'is_active'
         ]
         read_only_fields = [
             'id', 'total_calories', 'total_protein', 
-            'total_fat', 'total_carbohydrates', 'created_at', 'updated_at'
+            'total_fat', 'total_carbohydrates', 'micronutrients_summary',
+            'created_at', 'updated_at'
         ]
     
     def get_meals_details(self, obj):
@@ -92,15 +93,26 @@ class MealPlanSerializer(serializers.ModelSerializer):
             try:
                 food_entry = accessible_foods.get(id=meal.get('food_id'))
                 food_serializer = FoodEntrySerializer(food_entry)
+                serving_size = meal.get('serving_size', 1.0)
+                
+                # Calculate micronutrients for this meal
+                meal_micronutrients = {}
+                if food_entry.micronutrient_values.exists():
+                    meal_micronutrients = {
+                        mv.micronutrient.name: mv.value * serving_size
+                        for mv in food_entry.micronutrient_values.select_related("micronutrient")
+                    }
+                
                 meal_detail = {
                     'food': food_serializer.data,
-                    'serving_size': meal.get('serving_size', 1.0),
+                    'serving_size': serving_size,
                     'meal_type': meal.get('meal_type', 'meal'),
                     'calculated_nutrition': {
-                        'calories': food_entry.caloriesPerServing * meal.get('serving_size', 1.0),
-                        'protein': food_entry.proteinContent * meal.get('serving_size', 1.0),
-                        'fat': food_entry.fatContent * meal.get('serving_size', 1.0),
-                        'carbohydrates': food_entry.carbohydrateContent * meal.get('serving_size', 1.0),
+                        'calories': food_entry.caloriesPerServing * serving_size,
+                        'protein': food_entry.proteinContent * serving_size,
+                        'fat': food_entry.fatContent * serving_size,
+                        'carbohydrates': food_entry.carbohydrateContent * serving_size,
+                        'micronutrients': meal_micronutrients,
                     }
                 }
                 meals_details.append(meal_detail)

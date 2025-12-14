@@ -20,6 +20,11 @@ class MealPlan(models.Model):
     total_protein = models.FloatField(default=0.0)
     total_fat = models.FloatField(default=0.0)
     total_carbohydrates = models.FloatField(default=0.0)
+    micronutrients_summary = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Aggregated micronutrient totals for the meal plan"
+    )
     
     # Array of foods as meals - storing food IDs and meal information
     meals = models.JSONField(default=list, help_text="Array of meal objects with food information")
@@ -36,10 +41,13 @@ class MealPlan(models.Model):
     
     def calculate_total_nutrition(self):
         """Calculate and update total nutrition from meals array"""
+        from project.utils.nutrition_calculator import aggregate_micronutrients
+        
         total_calories = 0.0
         total_protein = 0.0
         total_fat = 0.0
         total_carbs = 0.0
+        micronutrients_list = []
 
         for meal in self.meals:
             # Assuming meal structure: {'food_id': int, 'serving_size': float, 'meal_type': str}
@@ -55,15 +63,27 @@ class MealPlan(models.Model):
                 total_protein += food_entry.proteinContent * serving_size
                 total_fat += food_entry.fatContent * serving_size
                 total_carbs += food_entry.carbohydrateContent * serving_size
+                
+                # Calculate micronutrients for this meal
+                if food_entry.micronutrient_values.exists():
+                    meal_micronutrients = {
+                        mv.micronutrient.name: mv.value * serving_size
+                        for mv in food_entry.micronutrient_values.select_related("micronutrient")
+                    }
+                    micronutrients_list.append(meal_micronutrients)
             except FoodEntry.DoesNotExist:
                 continue
+
+        # Aggregate all micronutrients
+        aggregated_micronutrients = aggregate_micronutrients(micronutrients_list)
 
         # Update the total nutrition fields
         self.total_calories = total_calories
         self.total_protein = total_protein
         self.total_fat = total_fat
         self.total_carbohydrates = total_carbs
-        self.save(update_fields=['total_calories', 'total_protein', 'total_fat', 'total_carbohydrates'])
+        self.micronutrients_summary = aggregated_micronutrients
+        self.save(update_fields=['total_calories', 'total_protein', 'total_fat', 'total_carbohydrates', 'micronutrients_summary'])
 
 
 class DailyNutritionLog(models.Model):
