@@ -580,7 +580,7 @@ const FoodScreen: React.FC = () => {
         onHide={() => setShowSuccessNotification(false)}
       />
 
-      {/* Header */}
+      {/* Header  @claude this is the component */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <Text style={[styles.headerTitle, textStyles.heading2]}>Foods Catalog</Text>
