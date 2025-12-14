@@ -553,78 +553,73 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 />
               </div>
                 
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                <p className="text-[var(--color-text-secondary)] text-sm">Default Serving Size</p>
-                <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.servingSize}g</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Serving Size Selector */}
-          <div className="mb-6 p-4 rounded-lg bg-[var(--color-accent-bg-soft)] border border-[var(--color-accent-border-soft)]">
-            <label className="text-sm font-semibold text-[var(--color-text-primary)] mb-2 block">
-              Adjust Serving Size
-            </label>
-            <div className="flex items-center gap-3 flex-wrap">
-              <input
-                type="number"
-                min="1"
-                max="10000"
-                value={selectedServingSize || ''}
-                onChange={(e) => {
-                  const val = e.target.value;
-                  if (val === '') {
-                    setSelectedServingSize(0);
-                  } else {
-                    setSelectedServingSize(Math.max(0, parseInt(val) || 0));
-                  }
-                }}
-                onBlur={() => {
-                  if (selectedServingSize < 1) {
-                    setSelectedServingSize(food?.servingSize || 100);
-                  }
-                }}
-                className="w-24 px-3 py-2 rounded-lg border text-lg font-semibold"
-                style={{
-                  backgroundColor: 'var(--color-bg-primary)',
-                  color: 'var(--color-text-primary)',
-                  borderColor: 'var(--color-border)',
-                }}
-              />
-              <span className="text-sm text-[var(--color-text-secondary)]">grams</span>
-              <div className="flex gap-2 flex-wrap">
-                <button
-                  onClick={() => setSelectedServingSize(food.servingSize)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    selectedServingSize === food.servingSize 
-                      ? 'bg-[var(--color-accent)] text-white' 
-                      : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]'
-                  }`}
-                >
-                  Default ({food.servingSize}g)
-                </button>
-                <button
-                  onClick={() => setSelectedServingSize(100)}
-                  className={`px-3 py-1 text-xs rounded transition-colors ${
-                    selectedServingSize === 100 
-                      ? 'bg-[var(--color-accent)] text-white' 
-                      : 'bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)]'
-                  }`}
-                >
-                  100g
-                </button>
-                <button
-                  onClick={() => setSelectedServingSize(selectedServingSize * 2)}
-                  className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                >
-                  ×2
-                </button>
-                <button
-                  onClick={() => setSelectedServingSize(Math.max(1, Math.floor(selectedServingSize / 2)))}
-                  className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                >
-                  ÷2
-                </button>
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Default Serving Size */}
+                  <div>
+                    <p className="text-[var(--color-text-secondary)] text-sm mb-2">Default Serving Size</p>
+                    <p className="font-medium text-[var(--color-text-primary)]">{food.servingSize}g</p>
+                  </div>
+                  
+                  {/* Adjust Serving Size */}
+                  <div>
+                    <p className="text-[var(--color-text-secondary)] text-sm mb-2">Adjust Serving Size</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="10000"
+                        value={selectedServingSize || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setSelectedServingSize(0);
+                          } else {
+                            setSelectedServingSize(Math.max(0, parseInt(val) || 0));
+                          }
+                        }}
+                        onBlur={() => {
+                          if (selectedServingSize < 1) {
+                            setSelectedServingSize(food?.servingSize || 100);
+                          }
+                        }}
+                        className="w-20 px-2 py-1 rounded border text-sm font-semibold"
+                        style={{
+                          backgroundColor: 'var(--color-bg-primary)',
+                          color: 'var(--color-text-primary)',
+                          borderColor: 'var(--color-border)',
+                        }}
+                      />
+                      <span className="text-xs text-[var(--color-text-secondary)]">g</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setSelectedServingSize(food.servingSize)}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          Default
+                        </button>
+                        <button
+                          onClick={() => setSelectedServingSize(100)}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          100g
+                        </button>
+                        <button
+                          onClick={() => setSelectedServingSize(selectedServingSize * 2)}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          ×2
+                        </button>
+                        <button
+                          onClick={() => setSelectedServingSize(Math.max(1, Math.floor(selectedServingSize / 2)))}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          ÷2
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -1059,48 +1054,20 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                   </div>
                 </div>
 
-                {/* Today's Progress Section */}
+                {/* Today's Progress Section - Combined Bar */}
                 {(() => {
                   if (!selectedNutrient) return null;
                   const target = getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient);
                   const consumed = getTodayConsumed(selectedNutrient);
-                  const percentage = target ? (consumed / target) * 100 : 0;
-                  const unit = getUnitForNutrient(selectedNutrient);
-                  
-                  return (
-                    <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                      <p className="text-sm text-[var(--color-text-secondary)] mb-2">Today's Progress</p>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-[var(--color-text-secondary)]">Already consumed:</span>
-                          <span className="font-medium text-[var(--color-text-primary)]">
-                            {consumed.toFixed(1)} {unit}
-                          </span>
-                        </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className="bg-green-500 h-2 rounded-full transition-all"
-                            style={{ width: `${Math.min(percentage, 100)}%` }}
-                          ></div>
-                        </div>
-                        <p className="text-xs text-[var(--color-text-tertiary)]">
-                          {percentage.toFixed(1)}% of daily target
-                          {!target && <span className="text-orange-500 ml-1">(no target set)</span>}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })()}
-
-                {(() => {
-                  if (!selectedNutrient) return null;
-                  const target = getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient);
                   const foodValue = getNutrientValue(selectedNutrient, customGrams);
                   const totalAfter = getTotalAfterEating(selectedNutrient, customGrams);
-                  const percentageAfter = target ? (totalAfter / target) * 100 : 0;
                   const unit = getUnitForNutrient(selectedNutrient);
                   const overdosing = isOverdosing(selectedNutrient, customGrams);
                   const exceedingTarget = isExceedingTarget(selectedNutrient, customGrams);
+                  
+                  // Calculate percentages for the combined bar
+                  const consumedPercentage = target ? (consumed / target) * 100 : 0;
+                  const totalPercentage = target ? (totalAfter / target) * 100 : 0;
                   
                   return (
                     <div className={`p-4 rounded-lg border ${
@@ -1110,31 +1077,45 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                         ? 'bg-yellow-500/10 border-yellow-500/30'
                         : 'bg-blue-500/10 border-blue-500/30'
                     }`}>
-                      <p className="text-sm text-[var(--color-text-secondary)] mb-1">This Serving ({customGrams}g) Provides</p>
-                      <p className="text-xl font-bold text-[var(--color-text-primary)]">
-                        {foodValue.toFixed(1)} {unit}
-                      </p>
-                      <div className="mt-3 p-3 rounded bg-[var(--color-bg-primary)] border border-[var(--color-border)]">
-                        <p className="text-xs text-[var(--color-text-secondary)] mb-1">After eating this serving:</p>
-                        <p className="text-lg font-bold text-[var(--color-text-primary)]">
-                          {totalAfter.toFixed(1)} {unit}
-                        </p>
-                      </div>
-                      <div className="mt-2">
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="text-[var(--color-text-secondary)]">% of Daily Target (after eating)</span>
-                          <span className="font-medium text-[var(--color-text-primary)]">
-                            {percentageAfter.toFixed(1)}%
-                            {!target && <span className="text-orange-500 ml-1">(no target)</span>}
-                          </span>
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">Today's Progress</p>
+                      
+                      {/* Combined Progress Bar */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-green-600 dark:text-green-400 font-medium">Already consumed: {consumed.toFixed(1)} {unit}</span>
+                          <span className={`font-medium ${
+                            overdosing ? 'text-red-600 dark:text-red-400' 
+                            : exceedingTarget ? 'text-yellow-600 dark:text-yellow-400' 
+                            : 'text-blue-600 dark:text-blue-400'
+                          }`}>This serving: {foodValue.toFixed(1)} {unit}</span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                          <div
-                            className={`h-2 rounded-full transition-all ${
-                              overdosing ? 'bg-red-500' : exceedingTarget ? 'bg-yellow-500' : 'bg-blue-500'
-                            }`}
-                            style={{ width: `${Math.min(percentageAfter, 100)}%` }}
-                          ></div>
+                        
+                        {/* Single combined bar */}
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                          <div className="flex h-full">
+                            {/* Already consumed (green) */}
+                            <div
+                              className="bg-green-500 h-full transition-all"
+                              style={{ width: `${Math.min(consumedPercentage, 100)}%` }}
+                            ></div>
+                            {/* This food (blue/yellow/red based on status) */}
+                            <div
+                              className={`h-full transition-all ${
+                                overdosing ? 'bg-red-500' : exceedingTarget ? 'bg-yellow-500' : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${Math.min(Math.max(0, totalPercentage - consumedPercentage), 100 - Math.min(consumedPercentage, 100))}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-[var(--color-text-tertiary)]">
+                            Total after eating: <span className="font-semibold text-[var(--color-text-primary)]">{totalAfter.toFixed(1)} {unit}</span>
+                          </p>
+                          <p className="text-xs text-[var(--color-text-tertiary)]">
+                            {totalPercentage.toFixed(1)}% of target
+                            {!target && <span className="text-orange-500 ml-1">(no target)</span>}
+                          </p>
                         </div>
                       </div>
                     </div>
