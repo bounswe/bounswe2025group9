@@ -1010,11 +1010,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                         setCustomGrams(val);
                         setSelectedServingSize(val);
                       }}
-                      className={`px-3 py-1 text-xs rounded transition-colors ${
-                        customGrams === food?.servingSize
-                          ? 'bg-[var(--color-accent)] text-white'
-                          : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      }`}
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
                     >
                       Default ({food?.servingSize}g)
                     </button>
@@ -1023,11 +1019,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                         setCustomGrams(100);
                         setSelectedServingSize(100);
                       }}
-                      className={`px-3 py-1 text-xs rounded transition-colors ${
-                        customGrams === 100
-                          ? 'bg-[var(--color-accent)] text-white'
-                          : 'bg-blue-500 hover:bg-blue-600 text-white'
-                      }`}
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
                     >
                       100g
                     </button>
@@ -1037,7 +1029,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                         setCustomGrams(val);
                         setSelectedServingSize(val);
                       }}
-                      className="px-3 py-1 text-xs rounded bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
                     >
                       ×2
                     </button>
@@ -1047,7 +1039,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                         setCustomGrams(val);
                         setSelectedServingSize(val);
                       }}
-                      className="px-3 py-1 text-xs rounded bg-blue-500 hover:bg-blue-600 text-white transition-colors"
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
                     >
                       ÷2
                     </button>
