@@ -15,6 +15,7 @@ from .views import (
     PriceReportListCreateView,
     PriceReportDetailView,
     AvailableMicronutrientsView,
+    PrivateFoodView
 )
 from .admin import FoodProposalModerationViewSet
 
@@ -74,4 +75,6 @@ urlpatterns = [
         name="price_report_detail",
     ),
     path("moderation/", include(moderation_router.urls), name="moderation"),
+    path("private/", PrivateFoodView.as_view(), name="private_foods"),
+    path("private/<int:pk>/", PrivateFoodView.as_view(), name="private_food_detail"),
 ]
