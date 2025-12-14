@@ -26,11 +26,27 @@ const PrivateFoodDetail: React.FC<PrivateFoodDetailProps> = ({
     if (!confirm(`Delete "${food.name}"? This action cannot be undone.`)) return;
 
     setLoading(true);
+
     try {
       await apiClient.deletePrivateFood(food.id);
+    }
+    catch (error: any) {
+      const status = error?.status;
+      const message = error?.data?.detail;
+
+      if (status === 409) {
+        alert(
+          message ||
+            "This food cannot be deleted because it is currently in use."
+        );
+        return;
+      }
+
+      alert("Failed to delete food. Please try again later.");
+    } 
+    finally {
       onChanged?.();
       onClose();
-    } finally {
       setLoading(false);
     }
   };
