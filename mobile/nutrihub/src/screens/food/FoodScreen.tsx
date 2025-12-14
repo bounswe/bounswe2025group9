@@ -737,7 +737,7 @@ const FoodScreen: React.FC = () => {
                       : theme.sortOptionInactiveBg,
                   },
                 ]}
-                onPress={() => setSortOption(value)}
+                onPress={() => setSortOption(sortOption === value ? '' : value)}
               >
                 <Text
                   style={[
