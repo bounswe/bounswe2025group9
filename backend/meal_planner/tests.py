@@ -7,7 +7,7 @@ from rest_framework import status
 from rest_framework.test import APIClient, APITestCase
 
 from accounts.models import NutritionTargets
-from foods.models import FoodEntryMicronutrient, Micronutrient
+from foods.models import FoodEntry, FoodEntryMicronutrient, Micronutrient
 from foods.services import FoodAccessService
 
 from .models import DailyNutritionLog, FoodLogEntry, MealPlan
@@ -330,4 +330,48 @@ class DailyNutritionHydrationTests(TestCase):
         self.assertEqual(
             data["hydration_adjusted_score"], round(self.food.nutritionScore, 2)
         )
+
+
+class DailyNutritionPrivateFoodRegressionTests(TestCase):
+    """Ensure daily log serialization works with private FoodEntry records."""
+
+    def setUp(self):
+        self.user = create_user(username="private", email="private@example.com")
+        self.food = FoodEntry.objects.create(
+            name="Secret Soup",
+            category="Homemade",
+            servingSize=200.0,
+            caloriesPerServing=250.0,
+            proteinContent=12.0,
+            fatContent=8.0,
+            carbohydrateContent=30.0,
+            dietaryOptions=[],
+            nutritionScore=6.5,
+            imageUrl="",
+            validated=False,
+            createdBy=self.user,
+        )
+
+    def test_serializer_handles_private_food_entry(self):
+        log = DailyNutritionLog.objects.create(user=self.user, date=date.today())
+        FoodLogEntry.objects.create(
+            daily_log=log,
+            food=self.food,
+            serving_size=1,
+            serving_unit="serving",
+            meal_type="lunch",
+            calories=0,
+            protein=0,
+            carbohydrates=0,
+            fat=0,
+            micronutrients={},
+        )
+
+        serializer = DailyNutritionLogSerializer(log)
+        data = serializer.data
+
+        expected_score = round(self.food.nutritionScore, 2)
+        self.assertEqual(data["base_nutrition_score"], expected_score)
+        self.assertEqual(data["hydration_penalty"], 0.0)
+        self.assertEqual(data["hydration_adjusted_score"], expected_score)
 
