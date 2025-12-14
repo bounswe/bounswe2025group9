@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.db.models.deletion import ProtectedError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from foods.models import (
@@ -725,7 +726,19 @@ class PrivateFoodView(APIView):
             createdBy=request.user,
             validated=False,
         )
-        food.delete()
+        try:
+            food.delete()
+        except ProtectedError:
+            return Response(
+                {
+                    "detail": (
+                        "This food cannot be deleted because it is currently "
+                        "used in your nutrition tracker or another record."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
         return Response(status=status.HTTP_204_NO_CONTENT)
     
 
