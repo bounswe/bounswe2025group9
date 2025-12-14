@@ -674,7 +674,7 @@ class PrivateFoodView(APIView):
     # POST (CREATE)
     # ------------------------
     def post(self, request):
-        serializer = FoodProposalSerializer(data=request.data, context={'request': request})
+        serializer = FoodEntrySerializer(data=request.data, context={'request': request})
 
         if serializer.is_valid():
             serializer.save(
