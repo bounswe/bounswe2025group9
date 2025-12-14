@@ -10,6 +10,8 @@ web-build/
 expo-env.d.ts
 /ios/
 /android/
+# Un-ignore AndroidManifest.xml to track keyboard settings
+!/android/app/src/main/AndroidManifest.xml
 
 # Native
 *.orig.*
