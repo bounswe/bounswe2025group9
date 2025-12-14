@@ -121,47 +121,23 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         help_text="Original serving size of the food (for display calculations)"
     )
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
-    food_id = serializers.IntegerField(required=False, allow_null=True, read_only=False)
-    private_food_id = serializers.IntegerField(required=False, allow_null=True, read_only=False)
+    food_id = serializers.PrimaryKeyRelatedField(
+        source='food',
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
+        write_only=True
+    )
     water_grams = serializers.SerializerMethodField(read_only=True)
-    
-    def to_internal_value(self, data):
-        """Convert food_id/private_food_id to food/private_food objects."""
-        # Get the raw data
-        ret = super().to_internal_value(data)
-        
-        # Map food_id to food object
-        if 'food_id' in data and data['food_id'] is not None:
-            try:
-                from foods.models import FoodEntry
-                ret['food'] = FoodEntry.objects.get(id=data['food_id'])
-            except FoodEntry.DoesNotExist:
-                raise serializers.ValidationError({'food_id': 'Food with this ID does not exist.'})
-            # Remove food_id from ret since it's not a model field
-            ret.pop('food_id', None)
-        
-        # Map private_food_id to private_food object
-        if 'private_food_id' in data and data['private_food_id'] is not None:
-            try:
-                from foods.models import FoodProposal
-                ret['private_food'] = FoodProposal.objects.get(
-                    id=data['private_food_id'],
-                    is_private=True
-                )
-            except FoodProposal.DoesNotExist:
-                raise serializers.ValidationError({'private_food_id': 'Private food with this ID does not exist.'})
-            # Remove private_food_id from ret since it's not a model field
-            ret.pop('private_food_id', None)
-        
-        return ret
-    
-    def to_representation(self, instance):
-        """Convert food/private_food objects to food_id/private_food_id."""
-        ret = super().to_representation(instance)
-        # Add food_id and private_food_id to the response
-        ret['food_id'] = instance.food_id if instance.food_id else None
-        ret['private_food_id'] = instance.private_food_id if instance.private_food_id else None
-        return ret
+
+    def __init__(self, *args, **kwargs):
+        """Initialize and set accessible foods queryset based on user context"""
+        super().__init__(*args, **kwargs)
+
+        # Get user from context
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Set queryset to only accessible foods for this user
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         from .models import FoodLogEntry
@@ -175,12 +151,8 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
                            'protein', 'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at']
     
     def get_food_name(self, obj):
-        """Get food name from either food or private_food."""
-        if obj.food:
-            return obj.food.name
-        elif obj.private_food:
-            return obj.private_food.name
-        return None
+        """Return the name of the linked FoodEntry if available."""
+        return obj.food.name if obj.food else None
 
     def get_water_grams(self, obj):
         """Return water contribution for this entry (g), to support hydration UI/what-if scenarios."""
@@ -295,12 +267,12 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
         logged foods' nutritionScore (0-10 scale). This stays aligned with the
         existing food-level scoring and avoids changing macro/micro totals.
         """
-        entries = obj.entries.select_related("food", "private_food")
+        entries = obj.entries.select_related("food")
         total_weight = 0.0
         weighted_score = 0.0
 
         for entry in entries:
-            food = entry.food or entry.private_food
+            food = entry.food
             if not food or food.nutritionScore is None:
                 continue
             try:
