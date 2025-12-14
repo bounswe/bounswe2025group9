@@ -400,7 +400,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string, micronutrient?: string }) => {
+  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string, micronutrient?: string, macronutrient?: string }) => {
     let url = "/foods/";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
@@ -417,6 +417,9 @@ export const apiClient = {
     }
     if (params && params.micronutrient) {
       queryParams.append('micronutrient', params.micronutrient);
+    }
+    if (params && params.macronutrient) {
+      queryParams.append('macronutrient', params.macronutrient);
     }
     const queryString = queryParams.toString();
     if (queryString) {

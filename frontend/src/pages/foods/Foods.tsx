@@ -5,6 +5,7 @@ import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 import NutritionScore from '../../components/NutritionScore';
 import { MicronutrientFilter, MicronutrientFilterItem, buildMicronutrientQuery } from '../../components/MicronutrientFilter';
+import { MacronutrientFilter, MacronutrientFilterItem, buildMacronutrientQuery } from '../../components/MacronutrientFilter';
 
 export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
@@ -85,16 +86,19 @@ const Foods = () => {
     const [sortBy, setSortBy] = useState<string>('');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
     const [micronutrientFilters, setMicronutrientFilters] = useState<MicronutrientFilterItem[]>([]);
+    const [macronutrientFilters, setMacronutrientFilters] = useState<MacronutrientFilterItem[]>([]);
 
-    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder, microFilters = micronutrientFilters) => {
+    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder, microFilters = micronutrientFilters, macroFilters = macronutrientFilters) => {
         setLoading(true);
         try {
             const micronutrientQuery = microFilters.length > 0 ? buildMicronutrientQuery(microFilters) : undefined;
+            const macronutrientQuery = macroFilters.length > 0 ? buildMacronutrientQuery(macroFilters) : undefined;
             const params: any = {
                 page: pageNum,
                 search,
                 ...(sortByParam && { sort_by: sortByParam, order: sortOrderParam }),
-                ...(micronutrientQuery && { micronutrient: micronutrientQuery })
+                ...(micronutrientQuery && { micronutrient: micronutrientQuery }),
+                ...(macronutrientQuery && { macronutrient: macronutrientQuery })
             };
             console.log("API request params:", params);
             const response = await apiClient.getFoods(params);
@@ -138,7 +142,7 @@ const Foods = () => {
     // Refetch when shouldFetch flag is set (for pagination and search)
     useEffect(() => {
         if (shouldFetch) {
-            fetchFoods(page, searchTerm);
+            fetchFoods(page, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
             setShouldFetch(false);
         }
     }, [shouldFetch]);
@@ -148,7 +152,7 @@ const Foods = () => {
         // Skip if this is initial render (sortBy will be empty string on mount)
         if (sortBy !== undefined && sortBy !== '') {
             console.log("Sort changed, fetching with:", { sortBy, sortOrder, page, searchTerm });
-            fetchFoods(page, searchTerm);
+            fetchFoods(page, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
         }
     }, [sortBy, sortOrder]);
 
@@ -156,8 +160,15 @@ const Foods = () => {
     useEffect(() => {
         setPage(1);
         setLoading(true);
-        fetchFoods(1, searchTerm);
+        fetchFoods(1, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
     }, [micronutrientFilters]);
+
+    // Refetch when macronutrient filters change
+    useEffect(() => {
+        setPage(1);
+        setLoading(true);
+        fetchFoods(1, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
+    }, [macronutrientFilters]);
 
     const pageSize = foods.length
     const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
@@ -197,10 +208,10 @@ const Foods = () => {
         
         // Fetch with the new sorting parameters directly
         console.log("Immediately fetching with new sort:", { newSortBy, newSortOrder });
-        
+
         // Use empty search to show all foods with the new sort
         setSearchTerm('');
-        fetchFoods(1, '', newSortBy, newSortOrder);
+        fetchFoods(1, '', newSortBy, newSortOrder, micronutrientFilters, macronutrientFilters);
     };
 
     const clearSearch = () => {
@@ -273,6 +284,14 @@ const Foods = () => {
                                 <MicronutrientFilter
                                     filters={micronutrientFilters}
                                     onChange={setMicronutrientFilters}
+                                />
+                            </div>
+
+                            {/* Macronutrient Filters */}
+                            <div className="mt-8">
+                                <MacronutrientFilter
+                                    filters={macronutrientFilters}
+                                    onChange={setMacronutrientFilters}
                                 />
                             </div>
                         </div>

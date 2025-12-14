@@ -235,6 +235,80 @@ class FoodCatalog(ListAPIView):
             # Use distinct() to avoid duplicate results from join
             queryset = queryset.distinct()
 
+        # --- MACRONUTRIENT RANGE FILTERING (NEW) ---
+        #
+        # Query parameter: `macronutrient`
+        #
+        # Syntax (comma-separated list):
+        #
+        #     macronutrient=<name>:<low>-<high>,<name>:<low>-,<name>:-<high>,...
+        #
+        # Rules:
+        #   • <name> is case-insensitive (protein, carbohydrates, fat)
+        #   • <low> and <high> are numeric (float); invalid values are ignored
+        #   • Ranges support:
+        #         low-high   → bounded range
+        #         low-       → lower-bounded (>= low)
+        #         -high      → upper-bounded (<= high)
+        #   • Each item creates an AND constraint:
+        #         protein:10-20,fat:5-15  → must satisfy both
+        #
+        # Examples:
+        #     macronutrient=protein:10-20
+        #     macronutrient=fat:5-
+        #     macronutrient=carbohydrates:-50
+        #     macronutrient=protein:10-20,fat:5-15
+        #
+        # Note: Values are per 100g
+        macronutrient_param = self.request.query_params.get("macronutrient", "")
+        if macronutrient_param.strip():
+            parts = [p.strip() for p in macronutrient_param.split(",") if p.strip()]
+
+            for part in parts:
+                if ":" not in part or "-" not in part:
+                    continue
+
+                name, rng = part.split(":", 1)
+                low_str, high_str = rng.split("-", 1)
+
+                name = name.strip().lower()
+
+                # Map macronutrient names to field names
+                field_map = {
+                    'protein': 'proteinContent',
+                    'carbohydrates': 'carbohydrateContent',
+                    'carbohydrate': 'carbohydrateContent',
+                    'carbs': 'carbohydrateContent',
+                    'fat': 'fatContent',
+                    'fats': 'fatContent',
+                }
+
+                field_name = field_map.get(name)
+                if not field_name:
+                    continue
+
+                # Parse numbers only if they exist
+                low = None
+                high = None
+
+                if low_str.strip():
+                    try:
+                        low = float(low_str)
+                    except ValueError:
+                        continue
+
+                if high_str.strip():
+                    try:
+                        high = float(high_str)
+                    except ValueError:
+                        continue
+
+                # Apply filters (macronutrients are direct fields, so this is simpler)
+                if low is not None:
+                    queryset = queryset.filter(**{f'{field_name}__gte': low})
+                if high is not None:
+                    queryset = queryset.filter(**{f'{field_name}__lte': high})
+
         # --- Sorting support ---
         # Support both separate parameters (sort_by + order) and combined format (sort_by="name-asc")
         sort_by = self.request.query_params.get("sort_by", "").strip()
