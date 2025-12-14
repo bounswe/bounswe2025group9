@@ -41,7 +41,7 @@ const HomeScreen: React.FC = () => {
   const { user } = useAuth();
   
   const [feedPosts, setFeedPosts] = useState<ForumTopic[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
