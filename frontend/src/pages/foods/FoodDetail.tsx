@@ -356,11 +356,11 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
             </div>
           </div>
             
-          {/* Nutrition Information - Per Serving */}
+          {/* Nutrition Information - Per 100g */}
           <div className="mb-6">
             <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
               <Fire size={20} weight="fill" className="text-[var(--color-accent)]" />
-              Nutrition Information (per {food.servingSize}g serving)
+              Nutrition Information (per 100g)
             </h3>
               
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -426,82 +426,12 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
             </div>
           </div>
 
-          {/* Nutrition Information - Per 100g */}
-          <div className="mb-8">
-            <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
-              <Scales size={20} weight="fill" className="text-[var(--color-accent)]" />
-              Nutrition Information (per 100g)
-            </h3>
-              
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('calories')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Fire size={24} weight="fill" className="text-red-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.caloriesPerServing / food.servingSize) * 100).toFixed(1)} kcal</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Calories</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('protein')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-blue-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.proteinContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Protein</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('fat')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-yellow-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.fatContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Fat</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('carbs')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-green-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.carbohydrateContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Carbs</p>
-              </div>
-            </div>
-          </div>
-
           {/* Micronutrients Section */}
           {displayedMicronutrients.length > 0 && (
             <div className="mb-8">
               <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
                 <Pill size={20} weight="fill" className="text-[var(--color-accent)]" />
-                Micronutrients (per {food.servingSize}g serving)
+                Micronutrients (per 100g)
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">

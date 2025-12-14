@@ -52,10 +52,8 @@ export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void })
           />
         </div>
         <div className="mt-2 space-y-1">
-          <p className="nh-text font-medium">Per {item.servingSize}g serving:</p>
+          <p className="nh-text font-medium">Per 100g:</p>
           <p className="nh-text text-sm ml-2">Calories: {item.caloriesPerServing} kcal</p>
-          <p className="nh-text font-medium mt-2">Per 100g:</p>
-          <p className="nh-text text-sm ml-2">Calories: {((item.caloriesPerServing / item.servingSize) * 100).toFixed(1)} kcal</p>
         </div>
         <p className="nh-text mt-2">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
       </div>
