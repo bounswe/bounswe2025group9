@@ -16,6 +16,7 @@ from .serializers import (
     RecipeIngredientSerializer,
 )
 from .pagination import ForumPostPagination
+from .filters import RecipeFilter
 
 
 class IsOwnerOrReadOnly(permissions.BasePermission):
@@ -219,13 +220,37 @@ class RecipeViewSet(viewsets.ModelViewSet):
     serializer_class = RecipeSerializer
     permission_classes = [permissions.IsAuthenticated, IsPostOwnerOrReadOnly]
     filter_backends = [DjangoFilterBackend, OrderingFilter]
-    ordering_fields = ["created_at"]
+    filterset_class = RecipeFilter
+    ordering_fields = ["created_at", "total_cost"]
 
     def get_queryset(self):
         queryset = Recipe.objects.all().order_by("-created_at")
         post_id = self.request.query_params.get("post")
         if post_id is not None:
             queryset = queryset.filter(post_id=post_id)
+        
+        # Handle sorting by calculated properties (nutrition_score, cost_to_nutrition_ratio)
+        ordering = self.request.query_params.get('ordering', '')
+        if 'nutrition_score' in ordering or 'cost_to_nutrition_ratio' in ordering:
+            # Convert queryset to list for Python-based sorting
+            recipes = list(queryset)
+            
+            if ordering == 'nutrition_score':
+                recipes.sort(key=lambda r: r.nutrition_score)
+            elif ordering == '-nutrition_score':
+                recipes.sort(key=lambda r: r.nutrition_score, reverse=True)
+            elif ordering == 'cost_to_nutrition_ratio':
+                recipes.sort(key=lambda r: r.cost_to_nutrition_ratio if r.cost_to_nutrition_ratio is not None else float('inf'))
+            elif ordering == '-cost_to_nutrition_ratio':
+                recipes.sort(key=lambda r: r.cost_to_nutrition_ratio if r.cost_to_nutrition_ratio is not None else float('-inf'), reverse=True)
+            
+            # Return a queryset with the sorted IDs
+            sorted_ids = [r.id for r in recipes]
+            # Preserve the sorted order using Django's preserved ordering
+            from django.db.models import Case, When
+            preserved = Case(*[When(pk=pk, then=pos) for pos, pk in enumerate(sorted_ids)])
+            queryset = queryset.filter(id__in=sorted_ids).order_by(preserved)
+        
         return queryset
 
     def get_serializer_context(self):

@@ -159,6 +159,8 @@ class RecipeSerializer(serializers.ModelSerializer):
     )
     currency = serializers.CharField(read_only=True)
     price_category = serializers.CharField(read_only=True, allow_null=True)
+    nutrition_score = serializers.FloatField(read_only=True)
+    cost_to_nutrition_ratio = serializers.SerializerMethodField()
 
     class Meta:
         model = Recipe
@@ -176,6 +178,8 @@ class RecipeSerializer(serializers.ModelSerializer):
             "total_cost",
             "currency",
             "price_category",
+            "nutrition_score",
+            "cost_to_nutrition_ratio",
             "created_at",
             "updated_at",
         ]
@@ -190,6 +194,8 @@ class RecipeSerializer(serializers.ModelSerializer):
             "total_cost",
             "currency",
             "price_category",
+            "nutrition_score",
+            "cost_to_nutrition_ratio",
             "created_at",
             "updated_at",
         ]
@@ -260,3 +266,10 @@ class RecipeSerializer(serializers.ModelSerializer):
             user = getattr(request, "user", None)
         for food in set(foods):
             recalculate_recipes_for_food(food, changed_by=user)
+
+    def get_cost_to_nutrition_ratio(self, obj):
+        """Return cost-to-nutrition ratio or None if unavailable"""
+        ratio = obj.cost_to_nutrition_ratio
+        if ratio is None:
+            return None
+        return round(ratio, 2)

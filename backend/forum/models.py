@@ -138,3 +138,34 @@ class Recipe(models.Model):
     @property
     def total_calories(self):
         return sum(ingredient.calorie_content for ingredient in self.ingredients.all())
+
+    @property
+    def nutrition_score(self):
+        """
+        Calculate average nutrition score from all ingredients.
+        Returns 0.0 if no ingredients or all scores are unavailable.
+        """
+        ingredients = self.ingredients.select_related('food').all()
+        if not ingredients:
+            return 0.0
+        
+        scores = [ingredient.food.nutritionScore for ingredient in ingredients]
+        valid_scores = [s for s in scores if s is not None]
+        
+        if not valid_scores:
+            return 0.0
+        
+        return sum(valid_scores) / len(valid_scores)
+
+    @property
+    def cost_to_nutrition_ratio(self):
+        """
+        Calculate cost-to-nutrition ratio for cost efficiency.
+        Lower value means better cost efficiency.
+        Returns None if nutrition_score is 0 or total_cost is unavailable.
+        """
+        nutrition = self.nutrition_score
+        if not self.total_cost or nutrition == 0:
+            return None
+        
+        return float(self.total_cost) / nutrition
