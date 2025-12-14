@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useReducer } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarBlank,
@@ -20,6 +20,18 @@ import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
 import { apiClient, Food } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets, FoodLogEntry } from '../types/nutrition';
+import { 
+  WhatIfEntry, 
+  whatIfReducer, 
+  initialWhatIfState, 
+  calculateWhatIfTotals,
+  generateWhatIfId 
+} from '../types/whatif';
+import WhatIfModeToggle from './WhatIfModeToggle';
+import WhatIfExitDialog from './WhatIfExitDialog';
+import WhatIfFoodEntry from './WhatIfFoodEntry';
+import WhatIfProgressBar from './WhatIfProgressBar';
+import WhatIfMicronutrients from './WhatIfMicronutrients';
 
 interface NutritionTrackingProps {
   onDateChange?: (date: Date) => void;
@@ -48,6 +60,11 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
+  
+  // What If Mode state
+  const [whatIfState, dispatchWhatIf] = useReducer(whatIfReducer, initialWhatIfState);
+  const [showWhatIfExitDialog, setShowWhatIfExitDialog] = useState(false);
+  const [isSavingMealPlan, setIsSavingMealPlan] = useState(false);
   const [historyLogs, setHistoryLogs] = useState<DailyNutritionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -338,29 +355,72 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       return;
     }
 
+    // Convert serving size based on unit
+    // Backend expects serving_size as a multiplier
+    // If unit is "g", convert grams to multiplier: grams / food.servingSize
+    // If unit is "serving", use servingSize directly as multiplier
+    let multiplier = numServingSize;
+    if (servingUnit === 'g') {
+      // Convert grams to multiplier (e.g., 200g / 100g = 2.0 servings)
+      multiplier = numServingSize / selectedFood.servingSize;
+    }
+
+    // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
+    multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+    // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
+    if (multiplier > 9999.999999) {
+      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      return;
+    }
+
+    // If in What If mode, add to what-if entries instead of saving to backend
+    if (whatIfState.isActive) {
+      const calculateNutrition = (valuePerServing: number) => {
+        if (servingUnit === 'serving') {
+          return valuePerServing * numServingSize;
+        } else {
+          return (valuePerServing / selectedFood.servingSize) * numServingSize;
+        }
+      };
+
+      // Calculate micronutrients for the what-if entry
+      const entryMicronutrients: { [key: string]: number } = {};
+      if (selectedFood.micronutrients) {
+        Object.entries(selectedFood.micronutrients).forEach(([name, data]) => {
+          // data has { value, unit } - we need to scale by serving size
+          entryMicronutrients[name] = calculateNutrition(data.value);
+        });
+      }
+
+      const whatIfEntry: WhatIfEntry = {
+        id: generateWhatIfId(),
+        food_id: selectedFood.id,
+        food_name: selectedFood.name,
+        food_serving_size: selectedFood.servingSize,
+        image_url: selectedFood.imageUrl || '',
+        serving_size: multiplier,
+        serving_unit: servingUnit,
+        meal_type: selectedMeal,
+        calories: calculateNutrition(selectedFood.caloriesPerServing),
+        protein: calculateNutrition(selectedFood.proteinContent),
+        carbohydrates: calculateNutrition(selectedFood.carbohydrateContent),
+        fat: calculateNutrition(selectedFood.fatContent),
+        micronutrients: entryMicronutrients,
+        isPlanned: true,
+        plannedAt: new Date().toISOString(),
+      };
+
+      dispatchWhatIf({ type: 'ADD_ENTRY', entry: whatIfEntry });
+      setShowServingDialog(false);
+      setSelectedFood(null);
+      return;
+    }
+
+    // Normal mode - save to backend
     try {
       setLoading(true);
       const dateStr = formatDateString(selectedDate);
-
-      // Convert serving size based on unit
-      // Backend expects serving_size as a multiplier
-      // If unit is "g", convert grams to multiplier: grams / food.servingSize
-      // If unit is "serving", use servingSize directly as multiplier
-      let multiplier = numServingSize;
-      if (servingUnit === 'g') {
-        // Convert grams to multiplier (e.g., 200g / 100g = 2.0 servings)
-        multiplier = numServingSize / selectedFood.servingSize;
-      }
-
-      // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
-      multiplier = Math.round(multiplier * 1000000) / 1000000;
-
-      // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
-      if (multiplier > 9999.999999) {
-        alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
-        setLoading(false);
-        return;
-      }
 
       await apiClient.addFoodEntry({
         food_id: selectedFood.id,
@@ -537,6 +597,115 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       setLoading(false);
     }
   };
+
+  // What If Mode handlers
+  const handleToggleWhatIfMode = () => {
+    if (whatIfState.isActive) {
+      // If there are planned entries, show exit dialog
+      if (whatIfState.entries.length > 0) {
+        setShowWhatIfExitDialog(true);
+      } else {
+        // No entries, just deactivate
+        dispatchWhatIf({ type: 'DEACTIVATE' });
+      }
+    } else {
+      // Activate What If mode with current nutrition as baseline
+      dispatchWhatIf({
+        type: 'ACTIVATE',
+        baseline: {
+          calories: todayLog?.total_calories || 0,
+          protein: todayLog?.total_protein || 0,
+          carbs: todayLog?.total_carbohydrates || 0,
+          fat: todayLog?.total_fat || 0,
+        },
+      });
+    }
+  };
+
+  const handleWhatIfIgnore = () => {
+    dispatchWhatIf({ type: 'DEACTIVATE' });
+    setShowWhatIfExitDialog(false);
+  };
+
+  const handleWhatIfSaveAsMealPlan = async () => {
+    if (whatIfState.entries.length === 0) return;
+
+    setIsSavingMealPlan(true);
+    try {
+      // Create meal plan from what-if entries
+      const meals = whatIfState.entries
+        .filter(e => e.isPlanned)
+        .map(entry => ({
+          food_id: entry.food_id,
+          serving_size: entry.serving_size,
+          meal_type: entry.meal_type,
+        }));
+
+      if (meals.length === 0) {
+        alert('No planned items to save');
+        return;
+      }
+
+      const mealPlanData = {
+        name: `What If Plan - ${new Date().toLocaleDateString()}`,
+        meals,
+      };
+
+      await apiClient.createMealPlan(mealPlanData);
+      
+      // Deactivate What If mode but keep entries visible as "planned"
+      // The entries will be shown as faded in the UI
+      dispatchWhatIf({ type: 'DEACTIVATE' });
+      setShowWhatIfExitDialog(false);
+      
+      alert('Meal plan saved successfully!');
+    } catch (err: any) {
+      console.error('Error saving meal plan:', err);
+      alert(err?.data?.detail || 'Failed to save meal plan');
+    } finally {
+      setIsSavingMealPlan(false);
+    }
+  };
+
+  const handleWhatIfConfirmEntry = async (id: string) => {
+    const entry = whatIfState.entries.find(e => e.id === id);
+    if (!entry) return;
+
+    try {
+      setLoading(true);
+      const dateStr = formatDateString(selectedDate);
+
+      // Add the entry to actual nutrition log
+      await apiClient.addFoodEntry({
+        food_id: entry.food_id,
+        serving_size: entry.serving_size,
+        serving_unit: entry.serving_unit,
+        meal_type: entry.meal_type,
+        date: dateStr,
+      });
+
+      // Remove from what-if entries
+      dispatchWhatIf({ type: 'REMOVE_ENTRY', id });
+
+      // Refresh data
+      await fetchData();
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (err: any) {
+      console.error('Error confirming entry:', err);
+      alert(err?.data?.detail || 'Failed to confirm entry');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleWhatIfDeleteEntry = (id: string) => {
+    dispatchWhatIf({ type: 'REMOVE_ENTRY', id });
+  };
+
+  // Calculate what-if totals for progress bars
+  const whatIfTotals = calculateWhatIfTotals(whatIfState.entries);
 
   const getMealIcon = (mealType: string) => {
     switch (mealType) {
@@ -948,11 +1117,18 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             </div>
           </div>
 
-          {/* View Mode Toggle */}
+          {/* View Mode Toggle and What If Mode */}
           <div className="flex items-center gap-2">
+            <WhatIfModeToggle
+              isActive={whatIfState.isActive}
+              onToggle={handleToggleWhatIfMode}
+              disabled={viewMode === 'weekly'}
+            />
+            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
             <button
               onClick={() => setViewMode('daily')}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
+              disabled={whatIfState.isActive}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: viewMode === 'daily' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
                 color: viewMode === 'daily' ? 'white' : 'var(--color-light)'
@@ -962,7 +1138,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             </button>
             <button
               onClick={() => setViewMode('weekly')}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
+              disabled={whatIfState.isActive}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               style={{
                 backgroundColor: viewMode === 'weekly' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
                 color: viewMode === 'weekly' ? 'white' : 'var(--color-light)'
@@ -1106,6 +1283,100 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           </button>
         </div>
       </div>
+
+      {/* What If Mode Progress Bars */}
+      {whatIfState.isActive && targets && (
+        <div className="nh-card border-2 border-dashed" style={{ borderColor: 'var(--whatif-border)' }}>
+          <div className="flex items-center gap-2 mb-4">
+            <span 
+              className="px-3 py-1 rounded-full text-sm font-medium"
+              style={{ 
+                backgroundColor: 'var(--whatif-active-bg)',
+                color: 'var(--whatif-active-text)'
+              }}
+            >
+              What If Mode
+            </span>
+            <span className="text-sm nh-text opacity-70">
+              See how planned foods affect your daily totals
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <WhatIfProgressBar
+              label="Calories"
+              current={todayLog?.total_calories || 0}
+              planned={whatIfTotals.calories}
+              target={targets.calories}
+              unit=" kcal"
+              color="#f97316"
+            />
+            <WhatIfProgressBar
+              label="Protein"
+              current={todayLog?.total_protein || 0}
+              planned={whatIfTotals.protein}
+              target={targets.protein}
+              unit="g"
+              color="#3b82f6"
+            />
+            <WhatIfProgressBar
+              label="Carbs"
+              current={todayLog?.total_carbohydrates || 0}
+              planned={whatIfTotals.carbs}
+              target={targets.carbohydrates}
+              unit="g"
+              color="#22c55e"
+            />
+            <WhatIfProgressBar
+              label="Fat"
+              current={todayLog?.total_fat || 0}
+              planned={whatIfTotals.fat}
+              target={targets.fat}
+              unit="g"
+              color="#eab308"
+            />
+          </div>
+          
+          {/* Micronutrients Section */}
+          <WhatIfMicronutrients
+            currentMicronutrients={todayLog?.micronutrients_summary || {}}
+            plannedMicronutrients={whatIfTotals.micronutrients}
+            targets={targets}
+          />
+        </div>
+      )}
+
+      {/* What If Planned Entries */}
+      {whatIfState.isActive && whatIfState.entries.length > 0 && (
+        <div className="nh-card border-2 border-dashed" style={{ borderColor: 'var(--whatif-border)' }}>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="nh-subtitle" style={{ color: 'var(--whatif-text)' }}>
+              Planned Items ({whatIfState.entries.length})
+            </h3>
+            <button
+              onClick={() => dispatchWhatIf({ type: 'CLEAR_ENTRIES' })}
+              className="text-sm px-3 py-1 rounded-lg transition-colors"
+              style={{ 
+                backgroundColor: 'var(--color-bg-tertiary)',
+                color: 'var(--color-error)'
+              }}
+            >
+              Clear All
+            </button>
+          </div>
+          
+          <div className="space-y-2">
+            {whatIfState.entries.map(entry => (
+              <WhatIfFoodEntry
+                key={entry.id}
+                entry={entry}
+                onConfirm={handleWhatIfConfirmEntry}
+                onDelete={handleWhatIfDeleteEntry}
+              />
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Meals Section (Daily View) */}
       {viewMode === 'daily' && (
@@ -1847,6 +2118,16 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           </Dialog.Panel>
         </div>
       </Dialog>
+
+      {/* What If Exit Dialog */}
+      <WhatIfExitDialog
+        open={showWhatIfExitDialog}
+        onClose={() => setShowWhatIfExitDialog(false)}
+        entries={whatIfState.entries}
+        onIgnore={handleWhatIfIgnore}
+        onSaveAsMealPlan={handleWhatIfSaveAsMealPlan}
+        isSaving={isSavingMealPlan}
+      />
     </div>
   );
 };
