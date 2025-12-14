@@ -714,6 +714,7 @@ const CreatePost = () => {
                                                             className="nh-button-square nh-button-primary"
                                                             onClick={addIngredient}
                                                             disabled={!selectedFoodId}
+                                                            aria-label="Add ingredient"
                                                         >
                                                             <Plus size={20} weight="bold" className="mr-1" />
 
