@@ -101,7 +101,7 @@ class FoodProposal(models.Model):
         null=True, blank=True, default=None
     )  # null=pending, True=approved, False=rejected
     createdAt = models.DateTimeField(default=django.utils.timezone.now)
-    proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    proposedBy = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
 
 
 class PriceCategoryThreshold(models.Model):
