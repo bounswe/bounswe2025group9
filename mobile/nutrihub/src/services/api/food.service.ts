@@ -209,6 +209,22 @@ export const getFoodCatalog = async (
     const response = await apiClient.get<ApiPaginatedResponse<ApiFoodItem>>(fullUrl);
 
     if (response.error) {
+      // Special handling for pagination 404 errors
+      // When requesting pages beyond available results, backend returns 404 "Invalid page"
+      // This should be treated as "no more results" rather than a fatal error
+      if (response.status === 404 && 
+          (response.error.toLowerCase().includes('invalid page') || 
+           response.error.toLowerCase().includes('page'))) {
+        console.log('No more pages available (404), treating as end of results');
+        return {
+          data: [],
+          status: 200, // Return success status
+          hasMore: false,
+          total: 0
+        };
+      }
+      
+      // For other errors, return the error as before
       console.error('API error:', response.error);
       return {
         error: response.error,

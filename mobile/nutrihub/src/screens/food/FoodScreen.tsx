@@ -254,6 +254,8 @@ const FoodScreen: React.FC = () => {
       if (response.error) {
         console.error('API Error:', response.error);
         setError(response.error);
+        // Stop processing - don't continue with invalid data
+        setPagination(prev => ({ ...prev, loading: false }));
         return;
       }
 
