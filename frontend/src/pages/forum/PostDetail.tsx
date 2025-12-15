@@ -3,6 +3,7 @@ import { useParams, Link, useNavigate } from 'react-router-dom'
 import { User, ThumbsUp, ArrowLeft, Tag, ChatDots, CaretLeft, CaretRight, CookingPot, Scales, Fire } from '@phosphor-icons/react'
 import { apiClient, Recipe } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import ProfileImage from '../../components/ProfileImage'
 // import cross-tab notification system
 import { notifyLikeChange } from '../../lib/likeNotifications';
@@ -70,11 +71,32 @@ const getTagStyle = (tagName: string) => {
     }
 };
 
+// Get translated tag name
+const getTranslatedTagName = (tagName: string, t: (key: string) => string): string => {
+    switch (tagName) {
+        case "Dietary tip":
+            return t('forum.dietaryTips');
+        case "Recipe":
+            return t('forum.recipes');
+        case "Meal plan":
+            return t('forum.mealPlans');
+        case "Vegan":
+            return t('forum.vegan');
+        case "Halal":
+            return t('forum.halal');
+        case "High-Protein":
+            return t('forum.highProtein');
+        default:
+            return tagName;
+    }
+};
+
 const PostDetail = () => {
     const { postId } = useParams<{ postId: string }>()
     const postIdNum = parseInt(postId || '0')
     const navigate = useNavigate()
     const { user } = useAuth();
+    const { t, currentLanguage } = useLanguage();
     const username = user?.username || 'anonymous';
     
     // Post state - use ForumPost type
@@ -406,14 +428,14 @@ const PostDetail = () => {
             }
         } catch (error) {
             console.error('Error creating comment:', error);
-            alert('Failed to post comment. Please try again.');
+            alert(t('forum.failedToPostComment'));
         }
     };
     
-    // Format date for display
+    // Format date for display using current language
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString(currentLanguage, {
             year: 'numeric',
             month: 'short',
             day: 'numeric',
@@ -437,7 +459,7 @@ const PostDetail = () => {
                     <div className="flex items-center justify-center mr-3">
                         <CookingPot size={24} weight="fill" className="text-primary" />
                     </div>
-                    <h2 className="nh-subtitle">Recipe Details</h2>
+                    <h2 className="nh-subtitle">{t('forum.recipeDetails')}</h2>
                 </div>
                 
                 {/* Nutritional Information */}
@@ -446,35 +468,35 @@ const PostDetail = () => {
                         <div className="flex justify-center mb-1">
                             <Fire size={20} weight="fill" className="text-red-500" />
                         </div>
-                        <div className="text-lg font-bold">{Math.round(recipe.total_calories)} kcal</div>
-                        <div className="text-xs text-gray-500">Calories</div>
+                        <div className="text-lg font-bold">{Math.round(recipe.total_calories)} {t('food.kcal')}</div>
+                        <div className="text-xs text-gray-500">{t('food.calories')}</div>
                     </div>
                     <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
                         <div className="flex justify-center mb-1">
                             <Scales size={20} weight="fill" className="text-blue-500" />
                         </div>
                         <div className="text-lg font-bold">{Math.round(recipe.total_protein)}g</div>
-                        <div className="text-xs text-gray-500">Protein</div>
+                        <div className="text-xs text-gray-500">{t('food.protein')}</div>
                     </div>
                     <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
                         <div className="flex justify-center mb-1">
                             <Scales size={20} weight="fill" className="text-yellow-500" />
                         </div>
                         <div className="text-lg font-bold">{Math.round(recipe.total_fat)}g</div>
-                        <div className="text-xs text-gray-500">Fat</div>
+                        <div className="text-xs text-gray-500">{t('food.fat')}</div>
                     </div>
                     <div className="p-3 rounded-lg text-center bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
                         <div className="flex justify-center mb-1">
                             <Scales size={20} weight="fill" className="text-green-500" />
                         </div>
                         <div className="text-lg font-bold">{Math.round(recipe.total_carbohydrates)}g</div>
-                        <div className="text-xs text-gray-500">Carbs</div>
+                        <div className="text-xs text-gray-500">{t('food.carbs')}</div>
                     </div>
                 </div>
                 
                 {/* Ingredients */}
                 <div className="mb-6">
-                    <h3 className="font-semibold text-lg mb-2">Ingredients</h3>
+                    <h3 className="font-semibold text-lg mb-2">{t('forum.ingredients')}</h3>
                     <ul className="list-disc list-inside space-y-1 ml-2">
                         {recipe.ingredients.map((ingredient, index) => (
                             <li key={index} className="nh-ingredient-main-text">
@@ -489,7 +511,7 @@ const PostDetail = () => {
                 
                 {/* Cooking Instructions */}
                 <div>
-                    <h3 className="font-semibold text-lg mb-2">Instructions</h3>
+                    <h3 className="font-semibold text-lg mb-2">{t('forum.instructions')}</h3>
                     <div className="whitespace-pre-line p-4 rounded-lg bg-[var(--color-bg-tertiary)] text-[var(--color-text-primary)] border border-[var(--forum-search-border)]">
                         {recipe.instructions}
                     </div>
@@ -637,11 +659,11 @@ const PostDetail = () => {
                     <div className="mb-6">
                         <Link to="/forum" className="nh-button nh-button-outline flex items-center gap-2 mb-6 py-3 rounded-lg shadow-sm hover:shadow transition-all px-4">
                             <ArrowLeft size={20} weight="bold" />
-                            Back to Forum
+                            {t('forum.backToForum')}
                         </Link>
                     </div>
                     <div className="text-center my-12">
-                        <p className="text-lg">Post not found.</p>
+                        <p className="text-lg">{t('forum.postNotFound')}</p>
                     </div>
                 </div>
             </div>
@@ -685,7 +707,7 @@ const PostDetail = () => {
                                                 style={{ backgroundColor: tagStyle.bg, color: tagStyle.text }}
                                             >
                                                 <Tag size={14} weight="fill" className="mr-1.5" />
-                                                {tag.name}
+                                                {getTranslatedTagName(tag.name, t)}
                                             </div>
                                         );
                                     })}
@@ -782,7 +804,7 @@ const PostDetail = () => {
                                     </div>
                                 ) : (
                                     <div className="mb-8 text-center py-4 px-4">
-                                        <p>Recipe information could not be loaded.</p>
+                                        <p>{t('forum.recipeInfoNotLoaded')}</p>
                                     </div>
                                 )
                             )}
@@ -800,7 +822,7 @@ const PostDetail = () => {
                                     />
                                     <div className="flex items-center gap-1">
                                         <User size={16} className="flex-shrink-0" />
-                                        Posted by: {post.author.username} • {formatDate(post.created_at)}
+                                        {t('forum.postedByColon')} {post.author.username} • {formatDate(post.created_at)}
                                     </div>
                                 </Link>
                                 <button 
@@ -810,16 +832,16 @@ const PostDetail = () => {
                                     <div className="flex items-center justify-center">
                                         <ThumbsUp size={16} weight={post.liked ? "fill" : "regular"} className="flex-shrink-0" />
                                     </div>
-                                    Likes: {post.likes}
+                                    {t('forum.likes')}: {post.likes}
                                 </button>
                             </div>
                         </div>
                         
                         {/* Comments Section */}
-                        <div className="mb-6">
+                        <div className="mb-6" id="comments-section">
                             <h2 className="nh-subtitle mb-4 flex items-center gap-2">
                                 <ChatDots size={20} weight="fill" className="text-primary" />
-                                Comments ({comments.length})
+                                {t('forum.comments')} ({comments.length})
                             </h2>
                             
                             {loadingComments ? (
@@ -859,7 +881,7 @@ const PostDetail = () => {
                                 </div>
                             ) : comments.length === 0 ? (
                                 <div className="text-center py-4">
-                                    <p>No comments yet. Be the first to comment!</p>
+                                    <p>{t('forum.noComments')}. {t('forum.beFirstComment')}</p>
                                 </div>
                             ) : (
                                 <div className="space-y-4 mb-8">
@@ -1005,7 +1027,7 @@ const PostDetail = () => {
                             
                             {/* Add Comment Form - Moved below comments */}
                             <div className="nh-card rounded-lg shadow-md border border-gray-700">
-                                <h3 className="nh-subtitle mb-4">Add a Comment</h3>
+                                <h3 className="nh-subtitle mb-4">{t('forum.comment')}</h3>
                                 <form onSubmit={handleCommentSubmit}>
                                     <div className="flex items-start gap-3 mb-4">
                                         <div className="flex-shrink-0">
@@ -1016,11 +1038,11 @@ const PostDetail = () => {
                                             />
                                         </div>
                                         <div className="flex-grow">
-                                            <p className="font-semibold text-primary mb-2">{username || 'You'}</p>
+                                            <p className="font-semibold text-primary mb-2">{username || t('common.you')}</p>
                                             <textarea 
                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)] transition-all"
                                                 rows={3}
-                                                placeholder="Share your thoughts..."
+                                                placeholder={t('forum.writeComment')}
                                                 value={commentText}
                                                 onChange={(e) => setCommentText(e.target.value)}
                                                 required
@@ -1032,7 +1054,7 @@ const PostDetail = () => {
                                             type="submit" 
                                             className="nh-button nh-button-primary light:hover:bg-blue-400 flex items-center gap-2 px-4 py-2 rounded-lg shadow-sm hover:shadow-md transition-all"
                                         >
-                                            Post Comment
+                                            {t('forum.postComment')}
                                         </button>
                                     </div>
                                 </form>

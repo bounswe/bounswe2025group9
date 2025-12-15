@@ -1,28 +1,30 @@
 import { Link } from 'react-router-dom'
 import { Calculator, CookingPot, HeartHalf } from '@phosphor-icons/react'
+import { useLanguage } from '../context/LanguageContext'
 
 // home page component
 const Home = () => {
+    const { t } = useLanguage()
+    
     return (
         <div className="w-full py-16">
             <div className="nh-container">
                 <div className="text-center mb-16">
-                    <h1 className="nh-title-lg">Welcome to NutriHub</h1>
+                    <h1 className="nh-title-lg">{t('home.welcomeToNutriHub')}</h1>
                     <p className="nh-text text-xl max-w-3xl mx-auto">
-                        Your complete nutrition platform for discovering healthy foods,
-                        sharing recipes, and joining a community of health enthusiasts.
+                        {t('home.welcomeDescription')}
                     </p>
                 </div>
 
                 <div className="flex flex-col md:flex-row justify-center gap-8 mt-12">
                     <Link to="/foods" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
-                        Explore Foods
+                        {t('home.exploreFoods')}
                     </Link>
                     <Link to="/forum" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
-                        Join Forum
+                        {t('home.joinForum')}
                     </Link>
                     <Link to="/mealplanner" className="nh-button nh-button-lg nh-button-primary flex items-center justify-center">
-                        Create a Meal Plan
+                        {t('home.createMealPlan')}
                     </Link>
                 </div>
 
@@ -32,10 +34,10 @@ const Home = () => {
                             <div className="flex items-center justify-center mr-3">
                                 <Calculator size={24} weight="fill" className="text-primary" />
                             </div>
-                            <h3 className="nh-subtitle">Track Nutrition</h3>
+                            <h3 className="nh-subtitle">{t('home.trackNutrition')}</h3>
                         </div>
                         <p className="nh-text">
-                            Access detailed nutritional information for thousands of foods.
+                            {t('home.trackNutritionDesc')}
                         </p>
                     </div>
                     <div className="nh-card">
@@ -43,10 +45,10 @@ const Home = () => {
                             <div className="flex items-center justify-center mr-3">
                                 <CookingPot size={24} weight="fill" className="text-primary" />
                             </div>
-                            <h3 className="nh-subtitle">Share Recipes</h3>
+                            <h3 className="nh-subtitle">{t('home.shareRecipes')}</h3>
                         </div>
                         <p className="nh-text">
-                            Discover and share healthy recipes with the community.
+                            {t('home.shareRecipesDesc')}
                         </p>
                     </div>
                     <div className="nh-card">
@@ -54,10 +56,10 @@ const Home = () => {
                             <div className="flex items-center justify-center mr-3">
                                 <HeartHalf size={24} weight="fill" className="text-primary" />
                             </div>
-                            <h3 className="nh-subtitle">Get Support</h3>
+                            <h3 className="nh-subtitle">{t('home.getSupport')}</h3>
                         </div>
                         <p className="nh-text">
-                            Connect with others on your journey to better nutrition.
+                            {t('home.getSupportDesc')}
                         </p>
                     </div>
                 </div>

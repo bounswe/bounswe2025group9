@@ -219,7 +219,7 @@ const Profile = () => {
       }
     } catch (error) {
       console.error('Error loading user data:', error)
-      showError('Failed to load profile data')
+      showError(t('profile.failedToLoadProfileData'))
     } finally {
       setIsLoading(false)
     }
@@ -446,7 +446,7 @@ const Profile = () => {
 
   // Handle delete meal plan
   const handleDeleteMealPlan = async (planId: number, planName: string) => {
-    if (window.confirm(`Are you sure you want to delete "${planName}"?`)) {
+    if (window.confirm(t('profile.areYouSureDeleteMealPlan', { name: planName }))) {
       try {
         await apiClient.deleteMealPlan(planId)
         // Remove from expanded set if it was expanded
@@ -456,7 +456,7 @@ const Profile = () => {
         await loadAllMealPlans() // Reload meal plans
       } catch (error) {
         console.error('Error deleting meal plan:', error)
-        alert('Failed to delete meal plan. Please try again.')
+        alert(t('profile.failedToDeleteMealPlan'))
       }
     }
   }
@@ -473,7 +473,7 @@ const Profile = () => {
       await loadAllMealPlans() // Reload to get updated list
     } catch (error) {
       console.error('Error updating meal plan:', error)
-      alert('Failed to update meal plan name. Please try again.')
+        alert(t('profile.failedToUpdateMealPlanName'))
     }
   }
 
@@ -483,10 +483,10 @@ const Profile = () => {
     setIsLoggingMealPlan(true)
     try {
       await apiClient.logMealPlanToNutrition(planId)
-      alert('Meal plan successfully logged to Nutrition Tracking!')
+      alert(t('profile.mealPlanLoggedSuccess'))
     } catch (error) {
       console.error('Error logging meal plan:', error)
-      alert('Failed to log meal plan to Nutrition Tracking. Please try again.')
+      alert(t('profile.failedToLogMealPlan'))
     } finally {
       setIsLoggingMealPlan(false)
       setLoggingMealPlanId(null)
@@ -665,13 +665,13 @@ const Profile = () => {
 
     const exists = selectedAllergens.find(a => a.name.toLowerCase() === customAllergen.toLowerCase())
     if (exists) {
-      showError('This allergen is already added')
+      showError(t('profile.allergenAlreadyAdded'))
       return
     }
 
     setSelectedAllergens(prev => [...prev, { name: customAllergen, isCustom: true }])
     setCustomAllergen('')
-    showSuccess('Custom allergen added')
+    showSuccess(t('profile.customAllergenAdded'))
   }
 
   const removeAllergen = (allergenName: string) => {
@@ -694,10 +694,10 @@ const Profile = () => {
 
       await apiClient.updateAllergens(allergensPayload)
       await fetchUserProfile()
-      showSuccess('Allergens saved successfully')
+      showSuccess(t('profile.allergensSavedSuccess'))
     } catch (error) {
       console.error('Error saving allergens:', error)
-      showError('Failed to save allergens')
+      showError(t('profile.failedToSaveAllergens'))
     } finally {
       setIsLoading(false)
     }
@@ -709,7 +709,7 @@ const Profile = () => {
 
     const exists = professionTags.find(t => t.name === selectedProfession)
     if (exists) {
-      showError('This profession tag is already added')
+      showError(t('profile.professionTagAlreadyAdded'))
       return
     }
 
@@ -718,12 +718,12 @@ const Profile = () => {
       verified: false
     }])
     setSelectedProfession('')
-    showSuccess('Profession tag added (Unverified)')
+    showSuccess(t('profile.professionTagAddedUnverified'))
   }
 
   const uploadCertificate = async (tagId: number) => {
     if (!certificateFile) {
-      showError('Please select a certificate file')
+      showError(t('profile.pleaseSelectCertificateFile'))
       return
     }
 
@@ -736,10 +736,10 @@ const Profile = () => {
       await apiClient.uploadCertificate(formData)
       await fetchUserProfile()
       setCertificateFile(null)
-      showSuccess('Certificate uploaded successfully')
+      showSuccess(t('profile.certificateUploadedSuccess'))
     } catch (error) {
       console.error('Error uploading certificate:', error)
-      showError('Failed to upload certificate')
+      showError(t('profile.failedToUploadCertificate'))
     } finally {
       setIsLoading(false)
     }
@@ -754,10 +754,10 @@ const Profile = () => {
     try {
       await apiClient.updateProfessionTags(professionTags)
       await fetchUserProfile()
-      showSuccess('Profession tags saved successfully')
+      showSuccess(t('profile.professionTagsSavedSuccess'))
     } catch (error) {
       console.error('Error saving profession tags:', error)
-      showError('Failed to save profession tags')
+      showError(t('profile.failedToSaveProfessionTags'))
     } finally {
       setIsLoading(false)
     }
@@ -815,12 +815,12 @@ const Profile = () => {
     if (!file) return
 
     if (!['image/jpeg', 'image/png', 'image/jpg'].includes(file.type)) {
-      showError('Only JPEG and PNG images are supported')
+      showError(t('profile.onlyJpegPngSupported'))
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-      showError('File size must be less than 5MB')
+      showError(t('profile.fileSizeMustBeLessThan5MB'))
       return
     }
 
@@ -838,7 +838,7 @@ const Profile = () => {
       reader.readAsDataURL(croppedFile)
     } catch (error) {
       console.error('Error cropping image:', error)
-      showError('Failed to process image')
+      showError(t('profile.failedToProcessImage'))
     }
   }
 
@@ -851,10 +851,10 @@ const Profile = () => {
       await apiClient.uploadProfilePicture(formData)
       await fetchUserProfile()
       setProfilePictureFile(null)
-      showSuccess('Profile picture updated successfully')
+      showSuccess(t('profile.profilePictureUpdatedSuccess'))
     } catch (error) {
       console.error('Error uploading profile picture:', error)
-      showError('Failed to upload profile picture')
+      showError(t('profile.failedToUploadProfilePicture'))
     } finally {
       setIsLoading(false)
     }
@@ -868,10 +868,10 @@ const Profile = () => {
       await fetchUserProfile()
       setProfilePicture(null)
       setProfilePictureFile(null)
-      showSuccess('Profile picture removed')
+      showSuccess(t('profile.profilePictureRemoved'))
     } catch (error) {
       console.error('Error removing profile picture:', error)
-      showError('Failed to remove profile picture')
+      showError(t('profile.failedToRemoveProfilePicture'))
     } finally {
       setIsLoading(false)
     }
@@ -880,7 +880,7 @@ const Profile = () => {
   // Report user
   const submitReport = async () => {
     if (!reportUserId || !reportReason || !reportDescription) {
-      showError('Please fill in all report fields')
+      showError(t('profile.pleaseFillAllReportFields'))
       return
     }
 
@@ -894,10 +894,10 @@ const Profile = () => {
       setReportUserId('')
       setReportReason('')
       setReportDescription('')
-      showSuccess('Report submitted successfully')
+      showSuccess(t('profile.reportSubmittedSuccess'))
     } catch (error) {
       console.error('Error submitting report:', error)
-      showError('Failed to submit report')
+      showError(t('profile.failedToSubmitReport'))
     } finally {
       setIsLoading(false)
     }
@@ -1008,7 +1008,7 @@ const Profile = () => {
           <div className="w-full md:w-1/5">
             <div className="sticky top-20">
               <h3 className="nh-subtitle mb-4">
-                Profile Sections
+                {t('profile.profileSections')}
               </h3>
               <div className="flex flex-col gap-3">
                 <button
@@ -1024,7 +1024,7 @@ const Profile = () => {
                   }}
                 >
                   <User size={18} weight="fill" />
-                  <span className="grow text-center">Overview</span>
+                  <span className="grow text-center">{t('profile.overview')}</span>
                 </button>
 
                 {/* Meal Planner Tab */}
@@ -1041,7 +1041,7 @@ const Profile = () => {
                   }}
                 >
                   <CalendarBlank size={18} weight="fill" />
-                  <span className="grow text-center">Meal Planner</span>
+                  <span className="grow text-center">{t('profile.mealPlanner')}</span>
                 </button>
 
                 <button
@@ -1057,7 +1057,7 @@ const Profile = () => {
                   }}
                 >
                   <Warning size={18} weight="fill" />
-                  <span className="grow text-center">Allergens</span>
+                  <span className="grow text-center">{t('profile.allergens')}</span>
                 </button>
 
                 <button
@@ -1073,7 +1073,7 @@ const Profile = () => {
                   }}
                 >
                   <Heart size={18} weight="fill" />
-                  <span className="grow text-center">Liked Posts</span>
+                  <span className="grow text-center">{t('profile.likedPosts')}</span>
                 </button>
 
                 <button
@@ -1089,7 +1089,7 @@ const Profile = () => {
                   }}
                 >
                   <BookOpen size={18} weight="fill" />
-                  <span className="grow text-center">Liked Recipes</span>
+                  <span className="grow text-center">{t('profile.likedRecipes')}</span>
                 </button>
 
                 <button
@@ -1105,7 +1105,7 @@ const Profile = () => {
                   }}
                 >
                   <Certificate size={18} weight="fill" />
-                  <span className="grow text-center">Profession Tags</span>
+                  <span className="grow text-center">{t('profile.professionTags')}</span>
                 </button>
 
                 <button
@@ -1117,7 +1117,7 @@ const Profile = () => {
                   }}
                 >
                   <Warning size={18} weight="fill" />
-                  <span className="grow text-center">Report User</span>
+                  <span className="grow text-center">{t('profile.reportUser')}</span>
                 </button>
 
                 {/* New button for Saved Meal Plans */}
@@ -1134,7 +1134,7 @@ const Profile = () => {
                   }}
                 >
                   <BookmarkSimple size={18} weight="fill" />
-                  <span className="grow text-center">Saved Meal Plans</span>
+                  <span className="grow text-center">{t('profile.savedMealPlans')}</span>
                 </button>
 
                 <button
@@ -1150,7 +1150,7 @@ const Profile = () => {
                   }}
                 >
                   <ForkKnife size={18} weight="fill" />
-                  <span className="grow text-center">Food Proposals</span>
+                  <span className="grow text-center">{t('profile.foodProposals')}</span>
                 </button>
 
                 <button
@@ -1166,7 +1166,7 @@ const Profile = () => {
                   }}
                 >
                   <Lock size={18} weight="fill" />
-                  <span className="grow text-center">Private Foods</span>
+                  <span className="grow text-center">{t('profile.privateFoods')}</span>
                 </button>
 
               </div>
@@ -1178,14 +1178,14 @@ const Profile = () => {
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Profile Overview</h2>
+                <h2 className="nh-subtitle">{t('profile.profileOverview')}</h2>
 
                 {/* Combined Profile Card */}
                 <div className="nh-card">
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     {/* Left: Profile Picture */}
                     <div className="flex flex-col items-center lg:items-start">
-                      <h3 className="nh-subtitle mb-4 text-center lg:text-left w-full">Profile Picture</h3>
+                      <h3 className="nh-subtitle mb-4 text-center lg:text-left w-full">{t('profile.profilePicture')}</h3>
                       <div className="flex flex-col items-center gap-4">
                         <div className="relative">
                           <input
@@ -1227,7 +1227,7 @@ const Profile = () => {
                                 onClick={removeProfilePicture}
                                 className="w-8 h-8 rounded-full bg-red-500 flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
                                 disabled={isLoading}
-                                title="Delete picture"
+                                title={t('profile.deletePicture')}
                               >
                                 <Trash size={16} weight="fill" className="text-white" />
                               </button>
@@ -1238,7 +1238,7 @@ const Profile = () => {
                         {/* Auto-upload when file is selected */}
                         {profilePictureFile && (
                           <div className="text-xs nh-text text-center">
-                            {isLoading ? 'Uploading...' : 'Picture will be uploaded automatically'}
+                            {isLoading ? t('profile.uploading') : t('profile.pictureWillBeUploaded')}
                           </div>
                         )}
                         
@@ -1248,11 +1248,11 @@ const Profile = () => {
                         }}>
                           <div>
                             <div className="text-xl font-bold text-primary">{followersCount}</div>
-                            <div className="nh-text text-xs">Followers</div>
+                            <div className="nh-text text-xs">{t('profile.followers')}</div>
                           </div>
                           <div>
                             <div className="text-xl font-bold text-primary">{followingCount}</div>
-                            <div className="nh-text text-xs">Following</div>
+                            <div className="nh-text text-xs">{t('profile.following')}</div>
                           </div>
                         </div>
                       </div>
@@ -1260,23 +1260,23 @@ const Profile = () => {
 
                     {/* Middle: Account Information */}
                     <div className="lg:col-span-2">
-                      <h3 className="nh-subtitle mb-4">Account Information</h3>
+                      <h3 className="nh-subtitle mb-4">{t('profile.accountInformation')}</h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                         <div>
-                          <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Username</label>
+                          <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>{t('profile.username')}</label>
                           <p className="nh-text text-sm">{user?.username}</p>
                         </div>
                         <div>
-                          <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Email</label>
+                          <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>{t('profile.email')}</label>
                           <p className="nh-text text-sm">{user?.email}</p>
                         </div>
                         <div>
-                          <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Full Name</label>
+                          <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>{t('profile.fullName')}</label>
                           <p className="nh-text text-sm">{user?.name} {user?.surname}</p>
                         </div>
                         {user?.address && (
                           <div>
-                            <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>Address</label>
+                            <label className="text-xs font-bold" style={{ color: 'var(--color-light)' }}>{t('profile.address')}</label>
                             <p className="nh-text text-sm">{user.address}</p>
                           </div>
                         )}
@@ -1284,14 +1284,14 @@ const Profile = () => {
 
                       {/* Body Metrics - Integrated */}
                       <div className="border-t pt-6" style={{ borderColor: 'var(--forum-search-border)' }}>
-                        <h3 className="nh-subtitle mb-2">Body Metrics</h3>
+                        <h3 className="nh-subtitle mb-2">{t('profile.bodyMetrics')}</h3>
                         <p className="nh-text mb-4 text-sm">
-                          Update your body metrics to get personalized nutrition targets.
+                          {t('profile.updateBodyMetrics')}
                         </p>
 
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                           <div>
-                            <label className="block text-xs font-medium mb-1">Height (cm)</label>
+                            <label className="block text-xs font-medium mb-1">{t('profile.heightCm')}</label>
                             <input
                               type="number"
                               value={metrics.height || ''}
@@ -1307,7 +1307,7 @@ const Profile = () => {
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium mb-1">Weight (kg)</label>
+                            <label className="block text-xs font-medium mb-1">{t('profile.weightKg')}</label>
                             <input
                               type="number"
                               value={metrics.weight || ''}
@@ -1323,7 +1323,7 @@ const Profile = () => {
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium mb-1">Age</label>
+                            <label className="block text-xs font-medium mb-1">{t('profile.age')}</label>
                             <input
                               type="number"
                               value={metrics.age || ''}
@@ -1339,7 +1339,7 @@ const Profile = () => {
                           </div>
 
                           <div>
-                            <label className="block text-xs font-medium mb-1">Gender</label>
+                            <label className="block text-xs font-medium mb-1">{t('profile.gender')}</label>
                             <select
                               value={metrics.gender}
                               onChange={(e) => setMetrics({ ...metrics, gender: e.target.value as 'M' | 'F' })}
@@ -1348,13 +1348,13 @@ const Profile = () => {
                                 border: '2px solid var(--dietary-option-border)'
                               }}
                             >
-                              <option value="M">Male</option>
-                              <option value="F">Female</option>
+                              <option value="M">{t('profile.male')}</option>
+                              <option value="F">{t('profile.female')}</option>
                             </select>
                           </div>
 
                           <div className="md:col-span-2">
-                            <label className="block text-xs font-medium mb-1">Activity Level</label>
+                            <label className="block text-xs font-medium mb-1">{t('profile.activityLevel')}</label>
                             <select
                               value={metrics.activity_level}
                               onChange={(e) => setMetrics({ ...metrics, activity_level: e.target.value as any })}
@@ -1363,11 +1363,11 @@ const Profile = () => {
                                 border: '2px solid var(--dietary-option-border)'
                               }}
                             >
-                              <option value="sedentary">Sedentary (little or no exercise)</option>
-                              <option value="light">Lightly active (light exercise/sports 1-3 days/week)</option>
-                              <option value="moderate">Moderately active (moderate exercise/sports 3-5 days/week)</option>
-                              <option value="active">Active (hard exercise/sports 6-7 days/week)</option>
-                              <option value="very_active">Very active (very hard exercise/sports & physical job)</option>
+                              <option value="sedentary">{t('profile.sedentary')}</option>
+                              <option value="light">{t('profile.lightlyActive')}</option>
+                              <option value="moderate">{t('profile.moderatelyActive')}</option>
+                              <option value="active">{t('profile.active')}</option>
+                              <option value="very_active">{t('profile.veryActive')}</option>
                             </select>
                           </div>
                         </div>
@@ -1379,7 +1379,7 @@ const Profile = () => {
                               className="nh-button nh-button-primary text-sm"
                               disabled={isLoading}
                             >
-                              {isLoading ? 'Saving...' : 'Save Metrics'}
+                              {isLoading ? t('nutrition.saving') : t('profile.saveMetrics')}
                             </button>
                           </div>
                         )}
@@ -1400,10 +1400,10 @@ const Profile = () => {
             {/* Allergens Tab */}
             {activeTab === 'allergens' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Allergen Management</h2>
+                <h2 className="nh-subtitle">{t('profile.allergenManagement')}</h2>
 
                 <div className="nh-card">
-                  <h3 className="text-lg font-semibold mb-4">Common Allergens</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('profile.commonAllergens')}</h3>
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                     {PREDEFINED_ALLERGENS.map(allergen => {
                       const isSelected = selectedAllergens.some(a => a.name === allergen)
@@ -1424,14 +1424,14 @@ const Profile = () => {
                 </div>
 
                 <div className="nh-card">
-                  <h3 className="text-lg font-semibold mb-4">Custom Allergens</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('profile.customAllergens')}</h3>
                   <div className="flex gap-2">
                     <input
                       type="text"
                       value={customAllergen}
                       onChange={(e) => setCustomAllergen(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && addCustomAllergen()}
-                      placeholder="Enter custom allergen name"
+                      placeholder={t('profile.enterCustomAllergen')}
                       className="flex-1 px-4 py-2 rounded-lg border input-white-bg"
                       style={{
                         borderColor: 'var(--color-bg-tertiary)'
@@ -1442,14 +1442,14 @@ const Profile = () => {
                       className="nh-button nh-button-primary flex items-center gap-2"
                     >
                       <Plus size={20} weight="bold" />
-                      Add
+                      {t('profile.add')}
                     </button>
                   </div>
                 </div>
 
                 {selectedAllergens.length > 0 && (
                   <div className="nh-card">
-                    <h3 className="text-lg font-semibold mb-4">Your Allergens ({selectedAllergens.length})</h3>
+                    <h3 className="text-lg font-semibold mb-4">{t('profile.yourAllergens')} ({selectedAllergens.length})</h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedAllergens.map(allergen => (
                         <div
@@ -1459,7 +1459,7 @@ const Profile = () => {
                           <span>{allergen.name}</span>
                           {allergen.isCustom && (
                             <span className="text-xs bg-red-200 dark:bg-red-800 px-2 py-1 rounded">
-                              Custom
+                              {t('profile.custom')}
                             </span>
                           )}
                           <button
@@ -1476,7 +1476,7 @@ const Profile = () => {
                       className="nh-button nh-button-primary mt-4"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Saving...' : 'Save Allergens'}
+                      {isLoading ? t('nutrition.saving') : t('profile.saveAllergens')}
                     </button>
                   </div>
                 )}
@@ -1486,12 +1486,12 @@ const Profile = () => {
             {/* Liked Posts Tab */}
             {activeTab === 'posts' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Liked Posts</h2>
+                <h2 className="nh-subtitle">{t('profile.likedPosts')}</h2>
 
                 {likedPosts.length === 0 ? (
                   <div className="nh-card text-center py-12">
                     <Heart size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="nh-text">You haven't liked any posts yet</p>
+                    <p className="nh-text">{t('profile.noLikedPosts')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1511,12 +1511,12 @@ const Profile = () => {
             {/* Liked Recipes Tab */}
             {activeTab === 'recipes' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Liked Recipes</h2>
+                <h2 className="nh-subtitle">{t('profile.likedRecipes')}</h2>
 
                 {likedRecipes.length === 0 ? (
                   <div className="nh-card text-center py-12">
                     <BookOpen size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="nh-text">You haven't liked any recipes yet</p>
+                    <p className="nh-text">{t('profile.noLikedRecipes')}</p>
                   </div>
                 ) : (
                   <div className="space-y-4">
@@ -1536,10 +1536,10 @@ const Profile = () => {
             {/* Profession Tags Tab */}
             {activeTab === 'tags' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Profession Tags</h2>
+                <h2 className="nh-subtitle">{t('profile.professionTags')}</h2>
 
                 <div className="nh-card">
-                  <h3 className="text-lg font-semibold mb-4">Add Profession Tag</h3>
+                  <h3 className="text-lg font-semibold mb-4">{t('profile.addProfessionTag')}</h3>
                   <div className="flex gap-2">
                     <select
                       value={selectedProfession}
@@ -1549,7 +1549,7 @@ const Profile = () => {
                         borderColor: 'var(--color-bg-tertiary)'
                       }}
                     >
-                      <option value="">Select a profession</option>
+                      <option value="">{t('profile.selectProfession')}</option>
                       {PROFESSION_TAGS.map(tag => (
                         <option key={tag} value={tag}>{tag}</option>
                       ))}
@@ -1559,11 +1559,11 @@ const Profile = () => {
                       className="nh-button nh-button-primary flex items-center gap-2"
                     >
                       <Plus size={20} weight="bold" />
-                      Add
+                      {t('profile.add')}
                     </button>
                   </div>
                   <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Tags will be marked as "Unverified" until approved by moderators.
+                    {t('profile.tagsUnverifiedUntilApproved')}
                   </p>
                 </div>
 
@@ -1578,7 +1578,7 @@ const Profile = () => {
                               ? 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300'
                               : 'bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300'
                               }`}>
-                              {tag.verified ? 'Verified' : 'Unverified'}
+                              {tag.verified ? t('profile.verified') : t('profile.unverified')}
                             </span>
                           </div>
                           <button
@@ -1602,7 +1602,7 @@ const Profile = () => {
                               htmlFor={`cert-${tag.name}`}
                               className="nh-button nh-button-outline cursor-pointer text-sm"
                             >
-                              {certificateFile ? certificateFile.name : 'Choose Certificate'}
+                              {certificateFile ? certificateFile.name : t('profile.chooseCertificate')}
                             </label>
                             {certificateFile && tag.id && (
                               <button
@@ -1610,7 +1610,7 @@ const Profile = () => {
                                 className="nh-button nh-button-primary text-sm"
                                 disabled={isLoading}
                               >
-                                Upload
+                                {t('profile.upload')}
                               </button>
                             )}
                           </div>
@@ -1622,7 +1622,7 @@ const Profile = () => {
                       className="nh-button nh-button-primary"
                       disabled={isLoading}
                     >
-                      {isLoading ? 'Saving...' : 'Save Tags'}
+                      {isLoading ? t('nutrition.saving') : t('profile.saveTags')}
                     </button>
                   </div>
                 )}
@@ -1708,7 +1708,7 @@ const Profile = () => {
             {/* Saved Meal Plans Tab */}
             {activeTab === 'mealPlans' && (
               <div className="space-y-4">
-                <h2 className="nh-title">Saved Meal Plans</h2>
+                <h2 className="nh-title">{t('profile.savedMealPlans')}</h2>
                 {allMealPlans.length > 0 ? (
                   <div className="space-y-3">
                     {allMealPlans.map((mealPlan) => {
@@ -1741,14 +1741,14 @@ const Profile = () => {
                                     value={editedMealPlanName}
                                     onChange={(e) => setEditedMealPlanName(e.target.value)}
                                     className="nh-input flex-1"
-                                    placeholder="Meal plan name"
+                                    placeholder={t('profile.mealPlanName')}
                                     autoFocus
                                   />
                                   <button
                                     onClick={handleSaveMealPlanName}
                                     className="nh-button nh-button-primary px-3 py-1 text-sm"
                                   >
-                                    Save
+                                    {t('common.save')}
                                   </button>
                                   <button
                                     onClick={() => {
@@ -1757,7 +1757,7 @@ const Profile = () => {
                                     }}
                                     className="nh-button nh-button-secondary px-3 py-1 text-sm"
                                   >
-                                    Cancel
+                                    {t('common.cancel')}
                                   </button>
                                 </div>
                               ) : (
@@ -1774,7 +1774,7 @@ const Profile = () => {
                                   style={{ display: 'flex' }}
                                 >
                                   <ForkKnife size={16} weight="fill" />
-                                  {isLoggingMealPlan && loggingMealPlanId === mealPlan.id ? 'Logging...' : 'Log'}
+                                  {isLoggingMealPlan && loggingMealPlanId === mealPlan.id ? t('profile.logging') : t('profile.log')}
                                 </button>
                                 <button
                                   onClick={() => {
@@ -1782,14 +1782,14 @@ const Profile = () => {
                                     setEditedMealPlanName(mealPlan.name)
                                   }}
                                   className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-                                  title="Edit meal plan name"
+                                  title={t('profile.editMealPlanName')}
                                 >
                                   <PencilSimple size={18} className="text-primary" />
                                 </button>
                                 <button
                                   onClick={() => handleDeleteMealPlan(mealPlan.id, mealPlan.name)}
                                   className="p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-                                  title="Delete meal plan"
+                                  title={t('profile.deleteMealPlan')}
                                 >
                                   <Trash size={18} className="text-red-500" />
                                 </button>
@@ -1812,7 +1812,7 @@ const Profile = () => {
                 ) : (
                   <div className="nh-card text-center py-12">
                     <BookmarkSimple size={48} className="mx-auto mb-4 opacity-50" />
-                    <p className="nh-text">You haven't saved any meal plan yet</p>
+                    <p className="nh-text">{t('profile.noSavedMealPlans')}</p>
                   </div>
                 )}
               </div>
@@ -1820,11 +1820,11 @@ const Profile = () => {
 
             { activeTab === 'foodProposals' &&
               <div className="mt-8 space-y-4">
-              <h2 className="nh-title">My Food Proposals</h2>
+              <h2 className="nh-title">{t('profile.myFoodProposals')}</h2>
 
               {isLoading ? (
                 <div className="nh-card text-center py-6">
-                  <p className="nh-text">Loading food proposals...</p>
+                  <p className="nh-text">{t('profile.loadingFoodProposals')}</p>
                 </div>
               ) : foodProposals.length > 0 ? (
                 <div className="nh-card p-0 overflow-hidden">
@@ -1848,7 +1848,7 @@ const Profile = () => {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <span className="text-xs nh-text opacity-50">No image</span>
+                              <span className="text-xs nh-text opacity-50">{t('profile.noImage')}</span>
                             )}
                           </div>
 
@@ -1863,7 +1863,7 @@ const Profile = () => {
                             </div>
 
                             <div className="text-xs nh-text opacity-50">
-                              Submitted on {new Date(food.createdAt).toLocaleDateString()}
+                              {t('profile.submittedOn')} {new Date(food.createdAt).toLocaleDateString()}
                             </div>
                           </div>
                         </div>
@@ -1871,20 +1871,20 @@ const Profile = () => {
                         {/* Right: Approval Status */}
                         <div className="shrink-0">
                           {food.isApproved === null && (
-                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
-                              Pending Review
+                              <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                              {t('profile.pendingReview')}
                             </span>
                           )}
 
                           {food.isApproved === true && (
                             <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                              Approved
+                              {t('profile.approved')}
                             </span>
                           )}
 
                           {food.isApproved === false && (
                             <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
-                              Rejected
+                              {t('profile.rejected')}
                             </span>
                           )}
                         </div>
@@ -1895,7 +1895,7 @@ const Profile = () => {
               ) : (
                 <div className="nh-card text-center py-8">
                   <p className="nh-text opacity-60">
-                    You have not submitted any food proposals yet.
+                    {t('profile.noFoodProposals')}
                   </p>
                 </div>
               )}
@@ -1905,7 +1905,7 @@ const Profile = () => {
 
           {activeTab === 'privateFoods' && (
             <div className="space-y-6">
-              <h2 className="nh-title">My Private Foods</h2>
+              <h2 className="nh-title">{t('profile.myPrivateFoods')}</h2>
 
               {privateFoods.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1923,7 +1923,7 @@ const Profile = () => {
               ) : (
                 <div className="nh-card text-center py-8">
                   <p className="nh-text opacity-60">
-                    You have not created any private foods yet.
+                    {t('profile.noPrivateFoods')}
                   </p>
                 </div>
               )}
@@ -1975,12 +1975,12 @@ const Profile = () => {
                 />
               ) : (
                 <div className="nh-card rounded-lg shadow-md">
-                  <h3 className="nh-subtitle mb-3 text-sm">Profile Tips</h3>
+                  <h3 className="nh-subtitle mb-3 text-sm">{t('profile.profileTips')}</h3>
                   <ul className="nh-text text-xs space-y-2">
-                    <li>• Keep your allergen list updated</li>
-                    <li>• Upload certificates for verification</li>
-                    <li>• Review your liked content</li>
-                    <li>• Report inappropriate behavior</li>
+                    <li>• {t('profile.keepAllergenListUpdated')}</li>
+                    <li>• {t('profile.uploadCertificatesForVerification')}</li>
+                    <li>• {t('profile.reviewLikedContent')}</li>
+                    <li>• {t('profile.reportInappropriateBehavior')}</li>
                   </ul>
                 </div>
               )}

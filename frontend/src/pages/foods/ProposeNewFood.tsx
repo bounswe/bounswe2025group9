@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ArrowLeft, WarningCircle } from '@phosphor-icons/react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FoodProposal, apiClient } from '../../lib/apiClient';
+import { useLanguage } from '../../context/LanguageContext';
 
 // Available dietary options
 const dietaryOptions = [
@@ -22,6 +23,7 @@ const ProposeNewFood: React.FC = () => {
   const foodId = id ? Number(id) : null;
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [isPrivate, setIsPrivate] = useState(false);
   const [foodName, setFoodName] = useState('');
   const [category, setCategory] = useState('');
@@ -96,7 +98,7 @@ const ProposeNewFood: React.FC = () => {
         setMicronutrients(prev => ({ ...prev, ...microState }));
       } catch (err) {
         console.error('Failed to load food for edit', err);
-        setError('Failed to load food data.');
+        setError(t('food.failedToLoadFoodData'));
       }
     };
 
@@ -106,21 +108,21 @@ const ProposeNewFood: React.FC = () => {
   const validateForm = () => {
     const errors: {[key: string]: string} = {};
     
-    if (!foodName.trim()) errors.foodName = 'Food name is required';
-    if (!category.trim()) errors.category = 'Category is required';
+    if (!foodName.trim()) errors.foodName = t('food.foodNameRequired');
+    if (!category.trim()) errors.category = t('food.categoryRequired');
     if (!servingSize || isNaN(Number(servingSize)) || Number(servingSize) <= 0) 
-      errors.servingSize = 'Valid serving size is required';
+      errors.servingSize = t('food.validServingSizeRequired');
     if (!calories || isNaN(Number(calories)) || Number(calories) < 0) 
-      errors.calories = 'Valid calorie count is required';
+      errors.calories = t('food.validCalorieCountRequired');
     if (!protein || isNaN(Number(protein)) || Number(protein) < 0) 
-      errors.protein = 'Valid protein content is required';
+      errors.protein = t('food.validProteinContentRequired');
     if (!carbs || isNaN(Number(carbs)) || Number(carbs) < 0) 
-      errors.carbs = 'Valid carbohydrate content is required';
+      errors.carbs = t('food.validCarbohydrateContentRequired');
     if (!fat || isNaN(Number(fat)) || Number(fat) < 0) 
-      errors.fat = 'Valid fat content is required';
+      errors.fat = t('food.validFatContentRequired');
     
     if (imageUrl && !isValidUrl(imageUrl)) 
-      errors.imageUrl = 'Please enter a valid URL';
+      errors.imageUrl = t('food.pleaseEnterValidUrl');
     
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
@@ -230,7 +232,7 @@ const ProposeNewFood: React.FC = () => {
     setSuccess('');
     
     if (!validateForm()) {
-      setError('Please correct the errors in the form');
+      setError(t('food.pleaseCorrectErrors'));
       return;
     }
     
@@ -264,17 +266,15 @@ const ProposeNewFood: React.FC = () => {
       
       if (isEditMode) {
         await apiClient.updatePrivateFood(foodId!, proposal);
-        setSuccess('Food updated successfully!');
+        setSuccess(t('food.foodUpdatedSuccess'));
       } else {
         const propose = isPrivate
           ? apiClient.proposePrivateFood
           : apiClient.proposeFood;
 
         await propose(proposal);
-        setSuccess('Food proposal submitted successfully!');
+        setSuccess(t('food.foodProposalSubmittedSuccess'));
       }
-
-      setSuccess('Food proposal submitted successfully!');
       
       // Clear form or redirect after success
       setTimeout(() => {
@@ -282,7 +282,7 @@ const ProposeNewFood: React.FC = () => {
       }, 2000);
     } catch (err) {
       console.error('Error submitting food proposal:', err);
-      setError(`Failed to submit food proposal. Please try again.`);
+      setError(t('food.failedToSubmitFoodProposal'));
     } finally {
       setIsSubmitting(false);
     }
@@ -306,7 +306,7 @@ const ProposeNewFood: React.FC = () => {
                   <ArrowLeft size={20} weight="bold" /> 
                 </button>
                 <h1 className="nh-title-custom">
-                  {isEditMode ? 'Edit Food' : 'Propose New Food'}
+                  {isEditMode ? t('food.editFood') : t('food.proposeNewFood')}
                 </h1>
               </div>
 
@@ -335,18 +335,18 @@ const ProposeNewFood: React.FC = () => {
               <form onSubmit={handleSubmit} id="proposeFoodForm">
                 {/* Basic Information */}
                 <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Basic Information</h2>
+                  <h2 className="nh-subtitle mb-4">{t('food.basicInformation')}</h2>
                   
                   <div className="mb-4">
                     <label className="block mb-2 font-medium">
-                      Food Name <span className="text-red-500">*</span>
+                      {t('food.foodName')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
                       value={foodName}
                       onChange={(e) => setFoodName(e.target.value)}
-                      placeholder="Enter food name"
+                      placeholder={t('food.enterFoodName')}
                       required
                     />
                     {validationErrors.foodName && (
@@ -356,14 +356,14 @@ const ProposeNewFood: React.FC = () => {
 
                   <div className="mb-4">
                     <label className="block mb-2 font-medium">
-                      Food Category <span className="text-red-500">*</span>
+                      {t('food.foodCategory')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
                       value={category}
                       onChange={(e) => setCategory(e.target.value)}
-                      placeholder="E.g., Fruits, Vegetables, Grains, etc."
+                      placeholder={t('food.categoryExample')}
                       required
                     />
                     {validationErrors.category && (
@@ -374,7 +374,7 @@ const ProposeNewFood: React.FC = () => {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                     <div>
                       <label className="block mb-2 font-medium">
-                        Serving Size (g) <span className="text-red-500">*</span>
+                        {t('food.servingSizeG')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -392,7 +392,7 @@ const ProposeNewFood: React.FC = () => {
 
                     <div>
                       <label className="block mb-2 font-medium">
-                        Calories per Serving <span className="text-red-500">*</span>
+                        {t('food.caloriesPerServing')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -412,12 +412,12 @@ const ProposeNewFood: React.FC = () => {
 
                 {/* Macronutrients */}
                 <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Macronutrients (per serving)</h2>
+                  <h2 className="nh-subtitle mb-4">{t('food.macronutrientsPerServing')}</h2>
                   
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <label className="block mb-2 font-medium">
-                        Carbohydrates (g) <span className="text-red-500">*</span>
+                        {t('food.carbohydratesG')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -435,7 +435,7 @@ const ProposeNewFood: React.FC = () => {
 
                     <div>
                       <label className="block mb-2 font-medium">
-                        Protein (g) <span className="text-red-500">*</span>
+                        {t('food.proteinG')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -453,7 +453,7 @@ const ProposeNewFood: React.FC = () => {
 
                     <div>
                       <label className="block mb-2 font-medium">
-                        Fat (g) <span className="text-red-500">*</span>
+                        {t('food.fatG')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="number"
@@ -473,7 +473,7 @@ const ProposeNewFood: React.FC = () => {
                 
                 {/* Visibility */}
                 <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Visibility</h2>
+                  <h2 className="nh-subtitle mb-4">{t('food.visibility')}</h2>
 
                   <label className="flex items-center gap-3 cursor-pointer select-none">
                     <input
@@ -483,23 +483,23 @@ const ProposeNewFood: React.FC = () => {
                       className="h-4 w-4 accent-[var(--color-primary)] cursor-pointer"
                     />
                     <span className="font-medium">
-                      Save as private food (only visible to me)
+                      {t('food.saveAsPrivateFood')}
                     </span>
                   </label>
 
                   <p className="mt-1 text-sm text-gray-500">
-                    If unchecked, the food will be submitted for public review.
+                    {t('food.privateFoodDescription')}
                   </p>
                 </div>
 
 
                 {/* Micronutrients */}
                 <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Micronutrients (per serving)</h2>
-                  <p className="text-sm text-gray-500 mb-4">Optional: Add vitamin and mineral content if known</p>
+                  <h2 className="nh-subtitle mb-4">{t('food.micronutrientsPerServing')}</h2>
+                  <p className="text-sm text-gray-500 mb-4">{t('food.optionalMicronutrients')}</p>
                   
                   <div className="mb-4">
-                    <h3 className="font-medium mb-3">Vitamins</h3>
+                    <h3 className="font-medium mb-3">{t('nutrition.vitamins')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {Object.entries(micronutrients)
                         .filter(([key]) => key.startsWith('Vitamin') || key.startsWith('Thiamin') || key.startsWith('Riboflavin') || key.startsWith('Niacin') || key.startsWith('Folate'))
@@ -523,7 +523,7 @@ const ProposeNewFood: React.FC = () => {
                   </div>
 
                   <div className="mb-4">
-                    <h3 className="font-medium mb-3">Minerals</h3>
+                    <h3 className="font-medium mb-3">{t('nutrition.minerals')}</h3>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       {Object.entries(micronutrients)
                         .filter(([key]) => !key.startsWith('Vitamin') && !key.startsWith('Thiamin') && !key.startsWith('Riboflavin') && !key.startsWith('Niacin') && !key.startsWith('Folate'))
@@ -549,11 +549,11 @@ const ProposeNewFood: React.FC = () => {
 
                 {/* Dietary Information */}
                 <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Dietary Information</h2>
+                  <h2 className="nh-subtitle mb-4">{t('food.dietaryInformation')}</h2>
                   
                   <div className="mb-4">
                     <label className="block mb-2 font-medium">
-                      Dietary Options
+                      {t('food.dietaryOptions')}
                     </label>
                     <div className="flex flex-wrap gap-2">
                       {dietaryOptions.map((option) => (
@@ -592,11 +592,11 @@ const ProposeNewFood: React.FC = () => {
 
                 {/* Image URL */}
                 <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Additional Information</h2>
+                  <h2 className="nh-subtitle mb-4">{t('food.additionalInformation')}</h2>
                   
                   <div className="mb-4">
                     <label className="block mb-2 font-medium">
-                      Image URL (optional)
+                      {t('food.imageUrlOptional')}
                     </label>
                     <input
                       type="text"
@@ -608,7 +608,7 @@ const ProposeNewFood: React.FC = () => {
                     {validationErrors.imageUrl && (
                       <p className="mt-1 text-red-500 text-sm">{validationErrors.imageUrl}</p>
                     )}
-                    <p className="mt-1 text-sm text-gray-500">Provide a URL to an image of this food (optional)</p>
+                    <p className="mt-1 text-sm text-gray-500">{t('food.imageUrlDescription')}</p>
                   </div>
                 </div>
 
@@ -620,7 +620,7 @@ const ProposeNewFood: React.FC = () => {
                     className="nh-button nh-button-secondary flex items-center gap-2 px-6 py-2"
                     disabled={isSubmitting}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                   <button
                     type="submit"
@@ -628,10 +628,10 @@ const ProposeNewFood: React.FC = () => {
                     disabled={isSubmitting}
                   >
                     {isSubmitting
-                      ? 'Saving...'
+                      ? t('nutrition.saving')
                       : isEditMode
-                      ? 'Save Changes'
-                      : 'Submit Proposal'}
+                      ? t('food.saveChanges')
+                      : t('food.submitProposal')}
                   </button>
                 </div>
               </form>

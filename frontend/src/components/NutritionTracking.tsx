@@ -20,6 +20,7 @@ import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
 import { apiClient, Food } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets, FoodLogEntry } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 import { 
   WhatIfEntry, 
   whatIfReducer, 
@@ -39,6 +40,7 @@ interface NutritionTrackingProps {
 }
 
 const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
+  const { t, currentLanguage } = useLanguage();
   // Helper function to normalize date to midnight local time (avoids timezone issues)
   const normalizeToMidnight = (date: Date): Date => {
     const normalized = new Date(date);
@@ -351,7 +353,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     // Validate serving size
     const numServingSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
     if (!numServingSize || numServingSize <= 0) {
-      alert('Please enter a valid serving size');
+      alert(t('nutrition.pleaseEnterValidServing'));
       return;
     }
 
@@ -370,7 +372,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
     // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
     if (multiplier > 9999.999999) {
-      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      alert(t('nutrition.servingSizeTooLarge'));
       return;
     }
 
@@ -444,7 +446,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         err?.data?.error ||
         err?.data?.detail ||
         err?.message ||
-        'Failed to add food entry';
+        t('nutrition.failedToAddFood');
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -515,14 +517,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
       // Validate multiplier is a valid number
       if (isNaN(multiplier) || !isFinite(multiplier)) {
-        alert('Invalid serving size calculation. Please check your input.');
+        alert(t('nutrition.invalidServingCalculation'));
         setLoading(false);
         return;
       }
 
       // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
       if (multiplier > 9999.999999) {
-        alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+        alert(t('nutrition.servingSizeTooLarge'));
         setLoading(false);
         return;
       }
@@ -565,7 +567,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         err?.data?.error ||
         err?.data?.detail ||
         err?.message ||
-        'Failed to update entry';
+        t('nutrition.failedToUpdateEntry');
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -573,7 +575,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   };
 
   const handleDeleteEntry = async (id: number) => {
-    if (!confirm('Are you sure you want to delete this entry?')) return;
+    if (!confirm(t('nutrition.areYouSureDelete'))) return;
     try {
       setLoading(true);
       await apiClient.deleteFoodEntry(id);
@@ -585,7 +587,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       }
     } catch (err: any) {
       console.error('Error deleting entry:', err);
-      const errorMessage = err?.data?.error || err?.data?.detail || err?.message || 'Failed to delete entry';
+      const errorMessage = err?.data?.error || err?.data?.detail || err?.message || t('nutrition.failedToDeleteEntry');
       alert(errorMessage);
       // Still try to refresh data even if delete failed, in case the entry was partially deleted
       try {
@@ -642,12 +644,12 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         }));
 
       if (meals.length === 0) {
-        alert('No planned items to save');
+        alert(t('nutrition.noPlannedItemsToSave'));
         return;
       }
 
       const mealPlanData = {
-        name: `What If Plan - ${new Date().toLocaleDateString()}`,
+        name: `What If Plan - ${new Date().toLocaleDateString(currentLanguage)}`,
         meals,
       };
 
@@ -658,10 +660,10 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       dispatchWhatIf({ type: 'DEACTIVATE' });
       setShowWhatIfExitDialog(false);
       
-      alert('Meal plan saved successfully!');
+      alert(t('nutrition.mealPlanSavedSuccess'));
     } catch (err: any) {
       console.error('Error saving meal plan:', err);
-      alert(err?.data?.detail || 'Failed to save meal plan');
+      alert(err?.data?.detail || t('nutrition.failedToSaveMealPlan'));
     } finally {
       setIsSavingMealPlan(false);
     }
@@ -694,7 +696,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       }
     } catch (err: any) {
       console.error('Error confirming entry:', err);
-      alert(err?.data?.detail || 'Failed to confirm entry');
+      alert(err?.data?.detail || t('nutrition.failedToConfirmEntry'));
     } finally {
       setLoading(false);
     }
@@ -745,7 +747,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(currentLanguage, {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
@@ -788,9 +790,9 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               {getMealIcon(mealType)}
             </div>
             <div>
-              <h3 className="font-semibold text-lg capitalize">{mealType}</h3>
+              <h3 className="font-semibold text-lg capitalize">{t(`nutrition.${mealType}`)}</h3>
               <p className="text-xs nh-text opacity-70">
-                {Math.round(totals.calories)} kcal • {entries.length} items
+                {Math.round(totals.calories)} {t('food.kcal')} • {entries.length} {t('nutrition.items')}
               </p>
             </div>
           </div>
@@ -801,7 +803,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             style={{ padding: '0.5rem 1rem', display: 'flex' }}
           >
             <Plus size={18} weight="bold" />
-            <span>Add Food</span>
+            <span>{t('nutrition.addFood')}</span>
           </button>
         </div>
 
@@ -867,7 +869,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     className="p-2 rounded transition-colors"
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Edit"
+                    title={t('common.edit')}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -881,7 +883,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     className="p-2 rounded transition-colors text-red-600"
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Delete"
+                    title={t('common.delete')}
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -898,7 +900,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         ) : (
           <div className="text-center py-8 nh-text opacity-50">
             <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No foods logged for {mealType}</p>
+            <p className="text-sm">{t('nutrition.noFoodsLogged', { mealType: t(`nutrition.${mealType}`) })}</p>
           </div>
         )}
 
@@ -908,19 +910,19 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
               <div className="grid grid-cols-4 gap-4 text-center text-sm">
                 <div>
-                  <p className="nh-text opacity-70">Calories</p>
+                  <p className="nh-text opacity-70">{t('food.calories')}</p>
                   <p className="font-bold">{Math.round(Number(totals.calories))}</p>
                 </div>
                 <div>
-                  <p className="nh-text opacity-70">Protein</p>
+                  <p className="nh-text opacity-70">{t('food.protein')}</p>
                   <p className="font-bold">{Number(totals.protein).toFixed(2)}g</p>
                 </div>
                 <div>
-                  <p className="nh-text opacity-70">Carbs</p>
+                  <p className="nh-text opacity-70">{t('food.carbs')}</p>
                   <p className="font-bold">{Number(totals.carbs).toFixed(2)}g</p>
                 </div>
                 <div>
-                  <p className="nh-text opacity-70">Fat</p>
+                  <p className="nh-text opacity-70">{t('food.fat')}</p>
                   <p className="font-bold">{Number(totals.fat).toFixed(2)}g</p>
                 </div>
               </div>
@@ -1087,16 +1089,16 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'var(--color-primary-light)' }}>
           <ChartLine size={32} className="text-primary" weight="fill" />
         </div>
-        <h3 className="nh-subtitle mb-3 text-xl">Setup Nutrition Tracking</h3>
+        <h3 className="nh-subtitle mb-3 text-xl">{t('nutrition.setupNutritionTracking')}</h3>
         <p className="nh-text mb-8 max-w-md mx-auto opacity-80">
-          To track your nutrition and see personalized targets, we first need to know a bit about you (height, weight, age, etc.).
+          {t('nutrition.setupNutritionTrackingDesc')}
         </p>
         <Link
           to="/profile"
           className="nh-button nh-button-primary inline-flex items-center gap-2 px-6 py-3 text-base"
         >
           <PencilSimple size={20} weight="bold" />
-          Set Up My Metrics
+          {t('nutrition.setUpMyMetrics')}
         </Link>
       </div>
     );
@@ -1110,9 +1112,9 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           <div className="flex items-center gap-4">
             <CalendarBlank size={32} weight="fill" className="text-primary" />
             <div>
-              <h2 className="nh-subtitle">Nutrition Tracking</h2>
+              <h2 className="nh-subtitle">{t('nutrition.tracking')}</h2>
               <p className="text-sm nh-text opacity-70">
-                Track your daily food intake and nutrients
+                {t('nutrition.trackYourDailyFood')}
               </p>
             </div>
           </div>
@@ -1133,8 +1135,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 backgroundColor: viewMode === 'daily' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
                 color: viewMode === 'daily' ? 'white' : 'var(--color-light)'
               }}
-            >
-              Daily
+              >
+              {t('nutrition.daily')}
             </button>
             <button
               onClick={() => setViewMode('weekly')}
@@ -1145,7 +1147,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 color: viewMode === 'weekly' ? 'white' : 'var(--color-light)'
               }}
             >
-              Weekly
+              {t('nutrition.weekly')}
             </button>
             {/* Reset icon - show if viewing a different day/week than current */}
             {(() => {
@@ -1173,7 +1175,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
                       }}
-                      title="Reset to today"
+                      title={t('nutrition.resetToToday')}
                     >
                       <ArrowClockwise size={20} weight="bold" />
                     </button>
@@ -1211,7 +1213,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
                       }}
-                      title="Reset to current week"
+                      title={t('nutrition.resetToCurrentWeek')}
                     >
                       <ArrowClockwise size={20} weight="bold" />
                     </button>
@@ -1243,7 +1245,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     backgroundColor: 'var(--color-success)',
                     color: 'white'
                   }}>
-                    Today
+                    {t('nutrition.today')}
                   </span>
                 )}
               </>
@@ -1262,7 +1264,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   return (
                     <div>
                       <p className="text-lg font-bold text-primary">
-                        {monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {monday.toLocaleDateString(currentLanguage, { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString(currentLanguage, { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
                   );
@@ -1295,24 +1297,24 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 color: 'var(--whatif-active-text)'
               }}
             >
-              What If Mode
+              {t('nutrition.whatIfMode')}
             </span>
             <span className="text-sm nh-text opacity-70">
-              See how planned foods affect your daily totals
+              {t('nutrition.whatIfModeDesc')}
             </span>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <WhatIfProgressBar
-              label="Calories"
+              label={t('food.calories')}
               current={todayLog?.total_calories || 0}
               planned={whatIfTotals.calories}
               target={targets.calories}
-              unit=" kcal"
+              unit={` ${t('food.kcal')}`}
               color="#f97316"
             />
             <WhatIfProgressBar
-              label="Protein"
+              label={t('food.protein')}
               current={todayLog?.total_protein || 0}
               planned={whatIfTotals.protein}
               target={targets.protein}
@@ -1320,7 +1322,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               color="#3b82f6"
             />
             <WhatIfProgressBar
-              label="Carbs"
+              label={t('food.carbs')}
               current={todayLog?.total_carbohydrates || 0}
               planned={whatIfTotals.carbs}
               target={targets.carbohydrates}
@@ -1328,7 +1330,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               color="#22c55e"
             />
             <WhatIfProgressBar
-              label="Fat"
+              label={t('food.fat')}
               current={todayLog?.total_fat || 0}
               planned={whatIfTotals.fat}
               target={targets.fat}
@@ -1351,7 +1353,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         <div className="nh-card border-2 border-dashed" style={{ borderColor: 'var(--whatif-border)' }}>
           <div className="flex items-center justify-between mb-4">
             <h3 className="nh-subtitle" style={{ color: 'var(--whatif-text)' }}>
-              Planned Items ({whatIfState.entries.length})
+              {t('nutrition.plannedItems')} ({whatIfState.entries.length})
             </h3>
             <button
               onClick={() => dispatchWhatIf({ type: 'CLEAR_ENTRIES' })}
@@ -1361,7 +1363,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 color: 'var(--color-error)'
               }}
             >
-              Clear All
+              {t('nutrition.clearAll')}
             </button>
           </div>
           
@@ -1383,7 +1385,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         <div>
           <div className="flex items-center gap-2 mb-4">
             <ForkKnife size={28} weight="fill" className="text-primary" />
-            <h3 className="nh-subtitle">Today's Meals</h3>
+            <h3 className="nh-subtitle">{t('nutrition.todaysMeals')}</h3>
           </div>
 
           <div className="space-y-4">
@@ -1463,7 +1465,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           <div className="nh-card">
             <div className="flex items-center gap-2 mb-6">
               <ChartLine size={28} weight="fill" className="text-primary" />
-              <h3 className="nh-subtitle">Weekly Overview</h3>
+              <h3 className="nh-subtitle">{t('nutrition.weeklyOverview')}</h3>
             </div>
 
             {/* Calendar Grid - 7 days in 2 rows with equal width cards */}
@@ -1483,7 +1485,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
 
                   const getDayName = (date: Date) => {
-                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                    return date.toLocaleDateString(currentLanguage, { weekday: 'short' });
                   };
 
                   const getDayNumber = (date: Date) => {
@@ -1519,7 +1521,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
                             backgroundColor: 'var(--color-primary)' + '20'
                           }}>
-                            Today
+                            {t('nutrition.today')}
                           </span>
                         )}
                       </div>
@@ -1620,7 +1622,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
 
                   const getDayName = (date: Date) => {
-                    return date.toLocaleDateString('en-US', { weekday: 'short' });
+                    return date.toLocaleDateString(currentLanguage, { weekday: 'short' });
                   };
 
                   const getDayNumber = (date: Date) => {
@@ -1656,7 +1658,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
                             backgroundColor: 'var(--color-primary)' + '20'
                           }}>
-                            Today
+                            {t('nutrition.today')}
                           </span>
                         )}
                       </div>
@@ -1781,7 +1783,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           >
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="nh-subtitle">
-                {editingEntry ? 'Edit Food Entry' : 'Set Serving Size'}
+                {editingEntry ? t('nutrition.editFoodEntry') : t('nutrition.setServingSize')}
               </Dialog.Title>
               <button
                 onClick={() => {
@@ -1824,7 +1826,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{selectedFood.name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {selectedFood.caloriesPerServing} kcal per {selectedFood.servingSize}g
+                      {t('nutrition.kcalPerGrams', { kcal: selectedFood.caloriesPerServing, grams: selectedFood.servingSize })}
                     </p>
                   </div>
                 </div>
@@ -1851,7 +1853,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{editingEntry.food_name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {editingFoodData.caloriesPerServing} kcal per {editingFoodData.servingSize}g
+                      {t('nutrition.kcalPerGrams', { kcal: editingFoodData.caloriesPerServing, grams: editingFoodData.servingSize })}
                     </p>
                   </div>
                 </div>
@@ -1860,7 +1862,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
             {/* Meal Type Selector */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">Meal Type</label>
+              <label className="block text-sm font-medium mb-2">{t('nutrition.mealType')}</label>
               <select
                 value={selectedMeal}
                 onChange={(e) => setSelectedMeal(e.target.value as 'breakfast' | 'lunch' | 'dinner' | 'snack')}
@@ -1871,25 +1873,25 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   color: 'var(--color-text)'
                 }}
               >
-                <option value="breakfast">Breakfast</option>
-                <option value="lunch">Lunch</option>
-                <option value="dinner">Dinner</option>
-                <option value="snack">Snack</option>
+                <option value="breakfast">{t('nutrition.breakfast')}</option>
+                <option value="lunch">{t('nutrition.lunch')}</option>
+                <option value="dinner">{t('nutrition.dinner')}</option>
+                <option value="snack">{t('nutrition.snack')}</option>
               </select>
             </div>
 
             {/* Serving Size Input */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
-                Serving Size
+                {t('food.servingSize')}
                 {editingEntry && editingEntry.food_serving_size && servingUnit === 'g' && (
                   <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / editingEntry.food_serving_size * 100) / 100} servings)
+                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / editingEntry.food_serving_size * 100) / 100} {t('nutrition.servings')})
                   </span>
                 )}
                 {!editingEntry && selectedFood && servingUnit === 'g' && (
                   <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize * 100) / 100} servings)
+                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize * 100) / 100} {t('nutrition.servings')})
                   </span>
                 )}
               </label>
@@ -1963,8 +1965,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     appearance: 'auto'
                   }}
                 >
-                  <option value="g">grams (g)</option>
-                  <option value="serving">serving</option>
+                  <option value="g">{t('nutrition.gramsG')}</option>
+                  <option value="serving">{t('nutrition.serving')}</option>
                 </select>
               </div>
             </div>
@@ -1992,28 +1994,28 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                  <p className="text-xs nh-text opacity-70 mb-2">{Math.round(totalGrams)}g of {editingEntry.food_name}</p>
+                  <p className="text-xs nh-text opacity-70 mb-2">{t('nutrition.gramsOfFood', { grams: Math.round(totalGrams), foodName: editingEntry.food_name })}</p>
                   <div className="grid grid-cols-4 gap-2 text-xs text-center">
                     <div>
-                      <p className="nh-text opacity-70">Calories</p>
+                      <p className="nh-text opacity-70">{t('food.calories')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.caloriesPerServing))}
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">Protein</p>
+                      <p className="nh-text opacity-70">{t('food.protein')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.proteinContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">Carbs</p>
+                      <p className="nh-text opacity-70">{t('food.carbs')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.carbohydrateContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">Fat</p>
+                      <p className="nh-text opacity-70">{t('food.fat')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.fatContent))}g
                       </p>
@@ -2051,28 +2053,28 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                  <p className="text-xs nh-text opacity-70 mb-2">{Math.round(totalGrams)}g of {selectedFood.name}</p>
+                  <p className="text-xs nh-text opacity-70 mb-2">{t('nutrition.gramsOfFood', { grams: Math.round(totalGrams), foodName: selectedFood.name })}</p>
                   <div className="grid grid-cols-4 gap-2 text-xs text-center">
                     <div>
-                      <p className="nh-text opacity-70">Calories</p>
+                      <p className="nh-text opacity-70">{t('food.calories')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.caloriesPerServing))}
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">Protein</p>
+                      <p className="nh-text opacity-70">{t('food.protein')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.proteinContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">Carbs</p>
+                      <p className="nh-text opacity-70">{t('food.carbs')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.carbohydrateContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">Fat</p>
+                      <p className="nh-text opacity-70">{t('food.fat')}</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.fatContent))}g
                       </p>
@@ -2104,7 +2106,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                Cancel
+                {t('common.cancel')}
               </button>
               <button
                 type="button"
@@ -2112,7 +2114,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 className="flex-1 nh-button nh-button-primary"
                 disabled={loading}
               >
-                {loading ? 'Saving...' : editingEntry ? 'Update' : 'Add to Log'}
+                {loading ? t('nutrition.saving') : editingEntry ? t('common.update') : t('nutrition.addToLog')}
               </button>
             </div>
           </Dialog.Panel>
