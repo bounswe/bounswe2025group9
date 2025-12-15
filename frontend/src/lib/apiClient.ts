@@ -55,6 +55,7 @@ export interface FoodProposal {
   price_unit?: PriceUnit;
   currency?: string;
   micronutrients?: { [key: string]: number };
+  isPrivate ?: boolean;
 }
 
 export interface FoodProposalStatus {
@@ -172,6 +173,8 @@ export interface RecipeIngredient {
   food_id: number;
   food_name?: string;
   amount: number;
+  customUnit: string; 
+  customAmount: number;
   protein?: number;
   fat?: number;
   carbs?: number;
@@ -199,6 +202,8 @@ export interface CreateRecipeRequest {
   ingredients: {
     food_id: number;
     amount: number;
+    customUnit: string;
+    customAmount: number;
   }[];
 }
 
@@ -432,10 +437,36 @@ export const apiClient = {
       body: JSON.stringify(proposal),
     }, true),
 
-    getFoodProposals: () =>
+    proposePrivateFood: (proposal: FoodProposal) =>
+    fetchJson<FoodProposalResponse>("/foods/private/", {
+      method: "POST",
+      body: JSON.stringify(proposal),
+    }, true),
+
+  getFoodProposals: () =>
     fetchJson<FoodProposalStatus[]>("/foods/get-proposal-status/", {
       method: "GET",
     }, true),
+  
+  getPrivateFoods: () =>
+    fetchJson<Food[]>("/foods/private/", {
+      method: "GET",
+    }, true),
+  getPrivateFood: (id: number | number) => 
+   fetchJson<Food>(`/foods/private/${id}/`, {
+      method: "GET",
+    }, true),
+  deletePrivateFood: (id: number) =>
+    fetchJson<void>(`/foods/private/${id}/`, {
+      method: "DELETE",
+    }, true),
+
+  updatePrivateFood: (id: number, updateData: Partial<FoodProposal>) =>
+    fetchJson<Food>(`/foods/private/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData),
+    }, true),
+
   getAvailableMicronutrients: () =>
     fetchJson<{
       micronutrients: Array<{ name: string; unit: string }>;

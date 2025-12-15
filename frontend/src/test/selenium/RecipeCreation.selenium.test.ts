@@ -65,11 +65,11 @@ describe('Recipe Creation - Selenium E2E Tests', () => {
       await driver.sleep(500);
 
       // Look for add ingredient button
-      const addIngredientButtons = await driver.findElements(
-        By.xpath("//button[contains(., 'Add Ingredient') or contains(., 'ingredient')]")
+      const addIngredientButton = await driver.findElement(
+        By.css('button[aria-label="Add ingredient"]')
       );
       
-      expect(addIngredientButtons.length).toBeGreaterThan(0);
+      expect(addIngredientButton).toBeDefined();
     }
   }, 30000);
 

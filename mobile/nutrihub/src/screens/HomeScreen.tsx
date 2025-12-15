@@ -23,6 +23,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING } from '../constants/theme';
 import { useTheme } from '../context/ThemeContext';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 import ForumPost from '../components/forum/ForumPost';
 import { MainTabParamList, ForumStackParamList } from '../navigation/types';
 import { ForumTopic } from '../types/types';
@@ -39,6 +40,7 @@ const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const { theme, textStyles } = useTheme();
   const { user } = useAuth();
+  const { t } = useLanguage();
   
   const [feedPosts, setFeedPosts] = useState<ForumTopic[]>([]);
   const [loading, setLoading] = useState(false);
@@ -174,7 +176,7 @@ const HomeScreen: React.FC = () => {
       <View style={styles.headerTitleRow}>
         <Icon name="rss" size={28} color={theme.primary} />
         <Text style={[styles.feedTitle, textStyles.heading2, { color: theme.text }]}>
-          Your NutriFeed
+          {t('home.yourFeed')}
         </Text>
       </View>
       <TouchableOpacity onPress={handleRefresh} disabled={loading || refreshing}>
@@ -193,17 +195,17 @@ const HomeScreen: React.FC = () => {
       <View style={styles.emptyFeed}>
         <Icon name="rss-off" size={64} color={theme.textSecondary} />
         <Text style={[styles.emptyTitle, textStyles.heading3, { color: theme.text }]}>
-          Your NutriFeed is Empty
+          {t('home.feedEmpty')}
         </Text>
         <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
-          Follow users and like posts to see them here!
+          {t('home.feedEmptyDesc')}
         </Text>
         <TouchableOpacity
           style={[styles.exploreButton, { backgroundColor: theme.primary }]}
           onPress={() => (navigation as any).navigate('Forum')}
         >
           <Text style={[textStyles.buttonText, { color: theme.buttonText }]}>
-            Explore Forum
+            {t('home.exploreForum')}
           </Text>
         </TouchableOpacity>
       </View>
@@ -220,7 +222,7 @@ const HomeScreen: React.FC = () => {
       <View style={styles.footerLoading}>
         <ActivityIndicator size="small" color={theme.primary} />
         <Text style={[styles.loadingText, textStyles.caption, { color: theme.textSecondary }]}>
-          Loading more posts...
+          {t('home.loadingPosts')}
         </Text>
       </View>
     );
@@ -244,10 +246,10 @@ const HomeScreen: React.FC = () => {
         <View style={styles.loginPrompt}>
           <Icon name="account-circle" size={64} color={theme.textSecondary} />
           <Text style={[styles.emptyTitle, textStyles.heading3, { color: theme.text }]}>
-            Welcome to NutriHub
+            {t('home.welcome')}
           </Text>
           <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
-            Please log in to see your personalized NutriFeed
+            {t('home.loginPrompt')}
           </Text>
         </View>
       </SafeAreaView>

@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import CommentViewSet, PostViewSet, TagViewSet, RecipeViewSet
+from .views import CommentViewSet, PostViewSet, TagViewSet, RecipeViewSet, recipe_schema_json_view
 from .admin import PostModerationViewSet, CommentModerationViewSet
 
 router = DefaultRouter()
@@ -20,4 +20,5 @@ moderation_router.register(
 urlpatterns = [
     path("", include(router.urls)),
     path("moderation/", include(moderation_router.urls), name="moderation"),
+    path("recipe/<int:pk>/schema/", recipe_schema_json_view, name="recipe-schema"),
 ]

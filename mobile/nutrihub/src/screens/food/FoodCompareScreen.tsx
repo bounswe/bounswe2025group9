@@ -22,6 +22,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { PALETTE, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { FoodItem } from '../../types/types';
 import FoodSelectorModal from '../../components/food/FoodSelectorModal';
@@ -29,19 +30,20 @@ import NutritionCompare from '../../components/food/NutritionCompare';
 
 const FoodCompareScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const [selectedFoods, setSelectedFoods] = useState<FoodItem[]>([]);
   const [selectorModalVisible, setSelectorModalVisible] = useState(false);
 
   const handleFoodSelect = (food: FoodItem) => {
     // Prevent duplicates
     if (selectedFoods.find(f => f.id === food.id)) {
-      Alert.alert('Duplicate Food', 'This food is already selected for comparison.');
+      Alert.alert(t('food.compareDuplicateTitle'), t('food.compareDuplicateMessage'));
       return;
     }
     
     // Limit to 2 foods
     if (selectedFoods.length >= 2) {
-      Alert.alert('Maximum Reached', 'You can compare up to 2 foods only.');
+      Alert.alert(t('food.compareLimitTitle'), t('food.compareLimitMessage'));
       return;
     }
     
@@ -55,7 +57,7 @@ const FoodCompareScreen: React.FC = () => {
   const handleAddFood = () => {
     // Prevent opening selector if already at limit
     if (selectedFoods.length >= 2) {
-      Alert.alert('Maximum Reached', 'You can compare up to 2 foods only.');
+      Alert.alert(t('food.compareLimitTitle'), t('food.compareLimitMessage'));
       return;
     }
     setSelectorModalVisible(true);
@@ -69,9 +71,9 @@ const FoodCompareScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={[styles.title, textStyles.heading2]}>Compare Foods</Text>
+          <Text style={[styles.title, textStyles.heading2]}>{t('food.compareFood')}</Text>
           <Text style={[styles.subtitle, textStyles.body, { color: theme.textSecondary }]}>
-            Select 2 foods to compare their nutritional values
+            {t('food.compareSubtitle')}
           </Text>
         </View>
 
@@ -79,7 +81,7 @@ const FoodCompareScreen: React.FC = () => {
         <View style={[styles.selectorCard, { backgroundColor: theme.card }]}>
           <View style={styles.selectorHeader}>
             <Text style={[styles.selectorTitle, textStyles.heading4]}>
-              Selected Foods
+              {t('food.selectedFoods')}
             </Text>
             <View style={[styles.countBadge, { backgroundColor: theme.primary + '20' }]}>
               <Text style={[styles.countText, { color: theme.primary }]}>
@@ -130,7 +132,7 @@ const FoodCompareScreen: React.FC = () => {
               <View style={styles.emptyState}>
                 <Icon name="food-off" size={48} color={theme.textSecondary} />
                 <Text style={[styles.emptyText, textStyles.body, { color: theme.textSecondary }]}>
-                  No foods selected yet
+                  {t('food.noFoodsSelected')}
                 </Text>
               </View>
             )}
@@ -149,19 +151,19 @@ const FoodCompareScreen: React.FC = () => {
           >
             <Icon name="plus" size={24} color={PALETTE.NEUTRAL.WHITE} />
             <Text style={[styles.addButtonText, textStyles.button]}>
-              Add Foods
+              {t('food.addFood')}
             </Text>
           </TouchableOpacity>
 
           {/* Helper Text */}
           {selectedFoods.length === 1 && (
             <Text style={[styles.helperText, textStyles.caption, { color: theme.textSecondary }]}>
-              Select one more food to enable comparison
+              {t('food.compareSelectOneMore')}
             </Text>
           )}
           {selectedFoods.length >= 2 && (
             <Text style={[styles.helperText, textStyles.caption, { color: theme.textSecondary }]}>
-              Maximum of 2 foods can be compared
+              {t('food.compareMaxTwo')}
             </Text>
           )}
         </View>
@@ -169,7 +171,7 @@ const FoodCompareScreen: React.FC = () => {
         {/* Comparison Results Section */}
         <View style={[styles.comparisonCard, { backgroundColor: theme.card }]}>
           <Text style={[styles.comparisonTitle, textStyles.heading4]}>
-            Comparison Results
+            {t('food.comparisonResults')}
           </Text>
           
           {selectedFoods.length === 2 ? (
@@ -178,7 +180,7 @@ const FoodCompareScreen: React.FC = () => {
             <View style={styles.comparisonEmptyState}>
               <Icon name="chart-line" size={64} color={theme.textSecondary} />
               <Text style={[styles.comparisonEmptyText, textStyles.body, { color: theme.textSecondary }]}>
-                Select two foods to start comparing
+                {t('food.compareSelectTwo')}
               </Text>
             </View>
           )}

@@ -85,7 +85,7 @@ jest.mock('../src/components/forum/ForumPost', () => {
 });
 
 // Mock forum service
-const mockGetFeed = jest.fn(() => Promise.resolve([]));
+const mockGetFeed = jest.fn(() => Promise.resolve({ results: [], next: null }));
 const mockToggleLike = jest.fn(() => Promise.resolve(false));
 
 jest.mock('../src/services/api/forum.service', () => ({
@@ -105,7 +105,7 @@ describe('HomeScreen', () => {
         username: 'johndoe',
       },
     });
-    mockGetFeed.mockResolvedValue([]);
+    mockGetFeed.mockResolvedValue({ results: [], next: null });
   });
 
   it('renders feed header when user is logged in', async () => {
@@ -128,7 +128,7 @@ describe('HomeScreen', () => {
   });
 
   it('renders empty feed message when user is logged in but has no posts', async () => {
-    mockGetFeed.mockResolvedValue([]);
+    mockGetFeed.mockResolvedValue({ results: [], next: null });
     
     const { getByText } = render(<HomeScreen />);
     
@@ -144,7 +144,7 @@ describe('HomeScreen', () => {
       { id: 2, title: 'Test Post 2', content: 'Content 2', author: 'user2', authorId: 2, likesCount: 10, isLiked: true },
     ];
     
-    mockGetFeed.mockResolvedValue(mockPosts);
+    mockGetFeed.mockResolvedValue({ results: mockPosts as any, next: null });
     
     const { getByTestId } = render(<HomeScreen />);
     

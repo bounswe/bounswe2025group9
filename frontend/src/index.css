@@ -105,6 +105,15 @@
   --pagination-disabled-text: #6b7280; /* gray-500 */
   --pagination-ellipsis-text: #9ca3af; /* gray-400 */
 
+  /* What If Mode colors - dark mode */
+  --whatif-active-bg: #7c3aed; /* violet-600 */
+  --whatif-active-text: #ffffff;
+  --whatif-border: #8b5cf6; /* violet-500 */
+  --whatif-text: #a78bfa; /* violet-400 */
+  --whatif-entry-bg: rgba(124, 58, 237, 0.15);
+  --whatif-badge-bg: rgba(124, 58, 237, 0.3);
+  --whatif-progress: #8b5cf6; /* violet-500 */
+
   /* gray scale */
   --color-gray-50: #f9fafb;
   --color-gray-100: #f3f4f6;
@@ -252,6 +261,15 @@
   --pagination-inactive-hover-bg: #f3f4f6; /* gray-100 - lighter background */
   --pagination-disabled-text: #d1d5db; /* gray-300 - lighter for disabled state */
   --pagination-ellipsis-text: #6b7280; /* gray-500 */
+
+  /* What If Mode colors - light mode */
+  --whatif-active-bg: #7c3aed; /* violet-600 */
+  --whatif-active-text: #ffffff;
+  --whatif-border: #8b5cf6; /* violet-500 */
+  --whatif-text: #6d28d9; /* violet-700 */
+  --whatif-entry-bg: rgba(124, 58, 237, 0.1);
+  --whatif-badge-bg: rgba(124, 58, 237, 0.2);
+  --whatif-progress: #8b5cf6; /* violet-500 */
 
   /* shadows for light mode */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);

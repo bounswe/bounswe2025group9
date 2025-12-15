@@ -76,11 +76,15 @@ class ApiClient {
       },
       async (error) => {
         const originalRequest = error.config;
+
+        const shouldAttemptRefresh =
+          !!originalRequest &&
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          this.isTokenInvalidResponse(error);
         
-        // If the error is due to an expired token and we haven't tried to refresh yet
-        if (error.response?.status === 401 &&
-            !originalRequest._retry &&
-            error.response?.data?.detail?.includes('expired')) {
+        // If the error is due to an expired/invalid token and we haven't tried to refresh yet
+        if (shouldAttemptRefresh) {
           
           if (this.isRefreshing) {
             try {
@@ -149,6 +153,22 @@ class ApiClient {
         
         return Promise.reject(error);
       }
+    );
+  }
+
+  private isTokenInvalidResponse(error: any): boolean {
+    const detail = error?.response?.data?.detail;
+    const code = error?.response?.data?.code;
+    const detailText = typeof detail === 'string' ? detail.toLowerCase() : '';
+
+    return (
+      code === 'token_not_valid' ||
+      detailText.includes('token has expired') ||
+      detailText.includes('token is invalid or expired') ||
+      detailText.includes('token is invalid') ||
+      detailText.includes('given token not valid') ||
+      detailText.includes('expired token') ||
+      detailText.includes('signature has expired')
     );
   }
   
