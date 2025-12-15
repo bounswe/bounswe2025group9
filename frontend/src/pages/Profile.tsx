@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
 import { Lock, User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CaretDown, CaretRight, Trash, CalendarBlank, PencilSimple, ForkKnife } from '@phosphor-icons/react'
@@ -62,6 +63,7 @@ const REPORT_OPTIONS: ReportOption[] = [
 
 const Profile = () => {
   const { user, fetchUserProfile } = useAuth()
+  const { t } = useLanguage()
   const navigate = useNavigate()
   // State management
   const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics' | 'foodProposals'| 'privateFoods'>('overview')
@@ -1914,6 +1916,7 @@ const Profile = () => {
                       onClick={() => {
                         setSelectedFood(food)
                       }}
+                      t={t}
                     />
                   ))}
                 </div>

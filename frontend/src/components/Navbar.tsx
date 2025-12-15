@@ -2,15 +2,18 @@ import { Link, useNavigate } from 'react-router-dom'
 import Logo from './Logo'
 import ThemeToggle from './ThemeToggle'
 import TextSizeSettings from './TextSizeSettings'
+import LanguageSelector from './LanguageSelector'
 import { SignIn, UserPlus, SignOut, List, User } from '@phosphor-icons/react'
 import { useAuth } from '../context/AuthContext'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTextSize } from '../context/TextSizeContext'
+import { useLanguage } from '../context/LanguageContext'
 
 // navbar component
 const Navbar = () => {
     const { isAuthenticated, logout, user } = useAuth()
     const { textSize } = useTextSize()
+    const { t } = useLanguage()
     const navigate = useNavigate()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [showDesktopNav, setShowDesktopNav] = useState(true)
@@ -165,20 +168,20 @@ const Navbar = () => {
                     {isAuthenticated ? (
                         <>
                             <Link to="/" className="text-white hover:text-gray-300 whitespace-nowrap">
-                                Home
+                                {t('nav.home')}
                             </Link>
                             <Link to="/foods" className="text-white hover:text-gray-300 whitespace-nowrap">
-                                Foods
+                                {t('nav.foods')}
                             </Link>
                             <Link to="/forum" className="text-white hover:text-gray-300 whitespace-nowrap">
-                                Forum
+                                {t('nav.forum')}
                             </Link>
                             <Link to="/nutrition" className="text-white hover:text-gray-300 whitespace-nowrap">
-                                Nutrition Tracking
+                                {t('nav.nutritionTracking')}
                             </Link>
                             {(user?.is_staff || user?.is_superuser) && (
                                 <Link to="/admin/moderation" className="text-white hover:text-gray-300 whitespace-nowrap">
-                                    Moderation
+                                    {t('nav.moderation')}
                                 </Link>
                             )}
                         </>
@@ -202,12 +205,12 @@ const Navbar = () => {
                                     to="/profile"
                                     className={user?.profile_image ? "rounded-full overflow-hidden" : "nh-button nh-button-primary flex items-center justify-center"}
                                     style={user?.profile_image ? {} : { padding: '8px 12px' }}
-                                    title="View Profile"
+                                    title={t('nav.viewProfile')}
                                 >
                                     {user?.profile_image ? (
                                         <img
                                             src={user.profile_image}
-                                            alt="Profile"
+                                            alt={t('nav.profile')}
                                             className="w-10 h-10 rounded-full object-cover"
                                             style={{ aspectRatio: '1/1' }}
                                         />
@@ -221,7 +224,7 @@ const Navbar = () => {
                                     onClick={handleLogout}
                                     className="nh-button nh-button-primary flex items-center justify-center"
                                     style={{ padding: '8px 12px' }}
-                                    title="Logout"
+                                    title={t('nav.logout')}
                                 >
                                     <SignOut size={24} weight="fill" />
                                 </button>
@@ -230,17 +233,18 @@ const Navbar = () => {
                             <>
                                 <Link to="/login" className="nh-button nh-button-primary flex items-center gap-1 w-30">
                                     <SignIn size={16} weight="fill" className="inline-block mr-2" />
-                                    Login
+                                    {t('nav.login')}
                                 </Link>
                                 <Link to="/signup" className="nh-button nh-button-outline flex items-center gap-1 w-30" style={{ display: 'inline-block' }}>
                                     <UserPlus size={16} weight="fill" className="inline-block mr-2" />
-                                    Sign Up
+                                    {t('nav.signup')}
                                 </Link>
                             </>
                         )}
                     </div>
 
                     <div className="flex flex-shrink-0 items-center gap-3" ref={utilitiesRef}>
+                        <LanguageSelector />
                         <TextSizeSettings />
                         <ThemeToggle />
                     </div>
@@ -267,26 +271,32 @@ const Navbar = () => {
                                 to="/" 
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Home
+                                {t('nav.home')}
                             </Link>
                             <Link 
                                 to="/foods" 
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Foods
+                                {t('nav.foods')}
                             </Link>
                             <Link 
                                 to="/forum" 
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
-                                Forum
+                                {t('nav.forum')}
+                            </Link>
+                            <Link 
+                                to="/nutrition" 
+                                onClick={() => setIsMobileMenuOpen(false)}
+                            >
+                                {t('nav.nutritionTracking')}
                             </Link>
                             {(user?.is_staff || user?.is_superuser) && (
                                 <Link 
                                     to="/admin/moderation" 
                                     onClick={() => setIsMobileMenuOpen(false)}
                                 >
-                                    Moderation
+                                    {t('nav.moderation')}
                                 </Link>
                             )}
                             <div className="pt-2 border-t divider flex flex-col gap-3">
@@ -298,7 +308,7 @@ const Navbar = () => {
                                     {user?.profile_image ? (
                                         <img
                                             src={user.profile_image}
-                                            alt="Profile"
+                                            alt={t('nav.profile')}
                                             className="w-6 h-6 rounded-full object-cover"
                                             style={{ aspectRatio: '1/1' }}
                                         />
@@ -307,7 +317,7 @@ const Navbar = () => {
                                             <User size={24} className="text-gray-700 dark:text-gray-300" weight="fill" />
                                         </div>
                                     )}
-                                    <span>Profile</span>
+                                    <span>{t('nav.profile')}</span>
                                 </Link>
                                 <button 
                                     onClick={() => {
@@ -317,7 +327,7 @@ const Navbar = () => {
                                     className="nh-button nh-button-primary flex items-center gap-1 w-full"
                                 >
                                     <SignOut size={16} weight="fill" className="inline-block mr-2" />
-                                    Logout
+                                    {t('nav.logout')}
                                 </button>
                             </div>
                         </div>
@@ -329,7 +339,7 @@ const Navbar = () => {
                                 onClick={() => setIsMobileMenuOpen(false)}
                             >
                                 <SignIn size={16} weight="fill" className="inline-block mr-2" />
-                                Login
+                                {t('nav.login')}
                             </Link>
                             <Link 
                                 to="/signup" 
@@ -338,7 +348,7 @@ const Navbar = () => {
                                 style={{ display: 'inline-block' }}
                             >
                                 <UserPlus size={16} weight="fill" className="inline-block mr-2" />
-                                Sign Up
+                                {t('nav.signup')}
                             </Link>
                         </div>
                     )}

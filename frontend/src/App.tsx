@@ -18,6 +18,13 @@ import SwaggerPage from './components/SwaggerPage';
 import MealPlanner from './pages/mealplanner/MealPlanner'
 import FoodCompare from './pages/foods/FoodCompare';
 import NutritionTrackingPage from './pages/NutritionTracking';
+import { useLanguage } from './context/LanguageContext';
+
+// 404 component with translation
+const NotFoundPage = () => {
+  const { t } = useLanguage();
+  return <div className="p-8 text-center">{t('common.pageNotFound')}</div>;
+};
 
 // app component with react-router setup
 function App() {
@@ -55,7 +62,7 @@ function App() {
               <Route path="admin/moderation" element={<ModerationPanel />} />
             </Route>
 
-            <Route path="*" element={<div className="p-8 text-center">Page not found</div>} />
+            <Route path="*" element={<NotFoundPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

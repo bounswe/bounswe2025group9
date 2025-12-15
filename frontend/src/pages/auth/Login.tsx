@@ -2,10 +2,12 @@ import { SignIn, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation, Link } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 
 // login page component
 const Login = () => {
     const { login } = useAuth()
+    const { t } = useLanguage()
     const navigate = useNavigate()
     const location = useLocation()
     
@@ -58,12 +60,12 @@ const Login = () => {
         }
 
         if (!formData.username) {
-            newErrors.username = 'Username is required'
+            newErrors.username = t('auth.usernameRequired')
             isValid = false
         }
 
         if (!formData.password) {
-            newErrors.password = 'Password is required'
+            newErrors.password = t('auth.passwordRequired')
             isValid = false
         }
 
@@ -84,7 +86,7 @@ const Login = () => {
                 navigate('/')
             } catch (err: any) {
                 // simple error message for any login failure
-                setLoginError('Invalid username or password')
+                setLoginError(t('auth.loginError'))
             } finally {
                 setIsLoading(false)
             }
@@ -98,7 +100,7 @@ const Login = () => {
                     <div className="text-center mb-4">
                         <div className="inline-flex items-center justify-center">
                             <SignIn size={28} weight="bold" className="text-primary mr-2 mb-3" aria-hidden="true" />
-                            <h2 className="nh-title">Login</h2>
+                            <h2 className="nh-title">{t('auth.login')}</h2>
                         </div>
                     </div>
                     
@@ -114,7 +116,7 @@ const Login = () => {
                     <form onSubmit={handleSubmit} className="space-y-4">
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Username
+                                {t('auth.username')}
                             </label>
                             <input
                                 type="text"
@@ -125,7 +127,7 @@ const Login = () => {
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                     errors.username ? 'border-red-500' : 'border-gray-500'
                                 }`}
-                                placeholder="Enter your username"
+                                placeholder={t('auth.enterUsername')}
                             />
                             {errors.username && (
                                 <p className="nh-error-message">
@@ -137,7 +139,7 @@ const Login = () => {
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Password
+                                {t('auth.password')}
                             </label>
                             <div className="relative">
                                 <input
@@ -149,7 +151,7 @@ const Login = () => {
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                         errors.password ? 'border-red-500' : 'border-gray-500'
                                     }`}
-                                    placeholder="Enter your password"
+                                    placeholder={t('auth.enterPassword')}
                                 />
                                 <button
                                     type="button"
@@ -176,7 +178,7 @@ const Login = () => {
                             disabled={isLoading}
                             className="nh-button nh-button-primary w-full"
                         >
-                            {isLoading ? 'Signing in...' : 'Sign In'}
+                            {isLoading ? t('auth.signingIn') : t('auth.signIn')}
                         </button>
                     </form>
 
@@ -189,9 +191,9 @@ const Login = () => {
 
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Don't have an account?{' '}
+                            {t('auth.noAccount')}{' '}
                             <Link to="/signup" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
-                                Sign up
+                                {t('nav.signup')}
                             </Link>
                         </p>
                     </div>

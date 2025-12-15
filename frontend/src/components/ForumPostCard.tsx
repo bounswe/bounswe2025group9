@@ -3,6 +3,7 @@ import { ThumbsUp, ChatDots, Tag } from '@phosphor-icons/react'
 import { Link } from 'react-router-dom'
 import { ForumPost } from '../lib/apiClient'
 import ProfileImage from './ProfileImage'
+import { useLanguage } from '../context/LanguageContext'
 
 // Define tag colors based on tag name for consistent display
 const getTagStyle = (tagName: string) => {
@@ -66,6 +67,26 @@ const getTagStyle = (tagName: string) => {
     }
 };
 
+// Get translated tag name
+const getTranslatedTagName = (tagName: string, t: (key: string) => string): string => {
+    switch (tagName) {
+        case "Dietary tip":
+            return t('forum.dietaryTips');
+        case "Recipe":
+            return t('forum.recipes');
+        case "Meal plan":
+            return t('forum.mealPlans');
+        case "Vegan":
+            return t('forum.vegan');
+        case "Halal":
+            return t('forum.halal');
+        case "High-Protein":
+            return t('forum.highProtein');
+        default:
+            return tagName;
+    }
+};
+
 interface ForumPostCardProps {
     post: ForumPost
     isLiked: boolean
@@ -74,15 +95,16 @@ interface ForumPostCardProps {
 }
 
 const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: ForumPostCardProps) => {
+    const { t, currentLanguage } = useLanguage()
     const [prevLikes, setPrevLikes] = useState(post.likes || 0)
     const [showAnimation, setShowAnimation] = useState(false)
     const [likeDiff, setLikeDiff] = useState(0)
     const timeoutRef = useRef<number | null>(null)
 
-    // Format date for display
+    // Format date for display using current language
     const formatDate = (dateString: string) => {
         const date = new Date(dateString);
-        return date.toLocaleDateString('en-US', {
+        return date.toLocaleDateString(currentLanguage, {
             year: 'numeric',
             month: 'short',
             day: 'numeric'
@@ -147,7 +169,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: Forum
                                 }}
                             >
                                 <Tag size={12} className="mr-1" />
-                                {tag.name}
+                                {getTranslatedTagName(tag.name, t)}
                             </div>
                         );
                     })}
@@ -157,7 +179,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: Forum
             {ingredientMatches && ingredientMatches.length > 0 && (
                 <div className="flex flex-wrap items-center gap-2 mb-3 text-sm">
                     <span className="uppercase text-xs tracking-[0.2em] font-semibold text-sky-400">
-                        Includes:
+                        {t('forum.includes')}
                     </span>
                     <div className="flex flex-wrap gap-1">
                         {ingredientMatches.slice(0, 2).map((match, idx) => (
@@ -170,7 +192,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: Forum
                         ))}
                         {ingredientMatches.length > 2 && (
                             <span className="text-xs text-gray-400">
-                                +{ingredientMatches.length - 2} more
+                                +{ingredientMatches.length - 2} {t('common.more')}
                             </span>
                         )}
                     </div>
@@ -205,7 +227,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: Forum
                         <div className="flex items-center justify-center">
                             <ChatDots size={16} weight="fill" className="flex-shrink-0" />
                         </div>
-                        Comments
+                        {t('forum.comments')}
                     </Link>
                     <button 
                         onClick={(e) => {
@@ -217,7 +239,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: Forum
                         <div className="flex items-center justify-center">
                             <ThumbsUp size={16} weight={isLiked ? "fill" : "regular"} className="flex-shrink-0" />
                         </div>
-                        Likes: <span 
+                        {t('forum.likes')}: <span 
                             className={showAnimation ? (likeDiff > 0 ? 'like-count-pulse' : 'like-count-decrease') : ''}
                             style={showAnimation ? {
                                 animation: likeDiff > 0 ? 'likeCountPulse 0.6s ease-out' : 'likeCountDecrease 0.6s ease-out'

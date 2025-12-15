@@ -375,3 +375,69 @@ img {
 .animate-fade-in {
   animation: fadeIn 0.3s ease-out;
 }
+
+/* RTL (Right-to-Left) Support for Arabic */
+html[dir="rtl"] {
+  direction: rtl;
+}
+
+html[dir="rtl"] .nh-container {
+  direction: rtl;
+}
+
+/* Flip icons and directional elements in RTL */
+html[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Adjust spacing in RTL mode */
+html[dir="rtl"] .mr-2 {
+  margin-right: 0;
+  margin-left: 0.5rem;
+}
+
+html[dir="rtl"] .ml-2 {
+  margin-left: 0;
+  margin-right: 0.5rem;
+}
+
+html[dir="rtl"] .pl-10 {
+  padding-left: 0;
+  padding-right: 2.5rem;
+}
+
+html[dir="rtl"] .pr-3 {
+  padding-right: 0;
+  padding-left: 0.75rem;
+}
+
+/* Adjust text alignment in RTL */
+html[dir="rtl"] .text-left {
+  text-align: right;
+}
+
+html[dir="rtl"] .text-right {
+  text-align: left;
+}
+
+/* Adjust flex direction for RTL */
+html[dir="rtl"] .flex-row {
+  flex-direction: row-reverse;
+}
+
+/* Adjust absolute positioned elements in RTL */
+html[dir="rtl"] .left-0 {
+  left: auto;
+  right: 0;
+}
+
+html[dir="rtl"] .right-0 {
+  right: auto;
+  left: 0;
+}
+
+/* Language selector dropdown positioning in RTL */
+html[dir="rtl"] .language-dropdown {
+  left: 0;
+  right: auto;
+}
