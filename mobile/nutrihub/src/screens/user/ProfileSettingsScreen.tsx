@@ -135,14 +135,6 @@ const ProfileSettingsScreen: React.FC = () => {
       screen: 'MyPosts'
     },
     {
-      id: 'nutrition-tracking',
-      title: t('profile.nutritionTracking'),
-      description: t('profile.trackDaily'),
-      icon: 'food-apple',
-      screen: 'NutritionTracking',
-      badgeColor: theme.success
-    },
-    {
       id: 'allergens',
       title: t('profile.allergens'),
       description: t('profile.manageAllergens'),
@@ -212,12 +204,12 @@ const ProfileSettingsScreen: React.FC = () => {
     try {
       const name = uri.split('/').pop() || 'profile.jpg';
       const res = await userService.uploadProfilePhoto(uri, name);
-      
+
       // Add cache-busting parameter to force image reload
-      const cacheBustedUrl = res.profile_image 
+      const cacheBustedUrl = res.profile_image
         ? `${res.profile_image}${res.profile_image.includes('?') ? '&' : '?'}t=${Date.now()}`
         : res.profile_image;
-      
+
       // Update local state with the server response
       setUser(prev => prev ? { ...prev, profile_image: cacheBustedUrl } : prev);
     } catch (error) {
@@ -246,7 +238,7 @@ const ProfileSettingsScreen: React.FC = () => {
         editable={true}
         removable={!!user?.profile_image}
       />
-      
+
       <View style={styles.userInfo}>
         <Text style={[textStyles.heading3, { color: theme.text }]}>
           {user?.name && user?.surname ? `${user.name} ${user.surname}` : user?.username}
