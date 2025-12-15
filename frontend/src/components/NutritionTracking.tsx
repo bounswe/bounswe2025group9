@@ -43,8 +43,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [showServingDialog, setShowServingDialog] = useState(false);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-  const [servingSize, setServingSize] = useState<number | string>(100);
-  const [servingUnit, setServingUnit] = useState('g');
+  const [servingSize, setServingSize] = useState<number | string>(1);
+  const [servingUnit, setServingUnit] = useState('serving');
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null);
   const [editingFoodData, setEditingFoodData] = useState<Food | null>(null);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
@@ -325,8 +325,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
   const handleFoodSelect = (food: Food) => {
     setSelectedFood(food);
-    setServingSize(food.servingSize);
-    setServingUnit('g');
+    setServingSize(1);
+    setServingUnit('serving');
     setShowAddFood(false);
     setShowServingDialog(true);
   };
@@ -1900,8 +1900,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     appearance: 'auto'
                   }}
                 >
-                  <option value="g">grams (g)</option>
                   <option value="serving">serving</option>
+                  <option value="g">grams (g)</option>
                 </select>
               </div>
             </div>
