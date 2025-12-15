@@ -1,4 +1,4 @@
-import { useState, useEffect, useReducer } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   CalendarBlank,
@@ -14,25 +14,16 @@ import {
   Coffee,
   Hamburger,
   X,
-  ArrowClockwise
+  ArrowClockwise,
+  Clock,
+  Check,
+  CalendarPlus
 } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
 import { apiClient, Food } from '../lib/apiClient';
-import { DailyNutritionLog, NutritionTargets, FoodLogEntry } from '../types/nutrition';
+import { DailyNutritionLog, NutritionTargets, FoodLogEntry, PlannedFoodEntry } from '../types/nutrition';
 import { useLanguage } from '../context/LanguageContext';
-import { 
-  WhatIfEntry, 
-  whatIfReducer, 
-  initialWhatIfState, 
-  calculateWhatIfTotals,
-  generateWhatIfId 
-} from '../types/whatif';
-import WhatIfModeToggle from './WhatIfModeToggle';
-import WhatIfExitDialog from './WhatIfExitDialog';
-import WhatIfFoodEntry from './WhatIfFoodEntry';
-import WhatIfProgressBar from './WhatIfProgressBar';
-import WhatIfMicronutrients from './WhatIfMicronutrients';
 
 interface NutritionTrackingProps {
   onDateChange?: (date: Date) => void;
@@ -40,6 +31,7 @@ interface NutritionTrackingProps {
 }
 
 const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { t, currentLanguage } = useLanguage();
   // Helper function to normalize date to midnight local time (avoids timezone issues)
   const normalizeToMidnight = (date: Date): Date => {
@@ -54,19 +46,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [showServingDialog, setShowServingDialog] = useState(false);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-  const [servingSize, setServingSize] = useState<number | string>(100);
-  const [servingUnit, setServingUnit] = useState('g');
+  const [servingSize, setServingSize] = useState<number | string>(1);
+  const [servingUnit, setServingUnit] = useState('serving');
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null);
   const [editingFoodData, setEditingFoodData] = useState<Food | null>(null);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
 
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
-  
-  // What If Mode state
-  const [whatIfState, dispatchWhatIf] = useReducer(whatIfReducer, initialWhatIfState);
-  const [showWhatIfExitDialog, setShowWhatIfExitDialog] = useState(false);
-  const [isSavingMealPlan, setIsSavingMealPlan] = useState(false);
   const [historyLogs, setHistoryLogs] = useState<DailyNutritionLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -224,7 +211,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       } else {
         // In daily view, fetch the daily log for selectedDate
         const dateStr = formatDateString(selectedDate);
-        
+
         // Fetch daily log and full targets in parallel for efficiency
         const [log, fullTargets] = await Promise.all([
           apiClient.getDailyLog(dateStr),
@@ -341,8 +328,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
   const handleFoodSelect = (food: Food) => {
     setSelectedFood(food);
-    setServingSize(food.servingSize); // Default to the food's serving size in grams
-    setServingUnit('g');
+    setServingSize(1);
+    setServingUnit('serving');
     setShowAddFood(false);
     setShowServingDialog(true);
   };
@@ -353,7 +340,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     // Validate serving size
     const numServingSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
     if (!numServingSize || numServingSize <= 0) {
-      alert(t('nutrition.pleaseEnterValidServing'));
+      alert('Please enter a valid serving size');
       return;
     }
 
@@ -372,58 +359,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
     // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
     if (multiplier > 9999.999999) {
-      alert(t('nutrition.servingSizeTooLarge'));
+      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
       return;
     }
 
-    // If in What If mode, add to what-if entries instead of saving to backend
-    if (whatIfState.isActive) {
-      const calculateNutrition = (valuePerServing: number) => {
-        if (servingUnit === 'serving') {
-          return valuePerServing * numServingSize;
-        } else {
-          return (valuePerServing / selectedFood.servingSize) * numServingSize;
-        }
-      };
-
-      // Calculate micronutrients for the what-if entry
-      const entryMicronutrients: { [key: string]: number } = {};
-      if (selectedFood.micronutrients) {
-        Object.entries(selectedFood.micronutrients).forEach(([name, data]) => {
-          // data has { value, unit } - we need to scale by serving size
-          entryMicronutrients[name] = calculateNutrition(data.value);
-        });
-      }
-
-      const whatIfEntry: WhatIfEntry = {
-        id: generateWhatIfId(),
-        food_id: selectedFood.id,
-        food_name: selectedFood.name,
-        food_serving_size: selectedFood.servingSize,
-        image_url: selectedFood.imageUrl || '',
-        serving_size: multiplier,
-        serving_unit: servingUnit,
-        meal_type: selectedMeal,
-        calories: calculateNutrition(selectedFood.caloriesPerServing),
-        protein: calculateNutrition(selectedFood.proteinContent),
-        carbohydrates: calculateNutrition(selectedFood.carbohydrateContent),
-        fat: calculateNutrition(selectedFood.fatContent),
-        micronutrients: entryMicronutrients,
-        isPlanned: true,
-        plannedAt: new Date().toISOString(),
-      };
-
-      dispatchWhatIf({ type: 'ADD_ENTRY', entry: whatIfEntry });
-      setShowServingDialog(false);
-      setSelectedFood(null);
-      return;
-    }
-
-    // Normal mode - save to backend
+    // Save to backend
     try {
       setLoading(true);
       const dateStr = formatDateString(selectedDate);
-
 
       await apiClient.addFoodEntry({
         food_id: selectedFood.id,
@@ -447,7 +390,65 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         err?.data?.error ||
         err?.data?.detail ||
         err?.message ||
-        t('nutrition.failedToAddFood');
+        'Failed to add food entry';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Plan a food entry (saves to backend)
+  const handlePlanFood = async () => {
+    if (!selectedFood) return;
+
+    // Validate serving size
+    const numServingSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
+    if (!numServingSize || numServingSize <= 0) {
+      alert('Please enter a valid serving size');
+      return;
+    }
+
+    // Convert serving size based on unit
+    let multiplier = numServingSize;
+    if (servingUnit === 'g') {
+      multiplier = numServingSize / selectedFood.servingSize;
+    }
+
+    // Round to 6 decimal places for precision
+    multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+    // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
+    if (multiplier > 9999.999999) {
+      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const dateStr = formatDateString(selectedDate);
+
+      await apiClient.addPlannedEntry({
+        food_id: selectedFood.id,
+        serving_size: multiplier,
+        serving_unit: servingUnit,
+        meal_type: selectedMeal,
+        date: dateStr
+      });
+
+      // Refresh data to get updated planned entries
+      await fetchData();
+      if (onDataChange) {
+        onDataChange();
+      }
+      setShowServingDialog(false);
+      setSelectedFood(null);
+    } catch (err: any) {
+      console.error('Error planning food:', err);
+      const errorMessage = err?.data?.serving_size?.[0] ||
+        err?.data?.error ||
+        err?.data?.detail ||
+        err?.message ||
+        'Failed to plan food entry';
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -516,14 +517,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
       // Validate multiplier is a valid number
       if (isNaN(multiplier) || !isFinite(multiplier)) {
-        alert(t('nutrition.invalidServingCalculation'));
+        alert('Invalid serving size calculation. Please check your input.');
         setLoading(false);
         return;
       }
 
       // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
       if (multiplier > 9999.999999) {
-        alert(t('nutrition.servingSizeTooLarge'));
+        alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
         setLoading(false);
         return;
       }
@@ -566,7 +567,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         err?.data?.error ||
         err?.data?.detail ||
         err?.message ||
-        t('nutrition.failedToUpdateEntry');
+        'Failed to update entry';
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -574,7 +575,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   };
 
   const handleDeleteEntry = async (id: number) => {
-    if (!confirm(t('nutrition.areYouSureDelete'))) return;
+    if (!confirm('Are you sure you want to delete this entry?')) return;
     try {
       setLoading(true);
       await apiClient.deleteFoodEntry(id);
@@ -586,7 +587,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       }
     } catch (err: any) {
       console.error('Error deleting entry:', err);
-      const errorMessage = err?.data?.error || err?.data?.detail || err?.message || t('nutrition.failedToDeleteEntry');
+      const errorMessage = err?.data?.error || err?.data?.detail || err?.message || 'Failed to delete entry';
       alert(errorMessage);
       // Still try to refresh data even if delete failed, in case the entry was partially deleted
       try {
@@ -599,94 +600,13 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
   };
 
-  // What If Mode handlers
-  const handleToggleWhatIfMode = () => {
-    if (whatIfState.isActive) {
-      // If there are planned entries, show exit dialog
-      if (whatIfState.entries.length > 0) {
-        setShowWhatIfExitDialog(true);
-      } else {
-        // No entries, just deactivate
-        dispatchWhatIf({ type: 'DEACTIVATE' });
-      }
-    } else {
-      // Activate What If mode with current nutrition as baseline
-      dispatchWhatIf({
-        type: 'ACTIVATE',
-        baseline: {
-          calories: todayLog?.total_calories || 0,
-          protein: todayLog?.total_protein || 0,
-          carbs: todayLog?.total_carbohydrates || 0,
-          fat: todayLog?.total_fat || 0,
-        },
-      });
-    }
-  };
-
-  const handleWhatIfIgnore = () => {
-    dispatchWhatIf({ type: 'DEACTIVATE' });
-    setShowWhatIfExitDialog(false);
-  };
-
-  const handleWhatIfSaveAsMealPlan = async () => {
-    if (whatIfState.entries.length === 0) return;
-
-    setIsSavingMealPlan(true);
-    try {
-      // Create meal plan from what-if entries
-      const meals = whatIfState.entries
-        .filter(e => e.isPlanned)
-        .map(entry => ({
-          food_id: entry.food_id,
-          serving_size: entry.serving_size,
-          meal_type: entry.meal_type,
-        }));
-
-      if (meals.length === 0) {
-        alert(t('nutrition.noPlannedItemsToSave'));
-        return;
-      }
-
-      const mealPlanData = {
-        name: `What If Plan - ${new Date().toLocaleDateString(currentLanguage)}`,
-        meals,
-      };
-
-      await apiClient.createMealPlan(mealPlanData);
-      
-      // Deactivate What If mode but keep entries visible as "planned"
-      // The entries will be shown as faded in the UI
-      dispatchWhatIf({ type: 'DEACTIVATE' });
-      setShowWhatIfExitDialog(false);
-      
-      alert(t('nutrition.mealPlanSavedSuccess'));
-    } catch (err: any) {
-      console.error('Error saving meal plan:', err);
-      alert(err?.data?.detail || t('nutrition.failedToSaveMealPlan'));
-    } finally {
-      setIsSavingMealPlan(false);
-    }
-  };
-
-  const handleWhatIfConfirmEntry = async (id: string) => {
-    const entry = whatIfState.entries.find(e => e.id === id);
-    if (!entry) return;
-
+  // Planned entry handlers
+  const handleConfirmPlannedEntry = async (id: number) => {
     try {
       setLoading(true);
-      const dateStr = formatDateString(selectedDate);
 
-      // Add the entry to actual nutrition log
-      await apiClient.addFoodEntry({
-        food_id: entry.food_id,
-        serving_size: entry.serving_size,
-        serving_unit: entry.serving_unit,
-        meal_type: entry.meal_type,
-        date: dateStr,
-      });
-
-      // Remove from what-if entries
-      dispatchWhatIf({ type: 'REMOVE_ENTRY', id });
+      // Convert planned entry to actual log entry via API
+      await apiClient.convertPlannedToLog(id);
 
       // Refresh data
       await fetchData();
@@ -694,19 +614,35 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         onDataChange();
       }
     } catch (err: any) {
-      console.error('Error confirming entry:', err);
-      alert(err?.data?.detail || t('nutrition.failedToConfirmEntry'));
+      console.error('Error confirming planned entry:', err);
+      alert(err?.data?.detail || err?.data?.error || 'Failed to log planned food');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleWhatIfDeleteEntry = (id: string) => {
-    dispatchWhatIf({ type: 'REMOVE_ENTRY', id });
+  const handleDeletePlannedEntry = async (id: number) => {
+    try {
+      setLoading(true);
+      await apiClient.deletePlannedEntry(id);
+
+      // Refresh data
+      await fetchData();
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (err: any) {
+      console.error('Error deleting planned entry:', err);
+      alert(err?.data?.detail || err?.data?.error || 'Failed to delete planned food');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Calculate what-if totals for progress bars
-  const whatIfTotals = calculateWhatIfTotals(whatIfState.entries);
+  // Filter planned entries by meal type (from API response)
+  const getPlannedEntriesForMeal = (mealType: string): PlannedFoodEntry[] => {
+    return todayLog?.planned_entries?.filter(e => e.meal_type === mealType) || [];
+  };
 
   const getMealIcon = (mealType: string) => {
     switch (mealType) {
@@ -746,7 +682,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString(currentLanguage, {
+    return date.toLocaleDateString('en-US', {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
@@ -774,6 +710,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   ) => {
     const totals = calculateMealTotals(entries);
     const mealColor = getMealColor(mealType);
+    const plannedEntries = getPlannedEntriesForMeal(mealType);
+    const hasAnyEntries = entries.length > 0 || plannedEntries.length > 0;
 
     return (
       <div className="nh-card" key={mealType}>
@@ -789,9 +727,12 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               {getMealIcon(mealType)}
             </div>
             <div>
-              <h3 className="font-semibold text-lg capitalize">{t(`nutrition.${mealType}`)}</h3>
+              <h3 className="font-semibold text-lg capitalize">{mealType}</h3>
               <p className="text-xs nh-text opacity-70">
-                {Math.round(totals.calories)} {t('food.kcal')} • {entries.length} {t('nutrition.items')}
+                {Math.round(totals.calories)} kcal • {entries.length} items
+                {plannedEntries.length > 0 && (
+                  <span style={{ color: '#8b5cf6' }}> • {plannedEntries.length} planned</span>
+                )}
               </p>
             </div>
           </div>
@@ -802,7 +743,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             style={{ padding: '0.5rem 1rem', display: 'flex' }}
           >
             <Plus size={18} weight="bold" />
-            <span>{t('nutrition.addFood')}</span>
+            <span>Add Food</span>
           </button>
         </div>
 
@@ -870,7 +811,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     className="p-2 rounded transition-colors"
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title={t('common.edit')}
+                    title="Edit"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -884,7 +825,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     className="p-2 rounded transition-colors text-red-600"
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title={t('common.delete')}
+                    title="Delete"
                     onClick={(e) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -898,32 +839,129 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             ))
             }
           </div >
-        ) : (
+        ) : plannedEntries.length === 0 ? (
           <div className="text-center py-8 nh-text opacity-50">
             <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">{t('nutrition.noFoodsLogged', { mealType: t(`nutrition.${mealType}`) })}</p>
+            <p className="text-sm">No foods logged for {mealType}</p>
+          </div>
+        ) : null}
+
+        {/* Planned Entries - shown after regular entries, sorted by planned_at */}
+        {plannedEntries.length > 0 && (
+          <div className={`space-y-2 ${entries.length > 0 ? 'mt-3' : ''}`}>
+            {[...plannedEntries]
+              .sort((a, b) => new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime())
+              .map((entry) => (
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed transition-all"
+                  style={{
+                    backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                    borderColor: '#8b5cf6'
+                  }}
+                >
+                  {/* Food Image */}
+                  {entry.image_url ? (
+                    <img
+                      src={entry.image_url}
+                      alt={entry.food_name}
+                      className="w-16 h-16 rounded-lg object-cover"
+                      style={{ filter: 'grayscale(20%)' }}
+                    />
+                  ) : (
+                    <div
+                      className="w-16 h-16 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--forum-search-border)' }}
+                    >
+                      <Hamburger size={28} weight="fill" className="opacity-50" />
+                    </div>
+                  )}
+
+                  {/* Food Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium" style={{ color: '#7c3aed' }}>{entry.food_name}</h4>
+                      <span
+                        className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                          color: '#7c3aed'
+                        }}
+                      >
+                        <Clock size={12} weight="fill" />
+                        Planned
+                      </span>
+                    </div>
+                    <p className="text-xs nh-text opacity-70">
+                      {(() => {
+                        const servingSizeNum = Number(entry.serving_size);
+                        const foodServingSize = Number(entry.food_serving_size) || 100;
+                        if (entry.serving_unit === 'g') {
+                          const grams = servingSizeNum * foodServingSize;
+                          return `${Math.round(grams)}g`;
+                        }
+                        return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
+                      })()}
+                    </p>
+                  </div>
+
+                  {/* Nutrition Info */}
+                  <div className="text-right">
+                    <p className="font-semibold" style={{ color: '#7c3aed' }}>{Math.round(Number(entry.calories))} kcal</p>
+                    <p className="text-xs nh-text opacity-70">
+                      P: {Number(entry.protein).toFixed(1)}g • C: {Number(entry.carbohydrates).toFixed(1)}g • F: {Number(entry.fat).toFixed(1)}g
+                    </p>
+                  </div>
+
+                  {/* Actions */}
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleConfirmPlannedEntry(entry.id)}
+                      className="p-2 rounded transition-colors"
+                      style={{
+                        backgroundColor: 'var(--color-success)',
+                        color: 'white'
+                      }}
+                      title="Log this food"
+                    >
+                      <Check size={18} weight="bold" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePlannedEntry(entry.id)}
+                      className="p-2 rounded transition-colors text-red-600"
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      title="Remove planned food"
+                    >
+                      <Trash size={18} />
+                    </button>
+                  </div>
+                </div>
+              ))}
           </div>
         )}
 
         {/* Meal Totals */}
         {
-          entries.length > 0 && (
+          hasAnyEntries && (
             <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
               <div className="grid grid-cols-4 gap-4 text-center text-sm">
                 <div>
-                  <p className="nh-text opacity-70">{t('food.calories')}</p>
+                  <p className="nh-text opacity-70">Calories</p>
                   <p className="font-bold">{Math.round(Number(totals.calories))}</p>
                 </div>
                 <div>
-                  <p className="nh-text opacity-70">{t('food.protein')}</p>
+                  <p className="nh-text opacity-70">Protein</p>
                   <p className="font-bold">{Number(totals.protein).toFixed(2)}g</p>
                 </div>
                 <div>
-                  <p className="nh-text opacity-70">{t('food.carbs')}</p>
+                  <p className="nh-text opacity-70">Carbs</p>
                   <p className="font-bold">{Number(totals.carbs).toFixed(2)}g</p>
                 </div>
                 <div>
-                  <p className="nh-text opacity-70">{t('food.fat')}</p>
+                  <p className="nh-text opacity-70">Fat</p>
                   <p className="font-bold">{Number(totals.fat).toFixed(2)}g</p>
                 </div>
               </div>
@@ -967,7 +1005,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               ></div>
             </div>
           </div>
-          
+
           {/* Date selector skeleton */}
           <div className="flex items-center justify-between mt-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
             <div
@@ -1006,7 +1044,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               <div className="w-full rounded-full h-2 mb-2" style={{ backgroundColor: 'var(--forum-search-border)' }}>
                 <div
                   className="h-2 rounded-full"
-                  style={{ 
+                  style={{
                     width: '60%',
                     backgroundColor: 'var(--color-bg-tertiary)'
                   }}
@@ -1090,16 +1128,16 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         <div className="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6" style={{ backgroundColor: 'var(--color-primary-light)' }}>
           <ChartLine size={32} className="text-primary" weight="fill" />
         </div>
-        <h3 className="nh-subtitle mb-3 text-xl">{t('nutrition.setupNutritionTracking')}</h3>
+        <h3 className="nh-subtitle mb-3 text-xl">Setup Nutrition Tracking</h3>
         <p className="nh-text mb-8 max-w-md mx-auto opacity-80">
-          {t('nutrition.setupNutritionTrackingDesc')}
+          To track your nutrition and see personalized targets, we first need to know a bit about you (height, weight, age, etc.).
         </p>
         <Link
           to="/profile"
           className="nh-button nh-button-primary inline-flex items-center gap-2 px-6 py-3 text-base"
         >
           <PencilSimple size={20} weight="bold" />
-          {t('nutrition.setUpMyMetrics')}
+          Set Up My Metrics
         </Link>
       </div>
     );
@@ -1113,42 +1151,34 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           <div className="flex items-center gap-4">
             <CalendarBlank size={32} weight="fill" className="text-primary" />
             <div>
-              <h2 className="nh-subtitle">{t('nutrition.tracking')}</h2>
+              <h2 className="nh-subtitle">Nutrition Tracking</h2>
               <p className="text-sm nh-text opacity-70">
-                {t('nutrition.trackYourDailyFood')}
+                Track your daily food intake and nutrients
               </p>
             </div>
           </div>
 
-          {/* View Mode Toggle and What If Mode */}
+          {/* View Mode Toggle */}
           <div className="flex items-center gap-2">
-            <WhatIfModeToggle
-              isActive={whatIfState.isActive}
-              onToggle={handleToggleWhatIfMode}
-              disabled={viewMode === 'weekly'}
-            />
-            <div className="w-px h-6 bg-gray-300 dark:bg-gray-600 mx-1" />
             <button
               onClick={() => setViewMode('daily')}
-              disabled={whatIfState.isActive}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
               style={{
                 backgroundColor: viewMode === 'daily' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
                 color: viewMode === 'daily' ? 'white' : 'var(--color-light)'
               }}
-              >
-              {t('nutrition.daily')}
+            >
+              Daily
             </button>
             <button
               onClick={() => setViewMode('weekly')}
-              disabled={whatIfState.isActive}
-              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-all cursor-pointer"
               style={{
                 backgroundColor: viewMode === 'weekly' ? 'var(--color-primary)' : 'var(--color-bg-tertiary)',
                 color: viewMode === 'weekly' ? 'white' : 'var(--color-light)'
               }}
             >
-              {t('nutrition.weekly')}
+              Weekly
             </button>
             {/* Reset icon - show if viewing a different day/week than current */}
             {(() => {
@@ -1176,7 +1206,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
                       }}
-                      title={t('nutrition.resetToToday')}
+                      title="Reset to today"
                     >
                       <ArrowClockwise size={20} weight="bold" />
                     </button>
@@ -1214,7 +1244,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                       onMouseLeave={(e) => {
                         e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
                       }}
-                      title={t('nutrition.resetToCurrentWeek')}
+                      title="Reset to current week"
                     >
                       <ArrowClockwise size={20} weight="bold" />
                     </button>
@@ -1246,7 +1276,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     backgroundColor: 'var(--color-success)',
                     color: 'white'
                   }}>
-                    {t('nutrition.today')}
+                    Today
                   </span>
                 )}
               </>
@@ -1265,7 +1295,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   return (
                     <div>
                       <p className="text-lg font-bold text-primary">
-                        {monday.toLocaleDateString(currentLanguage, { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString(currentLanguage, { month: 'short', day: 'numeric', year: 'numeric' })}
+                        {monday.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {sunday.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                       </p>
                     </div>
                   );
@@ -1287,106 +1317,13 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         </div>
       </div>
 
-      {/* What If Mode Progress Bars */}
-      {whatIfState.isActive && targets && (
-        <div className="nh-card border-2 border-dashed" style={{ borderColor: 'var(--whatif-border)' }}>
-          <div className="flex items-center gap-2 mb-4">
-            <span 
-              className="px-3 py-1 rounded-full text-sm font-medium"
-              style={{ 
-                backgroundColor: 'var(--whatif-active-bg)',
-                color: 'var(--whatif-active-text)'
-              }}
-            >
-              {t('nutrition.whatIfMode')}
-            </span>
-            <span className="text-sm nh-text opacity-70">
-              {t('nutrition.whatIfModeDesc')}
-            </span>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <WhatIfProgressBar
-              label={t('food.calories')}
-              current={todayLog?.total_calories || 0}
-              planned={whatIfTotals.calories}
-              target={targets.calories}
-              unit={` ${t('food.kcal')}`}
-              color="#f97316"
-            />
-            <WhatIfProgressBar
-              label={t('food.protein')}
-              current={todayLog?.total_protein || 0}
-              planned={whatIfTotals.protein}
-              target={targets.protein}
-              unit="g"
-              color="#3b82f6"
-            />
-            <WhatIfProgressBar
-              label={t('food.carbs')}
-              current={todayLog?.total_carbohydrates || 0}
-              planned={whatIfTotals.carbs}
-              target={targets.carbohydrates}
-              unit="g"
-              color="#22c55e"
-            />
-            <WhatIfProgressBar
-              label={t('food.fat')}
-              current={todayLog?.total_fat || 0}
-              planned={whatIfTotals.fat}
-              target={targets.fat}
-              unit="g"
-              color="#eab308"
-            />
-          </div>
-          
-          {/* Micronutrients Section */}
-          <WhatIfMicronutrients
-            currentMicronutrients={todayLog?.micronutrients_summary || {}}
-            plannedMicronutrients={whatIfTotals.micronutrients}
-            targets={targets}
-          />
-        </div>
-      )}
-
-      {/* What If Planned Entries */}
-      {whatIfState.isActive && whatIfState.entries.length > 0 && (
-        <div className="nh-card border-2 border-dashed" style={{ borderColor: 'var(--whatif-border)' }}>
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="nh-subtitle" style={{ color: 'var(--whatif-text)' }}>
-              {t('nutrition.plannedItems')} ({whatIfState.entries.length})
-            </h3>
-            <button
-              onClick={() => dispatchWhatIf({ type: 'CLEAR_ENTRIES' })}
-              className="text-sm px-3 py-1 rounded-lg transition-colors"
-              style={{ 
-                backgroundColor: 'var(--color-bg-tertiary)',
-                color: 'var(--color-error)'
-              }}
-            >
-              {t('nutrition.clearAll')}
-            </button>
-          </div>
-          
-          <div className="space-y-2">
-            {whatIfState.entries.map(entry => (
-              <WhatIfFoodEntry
-                key={entry.id}
-                entry={entry}
-                onConfirm={handleWhatIfConfirmEntry}
-                onDelete={handleWhatIfDeleteEntry}
-              />
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* Meals Section (Daily View) */}
       {viewMode === 'daily' && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <ForkKnife size={28} weight="fill" className="text-primary" />
-            <h3 className="nh-subtitle">{t('nutrition.todaysMeals')}</h3>
+            <h3 className="nh-subtitle">Today's Meals</h3>
           </div>
 
           <div className="space-y-4">
@@ -1466,7 +1403,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           <div className="nh-card">
             <div className="flex items-center gap-2 mb-6">
               <ChartLine size={28} weight="fill" className="text-primary" />
-              <h3 className="nh-subtitle">{t('nutrition.weeklyOverview')}</h3>
+              <h3 className="nh-subtitle">Weekly Overview</h3>
             </div>
 
             {/* Calendar Grid - 7 days in 2 rows with equal width cards */}
@@ -1486,7 +1423,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
 
                   const getDayName = (date: Date) => {
-                    return date.toLocaleDateString(currentLanguage, { weekday: 'short' });
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
                   };
 
                   const getDayNumber = (date: Date) => {
@@ -1522,7 +1459,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
                             backgroundColor: 'var(--color-primary)' + '20'
                           }}>
-                            {t('nutrition.today')}
+                            Today
                           </span>
                         )}
                       </div>
@@ -1623,7 +1560,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   const fatPercent = log ? Math.round((log.total_fat / targets.fat) * 100) : 0;
 
                   const getDayName = (date: Date) => {
-                    return date.toLocaleDateString(currentLanguage, { weekday: 'short' });
+                    return date.toLocaleDateString('en-US', { weekday: 'short' });
                   };
 
                   const getDayNumber = (date: Date) => {
@@ -1659,7 +1596,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                           <span className="text-xs px-1 py-0.5 rounded mt-1 inline-block text-primary" style={{
                             backgroundColor: 'var(--color-primary)' + '20'
                           }}>
-                            {t('nutrition.today')}
+                            Today
                           </span>
                         )}
                       </div>
@@ -1784,7 +1721,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           >
             <div className="flex justify-between items-center mb-4">
               <Dialog.Title className="nh-subtitle">
-                {editingEntry ? t('nutrition.editFoodEntry') : t('nutrition.setServingSize')}
+                {editingEntry ? 'Edit Food Entry' : 'Set Serving Size'}
               </Dialog.Title>
               <button
                 onClick={() => {
@@ -1827,7 +1764,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{selectedFood.name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {t('nutrition.kcalPerGrams', { kcal: selectedFood.caloriesPerServing, grams: selectedFood.servingSize })}
+                      {selectedFood.caloriesPerServing} kcal per 100g
                     </p>
                   </div>
                 </div>
@@ -1854,7 +1791,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{editingEntry.food_name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {t('nutrition.kcalPerGrams', { kcal: editingFoodData.caloriesPerServing, grams: editingFoodData.servingSize })}
+                      {editingFoodData.caloriesPerServing} kcal per 100g
                     </p>
                   </div>
                 </div>
@@ -1863,7 +1800,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
             {/* Meal Type Selector */}
             <div className="mb-4">
-              <label className="block text-sm font-medium mb-2">{t('nutrition.mealType')}</label>
+              <label className="block text-sm font-medium mb-2">Meal Type</label>
               <select
                 value={selectedMeal}
                 onChange={(e) => setSelectedMeal(e.target.value as 'breakfast' | 'lunch' | 'dinner' | 'snack')}
@@ -1874,27 +1811,34 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   color: 'var(--color-text)'
                 }}
               >
-                <option value="breakfast">{t('nutrition.breakfast')}</option>
-                <option value="lunch">{t('nutrition.lunch')}</option>
-                <option value="dinner">{t('nutrition.dinner')}</option>
-                <option value="snack">{t('nutrition.snack')}</option>
+                <option value="breakfast">Breakfast</option>
+                <option value="lunch">Lunch</option>
+                <option value="dinner">Dinner</option>
+                <option value="snack">Snack</option>
               </select>
             </div>
 
             {/* Serving Size Input */}
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
-                {t('food.servingSize')}
-                {editingEntry && editingEntry.food_serving_size && servingUnit === 'g' && (
-                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / editingEntry.food_serving_size * 100) / 100} {t('nutrition.servings')})
-                  </span>
-                )}
-                {!editingEntry && selectedFood && servingUnit === 'g' && (
-                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize * 100) / 100} {t('nutrition.servings')})
-                  </span>
-                )}
+                Serving Size
+                {editingEntry && servingUnit === 'g' && (() => {
+                  const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+                  const numServings = (typeof servingSize === 'number' ? servingSize : Number(servingSize)) / foodServingSize;
+                  return (
+                    <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                      ({Math.round(numServings * 100) / 100} servings)
+                    </span>
+                  );
+                })()}
+                {!editingEntry && selectedFood && servingUnit === 'g' && (() => {
+                  const numServings = (typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize;
+                  return (
+                    <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                      ({Math.round(numServings * 100) / 100} servings)
+                    </span>
+                  );
+                })()}
               </label>
               <div className="flex gap-2">
                 <input
@@ -1966,8 +1910,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     appearance: 'auto'
                   }}
                 >
-                  <option value="g">{t('nutrition.gramsG')}</option>
-                  <option value="serving">{t('nutrition.serving')}</option>
+                  <option value="serving">serving</option>
+                  <option value="g">grams (g)</option>
                 </select>
               </div>
             </div>
@@ -1997,28 +1941,28 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                  <p className="text-xs nh-text opacity-70 mb-2">{t('nutrition.gramsOfFood', { grams: Math.round(totalGrams), foodName: editingEntry.food_name })}</p>
+                  <p className="text-xs nh-text opacity-70 mb-2">{Math.round(totalGrams)}g of {editingEntry.food_name}</p>
                   <div className="grid grid-cols-4 gap-2 text-xs text-center">
                     <div>
-                      <p className="nh-text opacity-70">{t('food.calories')}</p>
+                      <p className="nh-text opacity-70">Calories</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.caloriesPerServing))}
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">{t('food.protein')}</p>
+                      <p className="nh-text opacity-70">Protein</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.proteinContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">{t('food.carbs')}</p>
+                      <p className="nh-text opacity-70">Carbs</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.carbohydrateContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">{t('food.fat')}</p>
+                      <p className="nh-text opacity-70">Fat</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(editingFoodData.fatContent))}g
                       </p>
@@ -2056,28 +2000,28 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                  <p className="text-xs nh-text opacity-70 mb-2">{t('nutrition.gramsOfFood', { grams: Math.round(totalGrams), foodName: selectedFood.name })}</p>
+                  <p className="text-xs nh-text opacity-70 mb-2">{Math.round(totalGrams)}g of {selectedFood.name}</p>
                   <div className="grid grid-cols-4 gap-2 text-xs text-center">
                     <div>
-                      <p className="nh-text opacity-70">{t('food.calories')}</p>
+                      <p className="nh-text opacity-70">Calories</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.caloriesPerServing))}
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">{t('food.protein')}</p>
+                      <p className="nh-text opacity-70">Protein</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.proteinContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">{t('food.carbs')}</p>
+                      <p className="nh-text opacity-70">Carbs</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.carbohydrateContent))}g
                       </p>
                     </div>
                     <div>
-                      <p className="nh-text opacity-70">{t('food.fat')}</p>
+                      <p className="nh-text opacity-70">Fat</p>
                       <p className="font-semibold">
                         {Math.round(calculateNutrition(selectedFood.fatContent))}g
                       </p>
@@ -2097,7 +2041,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   setEditingEntry(null);
                   setEditingFoodData(null);
                 }}
-                className="flex-1 px-4 py-2 rounded-lg border transition-colors"
+                className="px-4 py-2 rounded-lg border transition-colors"
                 style={{
                   borderColor: 'var(--dietary-option-border)',
                   color: 'var(--color-text)'
@@ -2109,30 +2053,42 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   e.currentTarget.style.backgroundColor = 'transparent';
                 }}
               >
-                {t('common.cancel')}
+                Cancel
               </button>
+              {/* Plan button - only shown for new entries, not editing */}
+              {!editingEntry && (
+                <button
+                  type="button"
+                  onClick={handlePlanFood}
+                  className="flex-1 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-medium"
+                  style={{
+                    backgroundColor: '#8b5cf6',
+                    color: 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#7c3aed';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#8b5cf6';
+                  }}
+                  disabled={loading}
+                >
+                  <CalendarPlus size={18} weight="bold" />
+                  Plan
+                </button>
+              )}
               <button
                 type="button"
                 onClick={editingEntry ? handleUpdateEntry : handleConfirmServing}
                 className="flex-1 nh-button nh-button-primary"
                 disabled={loading}
               >
-                {loading ? t('nutrition.saving') : editingEntry ? t('common.update') : t('nutrition.addToLog')}
+                {loading ? 'Saving...' : editingEntry ? 'Update' : 'Add to Log'}
               </button>
             </div>
           </Dialog.Panel>
         </div>
       </Dialog>
-
-      {/* What If Exit Dialog */}
-      <WhatIfExitDialog
-        open={showWhatIfExitDialog}
-        onClose={() => setShowWhatIfExitDialog(false)}
-        entries={whatIfState.entries}
-        onIgnore={handleWhatIfIgnore}
-        onSaveAsMealPlan={handleWhatIfSaveAsMealPlan}
-        isSaving={isSavingMealPlan}
-      />
     </div>
   );
 };

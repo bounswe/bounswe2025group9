@@ -180,9 +180,57 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Serving size must be greater than 0.")
         return value
 
+
+class PlannedFoodEntrySerializer(serializers.ModelSerializer):
+    """Serializer for planned food entries."""
+    food_name = serializers.CharField(source='food.name', read_only=True)
+    food_serving_size = serializers.DecimalField(
+        source='food.servingSize',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        allow_null=False,
+        help_text="Original serving size of the food (for display calculations)"
+    )
+    image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
+    food_id = serializers.PrimaryKeyRelatedField(
+        source='food',
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
+        write_only=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Initialize and set accessible foods queryset based on user context"""
+        super().__init__(*args, **kwargs)
+
+        # Get user from context
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Set queryset to only accessible foods for this user
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
+
+    class Meta:
+        from .models import PlannedFoodEntry
+        model = PlannedFoodEntry
+        fields = [
+            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
+            'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
+            'carbohydrates', 'fat', 'micronutrients', 'planned_at'
+        ]
+        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
+                           'protein', 'carbohydrates', 'fat', 'micronutrients', 'planned_at']
+
+    def validate_serving_size(self, value):
+        """Validate serving size is positive."""
+        if value <= 0:
+            raise serializers.ValidationError("Serving size must be greater than 0.")
+        return value
+
 class DailyNutritionLogSerializer(serializers.ModelSerializer):
     """Serializer for daily nutrition log with nested entries and target comparison."""
     entries = FoodLogEntrySerializer(many=True, read_only=True)
+    planned_entries = PlannedFoodEntrySerializer(many=True, read_only=True)
     targets = serializers.SerializerMethodField(read_only=True)
     adherence = serializers.SerializerMethodField(read_only=True)
     hydration_actual = serializers.SerializerMethodField(read_only=True)
@@ -197,7 +245,8 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
         model = DailyNutritionLog
         fields = [
             'date', 'total_calories', 'total_protein', 'total_carbohydrates',
-            'total_fat', 'micronutrients_summary', 'entries', 'targets', 'adherence',
+            'total_fat', 'micronutrients_summary', 'entries', 'planned_entries',
+            'targets', 'adherence',
             'hydration_actual', 'hydration_target', 'hydration_ratio', 'hydration_penalty',
             'base_nutrition_score', 'hydration_adjusted_score',
             'created_at', 'updated_at'
