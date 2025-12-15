@@ -21,7 +21,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
     carbohydrates: number;
     fat: number;
     micronutrients: {
-      [key: string]: number | { target: number; maximum: number };
+      [key: string]: number | { target: number; maximum?: number };
     };
   } | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
@@ -246,7 +246,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
   // Helper to find matching micronutrient key in recommendations
   // Food data has keys like "Vitamin E (alpha-tocopherol)" 
   // Recommendations have keys like "Vitamin E (alpha-tocopherol) (mg)"
-  const findMicronutrientInRecommendations = (nutrient: string): number | { target: number; maximum: number } | null => {
+  const findMicronutrientInRecommendations = (nutrient: string): number | { target: number; maximum?: number } | null => {
     if (!recommendations?.micronutrients) return null;
     
     // First try exact match
@@ -286,7 +286,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
     // For micronutrients, find matching key and check for maximum
     const micronutrient = findMicronutrientInRecommendations(nutrient);
     if (micronutrient && typeof micronutrient === 'object' && 'maximum' in micronutrient) {
-      return micronutrient.maximum;
+      return micronutrient.maximum ?? null;
     }
     
     return null;
