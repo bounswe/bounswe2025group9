@@ -22,6 +22,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import ForumPost from '../../components/forum/ForumPost';
 import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
@@ -44,6 +45,7 @@ const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailNavigationProp>();
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const { posts, updatePost } = usePosts();
   const { user: currentUser } = useAuth();
   
@@ -356,12 +358,12 @@ const PostDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.post')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading post...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('forum.loadingPost')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -374,19 +376,19 @@ const PostDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Post Not Found</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.postNotFoundTitle')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.errorContainer}>
           <Icon name="alert-circle" size={64} color={theme.textSecondary} />
           <Text style={[styles.errorText, textStyles.heading4]}>
-            {error || 'Post not found'}
+            {error || t('forum.postNotFound')}
           </Text>
           <Text style={[styles.errorSubtext, textStyles.body]}>
-            This post may have been deleted or is no longer available.
+            {t('forum.postNotFoundDesc')}
           </Text>
           <Button
-            title="Go Back"
+            title={t('common.goBack')}
             onPress={() => navigation.goBack()}
             variant="primary"
             style={styles.errorButton}
@@ -408,7 +410,7 @@ const PostDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.post')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         
@@ -441,13 +443,13 @@ const PostDetailScreen: React.FC = () => {
           {loadingRecipe && (
             <Card style={styles.recipeCard}>
               <ActivityIndicator size="small" color={theme.primary} />
-              <Text style={[styles.loadingText, textStyles.body]}>Loading recipe details...</Text>
+              <Text style={[styles.loadingText, textStyles.body]}>{t('forum.loadingRecipeDetails')}</Text>
             </Card>
           )}
           
           {recipe && (
             <Card style={styles.recipeCard}>
-              <Text style={[styles.recipeTitle, textStyles.heading3]}>Recipe Details</Text>
+              <Text style={[styles.recipeTitle, textStyles.heading3]}>{t('forum.recipeDetails')}</Text>
               
               {/* Nutritional Summary */}
               {recipe.ingredients && recipe.ingredients.length > 0 && (
@@ -458,28 +460,28 @@ const PostDetailScreen: React.FC = () => {
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_calories)}
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.calories')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="weight-lifter" size={20} color="#3B82F6" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_protein)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.protein')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="water" size={20} color="#F59E0B" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_fat)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.fat')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="grain" size={20} color="#10B981" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_carbohydrates)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.carbs')}</Text>
                     </View>
                   </View>
                 </View>
@@ -488,7 +490,7 @@ const PostDetailScreen: React.FC = () => {
               {/* Ingredients */}
               {recipe.ingredients && recipe.ingredients.length > 0 && (
                 <>
-                  <Text style={[styles.sectionTitle, textStyles.heading4]}>Ingredients</Text>
+                  <Text style={[styles.sectionTitle, textStyles.heading4]}>{t('forum.ingredients')}</Text>
                   {recipe.ingredients.map((ingredient, index) => (
                     <View key={index} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant }]}>
                       <Text style={[styles.ingredientName, textStyles.body]}>
@@ -505,7 +507,7 @@ const PostDetailScreen: React.FC = () => {
               {/* Instructions */}
               {recipe.instructions && (
                 <>
-                  <Text style={[styles.sectionTitle, textStyles.heading4]}>Instructions</Text>
+                  <Text style={[styles.sectionTitle, textStyles.heading4]}>{t('forum.instructions')}</Text>
                   <Text style={[styles.instructions, textStyles.body]}>{recipe.instructions}</Text>
                 </>
               )}
@@ -515,14 +517,14 @@ const PostDetailScreen: React.FC = () => {
           {/* Comments Section */}
           <View style={styles.commentsSection}>
             <Text style={[styles.commentsTitle, textStyles.heading4]}>
-              Comments ({comments.length})
+              {t('forum.comments')} ({comments.length})
             </Text>
             
             {comments.map(renderComment)}
             
             {comments.length === 0 && (
               <Text style={[styles.noCommentsText, textStyles.body]}>
-                No comments yet. Be the first to comment!
+                {t('forum.noComments')} {t('forum.beFirstComment')}
               </Text>
             )}
           </View>
@@ -531,7 +533,7 @@ const PostDetailScreen: React.FC = () => {
         {/* Comment Input */}
         <View style={[styles.commentInputContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
           <TextInput
-            placeholder="Add a comment..."
+            placeholder={t('forum.addComment')}
             value={newComment}
             onChangeText={setNewComment}
             multiline
@@ -539,7 +541,7 @@ const PostDetailScreen: React.FC = () => {
             editable={!submittingComment}
           />
           <Button
-            title="Submit"
+            title={t('common.submit')}
             onPress={handleAddComment}
             variant="primary"
             size="small"

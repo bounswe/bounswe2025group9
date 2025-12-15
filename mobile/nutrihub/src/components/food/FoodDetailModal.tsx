@@ -20,6 +20,7 @@ import { BlurView } from 'expo-blur';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BORDER_RADIUS, SPACING, getValidIconName, SHADOWS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Card from '../common/Card';
 import { FoodItem } from '../../types/types';
 import { getPriceCategoryText, getPriceCategoryColor } from '../../utils/priceUtils';
@@ -56,6 +57,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
   testID,
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   
   if (!food) return null;
   
@@ -246,13 +248,13 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
               
               {/* Basic Information */}
               <Card style={styles.infoCard}>
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Basic Information</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.basicInformation')}</Text>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Category:</Text>
+                  <Text style={[styles.infoLabel, textStyles.bodySecondary]}>{t('food.category')}:</Text>
                   <Text style={[styles.infoValue, textStyles.body]}>{food.category}</Text>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Nutrition Score:</Text>
+                  <Text style={[styles.infoLabel, textStyles.bodySecondary]}>{t('food.nutritionScore')}:</Text>
                   <View style={[
                     styles.nutritionScoreBadge, 
                     { backgroundColor: getNutritionScoreBgColor(food.nutritionScore) }
@@ -261,17 +263,17 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                       styles.nutritionScoreText, 
                       { color: getNutritionScoreColor(food.nutritionScore) }
                     ]}>
-                      {food.nutritionScore?.toFixed(1) || 'N/A'}
+                      {food.nutritionScore?.toFixed(1) || t('common.na')}
                     </Text>
                   </View>
                 </View>
                 <View style={styles.infoRow}>
-                  <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Per Unit:</Text>
-                  <Text style={[styles.infoValue, textStyles.body]}>100g</Text>
+                  <Text style={[styles.infoLabel, textStyles.bodySecondary]}>{t('food.perUnit')}:</Text>
+                  <Text style={[styles.infoValue, textStyles.body]}>{t('food.per100gUnit')}</Text>
                 </View>
                 {food.priceCategory && (
                   <View style={styles.infoRow}>
-                    <Text style={[styles.infoLabel, textStyles.bodySecondary]}>Price Category:</Text>
+                    <Text style={[styles.infoLabel, textStyles.bodySecondary]}>{t('food.priceCategory')}:</Text>
                     {renderPriceCategoryBadge()}
                   </View>
                 )}
@@ -281,7 +283,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
               {food.macronutrients && (
                 <Card style={styles.nutritionCard}>
                   <Text style={[styles.sectionTitle, textStyles.subtitle]}>
-                    Nutrition Information (per 100g)
+                    {t('food.nutritionInformationPer100g')}
                   </Text>
                   
                   {/* Macronutrients */}
@@ -289,10 +291,10 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                     <View style={styles.macroItem}>
                       <View style={styles.macroHeader}>
                         <Icon name="fire" size={20} color={theme.primary} />
-                        <Text style={[styles.macroLabel, textStyles.body]}>Calories</Text>
+                        <Text style={[styles.macroLabel, textStyles.body]}>{t('food.calories')}</Text>
                       </View>
                       <Text style={[styles.macroValue, textStyles.heading4]}>
-                        {food.macronutrients.calories} kcal
+                        {food.macronutrients.calories} {t('metrics.kcal')}
                       </Text>
                     </View>
                     
@@ -300,7 +302,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                       <View style={[styles.macroItem, styles.macroItemHalf]}>
                         <View style={styles.macroHeader}>
                           <Icon name="food-steak" size={20} color={theme.accent} />
-                          <Text style={[styles.macroLabel, textStyles.body]}>Protein</Text>
+                          <Text style={[styles.macroLabel, textStyles.body]}>{t('food.protein')}</Text>
                         </View>
                         <Text style={[styles.macroValue, textStyles.subtitle]}>
                           {food.macronutrients.protein}g
@@ -310,7 +312,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                       <View style={[styles.macroItem, styles.macroItemHalf]}>
                         <View style={styles.macroHeader}>
                           <Icon name="bread-slice" size={20} color={theme.warning} />
-                          <Text style={[styles.macroLabel, textStyles.body]}>Carbs</Text>
+                          <Text style={[styles.macroLabel, textStyles.body]}>{t('food.carbs')}</Text>
                         </View>
                         <Text style={[styles.macroValue, textStyles.subtitle]}>
                           {food.macronutrients.carbohydrates}g
@@ -322,7 +324,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                       <View style={[styles.macroItem, styles.macroItemHalf]}>
                         <View style={styles.macroHeader}>
                           <Icon name="oil" size={20} color="#FFA000" />
-                          <Text style={[styles.macroLabel, textStyles.body]}>Fat</Text>
+                          <Text style={[styles.macroLabel, textStyles.body]}>{t('food.fat')}</Text>
                         </View>
                         <Text style={[styles.macroValue, textStyles.subtitle]}>
                           {food.macronutrients.fat}g
@@ -333,7 +335,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                         <View style={[styles.macroItem, styles.macroItemHalf]}>
                           <View style={styles.macroHeader}>
                             <Icon name="leaf" size={20} color={theme.success} />
-                            <Text style={[styles.macroLabel, textStyles.body]}>Fiber</Text>
+                            <Text style={[styles.macroLabel, textStyles.body]}>{t('food.fiber')}</Text>
                           </View>
                           <Text style={[styles.macroValue, textStyles.subtitle]}>
                             {food.macronutrients.fiber}g
@@ -351,7 +353,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                   <View style={styles.micronutrientsHeader}>
                     <Icon name="pill" size={20} color={theme.primary} />
                     <Text style={[styles.sectionTitle, textStyles.subtitle, { marginBottom: 0, marginLeft: SPACING.xs }]}>
-                      Micronutrients (per 100g)
+                      {t('food.micronutrientsPer100g')}
                     </Text>
                   </View>
                   <View style={styles.micronutrientsContainer}>
@@ -383,7 +385,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
               {/* Dietary Tags */}
               {food.dietaryOptions && food.dietaryOptions.length > 0 && (
                 <Card style={styles.tagsCard}>
-                  <Text style={[styles.sectionTitle, textStyles.subtitle]}>Dietary Tags</Text>
+                  <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.dietaryTags')}</Text>
                   <View style={styles.tagsContainer}>
                     {food.dietaryOptions.map((tag, index) => renderDietaryTag(tag, index))}
                   </View>
@@ -397,7 +399,7 @@ const FoodDetailModal: React.FC<FoodDetailModalProps> = ({
                     <View style={styles.allergenHeader}>
                       <Icon name="alert-circle" size={20} color={theme.error} />
                       <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.error, marginBottom: 0, marginLeft: SPACING.xs }]}>
-                        Allergen Warnings
+                        {t('allergens.warningsTitle')}
                       </Text>
                     </View>
                     <View style={styles.allergensContainer}>
