@@ -1,6 +1,7 @@
 import { Info } from '@phosphor-icons/react';
 import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NutritionScoreProps {
   score: number;
@@ -19,6 +20,7 @@ interface NutritionScoreProps {
 }
 
 const NutritionScore = ({ score, showInfo = true, size = 'md', foodDetails }: NutritionScoreProps) => {
+  const { t } = useLanguage();
   const [showTooltip, setShowTooltip] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
@@ -279,43 +281,43 @@ const NutritionScore = ({ score, showInfo = true, size = 'md', foodDetails }: Nu
                 <div className="space-y-2 text-[var(--color-text-secondary)]">
                   <div className="bg-[var(--color-bg-secondary)] p-2 rounded">
                     <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-[var(--color-text-primary)] text-xs">1. Protein (30%)</p>
-                      <p className="font-bold text-[var(--color-accent)] text-xs">+{breakdown.proteinScore.toFixed(2)} pts</p>
+                      <p className="font-medium text-[var(--color-text-primary)] text-xs">{t('food.nutritionScoreProtein30')}</p>
+                      <p className="font-bold text-[var(--color-accent)] text-xs">+{breakdown.proteinScore.toFixed(2)} {t('food.pts')}</p>
                     </div>
-                    <p className="text-xs leading-tight">{breakdown.protein.toFixed(1)}g per 100g</p>
+                    <p className="text-xs leading-tight">{breakdown.protein.toFixed(1)}g {t('food.per100g')}</p>
                     <p className="text-xs leading-tight text-[var(--color-text-tertiary)] mt-0.5">
-                      Range: 0-30g per 100g (30g = max 3 pts)
+                      {t('food.nutritionScoreProteinRange')}
                     </p>
                   </div>
 
                   <div className="bg-[var(--color-bg-secondary)] p-2 rounded">
                     <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-[var(--color-text-primary)] text-xs">2. Carb Quality (30%)</p>
-                      <p className="font-bold text-[var(--color-accent)] text-xs">+{breakdown.carbQualityScore.toFixed(2)} pts</p>
+                      <p className="font-medium text-[var(--color-text-primary)] text-xs">{t('food.nutritionScoreCarbQuality30')}</p>
+                      <p className="font-bold text-[var(--color-accent)] text-xs">+{breakdown.carbQualityScore.toFixed(2)} {t('food.pts')}</p>
                     </div>
-                    <p className="text-xs leading-tight">Based on food category</p>
+                    <p className="text-xs leading-tight">{t('food.basedOnFoodCategory')}</p>
                     <p className="text-xs leading-tight text-[var(--color-text-tertiary)] mt-0.5">
-                      Veggies/fruits (3), whole grains (2.5), sweets (0.5)
+                      {t('food.carbQualityExamples')}
                     </p>
                   </div>
 
                   <div className="bg-[var(--color-bg-secondary)] p-2 rounded">
                     <div className="flex justify-between items-center mb-1">
-                      <p className="font-medium text-[var(--color-text-primary)] text-xs">3. Balance (40%)</p>
-                      <p className="font-bold text-[var(--color-accent)] text-xs">+{breakdown.nutrientBalanceScore.toFixed(2)} pts</p>
+                      <p className="font-medium text-[var(--color-text-primary)] text-xs">{t('food.nutritionScoreBalance40')}</p>
+                      <p className="font-bold text-[var(--color-accent)] text-xs">+{breakdown.nutrientBalanceScore.toFixed(2)} {t('food.pts')}</p>
                     </div>
                     <p className="text-xs leading-tight">
-                      Current: P {breakdown.totalMacros > 0 ? ((breakdown.protein * 4 / breakdown.totalMacros) * 100).toFixed(0) : 0}%, C {breakdown.totalMacros > 0 ? ((breakdown.carbs * 4 / breakdown.totalMacros) * 100).toFixed(0) : 0}%, F {breakdown.totalMacros > 0 ? ((breakdown.fat * 9 / breakdown.totalMacros) * 100).toFixed(0) : 0}%
+                      {t('food.current')}: P {breakdown.totalMacros > 0 ? ((breakdown.protein * 4 / breakdown.totalMacros) * 100).toFixed(0) : 0}%, C {breakdown.totalMacros > 0 ? ((breakdown.carbs * 4 / breakdown.totalMacros) * 100).toFixed(0) : 0}%, F {breakdown.totalMacros > 0 ? ((breakdown.fat * 9 / breakdown.totalMacros) * 100).toFixed(0) : 0}%
                     </p>
                     <p className="text-xs leading-tight text-[var(--color-text-tertiary)] mt-0.5">
-                      Ideal: Protein 10-35%, Carbs 45-65%, Fat 20-35%
+                      {t('food.idealMacroDistribution')}
                     </p>
                   </div>
                 </div>
 
                 <div className="mt-2 pt-2 border-t border-[var(--color-border)]">
                   <div className="flex justify-between items-center">
-                    <p className="font-bold text-[var(--color-text-primary)] text-xs">Total Score:</p>
+                    <p className="font-bold text-[var(--color-text-primary)] text-xs">{t('food.totalScore')}:</p>
                     <p className="font-bold text-[var(--color-accent)] text-sm">{clampedScore.toFixed(2)}/10.00</p>
                   </div>
                   <p className="text-xs text-[var(--color-text-tertiary)] mt-1 text-center">
@@ -326,24 +328,24 @@ const NutritionScore = ({ score, showInfo = true, size = 'md', foodDetails }: Nu
             ) : (
               <>
                 <p className="text-[var(--color-text-secondary)] mb-2 text-xs leading-tight">
-                  Score (0.00-10.00) from three components:
+                  {t('food.scoreFromThreeComponents')}
                 </p>
                 <div className="space-y-1.5 text-[var(--color-text-secondary)]">
                   <div>
-                    <p className="font-medium text-[var(--color-text-primary)] text-xs">1. Protein (30%)</p>
-                    <p className="text-xs mt-0.5 leading-tight">0-30g per 100g (30g = 3 pts)</p>
+                    <p className="font-medium text-[var(--color-text-primary)] text-xs">{t('food.nutritionScoreProtein30')}</p>
+                    <p className="text-xs mt-0.5 leading-tight">{t('food.proteinRange')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-[var(--color-text-primary)] text-xs">2. Carb Quality (30%)</p>
-                    <p className="text-xs mt-0.5 leading-tight">Veggies/fruits (3), whole grains (2.5), sweets (0.5)</p>
+                    <p className="font-medium text-[var(--color-text-primary)] text-xs">{t('food.nutritionScoreCarbQuality30')}</p>
+                    <p className="text-xs mt-0.5 leading-tight">{t('food.carbQualityExamples')}</p>
                   </div>
                   <div>
-                    <p className="font-medium text-[var(--color-text-primary)] text-xs">3. Balance (40%)</p>
-                    <p className="text-xs mt-0.5 leading-tight">Macro distribution: Protein 10-35%, Carbs 45-65%, Fat 20-35%</p>
+                    <p className="font-medium text-[var(--color-text-primary)] text-xs">{t('food.nutritionScoreBalance40')}</p>
+                    <p className="text-xs mt-0.5 leading-tight">{t('food.macroDistribution')}</p>
                   </div>
                 </div>
                 <p className="text-[var(--color-text-tertiary)] text-xs mt-2 italic leading-tight">
-                  Final = Sum of all three (max 10.00)
+                  {t('food.finalScoreCalculation')}
                 </p>
               </>
             )}

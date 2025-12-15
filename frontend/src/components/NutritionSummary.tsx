@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChartLineUp, Flame, TrendUp, Cookie, Drop } from '@phosphor-icons/react';
 import { apiClient } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NutritionSummaryProps {
   compact?: boolean;
@@ -10,6 +11,7 @@ interface NutritionSummaryProps {
 }
 
 const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionSummaryProps) => {
+  const { t } = useLanguage();
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,30 +80,30 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
       return (
         <div className="nh-card flex flex-col items-center justify-center p-6 text-center">
           <ChartLineUp size={32} className="text-primary mb-2" weight="fill" />
-          <p className="text-sm font-medium mb-3">Setup Nutrition</p>
+          <p className="text-sm font-medium mb-3">{t('nutrition.setupNutrition')}</p>
           {onNavigateToNutrition ? (
             <button 
               onClick={onNavigateToNutrition}
               className="text-xs text-primary hover:underline"
             >
-              Set Metrics →
+              {t('nutrition.setMetrics')} →
             </button>
           ) : (
-            <Link to="/profile?tab=nutrition" className="text-xs text-primary hover:underline">Set Metrics →</Link>
+            <Link to="/profile?tab=nutrition" className="text-xs text-primary hover:underline">{t('nutrition.setMetrics')} →</Link>
           )}
         </div>
       );
     }
     return (
       <div className="nh-card text-center p-8">
-        <h3 className="nh-subtitle mb-4">Nutrition Summary</h3>
-        <p className="nh-text mb-4 text-sm">Set up your metrics to see your daily nutrition summary.</p>
+        <h3 className="nh-subtitle mb-4">{t('nutrition.nutritionSummary')}</h3>
+        <p className="nh-text mb-4 text-sm">{t('nutrition.setupMetricsToSeeSummary')}</p>
         {onNavigateToNutrition ? (
           <button 
             onClick={onNavigateToNutrition}
             className="nh-button nh-button-primary text-sm"
           >
-            Set Up Metrics
+            {t('nutrition.setUpMetrics')}
           </button>
         ) : (
           <Link to="/profile?tab=nutrition" className="nh-button nh-button-primary text-sm">Set Up Metrics</Link>
@@ -247,7 +249,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
   // Full version (not compact)
   return (
     <div className="nh-card">
-      <h3 className="nh-subtitle mb-6">Today's Nutrition Summary</h3>
+      <h3 className="nh-subtitle mb-6">{t('nutrition.todaysNutritionSummary')}</h3>
 
       {/* Macronutrients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
