@@ -637,7 +637,22 @@
     "planSettings": "Plan Settings",
     "planDuration": "Plan Duration",
     "saveMealPlan": "Save Meal Plan",
-    "logMealPlan": "Log Meal Plan"
+    "logMealPlan": "Log Meal Plan",
+    "cannotSaveMealPlanNoFoods": "Cannot save meal plan: No valid foods found. Please replace preset foods with foods from the database by clicking the edit button.",
+    "notePresetFoodsNotFound": "Note: {{count}} preset food(s) not found in database. Saving meal plan with {{mealCount}} valid meal(s).",
+    "mealPlanSavedSuccessfully": "Meal plan saved successfully with optimized serving sizes to meet your nutrition targets!",
+    "cannotSavePresetFoodsDontExist": "Cannot save: {{count}} preset food(s) don't exist in the database. Please click the edit button (pencil icon) to replace them with foods from the database.",
+    "failedToSaveMealPlanPresetFoods": "Failed to save meal plan. Some preset foods may not exist in the database. Please replace them with foods from the database.",
+    "failedToSaveMealPlanTryAgain": "Failed to save meal plan. Please try again or replace preset foods with foods from the database.",
+    "mealPlanLoggedSuccessfully": "Meals logged to nutrition tracking successfully!",
+    "failedToLogMealPlan": "Failed to log meals. Please try again.",
+    "failedToSaveAndLogMeals": "Failed to save and log meals. Please try again.",
+    "exitWhatIfModeTooltip": "Exit What If mode",
+    "enterWhatIfModeTooltip": "Enter What If mode to plan meals",
+    "exitWhatIf": "Exit What If",
+    "whatIf": "What If?",
+    "micronutrients": "Micronutrients",
+    "over": "over"
   },
   "language": {
     "title": "Language",

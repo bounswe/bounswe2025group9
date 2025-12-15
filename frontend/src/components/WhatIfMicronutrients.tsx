@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { CaretDown, CaretRight } from '@phosphor-icons/react';
 import { isVitamin, isMineral, extractUnit, extractName } from '../types/whatif';
 import { NutritionTargets } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WhatIfMicronutrientsProps {
   currentMicronutrients: { [key: string]: number };
@@ -14,6 +15,7 @@ const WhatIfMicronutrients = ({
   plannedMicronutrients,
   targets,
 }: WhatIfMicronutrientsProps) => {
+  const { t } = useLanguage();
   const [showVitamins, setShowVitamins] = useState(false);
   const [showMinerals, setShowMinerals] = useState(false);
 
@@ -129,7 +131,7 @@ const WhatIfMicronutrients = ({
         
         {isOverTarget && (
           <p className="text-xs mt-0.5 text-amber-500">
-            {(total - targetValue).toFixed(1)}{unit ? ` ${unit}` : ''} over
+            {(total - targetValue).toFixed(1)}{unit ? ` ${unit}` : ''} {t('profile.over')}
           </p>
         )}
       </div>
@@ -142,7 +144,7 @@ const WhatIfMicronutrients = ({
       style={{ borderColor: 'var(--whatif-border)' }}
     >
       <p className="text-sm font-medium mb-3" style={{ color: 'var(--whatif-text)' }}>
-        Micronutrients
+        {t('profile.micronutrients')}
       </p>
       
       {/* Vitamins Section */}
@@ -153,7 +155,7 @@ const WhatIfMicronutrients = ({
             className="w-full flex items-center justify-between p-2 rounded transition-colors"
             style={{ backgroundColor: 'var(--dietary-option-bg)' }}
           >
-            <span className="text-xs font-semibold">Vitamins</span>
+            <span className="text-xs font-semibold">{t('profile.vitamins')}</span>
             {showVitamins ? (
               <CaretDown size={14} style={{ color: 'var(--whatif-text)' }} />
             ) : (
@@ -176,7 +178,7 @@ const WhatIfMicronutrients = ({
             className="w-full flex items-center justify-between p-2 rounded transition-colors"
             style={{ backgroundColor: 'var(--dietary-option-bg)' }}
           >
-            <span className="text-xs font-semibold">Minerals</span>
+            <span className="text-xs font-semibold">{t('profile.minerals')}</span>
             {showMinerals ? (
               <CaretDown size={14} style={{ color: 'var(--whatif-text)' }} />
             ) : (

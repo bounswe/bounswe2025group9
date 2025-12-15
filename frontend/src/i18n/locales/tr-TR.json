@@ -635,7 +635,22 @@
     "planSettings": "Plan Ayarları",
     "planDuration": "Plan Süresi",
     "saveMealPlan": "Öğün Planını Kaydet",
-    "logMealPlan": "Öğün Planını Kaydet"
+    "logMealPlan": "Öğün Planını Kaydet",
+    "cannotSaveMealPlanNoFoods": "Öğün planı kaydedilemiyor: Geçerli yiyecek bulunamadı. Lütfen önceden ayarlanmış yiyecekleri düzenle butonuna tıklayarak veritabanındaki yiyeceklerle değiştirin.",
+    "notePresetFoodsNotFound": "Not: Veritabanında {{count}} önceden ayarlanmış yiyecek bulunamadı. {{mealCount}} geçerli öğün ile öğün planı kaydediliyor.",
+    "mealPlanSavedSuccessfully": "Beslenme hedeflerinize ulaşmak için optimize edilmiş porsiyon boyutlarıyla öğün planı başarıyla kaydedildi!",
+    "cannotSavePresetFoodsDontExist": "Kaydedilemiyor: Veritabanında {{count}} önceden ayarlanmış yiyecek yok. Lütfen bunları veritabanındaki yiyeceklerle değiştirmek için düzenle butonuna (kalem simgesi) tıklayın.",
+    "failedToSaveMealPlanPresetFoods": "Öğün planı kaydedilemedi. Bazı önceden ayarlanmış yiyecekler veritabanında bulunmayabilir. Lütfen bunları veritabanındaki yiyeceklerle değiştirin.",
+    "failedToSaveMealPlanTryAgain": "Öğün planı kaydedilemedi. Lütfen tekrar deneyin veya önceden ayarlanmış yiyecekleri veritabanındaki yiyeceklerle değiştirin.",
+    "mealPlanLoggedSuccessfully": "Öğünler beslenme takibine başarıyla kaydedildi!",
+    "failedToLogMealPlan": "Öğünler kaydedilemedi. Lütfen tekrar deneyin.",
+    "failedToSaveAndLogMeals": "Öğünler kaydedilemedi ve günlüğe yazılamadı. Lütfen tekrar deneyin.",
+    "exitWhatIfModeTooltip": "Ne Olur modundan çık",
+    "enterWhatIfModeTooltip": "Öğün planlamak için Ne Olur moduna gir",
+    "exitWhatIf": "Ne Olur'dan Çık",
+    "whatIf": "Ne Olur?",
+    "micronutrients": "Mikrobesinler",
+    "over": "üzerinde"
   },
   "language": {
     "title": "Dil",

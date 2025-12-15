@@ -5,6 +5,7 @@ import FoodSelector from '../../components/FoodSelector';
 import { PencilSimple, Funnel, CalendarBlank, Hamburger, ForkKnife } from '@phosphor-icons/react';
 import {apiClient} from '../../lib/apiClient';
 import { Brocolli, Goat, Pork, ChickenBreast, Beef, RiceNoodles, Anchovies, Tilapia, RiceCakes, Egg, MultigrainBread, Oatmeal, Tofu, LentilSoup, Quinoa, GreekYogurt, CottageCheese } from './MockFoods';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface weeklyMealPlan {
     [key: string]: [Food, Food, Food];
@@ -60,6 +61,7 @@ const MealPlanner = ({
   onSaveRef,
   onLogRef
 }: MealPlannerProps = {}) => {
+    const { t } = useLanguage();
     const [internalDietaryPreference, setInternalDietaryPreference] = useState('high-protein');
     const [internalPlanDuration, setInternalPlanDuration] = useState<'weekly' | 'daily'>('weekly');
     
@@ -273,7 +275,7 @@ const MealPlanner = ({
         
         // Check if we have any valid meals
         if (meals.length === 0) {
-            setErrorMessage('Cannot save meal plan: No valid foods found. Please replace preset foods with foods from the database by clicking the edit button.');
+            setErrorMessage(t('profile.cannotSaveMealPlanNoFoods'));
             setSuccessMessage('');
             setTimeout(() => setErrorMessage(''), 7000);
             return;
@@ -282,7 +284,7 @@ const MealPlanner = ({
         // Show warning if some foods were filtered out
         if (invalidFoods.length > 0) {
             console.warn('Some foods were filtered out:', invalidFoods);
-            setErrorMessage(`Note: ${invalidFoods.length} preset food(s) not found in database. Saving meal plan with ${meals.length} valid meal(s).`);
+            setErrorMessage(t('profile.notePresetFoodsNotFound', { count: invalidFoods.length, mealCount: meals.length }));
             setTimeout(() => setErrorMessage(''), 5000);
         }
         
@@ -296,7 +298,7 @@ const MealPlanner = ({
             console.log('Meal plan created:', newPlan);
             setSavedMealPlanId(newPlan.id);
             await apiClient.setCurrentMealPlan(newPlan.id);
-            setSuccessMessage('Meal plan saved successfully with optimized serving sizes to meet your nutrition targets!');
+            setSuccessMessage(t('profile.mealPlanSavedSuccessfully'));
             setErrorMessage('');
             setTimeout(() => setSuccessMessage(''), 5000);
         } catch (err: any) {
@@ -309,12 +311,12 @@ const MealPlanner = ({
                 const invalidCount = mealErrors.filter((mealError: any) => mealError?.food_id).length;
                 
                 if (invalidCount > 0) {
-                    setErrorMessage(`Cannot save: ${invalidCount} preset food(s) don't exist in the database. Please click the edit button (pencil icon) to replace them with foods from the database.`);
+                    setErrorMessage(t('profile.cannotSavePresetFoodsDontExist', { count: invalidCount }));
                 } else {
-                    setErrorMessage('Failed to save meal plan. Some preset foods may not exist in the database. Please replace them with foods from the database.');
+                    setErrorMessage(t('profile.failedToSaveMealPlanPresetFoods'));
                 }
             } else {
-                setErrorMessage('Failed to save meal plan. Please try again or replace preset foods with foods from the database.');
+                setErrorMessage(t('profile.failedToSaveMealPlanTryAgain'));
             }
             setTimeout(() => setErrorMessage(''), 7000);
         }
@@ -324,16 +326,16 @@ const MealPlanner = ({
         setIsLogging(true);
         try {
             await apiClient.logMealPlanToNutrition(planId);
-            setSuccessMessage('Meals logged to nutrition tracking successfully!');
+            setSuccessMessage(t('profile.mealPlanLoggedSuccessfully'));
             setTimeout(() => setSuccessMessage(''), 3000);
         } catch (err) {
             console.error('Error logging meals to nutrition:', err);
-            setSuccessMessage('Failed to log meals. Please try again.');
+            setSuccessMessage(t('profile.failedToLogMealPlan'));
             setTimeout(() => setSuccessMessage(''), 3000);
         } finally {
             setIsLogging(false);
         }
-    }, [dietaryPreference, localMealPlans, savedMealPlanId]);
+    }, [dietaryPreference, localMealPlans, savedMealPlanId, t]);
 
     const handleLogToNutrition = useCallback(async () => {
         if (!savedMealPlanId) {
@@ -378,7 +380,7 @@ const MealPlanner = ({
                 await logMealPlan(newPlan.id);
             } catch (err) {
                 console.error('Error saving and logging meal plan:', err);
-                setSuccessMessage('Failed to save and log meals. Please try again.');
+                setSuccessMessage(t('profile.failedToSaveAndLogMeals'));
                 setTimeout(() => setSuccessMessage(''), 3000);
             }
             return;

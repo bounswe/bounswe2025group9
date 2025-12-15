@@ -1,4 +1,5 @@
 import { Lightning, LightningSlash } from '@phosphor-icons/react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WhatIfModeToggleProps {
   isActive: boolean;
@@ -7,6 +8,7 @@ interface WhatIfModeToggleProps {
 }
 
 const WhatIfModeToggle = ({ isActive, onToggle, disabled = false }: WhatIfModeToggleProps) => {
+  const { t } = useLanguage();
   return (
     <button
       onClick={onToggle}
@@ -27,17 +29,17 @@ const WhatIfModeToggle = ({ isActive, onToggle, disabled = false }: WhatIfModeTo
           ? '2px solid var(--whatif-border, #8b5cf6)' 
           : '2px solid transparent',
       }}
-      title={isActive ? 'Exit What If mode' : 'Enter What If mode to plan meals'}
+      title={isActive ? t('profile.exitWhatIfModeTooltip') : t('profile.enterWhatIfModeTooltip')}
     >
       {isActive ? (
         <>
           <LightningSlash size={18} weight="fill" />
-          <span>Exit What If</span>
+          <span>{t('profile.exitWhatIf')}</span>
         </>
       ) : (
         <>
           <Lightning size={18} weight="fill" />
-          <span>What If?</span>
+          <span>{t('profile.whatIf')}</span>
         </>
       )}
     </button>
