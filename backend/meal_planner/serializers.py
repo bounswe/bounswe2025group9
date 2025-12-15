@@ -244,7 +244,6 @@ class PlannedFoodEntrySerializer(serializers.ModelSerializer):
 class DailyNutritionLogSerializer(serializers.ModelSerializer):
     """Serializer for daily nutrition log with nested entries and target comparison."""
     entries = FoodLogEntrySerializer(many=True, read_only=True)
-    planned_entries = PlannedFoodEntrySerializer(many=True, read_only=True)
     targets = serializers.SerializerMethodField(read_only=True)
     adherence = serializers.SerializerMethodField(read_only=True)
     hydration_actual = serializers.SerializerMethodField(read_only=True)

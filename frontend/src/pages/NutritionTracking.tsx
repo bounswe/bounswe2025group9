@@ -1,88 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CaretDown, CaretRight, Info, Plus, Trash, CalendarPlus, ForkKnife, Coffee, Moon, Cookie, X, Hamburger, FloppyDiskBack } from '@phosphor-icons/react'
-import { Dialog } from '@headlessui/react'
+import { CaretDown, CaretRight, Info, ForkKnife } from '@phosphor-icons/react'
 import NutritionTracking from '../components/NutritionTracking'
-import FoodSelector from '../components/FoodSelector'
-import { apiClient, Food } from '../lib/apiClient'
-import { DailyNutritionLog, NutritionTargets, SavedMealPlan } from '../types/nutrition'
+import { apiClient } from '../lib/apiClient'
+import { DailyNutritionLog, NutritionTargets } from '../types/nutrition'
 
 const NutritionTrackingPage = () => {
   const [nutritionData, setNutritionData] = useState<{
     todayLog: DailyNutritionLog | null;
     targets: NutritionTargets | null;
   }>({ todayLog: null, targets: null })
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [showVitamins, setShowVitamins] = useState(false)
   const [showMinerals, setShowMinerals] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [showHydrationInfo, setShowHydrationInfo] = useState(false)
   
-  // Meal Plan Manager state
-  const [savedMealPlansExpanded, setSavedMealPlansExpanded] = useState(false)
-  const [savedMealPlans, setSavedMealPlans] = useState<SavedMealPlan[]>([])
-  const [mealPlansLoading, setMealPlansLoading] = useState(false)
-  const [showCreateMealPlanDialog, setShowCreateMealPlanDialog] = useState(false)
-  const [showMealPlanDetailDialog, setShowMealPlanDetailDialog] = useState(false)
-  const [selectedMealPlan, setSelectedMealPlan] = useState<SavedMealPlan | null>(null)
-  const [newMealPlanName, setNewMealPlanName] = useState('')
-  
-  // For adding foods to meal plan
-  const [showAddFoodToMealPlan, setShowAddFoodToMealPlan] = useState(false)
-  const [addingFoodMealType, setAddingFoodMealType] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast')
-  // Default all meal sections to collapsed
-  const [collapsedMealSections, setCollapsedMealSections] = useState<{ [key: string]: boolean }>({
-    'create-breakfast': true,
-    'create-lunch': true,
-    'create-dinner': true,
-    'create-snack': true,
-    'detail-breakfast': true,
-    'detail-lunch': true,
-    'detail-dinner': true,
-    'detail-snack': true
-  })
-  
-  const toggleMealSection = (mealType: string) => {
-    setCollapsedMealSections(prev => ({
-      ...prev,
-      [mealType]: !prev[mealType]
-    }))
-  }
-  const [showServingDialog, setShowServingDialog] = useState(false)
-  const [selectedFood, setSelectedFood] = useState<Food | null>(null)
-  const [servingSize, setServingSize] = useState<number | string>(1)
-  const [servingUnit, setServingUnit] = useState('serving')
-  const [pendingEntries, setPendingEntries] = useState<Array<{
-    food_id: number;
-    food_name: string;
-    image_url: string;
-    food_serving_size: number;
-    serving_size: number;
-    serving_unit: string;
-    meal_type: string;
-    calories: number;
-    protein: number;
-    carbohydrates: number;
-    fat: number;
-    source_entry_id?: string; // Track which log/plan entry this came from
-  }>>([])
-  
-  // Fetch saved meal plans
-  const fetchSavedMealPlans = useCallback(async () => {
-    setMealPlansLoading(true)
-    try {
-      const response = await apiClient.getSavedMealPlans()
-      setSavedMealPlans(response.results || [])
-    } catch (error) {
-      console.error('Error fetching saved meal plans:', error)
-    } finally {
-      setMealPlansLoading(false)
-    }
-  }, [])
-  
-  useEffect(() => {
-    fetchSavedMealPlans()
-  }, [fetchSavedMealPlans])
-
   // Helper function to format date as YYYY-MM-DD in local timezone
   const formatDateString = (date: Date): string => {
     const year = date.getFullYear();
@@ -182,169 +113,21 @@ const NutritionTrackingPage = () => {
     <div className="w-full py-12">
       <div className="nh-container">
         <div className="flex flex-col md:flex-row gap-6">
-          {/* Left sidebar - Meal Planner */}
+          {/* Left sidebar - Tips */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">
-              {/* Meal Planner */}
               <div className="nh-card">
-                {/* Header */}
-                <div 
-                  className="flex items-center gap-3 pb-3 mb-3 border-b"
-                  style={{ borderColor: 'var(--forum-search-border)' }}
-                >
-                  <div 
-                    className="w-10 h-10 rounded-xl flex items-center justify-center"
-                    style={{ backgroundColor: 'var(--color-primary)', color: 'white' }}
-                  >
-                    <ForkKnife size={20} weight="fill" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold">Meal Planner</h3>
-                    <p className="text-xs opacity-60">Save & reuse meals</p>
-                  </div>
-                </div>
-                
-                {/* Saved Meal Plans - Collapsible Section */}
-                <div>
-                  <button
-                    onClick={() => setSavedMealPlansExpanded(!savedMealPlansExpanded)}
-                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all hover:scale-[1.02]"
-                    style={{ 
-                      backgroundColor: savedMealPlansExpanded ? 'var(--color-primary)' : 'var(--dietary-option-bg)',
-                      color: savedMealPlansExpanded ? 'white' : 'inherit'
-                    }}
-                  >
-                    <span className="text-sm font-semibold flex items-center gap-2">
-                      <FloppyDiskBack size={16} weight="fill" style={{ opacity: savedMealPlansExpanded ? 1 : 0.7 }} />
-                      Saved Plans
-                      <span 
-                        className="px-2 py-0.5 rounded-full text-xs font-bold"
-                        style={{ 
-                          backgroundColor: savedMealPlansExpanded ? 'rgba(255,255,255,0.2)' : 'var(--color-primary)',
-                          color: savedMealPlansExpanded ? 'white' : 'white'
-                        }}
-                      >
-                        {savedMealPlans.length}
-                      </span>
-                    </span>
-                    {savedMealPlansExpanded ? (
-                      <CaretDown size={16} weight="bold" />
-                    ) : (
-                      <CaretRight size={16} weight="bold" />
-                    )}
-                  </button>
-
-                  {savedMealPlansExpanded && (
-                    <div className="mt-2">
-                      {mealPlansLoading ? (
-                        <div className="space-y-2">
-                          {[1, 2].map((i) => (
-                            <div key={i} className="animate-pulse p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                              <div className="h-4 w-3/4 rounded" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}></div>
-                              <div className="h-3 w-1/2 rounded mt-1" style={{ backgroundColor: 'var(--color-bg-tertiary)' }}></div>
-                            </div>
-                          ))}
-                        </div>
-                      ) : savedMealPlans.length === 0 ? (
-                        <div 
-                          className="text-center py-4 px-3 rounded-lg"
-                          style={{ backgroundColor: 'var(--dietary-option-bg)' }}
-                        >
-                          <p className="text-xs opacity-50 mb-1">No saved meal plans</p>
-                          <p className="text-xs opacity-40">Create one below</p>
-                        </div>
-                      ) : (
-                        <div className="space-y-2 max-h-[40vh] overflow-y-auto">
-                          {savedMealPlans.map((plan) => (
-                            <button
-                              key={plan.id}
-                              onClick={async () => {
-                                try {
-                                  const fullPlan = await apiClient.getSavedMealPlan(plan.id)
-                                  setSelectedMealPlan(fullPlan)
-                                  setShowMealPlanDetailDialog(true)
-                                } catch (error) {
-                                  console.error('Error fetching meal plan details:', error)
-                                }
-                              }}
-                              className="w-full p-3 rounded-lg text-left transition-all"
-                              style={{ backgroundColor: 'var(--dietary-option-bg)' }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.backgroundColor = 'var(--dietary-option-bg)'
-                              }}
-                            >
-                              <div className="flex items-center gap-2 mb-2">
-                                <div 
-                                  className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0"
-                                  style={{ backgroundColor: 'var(--color-primary)', color: 'white', opacity: 0.8 }}
-                                >
-                                  <ForkKnife size={12} weight="fill" />
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className="text-sm font-medium truncate">{plan.name}</p>
-                                  <p className="text-xs opacity-60">
-                                    {Math.round(plan.total_calories)} kcal • {plan.entry_count || plan.entries?.length || 0} items
-                                  </p>
-                                </div>
-                              </div>
-                              {/* Food image previews */}
-                              {plan.entries && plan.entries.length > 0 && (
-                                <div className="flex flex-wrap gap-1 mt-1">
-                                  {plan.entries.slice(0, 5).map((entry, idx) => (
-                                    entry.image_url ? (
-                                      <img 
-                                        key={idx}
-                                        src={entry.image_url} 
-                                        alt={entry.food_name} 
-                                        className="w-7 h-7 rounded object-cover"
-                                      />
-                                    ) : (
-                                      <div 
-                                        key={idx}
-                                        className="w-7 h-7 rounded flex items-center justify-center"
-                                        style={{ backgroundColor: 'var(--forum-search-border)' }}
-                                      >
-                                        <Hamburger size={12} className="opacity-50" />
-                                      </div>
-                                    )
-                                  ))}
-                                  {plan.entries.length > 5 && (
-                                    <div 
-                                      className="w-7 h-7 rounded flex items-center justify-center text-xs opacity-70"
-                                      style={{ backgroundColor: 'var(--forum-search-border)' }}
-                                    >
-                                      +{plan.entries.length - 5}
-                                    </div>
-                                  )}
-                                </div>
-                              )}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Create New Meal Plan Button */}
-                <button
-                  onClick={() => {
-                    setNewMealPlanName('')
-                    setPendingEntries([])
-                    setShowCreateMealPlanDialog(true)
-                  }}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg font-medium transition-colors mt-3"
-                  style={{
-                    backgroundColor: 'var(--color-primary)',
-                    color: 'white'
-                  }}
-                >
-                  <Plus size={18} weight="bold" />
-                  Create Meal Plan
-                </button>
+                <h3 className="nh-subtitle mb-3 text-sm flex items-center gap-2">
+                  <ForkKnife size={18} weight="fill" className="text-primary" />
+                  Tracking Tips
+                </h3>
+                <ul className="nh-text text-xs space-y-2">
+                  <li>• Log meals as you eat them</li>
+                  <li>• Be consistent with serving sizes</li>
+                  <li>• Review weekly trends</li>
+                  <li>• Update your metrics regularly</li>
+                  <li>• Track snacks and beverages too</li>
+                </ul>
               </div>
             </div>
           </div>
@@ -354,7 +137,6 @@ const NutritionTrackingPage = () => {
             <NutritionTracking 
               onDateChange={handleDateChange}
               onDataChange={fetchNutritionData}
-              refreshTrigger={refreshTrigger}
             />
           </div>
 
