@@ -22,6 +22,7 @@ import {
 } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
+import FoodDetail from '../pages/foods/FoodDetail';
 import { apiClient, Food } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets, FoodLogEntry, PlannedFoodEntry } from '../types/nutrition';
 
@@ -64,6 +65,10 @@ const NutritionTracking = ({ onDateChange, onDataChange, refreshTrigger }: Nutri
     dinner: true,
     snack: true
   });
+  
+  // Food detail modal state
+  const [viewingFood, setViewingFood] = useState<Food | null>(null);
+  const [showFoodDetail, setShowFoodDetail] = useState(false);
 
   const toggleMealSection = (mealType: string) => {
     setCollapsedMealSections(prev => ({
@@ -346,6 +351,58 @@ const NutritionTracking = ({ onDateChange, onDataChange, refreshTrigger }: Nutri
     setShowAddFood(true);
   };
 
+  // Handler to view food details
+  const handleViewFoodDetail = async (entry: FoodLogEntry) => {
+    if (!entry.food_id) return;
+    
+    try {
+      // Search for the food by name to get full details including nutrition score
+      const response = await apiClient.getFoods({ search: entry.food_name, page: 1 });
+      const food = response.results?.find(f => f.id === entry.food_id);
+      
+      if (food) {
+        setViewingFood(food);
+        setShowFoodDetail(true);
+      } else {
+        // Fallback: create a minimal Food object from the entry data
+        const fallbackFood: Food = {
+          id: entry.food_id,
+          name: entry.food_name,
+          category: '',
+          servingSize: entry.food_serving_size || 100,
+          caloriesPerServing: entry.calories / entry.serving_size,
+          proteinContent: entry.protein / entry.serving_size,
+          fatContent: entry.fat / entry.serving_size,
+          carbohydrateContent: entry.carbohydrates / entry.serving_size,
+          allergens: [],
+          dietaryOptions: [],
+          nutritionScore: 0,
+          imageUrl: entry.image_url || '',
+        };
+        setViewingFood(fallbackFood);
+        setShowFoodDetail(true);
+      }
+    } catch (err) {
+      console.error('Error fetching food details:', err);
+      // Fallback: create a minimal Food object from the entry data
+      const fallbackFood: Food = {
+        id: entry.food_id,
+        name: entry.food_name,
+        category: '',
+        servingSize: entry.food_serving_size || 100,
+        caloriesPerServing: entry.calories / entry.serving_size,
+        proteinContent: entry.protein / entry.serving_size,
+        fatContent: entry.fat / entry.serving_size,
+        carbohydrateContent: entry.carbohydrates / entry.serving_size,
+        allergens: [],
+        dietaryOptions: [],
+        nutritionScore: 0,
+        imageUrl: entry.image_url || '',
+      };
+      setViewingFood(fallbackFood);
+      setShowFoodDetail(true);
+    }
+  };
 
   const handleFoodSelect = (food: Food) => {
     setSelectedFood(food);
@@ -829,8 +886,17 @@ const NutritionTracking = ({ onDateChange, onDataChange, refreshTrigger }: Nutri
                 {entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-center gap-3 p-3 rounded-lg hover:shadow-sm transition-all"
+                    className="flex items-center gap-3 p-3 rounded-lg hover:shadow-md transition-all cursor-pointer"
                     style={{ backgroundColor: 'var(--dietary-option-bg)' }}
+                    onClick={() => handleViewFoodDetail(entry)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        handleViewFoodDetail(entry);
+                      }
+                    }}
                   >
                     {/* Food Image */}
                     {entry.image_url ? (
@@ -2141,6 +2207,16 @@ const NutritionTracking = ({ onDateChange, onDataChange, refreshTrigger }: Nutri
           </Dialog.Panel>
         </div>
       </Dialog>
+
+      {/* Food Detail Modal */}
+      <FoodDetail
+        food={viewingFood}
+        open={showFoodDetail}
+        onClose={() => {
+          setShowFoodDetail(false);
+          setViewingFood(null);
+        }}
+      />
     </div>
   );
 };
