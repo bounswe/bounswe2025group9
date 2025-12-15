@@ -143,12 +143,19 @@ class ApiClient {
         if (__DEV__) {
           const method = error.config?.method?.toUpperCase() || 'UNKNOWN';
           const url = error.config ? `${error.config.baseURL || ''}${error.config.url || ''}` : 'Unknown URL';
-          console.error(`❌ [${method}] ${url} - Error:`, {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            message: error.message,
-          });
+          const status = error.response?.status;
+
+          // Suppress noisy logs for expected 404 on metrics (no data yet)
+          const isMetrics404 = status === 404 && url.includes('/users/metrics/');
+
+          if (!isMetrics404) {
+            console.error(`❌ [${method}] ${url} - Error:`, {
+              status,
+              statusText: error.response?.statusText,
+              data: error.response?.data,
+              message: error.message,
+            });
+          }
         }
         
         return Promise.reject(error);

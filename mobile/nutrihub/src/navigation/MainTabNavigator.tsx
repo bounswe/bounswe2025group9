@@ -31,9 +31,11 @@ import ReportUserScreen from '../screens/user/ReportUserScreen';
 import FollowersListScreen from '../screens/user/FollowersListScreen';
 import FollowingListScreen from '../screens/user/FollowingListScreen';
 import LanguageSettingsScreen from '../screens/user/LanguageSettingsScreen';
+import PrivateFoodsScreen from '../screens/food/PrivateFoodsScreen';
 
 // Nutrition screens
 import NutritionTrackingScreen from '../screens/nutrition/NutritionTrackingScreen';
+import FoodProposalsScreen from '../screens/food/FoodProposalsScreen';
 
 import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
@@ -151,6 +153,8 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen name="ReportUser" component={ReportUserScreen} />
       <ProfileStack.Screen name="NutritionTracking" component={NutritionTrackingScreen} />
       <ProfileStack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
+      <ProfileStack.Screen name="FoodProposals" component={FoodProposalsScreen} />
+      <ProfileStack.Screen name="PrivateFoods" component={PrivateFoodsScreen} />
     </ProfileStack.Navigator>
   );
 };
