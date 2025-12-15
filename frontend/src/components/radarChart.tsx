@@ -1,4 +1,4 @@
-import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Legend, Tooltip } from 'recharts';
+import { ResponsiveContainer, Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Tooltip } from 'recharts';
 import { Food } from '../lib/apiClient';
 
 interface MacroRadarChartProps {
@@ -9,12 +9,14 @@ interface MacroRadarChartProps {
 
 interface MicronutrientRadarChartProps extends MacroRadarChartProps {
     nutrients: string[];
+    chartType: 'vitamin' | 'mineral';
 }
 
 type MicronutrientUnit = 'mg' | 'ug' | 'g' | '';
 
 type MicronutrientDatum = {
     nutrient: string;
+    label?: string;
     f1: number;
     f2: number;
     f3?: number;
@@ -51,6 +53,23 @@ const colors = [
 
 const normalizeName = (name: string) => name.toLowerCase().replace(/\s+/g, ' ').trim();
 const stripParenthetical = (name: string) => name.replace(/\([^)]*\)/g, '').trim();
+const stripParentheticalContent = (name: string) => name.replace(/\s*\([^)]*\)/g, '').trim();
+const ANGLE_TICK_OFFSET = 22;
+
+const renderAngleTick = ({ payload, x, y, cx, cy }: any) => {
+    const dx = x - cx;
+    const dy = y - cy;
+    const radius = Math.sqrt(dx * dx + dy * dy) || 1;
+    const factor = (radius + ANGLE_TICK_OFFSET) / radius;
+    const newX = cx + dx * factor;
+    const newY = cy + dy * factor;
+
+    return (
+        <text x={newX} y={newY} textAnchor="middle" fill="#6b7280" fontSize={12}>
+            {payload.value}
+        </text>
+    );
+};
 
 const formatUnit = (unit?: string): MicronutrientUnit => {
     if (!unit) return '';
@@ -58,6 +77,18 @@ const formatUnit = (unit?: string): MicronutrientUnit => {
     if (normalized === 'ug' || normalized === '\u00b5g') return 'ug';
     if (normalized === 'mg' || normalized === 'g') return normalized as MicronutrientUnit;
     return unit as MicronutrientUnit;
+};
+
+const formatAngleLabel = (nutrient: string, kind: 'macro' | 'vitamin' | 'mineral') => {
+    if (kind === 'macro') {
+        return stripParentheticalContent(nutrient);
+    }
+    if (kind === 'vitamin') {
+        return stripParentheticalContent(nutrient);
+    }
+    // mineral: drop symbol (after comma)
+    const [nameOnly] = nutrient.split(',');
+    return nameOnly.trim();
 };
 
 const getMicronutrientEntry = (food: Food | undefined, nutrient: string) => {
@@ -123,49 +154,73 @@ const MicronutrientTooltip = ({ active, payload }: any) => {
 };
 
 // Compare macronutrient values per 100g of up to three foods
+const buildLegendItems = (foodList: Array<Food | undefined>) =>
+    foodList
+        .map((food, idx) => ({ food, idx }))
+        .filter(({ food }) => !!food)
+        .map(({ food, idx }) => ({
+            name: food?.name || `Food ${idx + 1}`,
+            color: colors[idx].stroke,
+        }));
+
 const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }) => {
     const data = [
         {
             nutrient: 'Protein (g)',
+            label: formatAngleLabel('Protein (g)', 'macro'),
             f1: toSigFigs(food1.proteinContent ? (food1.proteinContent / (food1.servingSize || 100)) * 100 : 0),
             f2: toSigFigs(food2.proteinContent ? (food2.proteinContent / (food2.servingSize || 100)) * 100 : 0),
             f3: toSigFigs(food3?.proteinContent ? (food3.proteinContent / (food3.servingSize || 100)) * 100 : 0),
         },
         {
             nutrient: 'Fat (g)',
+            label: formatAngleLabel('Fat (g)', 'macro'),
             f1: toSigFigs(food1.fatContent ? (food1.fatContent / (food1.servingSize || 100)) * 100 : 0),
             f2: toSigFigs(food2.fatContent ? (food2.fatContent / (food2.servingSize || 100)) * 100 : 0),
             f3: toSigFigs(food3?.fatContent ? (food3.fatContent / (food3.servingSize || 100)) * 100 : 0),
         },
         {
             nutrient: 'Carbs (g)',
+            label: formatAngleLabel('Carbs (g)', 'macro'),
             f1: toSigFigs(food1.carbohydrateContent ? (food1.carbohydrateContent / (food1.servingSize || 100)) * 100 : 0),
             f2: toSigFigs(food2.carbohydrateContent ? (food2.carbohydrateContent / (food2.servingSize || 100)) * 100 : 0),
             f3: toSigFigs(food3?.carbohydrateContent ? (food3.carbohydrateContent / (food3.servingSize || 100)) * 100 : 0),
         },
     ];
 
+    const legendItems = buildLegendItems([food1, food2, food3]);
+
     return (
-        <div style={{ width: '100%', height: 360, maxWidth: '700px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={data} outerRadius="80%">
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="nutrient" />
-                    <PolarRadiusAxis angle={90} type="number" domain={[-10, 'dataMax']} />
-                    <Tooltip />
-                    <Radar name={food1?.name || 'Food 1'} dataKey="f1" stroke={colors[0].stroke} fill={colors[0].fill} fillOpacity={0} strokeWidth={2} />
-                    <Radar name={food2?.name || 'Food 2'} dataKey="f2" stroke={colors[1].stroke} fill={colors[1].fill} fillOpacity={0} strokeWidth={2} />
-                    {food3 && (
-                        <Radar name={food3?.name || 'Food 3'} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2} />
-                    )}
-                    <Legend verticalAlign="bottom" />
-                </RadarChart>
-            </ResponsiveContainer>
+        <div style={{ width: '100%', maxWidth: '900px' }} className="space-y-3">
+            <div style={{ width: '100%', height: 380 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={data} outerRadius="80%" margin={{ top: 36, right: 48, bottom: 36, left: 48 }}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="label" tick={renderAngleTick} tickLine={false} />
+                        <PolarRadiusAxis angle={90} type="number" domain={[-10, 'dataMax']} tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip />
+                        <Radar name={food1?.name || 'Food 1'} dataKey="f1" stroke={colors[0].stroke} fill={colors[0].fill} fillOpacity={0} strokeWidth={2} />
+                        <Radar name={food2?.name || 'Food 2'} dataKey="f2" stroke={colors[1].stroke} fill={colors[1].fill} fillOpacity={0} strokeWidth={2} />
+                        {food3 && (
+                            <Radar name={food3?.name || 'Food 3'} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2} />
+                        )}
+                    </RadarChart>
+                </ResponsiveContainer>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm nh-text">
+                {legendItems.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} aria-hidden="true" />
+                        <span className="font-medium">{item.name}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
 
-const MicronutrientRadarChart: React.FC<MicronutrientRadarChartProps> = ({ food1, food2, food3, nutrients }) => {
+const MicronutrientRadarChart: React.FC<MicronutrientRadarChartProps> = ({ food1, food2, food3, nutrients, chartType }) => {
     const data: MicronutrientDatum[] = nutrients.map((nutrient) => {
         const f1 = formatMicronutrientValue(food1, nutrient);
         const f2 = formatMicronutrientValue(food2, nutrient);
@@ -177,6 +232,7 @@ const MicronutrientRadarChart: React.FC<MicronutrientRadarChartProps> = ({ food1
 
         return {
             nutrient,
+            label: formatAngleLabel(nutrient, chartType),
             f1: toSigFigs(normalize(f1.value), 3),
             f2: toSigFigs(normalize(f2.value), 3),
             f3: food3 ? toSigFigs(normalize(f3.value), 3) : undefined,
@@ -195,6 +251,7 @@ const MicronutrientRadarChart: React.FC<MicronutrientRadarChartProps> = ({ food1
     });
 
     const hasAnyData = data.some((d) => (d.f1 > 0 || d.f2 > 0 || (d.f3 ?? 0) > 0));
+    const legendItems = buildLegendItems([food1, food2, food3]);
 
     if (!hasAnyData) {
         return (
@@ -207,21 +264,31 @@ const MicronutrientRadarChart: React.FC<MicronutrientRadarChartProps> = ({ food1
     }
 
     return (
-        <div style={{ width: '100%', height: 360, maxWidth: '700px' }}>
-            <ResponsiveContainer width="100%" height="100%">
-                <RadarChart data={data} outerRadius="80%">
-                    <PolarGrid />
-                    <PolarAngleAxis dataKey="nutrient" />
-                    <PolarRadiusAxis angle={90} type="number" domain={[0, 100]} />
-                    <Tooltip content={<MicronutrientTooltip />} />
-                    <Radar name={food1?.name || 'Food 1'} dataKey="f1" stroke={colors[0].stroke} fill={colors[0].fill} fillOpacity={0} strokeWidth={2} />
-                    <Radar name={food2?.name || 'Food 2'} dataKey="f2" stroke={colors[1].stroke} fill={colors[1].fill} fillOpacity={0} strokeWidth={2} />
-                    {food3 && (
-                        <Radar name={food3?.name || 'Food 3'} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2} />
-                    )}
-                    <Legend verticalAlign="bottom" />
-                </RadarChart>
-            </ResponsiveContainer>
+        <div style={{ width: '100%', maxWidth: '900px' }} className="space-y-3">
+            <div style={{ width: '100%', height: 380 }}>
+                <ResponsiveContainer width="100%" height="100%">
+                    <RadarChart data={data} outerRadius="80%" margin={{ top: 36, right: 48, bottom: 36, left: 48 }}>
+                        <PolarGrid />
+                        <PolarAngleAxis dataKey="label" tick={renderAngleTick} tickLine={false} />
+                        <PolarRadiusAxis angle={90} type="number" domain={[0, 100]} tick={{ fontSize: 9 }} tickLine={false} />
+                        <Tooltip content={<MicronutrientTooltip />} />
+                        <Radar name={food1?.name || 'Food 1'} dataKey="f1" stroke={colors[0].stroke} fill={colors[0].fill} fillOpacity={0} strokeWidth={2} />
+                        <Radar name={food2?.name || 'Food 2'} dataKey="f2" stroke={colors[1].stroke} fill={colors[1].fill} fillOpacity={0} strokeWidth={2} />
+                        {food3 && (
+                            <Radar name={food3?.name || 'Food 3'} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2} />
+                        )}
+                    </RadarChart>
+                </ResponsiveContainer>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 text-sm nh-text">
+                {legendItems.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
+                        <span className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }} aria-hidden="true" />
+                        <span className="font-medium">{item.name}</span>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 };
@@ -238,7 +305,7 @@ export const VitaminRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2
         'Folate, DFE',
     ];
 
-    return <MicronutrientRadarChart food1={food1} food2={food2} food3={food3} nutrients={vitaminKeys} />;
+    return <MicronutrientRadarChart food1={food1} food2={food2} food3={food3} nutrients={vitaminKeys} chartType="vitamin" />;
 };
 
 export const MineralRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }) => {
@@ -253,7 +320,7 @@ export const MineralRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2
         'Selenium, Se',
     ];
 
-    return <MicronutrientRadarChart food1={food1} food2={food2} food3={food3} nutrients={mineralKeys} />;
+    return <MicronutrientRadarChart food1={food1} food2={food2} food3={food3} nutrients={mineralKeys} chartType="mineral" />;
 };
 
 export default MacroRadarChart;
