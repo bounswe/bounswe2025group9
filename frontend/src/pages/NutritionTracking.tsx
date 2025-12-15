@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CaretDown, CaretRight, Info, Plus, Trash, CalendarPlus, ForkKnife, Coffee, Moon, Cookie, X, Hamburger, FloppyDiskBack } from '@phosphor-icons/react'
+import { CaretDown, CaretRight, Plus, Trash, CalendarPlus, ForkKnife, Coffee, Moon, Cookie, X, Hamburger, FloppyDiskBack } from '@phosphor-icons/react'
 import { Dialog } from '@headlessui/react'
 import NutritionTracking from '../components/NutritionTracking'
 import FoodSelector from '../components/FoodSelector'
@@ -118,20 +118,7 @@ const NutritionTrackingPage = () => {
     fetchNutritionData()
   }, [fetchNutritionData])
 
-  const waterTarget = (() => {
-    const raw = nutritionData.targets?.micronutrients?.['Water (g)'] as any;
-    if (typeof raw === 'number') return raw;
-    if (raw && typeof raw === 'object' && 'target' in raw) return raw.target as number;
-    return 0;
-  })();
-  const waterActual = nutritionData.todayLog?.micronutrients_summary?.['Water (g)'] ?? 0;
-  const waterRatio = waterTarget > 0 ? waterActual / waterTarget : 0;
-  const waterBarColor =
-    waterRatio === 0
-      ? 'var(--color-text-secondary)'
-      : waterRatio >= 1
-        ? 'var(--color-success)'
-        : 'var(--color-primary)';
+  
 
   // Calculate planned entries totals
   const plannedTotals = {
@@ -345,35 +332,7 @@ const NutritionTrackingPage = () => {
                   <>
                 <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
                     <div className="space-y-2">
-                      {/* Hydration inside Daily Targets (matches macro rows) */}
-                      <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
-                        <div className="flex items-center justify-between mb-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium">Hydration</span>
-                            <button
-                              className="p-1 rounded text-[var(--color-text-secondary)]"
-                              onClick={() => setShowHydrationInfo(true)}
-                              style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                              title="How hydration target is calculated"
-                            >
-                              <Info size={12} />
-                            </button>
-                          </div>
-                          <span className="text-xs font-bold" style={{ color: waterBarColor }}>
-                            {waterActual.toFixed(1)}/ {waterTarget.toFixed(1)}
-                          </span>
-                        </div>
-                        <div className="w-full rounded-full h-1.5" 
-                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
-                          <div
-                            className="bg-blue-500 h-1.5 rounded-full transition-all"
-                            style={{
-                              width: `${Math.min(100, Math.max(0, waterRatio * 100))}%`,
-                              backgroundColor: 'var(--color-primary)'
-                            }}
-                          ></div>
-                        </div>
-                      </div>
+                   
                       {/* Calories */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
