@@ -3,7 +3,7 @@ import { apiClient } from '../lib/apiClient';
 import { useLanguage } from '../context/LanguageContext';
 import { NutrientFilter, NutrientFilterItem, buildNutrientQuery } from './NutrientFilter';
 
-export interface MicronutrientFilterItem extends NutrientFilterItem {}
+export interface MicronutrientFilterItem extends NutrientFilterItem { }
 
 interface MicronutrientFilterProps {
   filters: MicronutrientFilterItem[];
@@ -133,75 +133,66 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
         </button>
       </div>
 
-	  {/* Current filters */}
-	  {filters.length > 0 && (
-		  <div className="space-y-2">
-      <p className="nh-text font-medium">{t('food.activeFilters')}:</p>
-		  {filters.map((filter, index) => {
-			  const micronutrient = availableMicronutrients.find(
-				  m => m.name.toLowerCase() === filter.name.toLowerCase()
-			  );
-        const unit = micronutrient ? ` ${micronutrient.unit}` : '';
+      {/* Current filters */}
+      {filters.length > 0 && (
+        <div className="space-y-2">
+          <p className="nh-text font-medium">{t('food.activeFilters')}:</p>
+          {filters.map((filter, index) => {
+            const micronutrient = availableMicronutrients.find(
+              m => m.name.toLowerCase() === filter.name.toLowerCase()
+            );
+            const unit = micronutrient ? ` ${micronutrient.unit}` : '';
 
-        const valueText =
-          filter.min !== undefined && filter.max !== undefined
-            ? t('food.rangeValue', { min: filter.min, max: filter.max, unit })
-            : filter.min !== undefined
-              ? t('food.minValue', { value: filter.min, unit })
-              : filter.max !== undefined
-                ? t('food.maxValue', { value: filter.max, unit })
-                : t('food.anyAmount');
+            const valueText =
+              filter.min !== undefined && filter.max !== undefined
+                ? t('food.rangeValue', { min: filter.min, max: filter.max, unit })
+                : filter.min !== undefined
+                  ? t('food.minValue', { value: filter.min, unit })
+                  : filter.max !== undefined
+                    ? t('food.maxValue', { value: filter.max, unit })
+                    : t('food.anyAmount');
 
-							  return (
-								  <div
-								  key={index}
-								  className="flex items-center justify-between p-2 rounded-lg"
-								  style={{
-									  backgroundColor: 'var(--color-bg-secondary)',
-									  border: '1px solid var(--color-border)'
-								  }}
-								  >
-								  <div className="flex-1 min-w-0">
-								  <p className="nh-text font-medium truncate">{filter.name}</p>
-								  <p className="nh-text text-sm opacity-70">{valueText}</p>
-								  </div>
+            return (
+              <div
+                key={index}
+                className="flex items-center justify-between p-2 rounded-lg"
+                style={{
+                  backgroundColor: 'var(--color-bg-secondary)',
+                  border: '1px solid var(--color-border)'
+                }}
+              >
+                <div className="flex-1 min-w-0">
+                  <p className="nh-text font-medium truncate">{filter.name}</p>
+                  <p className="nh-text text-sm opacity-70">{valueText}</p>
+                </div>
 
-								  <button
-								  onClick={() => removeFilter(index)}
-								  className="p-1 rounded transition-colors flex-shrink-0 ml-2"
-								  aria-label={t('common.removeFilter')}
-								  style={{
-									  color: 'var(--color-error, #ef4444)'
-								  }}
-								  onMouseEnter={(e) => {
-									  e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
-								  }}
-								  onMouseLeave={(e) => {
-									  e.currentTarget.style.backgroundColor = 'transparent';
-								  }}
-								  >
-								  <X size={20} weight="bold" />
-								  </button>
-								  </div>
-							  );
-		  })}
-		  </div>
-	  )}
+                <button
+                  onClick={() => removeFilter(index)}
+                  className="p-1 rounded transition-colors flex-shrink-0 ml-2"
+                  aria-label={t('common.removeFilter')}
+                  style={{
+                    color: 'var(--color-error, #ef4444)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'transparent';
+                  }}
+                >
+                  <X size={20} weight="bold" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
       {filters.length === 0 && (
         <p className="nh-text text-sm italic opacity-60">
           {t('food.noActiveMicronutrientFilters')}
         </p>
       )}
     </div>
-    <NutrientFilter
-      title="Micronutrient Filters"
-      description="Filter foods by their micronutrient content. Start typing to see suggestions."
-      availableNutrients={availableMicronutrients}
-      loading={loading}
-      filters={filters}
-      onChange={onChange}
-      placeholder="Nutrient name (e.g., iron, vitamin c)"
-    />
   );
 };
 

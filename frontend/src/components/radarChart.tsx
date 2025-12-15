@@ -44,9 +44,6 @@ const toSigFigs = (num: number, sig: number = 2): number => {
     return parseFloat(num.toPrecision(sig));
 };
 
-// Compare macronutrient values per 100g of up to three foods
-const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }) => {
-    const { t } = useLanguage();
 const colors = [
     { stroke: '#ff7f50', fill: '#8884d8' },
     { stroke: '#7fd8be', fill: '#0084d8' },
@@ -128,6 +125,7 @@ const MicronutrientTooltip = ({ active, payload }: any) => {
 
 // Compare macronutrient values per 100g of up to three foods
 const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }) => {
+    const { t } = useLanguage();
     const data = [
         {
             nutrient: `${t('food.protein')} (g)`,
@@ -135,13 +133,13 @@ const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }
             f2: toSigFigs(food2.proteinContent ? (food2.proteinContent / (food2.servingSize || 100)) * 100 : 0),
             f3: toSigFigs(food3?.proteinContent ? (food3.proteinContent / (food3.servingSize || 100)) * 100 : 0),
         },
-        { 
+        {
             nutrient: `${t('food.fat')} (g)`,
             f1: toSigFigs(food1.fatContent ? (food1.fatContent / (food1.servingSize || 100)) * 100 : 0),
             f2: toSigFigs(food2.fatContent ? (food2.fatContent / (food2.servingSize || 100)) * 100 : 0),
             f3: toSigFigs(food3?.fatContent ? (food3.fatContent / (food3.servingSize || 100)) * 100 : 0),
         },
-        { 
+        {
             nutrient: `${t('food.carbs')} (g)`,
             f1: toSigFigs(food1.carbohydrateContent ? (food1.carbohydrateContent / (food1.servingSize || 100)) * 100 : 0),
             f2: toSigFigs(food2.carbohydrateContent ? (food2.carbohydrateContent / (food2.servingSize || 100)) * 100 : 0),
@@ -160,7 +158,7 @@ const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }
                     <Radar name={food1?.name || t('food.food1')} dataKey="f1" stroke={colors[0].stroke} fill={colors[0].fill} fillOpacity={0} strokeWidth={2} />
                     <Radar name={food2?.name || t('food.food2')} dataKey="f2" stroke={colors[1].stroke} fill={colors[1].fill} fillOpacity={0} strokeWidth={2} />
                     {food3 && (
-                        <Radar name={food3?.name || t('food.food3')} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2}  />
+                        <Radar name={food3?.name || t('food.food3')} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2} />
                     )}
                     <Legend verticalAlign="bottom" />
                 </RadarChart>
