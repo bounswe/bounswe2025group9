@@ -1,5 +1,5 @@
 from rest_framework import generics, status, viewsets
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework.decorators import api_view, permission_classes, action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,7 +7,7 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta, date
 from django.db.models import Avg, Count
 
-from .models import MealPlan, DailyNutritionLog, FoodLogEntry, PlannedFoodEntry
+from .models import MealPlan, DailyNutritionLog, FoodLogEntry, PlannedFoodEntry, SavedMealPlan, SavedMealPlanEntry
 from .serializers import (
     MealPlanSerializer, 
     MealPlanCreateSerializer,
@@ -15,6 +15,10 @@ from .serializers import (
     DailyNutritionLogListSerializer,
     FoodLogEntrySerializer,
     PlannedFoodEntrySerializer,
+    SavedMealPlanSerializer,
+    SavedMealPlanCreateSerializer,
+    SavedMealPlanListSerializer,
+    SavedMealPlanEntrySerializer,
 )
 
 
@@ -445,3 +449,328 @@ class NutritionStatisticsView(APIView):
                 'adherence': adherence,
             }
         }, status=status.HTTP_200_OK)
+
+
+# ==================== Saved Meal Plan Views ====================
+
+class SavedMealPlanListCreateView(generics.ListCreateAPIView):
+    """
+    GET /api/meal-planner/saved-plans/ - List user's saved meal plans
+    POST /api/meal-planner/saved-plans/ - Create a new saved meal plan
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return SavedMealPlan.objects.filter(user=self.request.user)
+    
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return SavedMealPlanCreateSerializer
+        return SavedMealPlanListSerializer
+    
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class SavedMealPlanDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    GET /api/meal-planner/saved-plans/{id}/ - Get a specific saved meal plan
+    PUT/PATCH /api/meal-planner/saved-plans/{id}/ - Update a saved meal plan
+    DELETE /api/meal-planner/saved-plans/{id}/ - Delete a saved meal plan
+    """
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return SavedMealPlan.objects.filter(user=self.request.user)
+    
+    def get_serializer_class(self):
+        if self.request.method in ['PUT', 'PATCH']:
+            return SavedMealPlanCreateSerializer
+        return SavedMealPlanSerializer
+
+
+class SavedMealPlanEntryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing saved meal plan entries.
+    
+    POST /api/meal-planner/saved-plans/{plan_id}/entries/
+    PUT /api/meal-planner/saved-plans/{plan_id}/entries/{id}/
+    DELETE /api/meal-planner/saved-plans/{plan_id}/entries/{id}/
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = SavedMealPlanEntrySerializer
+
+    def get_queryset(self):
+        plan_id = self.kwargs.get('plan_id')
+        return SavedMealPlanEntry.objects.filter(
+            meal_plan__user=self.request.user,
+            meal_plan_id=plan_id
+        )
+    
+    def get_meal_plan(self):
+        plan_id = self.kwargs.get('plan_id')
+        return get_object_or_404(SavedMealPlan, id=plan_id, user=self.request.user)
+
+    def create(self, request, plan_id=None):
+        """Create a new entry in the saved meal plan."""
+        meal_plan = self.get_meal_plan()
+        
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(meal_plan=meal_plan)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, plan_id=None, pk=None):
+        """Update an existing entry in the saved meal plan."""
+        try:
+            entry = self.get_queryset().get(pk=pk)
+        except SavedMealPlanEntry.DoesNotExist:
+            return Response(
+                {'error': 'Entry not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        serializer = self.get_serializer(entry, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, plan_id=None, pk=None):
+        """Delete an entry from the saved meal plan."""
+        try:
+            entry = self.get_queryset().get(pk=pk)
+        except SavedMealPlanEntry.DoesNotExist:
+            return Response(
+                {'error': 'Entry not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def log_saved_meal_plan(request, pk):
+    """
+    Log all entries from a saved meal plan to a specific date's nutrition log.
+    POST /api/meal-planner/saved-plans/{id}/log/
+    
+    Request body:
+    {
+        "date": "YYYY-MM-DD" (optional, defaults to today)
+    }
+    """
+    try:
+        saved_plan = SavedMealPlan.objects.get(pk=pk, user=request.user)
+    except SavedMealPlan.DoesNotExist:
+        return Response(
+            {'error': 'Saved meal plan not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Get the date
+    date_str = request.data.get('date')
+    if date_str:
+        try:
+            log_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    else:
+        log_date = date.today()
+    
+    # Get or create daily log for the date
+    daily_log, _ = DailyNutritionLog.objects.get_or_create(
+        user=request.user,
+        date=log_date
+    )
+    
+    # Create food log entries from saved meal plan entries
+    created_entries = []
+    for entry in saved_plan.entries.all():
+        log_entry = FoodLogEntry.objects.create(
+            daily_log=daily_log,
+            food=entry.food,
+            serving_size=entry.serving_size,
+            serving_unit=entry.serving_unit,
+            meal_type=entry.meal_type,
+        )
+        created_entries.append(log_entry)
+    
+    serializer = FoodLogEntrySerializer(created_entries, many=True, context={'request': request})
+    return Response({
+        'message': f'Successfully logged {len(created_entries)} entries from "{saved_plan.name}".',
+        'date': log_date.isoformat(),
+        'entries': serializer.data
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def plan_saved_meal_plan(request, pk):
+    """
+    Plan all entries from a saved meal plan to a specific date (as planned entries).
+    POST /api/meal-planner/saved-plans/{id}/plan/
+    
+    Request body:
+    {
+        "date": "YYYY-MM-DD" (optional, defaults to today)
+    }
+    """
+    try:
+        saved_plan = SavedMealPlan.objects.get(pk=pk, user=request.user)
+    except SavedMealPlan.DoesNotExist:
+        return Response(
+            {'error': 'Saved meal plan not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Get the date
+    date_str = request.data.get('date')
+    if date_str:
+        try:
+            log_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    else:
+        log_date = date.today()
+    
+    # Get or create daily log for the date
+    daily_log, _ = DailyNutritionLog.objects.get_or_create(
+        user=request.user,
+        date=log_date
+    )
+    
+    # Create planned food entries from saved meal plan entries
+    created_entries = []
+    for entry in saved_plan.entries.all():
+        planned_entry = PlannedFoodEntry.objects.create(
+            daily_log=daily_log,
+            food=entry.food,
+            serving_size=entry.serving_size,
+            serving_unit=entry.serving_unit,
+            meal_type=entry.meal_type,
+        )
+        created_entries.append(planned_entry)
+    
+    serializer = PlannedFoodEntrySerializer(created_entries, many=True, context={'request': request})
+    return Response({
+        'message': f'Successfully planned {len(created_entries)} entries from "{saved_plan.name}".',
+        'date': log_date.isoformat(),
+        'entries': serializer.data
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_saved_meal_plan_from_log(request):
+    """
+    Create a saved meal plan from current logged or planned entries.
+    POST /api/meal-planner/saved-plans/from-log/
+    
+    Request body:
+    {
+        "name": "My Meal Plan",
+        "description": "Optional description",
+        "date": "YYYY-MM-DD" (optional, defaults to today),
+        "include_logged": true,  // Include logged food entries
+        "include_planned": true,  // Include planned food entries
+        "entry_ids": [1, 2, 3],  // Optional: specific logged entry IDs to include
+        "planned_entry_ids": [4, 5, 6]  // Optional: specific planned entry IDs to include
+    }
+    """
+    name = request.data.get('name', 'My Meal Plan')
+    description = request.data.get('description', '')
+    date_str = request.data.get('date')
+    include_logged = request.data.get('include_logged', True)
+    include_planned = request.data.get('include_planned', True)
+    entry_ids = request.data.get('entry_ids')
+    planned_entry_ids = request.data.get('planned_entry_ids')
+    
+    # Get the date
+    if date_str:
+        try:
+            log_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+        except ValueError:
+            return Response(
+                {'error': 'Invalid date format. Use YYYY-MM-DD.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+    else:
+        log_date = date.today()
+    
+    # Get daily log for the date
+    try:
+        daily_log = DailyNutritionLog.objects.get(user=request.user, date=log_date)
+    except DailyNutritionLog.DoesNotExist:
+        return Response(
+            {'error': f'No nutrition log found for {log_date.isoformat()}.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Create the saved meal plan
+    saved_plan = SavedMealPlan.objects.create(
+        user=request.user,
+        name=name,
+        description=description
+    )
+    
+    entries_created = 0
+    
+    # Add logged entries
+    if include_logged:
+        if entry_ids:
+            logged_entries = daily_log.entries.filter(id__in=entry_ids)
+        else:
+            logged_entries = daily_log.entries.all()
+        
+        for entry in logged_entries:
+            SavedMealPlanEntry.objects.create(
+                meal_plan=saved_plan,
+                food=entry.food,
+                serving_size=entry.serving_size,
+                serving_unit=entry.serving_unit,
+                meal_type=entry.meal_type,
+            )
+            entries_created += 1
+    
+    # Add planned entries
+    if include_planned:
+        if planned_entry_ids:
+            planned_entries = daily_log.planned_entries.filter(id__in=planned_entry_ids)
+        else:
+            planned_entries = daily_log.planned_entries.all()
+        
+        for entry in planned_entries:
+            SavedMealPlanEntry.objects.create(
+                meal_plan=saved_plan,
+                food=entry.food,
+                serving_size=entry.serving_size,
+                serving_unit=entry.serving_unit,
+                meal_type=entry.meal_type,
+            )
+            entries_created += 1
+    
+    if entries_created == 0:
+        # Delete the empty meal plan
+        saved_plan.delete()
+        return Response(
+            {'error': 'No entries found to create meal plan from.'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    serializer = SavedMealPlanSerializer(saved_plan, context={'request': request})
+    return Response({
+        'message': f'Successfully created meal plan "{name}" with {entries_created} entries.',
+        'meal_plan': serializer.data
+    }, status=status.HTTP_201_CREATED)

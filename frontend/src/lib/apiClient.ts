@@ -1303,6 +1303,113 @@ export const apiClient = {
       method: "GET"
     }, true),
 
+  // Saved Meal Plans (Reusable Templates)
+  getSavedMealPlans: () => {
+    console.log('[API] Fetching saved meal plans');
+    return fetchJson<PaginatedResponse<import('../types/nutrition').SavedMealPlan>>("/meal-planner/saved-plans/", {
+      method: "GET"
+    }, true);
+  },
+
+  getSavedMealPlan: (id: number) => {
+    console.log(`[API] Fetching saved meal plan ID: ${id}`);
+    return fetchJson<import('../types/nutrition').SavedMealPlan>(`/meal-planner/saved-plans/${id}/`, {
+      method: "GET"
+    }, true);
+  },
+
+  createSavedMealPlan: (data: import('../types/nutrition').SavedMealPlanCreateRequest) => {
+    console.log('[API] Creating saved meal plan:', data.name);
+    return fetchJson<import('../types/nutrition').SavedMealPlan>("/meal-planner/saved-plans/", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }, true);
+  },
+
+  updateSavedMealPlan: (id: number, data: Partial<import('../types/nutrition').SavedMealPlanCreateRequest>) => {
+    console.log(`[API] Updating saved meal plan ID: ${id}`);
+    return fetchJson<import('../types/nutrition').SavedMealPlan>(`/meal-planner/saved-plans/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(data)
+    }, true);
+  },
+
+  deleteSavedMealPlan: (id: number) => {
+    console.log(`[API] Deleting saved meal plan ID: ${id}`);
+    return fetchJson<void>(`/meal-planner/saved-plans/${id}/`, {
+      method: "DELETE"
+    }, true);
+  },
+
+  logSavedMealPlan: (id: number, date?: string) => {
+    console.log(`[API] Logging saved meal plan ID: ${id} to date: ${date || 'today'}`);
+    return fetchJson<{
+      message: string;
+      date: string;
+      entries: import('../types/nutrition').FoodLogEntry[];
+    }>(`/meal-planner/saved-plans/${id}/log/`, {
+      method: "POST",
+      body: JSON.stringify({ date })
+    }, true);
+  },
+
+  planSavedMealPlan: (id: number, date?: string) => {
+    console.log(`[API] Planning saved meal plan ID: ${id} for date: ${date || 'today'}`);
+    return fetchJson<{
+      message: string;
+      date: string;
+      entries: import('../types/nutrition').PlannedFoodEntry[];
+    }>(`/meal-planner/saved-plans/${id}/plan/`, {
+      method: "POST",
+      body: JSON.stringify({ date })
+    }, true);
+  },
+
+  createSavedMealPlanFromLog: (data: import('../types/nutrition').CreateFromLogRequest) => {
+    console.log('[API] Creating saved meal plan from log:', data.name);
+    return fetchJson<{
+      message: string;
+      meal_plan: import('../types/nutrition').SavedMealPlan;
+    }>("/meal-planner/saved-plans/from-log/", {
+      method: "POST",
+      body: JSON.stringify(data)
+    }, true);
+  },
+
+  // Saved Meal Plan Entry Management
+  addSavedMealPlanEntry: (planId: number, entry: {
+    food_id: number;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+  }) => {
+    console.log(`[API] Adding entry to saved meal plan ID: ${planId}`);
+    return fetchJson<import('../types/nutrition').SavedMealPlanEntry>(`/meal-planner/saved-plans/${planId}/entries/`, {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }, true);
+  },
+
+  updateSavedMealPlanEntry: (planId: number, entryId: number, update: {
+    food_id?: number;
+    serving_size?: number;
+    serving_unit?: string;
+    meal_type?: string;
+  }) => {
+    console.log(`[API] Updating entry ${entryId} in saved meal plan ID: ${planId}`);
+    return fetchJson<import('../types/nutrition').SavedMealPlanEntry>(`/meal-planner/saved-plans/${planId}/entries/${entryId}/`, {
+      method: "PUT",
+      body: JSON.stringify(update)
+    }, true);
+  },
+
+  deleteSavedMealPlanEntry: (planId: number, entryId: number) => {
+    console.log(`[API] Deleting entry ${entryId} from saved meal plan ID: ${planId}`);
+    return fetchJson<void>(`/meal-planner/saved-plans/${planId}/entries/${entryId}/`, {
+      method: "DELETE"
+    }, true);
+  },
+
   // Moderation endpoints
   moderation: {
     // User management
