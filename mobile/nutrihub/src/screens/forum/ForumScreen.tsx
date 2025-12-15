@@ -695,9 +695,6 @@ const ForumScreen: React.FC = () => {
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
           <Text style={[styles.headerTitle, textStyles.heading2]}>{t('forum.title')}</Text>
-          <Text style={[styles.subtitle, textStyles.caption]}>
-            {t('forum.subtitle')}
-          </Text>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
@@ -712,9 +709,6 @@ const ForumScreen: React.FC = () => {
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
           <Text style={[styles.headerTitle, textStyles.heading2]}>{t('forum.title')}</Text>
-          <Text style={[styles.subtitle, textStyles.caption]}>
-            {t('forum.subtitle')}
-          </Text>
         </View>
         <View style={styles.errorContainer}>
           <Icon name="alert-circle" size={48} color={theme.error} />
@@ -737,9 +731,6 @@ const ForumScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.headerTitle, textStyles.heading2]}>{t('forum.title')}</Text>
-        <Text style={[styles.subtitle, textStyles.caption]}>
-          {t('forum.subtitle')}
-        </Text>
       </View>
       
       {selectedFoods.length > 0 && foodFilterLoading && (
@@ -996,10 +987,6 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     marginBottom: SPACING.xs,
-  },
-  subtitle: {
-    textAlign: 'center',
-    marginBottom: SPACING.md,
   },
   loadingContainer: {
     flex: 1,
