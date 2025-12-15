@@ -39,6 +39,11 @@ export type MainTabParamList = {
   MyProfile: undefined;
   
   /**
+   * Nutrition tab with no parameters
+   */
+  Nutrition: undefined;
+  
+  /**
    * Feed tab with no parameters (kept for backwards compatibility)
    */
   Feed: undefined;
@@ -204,11 +209,6 @@ export type ProfileStackParamList = {
     username: string;
   };
   
-  /**
-   * Nutrition tracking screen
-   */
-  NutritionTracking: undefined;
-
   /**
    * Food proposal tracking screen
    */

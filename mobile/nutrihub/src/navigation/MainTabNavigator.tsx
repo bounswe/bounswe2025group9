@@ -152,7 +152,6 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen name="ProfessionTags" component={ProfessionTagsScreen} />
       <ProfileStack.Screen name="AccountWarnings" component={AccountWarningsScreen} />
       <ProfileStack.Screen name="ReportUser" component={ReportUserScreen} />
-      <ProfileStack.Screen name="NutritionTracking" component={NutritionTrackingScreen} />
       <ProfileStack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
       <ProfileStack.Screen name="FoodProposals" component={FoodProposalsScreen} />
       <ProfileStack.Screen name="PrivateFoods" component={PrivateFoodsScreen} />
@@ -167,7 +166,7 @@ const RootStack = createNativeStackNavigator<MainTabParamList>();
 const TabNavigator = () => {
   const { theme } = useTheme();
   const { t } = useLanguage();
-  
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -196,6 +195,8 @@ const TabNavigator = () => {
             iconName = focused ? 'food-apple' : 'food-apple-outline';
           } else if (route.name === 'Forum') {
             iconName = focused ? 'forum' : 'forum-outline';
+          } else if (route.name === 'Nutrition') {
+            iconName = focused ? 'chart-arc' : 'chart-arc';
           } else if (route.name === 'MyProfile') {
             iconName = focused ? 'account' : 'account-outline';
           } else {
@@ -208,6 +209,7 @@ const TabNavigator = () => {
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: t('navigation.home') }} />
       <Tab.Screen name="Food" component={FoodStackNavigator} options={{ tabBarLabel: t('navigation.food') }} />
       <Tab.Screen name="Forum" component={ForumStackNavigator} options={{ tabBarLabel: t('navigation.forum') }} />
+      <Tab.Screen name="Nutrition" component={NutritionTrackingScreen} options={{ tabBarLabel: t('navigation.nutrition') }} />
       <Tab.Screen name="MyProfile" component={ProfileStackNavigator} options={{ tabBarLabel: t('navigation.profile') }} />
     </Tab.Navigator>
   );
