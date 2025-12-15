@@ -106,23 +106,12 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   );
 
   const getStatusIcon = () => {
-    // Only show checkmark when actually at 100% or met
-    if (percentage >= 100 && percentage <= 100) return 'check-circle';
-    if (name === 'Protein' && isMinorOver) return 'check-circle'; // Protein met in acceptable range
+    // Only show icons when over target (user finds other icons distracting)
+    if (!isOverTarget) return null; // No icon when under target
 
-    // 90-99% - close to target but not met
-    if (isNearTarget) return 'chart-line'; // Progress indicator instead of checkmark
-
-    // Under target icons
-    if (!isOverTarget) {
-      if (isVeryLow) return 'alert-circle';  // Alert for very low
-      if (isLow) return 'alert-outline';  // Outline alert for low
-      return 'trending-up';  // Trending for fair
-    }
-
-    // Over target icons (warnings only)
-    if (isMinorOver || isModerateOver) return 'alert-circle';
-    return 'close-circle'; // X for severe over
+    // Over target - show simple warning
+    if (name === 'Protein' && isMinorOver) return 'check-circle'; // Acceptable for protein
+    return 'alert-circle'; // Simple alert for over target
   };
 
   const getStatusMessage = () => {
@@ -226,28 +215,26 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           </View>
         </View>
 
-        {/* Status Icon - Clickable for detailed info */}
+        {/* Status Icon - Only show warning when over target */}
         <TouchableOpacity
           onPress={() => setShowInfoModal(true)}
           activeOpacity={0.7}
           style={{ position: 'relative' }}
         >
-          <Icon
-            name={getStatusIcon()}
-            size={28}
-            color={isOverTarget || isNearTarget ? statusColor : theme.textSecondary}
-            style={!isOverTarget && !isNearTarget ? { opacity: 0.4 } : undefined}
-          />
-          <View style={{
-            position: 'absolute',
-            bottom: -2,
-            right: -2,
-            backgroundColor: theme.surface,
-            borderRadius: 8,
-            padding: 1
-          }}>
-            <Icon name="information" size={12} color={theme.primary} style={{ opacity: 0.7 }} />
-          </View>
+          {getStatusIcon() ? (
+            <Icon
+              name={getStatusIcon()!}
+              size={24}
+              color={statusColor}
+            />
+          ) : (
+            <Icon
+              name="information-outline"
+              size={24}
+              color={theme.textSecondary}
+              style={{ opacity: 0.5 }}
+            />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -265,9 +252,6 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           >
             {percentage}%
           </Text>
-          {(isSevereOver || isVeryLow) && (
-            <Icon name="alert" size={16} color={statusColor} style={{ marginLeft: 4 }} />
-          )}
         </View>
       </View>
 
@@ -286,27 +270,14 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           />
         </View>
 
-        {/* Visual indicator when over 100% - only for warnings, not acceptable protein */}
+        {/* Overflow badge - only for warnings, not acceptable protein */}
         {isOverTarget && !(name === 'Protein' && isMinorOver) && (
-          <>
-            {/* Small overflow extension beyond the bar */}
-            <View
-              style={[
-                styles.overflowExtension,
-                {
-                  backgroundColor: statusColor,
-                  width: Math.min((percentage - 100) * 0.5, 30) // Max 30px extension
-                }
-              ]}
-            />
-            {/* Clear label showing how much over */}
-            <View style={[styles.overflowBadge, { backgroundColor: statusColor }]}>
-              <Icon name="arrow-up" size={10} color="#fff" />
-              <Text style={[textStyles.small, { color: '#fff', fontWeight: '700', marginLeft: 2 }]}>
-                +{percentage - 100}%
-              </Text>
-            </View>
-          </>
+          <View style={[styles.overflowBadge, { backgroundColor: statusColor }]}>
+            <Icon name="arrow-up" size={10} color="#fff" />
+            <Text style={[textStyles.small, { color: '#fff', fontWeight: '700', marginLeft: 2 }]}>
+              +{percentage - 100}%
+            </Text>
+          </View>
         )}
       </View>
 
@@ -365,7 +336,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
-              <Icon name={getStatusIcon()} size={32} color={statusColor} />
+              <Icon name={getStatusIcon() || "information"} size={32} color={statusColor} />
               <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.md, flex: 1 }]}>
                 {getDetailedInfo().title}
               </Text>
@@ -505,19 +476,12 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   overflowBadge: {
-    position: 'absolute',
-    right: -6,
-    top: -10,
+    marginLeft: SPACING.sm,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: SPACING.sm,
     paddingVertical: 4,
     borderRadius: BORDER_RADIUS.sm,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 3,
   },
   statusMessage: {
     flexDirection: 'row',
