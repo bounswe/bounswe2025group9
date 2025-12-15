@@ -48,6 +48,10 @@ const ProfileSettingsScreen: React.FC = () => {
   const [showMetricsModal, setShowMetricsModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
 
+  const handleNavigate = (screen: string) => {
+    (navigation as any).navigate(screen);
+  };
+
   // Load user profile on mount
   useEffect(() => {
     loadUserProfile();
@@ -106,6 +110,22 @@ const ProfileSettingsScreen: React.FC = () => {
       icon: 'human-male-height',
       onPress: () => setShowMetricsModal(true),
       badgeColor: theme.primary
+    },
+    {
+      id: 'food-proposals',
+      title: 'My Food Proposals',
+      description: 'Track pending, approved, or rejected food proposals',
+      icon: 'clipboard-list',
+      screen: 'FoodProposals',
+      badgeColor: theme.primary
+    },
+    {
+      id: 'private-foods',
+      title: 'My Private Foods',
+      description: 'View private foods you created',
+      icon: 'lock',
+      screen: 'PrivateFoods',
+      badgeColor: theme.success
     },
     {
       id: 'my-posts',
@@ -177,8 +197,7 @@ const ProfileSettingsScreen: React.FC = () => {
     if (item.onPress) {
       item.onPress();
     } else if (item.screen) {
-      // Navigate to the specific screen
-      (navigation as any).navigate(item.screen);
+      handleNavigate(item.screen);
     }
   };
 

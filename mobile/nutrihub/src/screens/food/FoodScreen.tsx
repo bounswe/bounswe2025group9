@@ -35,6 +35,7 @@ import { FoodItem, FoodCategoryType, DietaryOptionType, FoodFilters } from '../.
 import { FoodStackParamList } from '../../navigation/types';
 import { FOOD_CATEGORIES, DIETARY_OPTIONS, FOOD_SORT_OPTIONS } from '../../constants/foodConstants';
 import { getFoodCatalog, submitFoodProposal } from '../../services/api/food.service';
+import { getPrivateFoodsAsFoodItems } from '../../services/api/privateFood.service';
 import { API_CONFIG } from '../../config';
 
 type FoodScreenNavigationProp = NativeStackNavigationProp<FoodStackParamList, 'FoodList'>;
@@ -79,6 +80,7 @@ const FoodScreen: React.FC = () => {
 
   // Food data state
   const [foodData, setFoodData] = useState<FoodItem[]>([]);
+  const [privateFoodData, setPrivateFoodData] = useState<FoodItem[]>([]);
 
   // Ref to track if we're already fetching
   const isFetchingRef = React.useRef(false);
@@ -136,15 +138,8 @@ const FoodScreen: React.FC = () => {
         return { sortBy: 'name', sortOrder: 'asc' };
       case FOOD_SORT_OPTIONS.NAME_Z_TO_A:
         return { sortBy: 'name', sortOrder: 'desc' };
-      case FOOD_SORT_OPTIONS.PRICE_LOW_TO_HIGH:
-        return { sortBy: 'price', sortOrder: 'asc' };
-      case FOOD_SORT_OPTIONS.PRICE_HIGH_TO_LOW:
-        return { sortBy: 'price', sortOrder: 'desc' };
       case FOOD_SORT_OPTIONS.NUTRITION_SCORE:
         return { sortBy: 'nutritionscore', sortOrder: 'desc' };
-      case FOOD_SORT_OPTIONS.COST_TO_NUTRITION_RATIO:
-        // Cost-to-nutrition ratio: sort by price/nutritionScore ratio (ascending = best value)
-        return { sortBy: 'cost-nutrition-ratio', sortOrder: 'asc' };
       default:
         return {};
     }
@@ -173,27 +168,15 @@ const FoodScreen: React.FC = () => {
     }
     
     // Apply price category filter (not handled by backend)
-    if (filters.priceCategory) {
+    const priceCategoryFilter = filters.priceCategory;
+    if (priceCategoryFilter) {
       result = result.filter(item => {
         if (!item.priceCategory) return false;
         // Normalize category (handle both $ and ₺ symbols, remove spaces)
         const normalizedItemCategory = item.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
-        const normalizedFilterCategory = filters.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+        const normalizedFilterCategory = priceCategoryFilter.replace(/₺/g, '$').replace(/\s+/g, '').trim();
         return normalizedItemCategory === normalizedFilterCategory;
       });
-    }
-    
-    // Apply price range filter (not handled by backend)
-    if (filters.minPrice !== undefined) {
-      result = result.filter(item => 
-        item.price !== undefined && item.price >= (filters.minPrice as number)
-      );
-    }
-    
-    if (filters.maxPrice !== undefined) {
-      result = result.filter(item => 
-        item.price !== undefined && item.price <= (filters.maxPrice as number)
-      );
     }
     
     // Apply nutrition score range filter (not handled by backend)
@@ -313,8 +296,12 @@ const FoodScreen: React.FC = () => {
           return [...prevData, ...newItems];
         });
       } else {
-        // Replace all data for initial load or refresh
-        setFoodData(responseData);
+        // Also fetch private foods (once per refresh)
+        const privates = await getPrivateFoodsAsFoodItems();
+        setPrivateFoodData(privates);
+
+        // Replace all data for initial load or refresh (public + private)
+        setFoodData([...responseData, ...privates]);
 
         // Update pagination state for first load
         const nextPage = 2; // Since we just loaded page 1

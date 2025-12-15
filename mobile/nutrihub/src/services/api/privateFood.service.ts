@@ -1,16 +1,21 @@
 /**
  * Private Food Service
  * 
- * Manages private food items stored locally using AsyncStorage.
- * Private foods are user-created foods that can be used immediately
- * without admin approval.
+ * Manages private food items and keeps them in sync with the backend.
+ * Previously this was local-only; now we:
+ *  - Use backend endpoints (/foods/private/) for create/read/update/delete
+ *  - Cache locally via AsyncStorage so existing UI still works offline
+ * This mirrors the frontend private food flow.
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { apiClient } from './client';
+import { calculateNutritionScore, transformFoodItem } from './food.service';
 import { PrivateFood } from '../../types/nutrition';
 import { FoodItem, FoodCategoryType } from '../../types/types';
 
 const PRIVATE_FOODS_STORAGE_KEY = 'nutrihub_private_foods';
+const PRIVATE_FOOD_ENTRIES_KEY = 'nutrihub_private_food_entries';
 
 /**
  * Generate a UUID for private food items
@@ -24,15 +29,100 @@ const generateUUID = (): string => {
 };
 
 /**
- * Get all private foods from storage
+ * Normalize backend private food to the local PrivateFood shape
+ */
+const normalizePrivateFood = (data: any): PrivateFood => {
+    return {
+        id: String(data.id ?? data.uuid ?? generateUUID()),
+        name: data.name,
+        category: data.category ?? 'Other',
+        servingSize: Number(
+            data.serving_size ??
+            data.servingSize ??
+            data.serving_size_in_grams ??
+            100
+        ),
+        calories: Number(data.calories_per_serving ?? data.calories ?? data.energy ?? 0),
+        protein: Number(data.protein_content ?? data.protein ?? 0),
+        carbohydrates: Number(data.carbohydrate_content ?? data.carbohydrates ?? 0),
+        fat: Number(data.fat_content ?? data.fat ?? 0),
+        fiber: data.fiber !== undefined ? Number(data.fiber) : undefined,
+        sugar: data.sugar !== undefined ? Number(data.sugar) : undefined,
+        micronutrients: data.micronutrients ?? undefined,
+        dietaryOptions: data.dietary_options ?? data.dietaryOptions ?? [],
+        createdAt: data.created_at ?? data.createdAt ?? new Date().toISOString(),
+        updatedAt: data.updated_at ?? data.updatedAt ?? new Date().toISOString(),
+        sourceType: (data.source_type ?? data.sourceType ?? 'custom') as 'custom' | 'modified_proposal',
+        originalFoodId: data.original_food_id ?? data.originalFoodId,
+    };
+};
+
+/**
+ * Fetch private foods from backend and cache locally
+ */
+const fetchPrivateFoodsFromApi = async (): Promise<PrivateFood[]> => {
+    const response = await apiClient.get('/foods/private/');
+    const foods = Array.isArray(response.data)
+        ? response.data.map(normalizePrivateFood)
+        : [];
+    await AsyncStorage.setItem(PRIVATE_FOODS_STORAGE_KEY, JSON.stringify(foods));
+    return foods;
+};
+
+/**
+ * Fetch private foods as FoodItem (frontend-compatible shape) from backend
+ */
+export const getPrivateFoodsAsFoodItems = async (): Promise<FoodItem[]> => {
+    const response = await apiClient.get('/foods/private/');
+    const apiFoods = Array.isArray(response.data) ? response.data : [];
+    return apiFoods.map((f: any) => {
+        const item = transformFoodItem({
+            id: f.id,
+            name: f.name,
+            category: f.category,
+            servingSize: f.serving_size ?? f.servingSize ?? 100,
+            caloriesPerServing: f.calories_per_serving ?? f.caloriesPerServing ?? f.calories ?? 0,
+            proteinContent: f.protein_content ?? f.proteinContent ?? f.protein ?? 0,
+            fatContent: f.fat_content ?? f.fatContent ?? f.fat ?? 0,
+            carbohydrateContent: f.carbohydrate_content ?? f.carbohydrateContent ?? f.carbohydrates ?? 0,
+            fiberContent: f.fiber ?? f.fiberContent,
+            sugarContent: f.sugar ?? f.sugarContent,
+            micronutrients: f.micronutrients,
+            dietaryOptions: f.dietary_options ?? f.dietaryOptions ?? [],
+            nutritionScore: f.nutrition_score ?? f.nutritionScore,
+            imageUrl: f.imageUrl ?? f.image_url ?? '',
+            base_price: f.base_price ?? f.basePrice ?? null,
+            price_unit: f.price_unit ?? f.priceUnit ?? 'per_100g',
+            price_category: f.price_category ?? null,
+            currency: f.currency ?? undefined,
+        });
+
+        // Use negative IDs to avoid collisions with public catalog IDs
+        const safeId = f.id ? -Math.abs(Number(f.id)) : -Date.now();
+
+        return {
+            ...item,
+            id: safeId,
+            isPrivate: true,
+            iconName: 'lock',
+            priceCategory: item.priceCategory ?? null,
+        };
+    });
+};
+
+/**
+ * Get all private foods (backend first, fallback to cache)
  */
 export const getPrivateFoods = async (): Promise<PrivateFood[]> => {
     try {
-        const data = await AsyncStorage.getItem(PRIVATE_FOODS_STORAGE_KEY);
-        if (!data) {
-            return [];
+        try {
+            return await fetchPrivateFoodsFromApi();
+        } catch (apiErr) {
+            console.warn('Falling back to cached private foods:', apiErr);
         }
-        return JSON.parse(data) as PrivateFood[];
+
+        const data = await AsyncStorage.getItem(PRIVATE_FOODS_STORAGE_KEY);
+        return data ? (JSON.parse(data) as PrivateFood[]) : [];
     } catch (error) {
         console.error('Error getting private foods:', error);
         return [];
@@ -43,24 +133,55 @@ export const getPrivateFoods = async (): Promise<PrivateFood[]> => {
  * Add a new private food
  */
 export const addPrivateFood = async (
-    food: Omit<PrivateFood, 'id' | 'createdAt' | 'updatedAt'>
+    food: {
+        name: string;
+        category: string;
+        servingSize: number;
+        calories: number;
+        protein: number;
+        carbohydrates: number;
+        fat: number;
+        fiber?: number;
+        sugar?: number;
+        dietaryOptions?: string[];
+        micronutrients?: Record<string, number>;
+        sourceType?: 'custom' | 'modified_proposal';
+    }
 ): Promise<PrivateFood> => {
+  const nutritionScore = calculateNutritionScore(
+    food.protein,
+    food.carbohydrates,
+    food.fat,
+    food.category,
+    food.name
+  );
+
+    const payload = {
+        name: food.name,
+        category: food.category,
+        servingSize: food.servingSize,
+        caloriesPerServing: food.calories,
+        proteinContent: food.protein,
+        fatContent: food.fat,
+        carbohydrateContent: food.carbohydrates,
+        dietaryOptions: food.dietaryOptions ?? [],
+        micronutrients: food.micronutrients,
+        isPrivate: true,
+    nutritionScore,
+        sourceType: food.sourceType ?? 'custom',
+    };
+
     try {
-        const existingFoods = await getPrivateFoods();
+        const response = await apiClient.post('/foods/private/', payload);
+        const saved = normalizePrivateFood(response.data);
 
-        const newFood: PrivateFood = {
-            ...food,
-            id: generateUUID(),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-        };
-
-        const updatedFoods = [...existingFoods, newFood];
+        const existing = await getPrivateFoods();
+        const updatedFoods = [...existing.filter(f => f.id !== saved.id), saved];
         await AsyncStorage.setItem(PRIVATE_FOODS_STORAGE_KEY, JSON.stringify(updatedFoods));
 
-        return newFood;
+        return saved;
     } catch (error) {
-        console.error('Error adding private food:', error);
+        console.error('Error adding private food (API):', error);
         throw error;
     }
 };
@@ -69,31 +190,46 @@ export const addPrivateFood = async (
  * Update an existing private food
  */
 export const updatePrivateFood = async (
-    id: string,
-    updates: Partial<Omit<PrivateFood, 'id' | 'createdAt'>>
+    id: string | number,
+    updates: Partial<{
+        name: string;
+        category: string;
+        servingSize: number;
+        calories: number;
+        protein: number;
+        carbohydrates: number;
+        fat: number;
+        fiber?: number;
+        sugar?: number;
+        dietaryOptions?: string[];
+        micronutrients?: Record<string, number>;
+    }>
 ): Promise<PrivateFood | null> => {
+    const payload: any = {};
+    if (updates.name !== undefined) payload.name = updates.name;
+    if (updates.category !== undefined) payload.category = updates.category;
+    if (updates.servingSize !== undefined) payload.servingSize = updates.servingSize;
+    if (updates.calories !== undefined) payload.caloriesPerServing = updates.calories;
+    if (updates.protein !== undefined) payload.proteinContent = updates.protein;
+    if (updates.fat !== undefined) payload.fatContent = updates.fat;
+    if (updates.carbohydrates !== undefined) payload.carbohydrateContent = updates.carbohydrates;
+    if (updates.dietaryOptions !== undefined) payload.dietaryOptions = updates.dietaryOptions;
+    if (updates.micronutrients !== undefined) payload.micronutrients = updates.micronutrients;
+    if (updates.fiber !== undefined) payload.fiber = updates.fiber;
+    if (updates.sugar !== undefined) payload.sugar = updates.sugar;
+
     try {
-        const existingFoods = await getPrivateFoods();
-        const index = existingFoods.findIndex((food) => food.id === id);
+        const response = await apiClient.patch(`/foods/private/${id}/`, payload);
+        const updated = normalizePrivateFood(response.data);
 
-        if (index === -1) {
-            console.warn(`Private food with id ${id} not found`);
-            return null;
-        }
+        const existing = await getPrivateFoods();
+        const merged = [...existing.filter(f => f.id !== updated.id), updated];
+        await AsyncStorage.setItem(PRIVATE_FOODS_STORAGE_KEY, JSON.stringify(merged));
 
-        const updatedFood: PrivateFood = {
-            ...existingFoods[index],
-            ...updates,
-            updatedAt: new Date().toISOString(),
-        };
-
-        existingFoods[index] = updatedFood;
-        await AsyncStorage.setItem(PRIVATE_FOODS_STORAGE_KEY, JSON.stringify(existingFoods));
-
-        return updatedFood;
+        return updated;
     } catch (error) {
-        console.error('Error updating private food:', error);
-        throw error;
+        console.error('Error updating private food (API):', error);
+        return null;
     }
 };
 
@@ -102,19 +238,16 @@ export const updatePrivateFood = async (
  */
 export const deletePrivateFood = async (id: string): Promise<boolean> => {
     try {
-        const existingFoods = await getPrivateFoods();
-        const filteredFoods = existingFoods.filter((food) => food.id !== id);
+        await apiClient.delete(`/foods/private/${id}/`);
 
-        if (filteredFoods.length === existingFoods.length) {
-            console.warn(`Private food with id ${id} not found`);
-            return false;
-        }
+        const existingFoods = await getPrivateFoods();
+        const filteredFoods = existingFoods.filter((food) => food.id !== id && food.id !== String(id));
 
         await AsyncStorage.setItem(PRIVATE_FOODS_STORAGE_KEY, JSON.stringify(filteredFoods));
         return true;
     } catch (error) {
         console.error('Error deleting private food:', error);
-        throw error;
+        return false;
     }
 };
 
@@ -123,7 +256,9 @@ export const deletePrivateFood = async (id: string): Promise<boolean> => {
  */
 export const convertToFoodItem = (privateFood: PrivateFood): FoodItem => {
     return {
-        id: -parseInt(privateFood.id.replace(/-/g, '').substring(0, 8), 16), // Negative ID to distinguish from API foods
+        id: typeof privateFood.id === 'string'
+            ? -parseInt(privateFood.id.replace(/-/g, '').substring(0, 8), 16)
+            : Number(privateFood.id),
         title: privateFood.name,
         description: `Private food (${privateFood.sourceType === 'custom' ? 'Custom' : 'Modified Proposal'})`,
         iconName: 'food',
@@ -147,8 +282,15 @@ export const convertToFoodItem = (privateFood: PrivateFood): FoodItem => {
  */
 export const getPrivateFoodById = async (id: string): Promise<PrivateFood | null> => {
     try {
+        try {
+            const response = await apiClient.get(`/foods/private/${id}/`);
+            return normalizePrivateFood(response.data);
+        } catch (apiErr) {
+            console.warn('Falling back to cached private food:', apiErr);
+        }
+
         const foods = await getPrivateFoods();
-        return foods.find((food) => food.id === id) || null;
+        return foods.find((food) => food.id === id || food.id === String(id)) || null;
     } catch (error) {
         console.error('Error getting private food by id:', error);
         return null;
@@ -189,8 +331,6 @@ export const clearAllPrivateFoods = async (): Promise<void> => {
 };
 
 // ============ Private Food Entries (Log Entries) ============
-const PRIVATE_FOOD_ENTRIES_KEY = 'nutrihub_private_food_entries';
-
 interface PrivateFoodEntry {
     id: number;
     food_id: number;

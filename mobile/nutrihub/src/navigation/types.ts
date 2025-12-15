@@ -208,11 +208,21 @@ export type ProfileStackParamList = {
    * Nutrition tracking screen
    */
   NutritionTracking: undefined;
+
+  /**
+   * Food proposal tracking screen
+   */
+  FoodProposals: undefined;
   
   /**
    * Language settings screen
    */
   LanguageSettings: undefined;
+  
+  /**
+   * Private foods screen
+   */
+  PrivateFoods: undefined;
 };
 
 /**
