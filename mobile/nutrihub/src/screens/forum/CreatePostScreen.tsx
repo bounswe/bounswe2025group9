@@ -23,6 +23,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -48,6 +49,17 @@ interface Ingredient {
 const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation<CreatePostNavigationProp>();
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
+
+  // Backend tag names are expected to be in English (as returned by API).
+  // We keep these constants for lookup, but display translated labels in the UI.
+  const BACKEND_TAG_NAMES = {
+    dietaryTip: 'Dietary tip',
+    recipe: 'Recipe',
+    vegan: 'Vegan',
+    halal: 'Halal',
+    highProtein: 'High-Protein',
+  } as const;
   
   // Post type selection
   const [postType, setPostType] = useState<PostType>('nutrition');
@@ -101,11 +113,11 @@ const CreatePostScreen: React.FC = () => {
         } else {
           console.error('Tags is empty or not an array:', tags);
           setAvailableTags([]);
-          setTagErrors('Unable to load post tags. Some features may be limited.');
+          setTagErrors(t('forum.create.tagsLoadEmpty'));
         }
       } catch (err) {
         console.error('Error fetching tags:', err);
-        setTagErrors('Failed to load post tags. Some features may be limited.');
+        setTagErrors(t('forum.create.tagsLoadFailed'));
         setAvailableTags([]);
       } finally {
         setLoading(false);
@@ -158,9 +170,9 @@ const CreatePostScreen: React.FC = () => {
   // Validate nutrition title field
   const validateNutritionTitle = (value: string): string | undefined => {
     if (!value.trim()) {
-      return 'Title is required';
+      return t('forum.create.titleRequired');
     } else if (value.trim().length < 3) {
-      return 'Title must be at least 3 characters';
+      return t('forum.create.titleMinLength');
     }
     return undefined;
   };
@@ -168,9 +180,9 @@ const CreatePostScreen: React.FC = () => {
   // Validate nutrition content field
   const validateNutritionContent = (value: string): string | undefined => {
     if (!value.trim()) {
-      return 'Content is required';
+      return t('forum.create.contentRequired');
     } else if (value.trim().length < 10) {
-      return 'Content must be at least 10 characters';
+      return t('forum.create.contentMinLength');
     }
     return undefined;
   };
@@ -178,9 +190,9 @@ const CreatePostScreen: React.FC = () => {
   // Validate recipe name field
   const validateRecipeName = (value: string): string | undefined => {
     if (!value.trim()) {
-      return 'Recipe name is required';
+      return t('forum.create.recipeNameRequired');
     } else if (value.trim().length < 3) {
-      return 'Recipe name must be at least 3 characters';
+      return t('forum.create.recipeNameMinLength');
     }
     return undefined;
   };
@@ -188,9 +200,9 @@ const CreatePostScreen: React.FC = () => {
   // Validate recipe instructions field
   const validateRecipeInstructions = (value: string): string | undefined => {
     if (!value.trim()) {
-      return 'Instructions are required';
+      return t('forum.create.instructionsRequired');
     } else if (value.trim().length < 10) {
-      return 'Instructions must be at least 10 characters';
+      return t('forum.create.instructionsMinLength');
     }
     return undefined;
   };
@@ -302,7 +314,7 @@ const CreatePostScreen: React.FC = () => {
     
     // Check ingredients
     if (ingredients.length === 0) {
-      setIngredientError('At least one ingredient is required');
+      setIngredientError(t('forum.create.ingredientRequired'));
       return false;
     } else {
       setIngredientError(undefined);
@@ -319,7 +331,7 @@ const CreatePostScreen: React.FC = () => {
     }
     
     // Find Dietary tip tag ID
-    const dietaryTipTagId = getTagIdByName('Dietary tip');
+    const dietaryTipTagId = getTagIdByName(BACKEND_TAG_NAMES.dietaryTip);
     
     if (!dietaryTipTagId) {
       Alert.alert(
@@ -387,7 +399,7 @@ const CreatePostScreen: React.FC = () => {
     }
     
     // Find Recipe tag ID
-    const recipeTagId = getTagIdByName('Recipe');
+    const recipeTagId = getTagIdByName(BACKEND_TAG_NAMES.recipe);
     
     if (!recipeTagId) {
       Alert.alert(
@@ -409,7 +421,7 @@ const CreatePostScreen: React.FC = () => {
       const totalCarbs = ingredients.reduce((sum, ing) => sum + ing.carbs, 0);
       
       // Format recipe content for the post body (similar to frontend)
-      const recipeContent = `This is a recipe post.\n\nYou can find the full recipe details including ingredients and instructions below.`;
+      const recipeContent = t('forum.create.recipePostBody');
       
       // Combine recipe tag with dietary tags
       const allTagIds = [recipeTagId, ...selectedDietaryTags];
@@ -480,26 +492,26 @@ const CreatePostScreen: React.FC = () => {
   const addIngredient = () => {
     // Validate food selection
     if (!selectedFoodId) {
-      setIngredientError('Please select a food item');
+      setIngredientError(t('forum.create.selectFoodItem'));
       return;
     }
     
     const selectedFood = foodOptions.find(food => food.id === selectedFoodId);
     if (!selectedFood) {
-      setIngredientError('Selected food not found');
+      setIngredientError(t('forum.create.selectedFoodNotFound'));
       return;
     }
     
     // Validate amount
     const amount = parseFloat(selectedFoodAmount);
     if (isNaN(amount) || amount <= 0) {
-      setIngredientError('Please enter a valid amount (greater than 0)');
+      setIngredientError(t('forum.create.invalidAmount'));
       return;
     }
     
     // Check for duplicates
     if (ingredients.some(ing => ing.food_id === selectedFoodId)) {
-      setIngredientError('This ingredient is already in your recipe');
+      setIngredientError(t('forum.create.ingredientAlreadyAdded'));
       return;
     }
     
@@ -566,12 +578,12 @@ const CreatePostScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Create New Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.createPost')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -589,7 +601,7 @@ const CreatePostScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Create New Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.createPost')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         
@@ -610,7 +622,7 @@ const CreatePostScreen: React.FC = () => {
           
           {/* Post Type Selection */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Post Type</Text>
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('forum.postType')}</Text>
             <View style={styles.postTypeContainer}>
               <TouchableOpacity
                 style={[
@@ -633,7 +645,7 @@ const CreatePostScreen: React.FC = () => {
                     { color: postType === 'nutrition' ? '#FFFFFF' : theme.text }
                   ]}
                 >
-                  Nutrition Tip
+                  {t('forum.nutritionTip')}
                 </Text>
               </TouchableOpacity>
               
@@ -658,7 +670,7 @@ const CreatePostScreen: React.FC = () => {
                     { color: postType === 'recipe' ? '#FFFFFF' : theme.text }
                   ]}
                 >
-                  Recipe
+                  {t('forum.recipe')}
                 </Text>
               </TouchableOpacity>
               
@@ -683,7 +695,7 @@ const CreatePostScreen: React.FC = () => {
                     { color: postType === 'mealplan' ? '#FFFFFF' : theme.text }
                   ]}
                 >
-                  Meal Plan
+                  {t('forum.mealPlan')}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -694,8 +706,8 @@ const CreatePostScreen: React.FC = () => {
             /* Nutrition Tip Form */
             <Card style={styles.section}>
               <TextInput
-                label="Title"
-                placeholder="Enter your tip title"
+                label={t('forum.create.title')}
+                placeholder={t('forum.create.tipTitlePlaceholder')}
                 value={nutritionTitle}
                 onChangeText={handleNutritionTitleChange}
                 onBlur={handleNutritionTitleBlur}
@@ -703,8 +715,8 @@ const CreatePostScreen: React.FC = () => {
               />
               
               <TextInput
-                label="Content"
-                placeholder="Share your nutrition tip..."
+                label={t('forum.create.content')}
+                placeholder={t('forum.create.tipContentPlaceholder')}
                 value={nutritionContent}
                 onChangeText={handleNutritionContentChange}
                 onBlur={handleNutritionContentBlur}
@@ -714,7 +726,7 @@ const CreatePostScreen: React.FC = () => {
               />
               
               <Button
-                title="Post Nutrition Tip"
+                title={t('forum.create.postNutritionTip')}
                 onPress={handleSubmitNutritionTip}
                 loading={isSubmittingNutrition}
                 disabled={isSubmittingNutrition || !isNutritionFormValid()}
@@ -726,8 +738,8 @@ const CreatePostScreen: React.FC = () => {
             <>
               <Card style={styles.section}>
                 <TextInput
-                  label="Recipe Name"
-                  placeholder="Enter recipe name"
+                  label={t('forum.create.recipeName')}
+                  placeholder={t('forum.create.recipeNamePlaceholder')}
                   value={recipeName}
                   onChangeText={handleRecipeNameChange}
                   onBlur={handleRecipeNameBlur}
@@ -737,7 +749,7 @@ const CreatePostScreen: React.FC = () => {
               
               {/* Recipe Details summary (always visible in Recipe mode) */}
               <Card style={styles.section}>
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Recipe Details</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('forum.recipeDetails')}</Text>
                 <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
                   <View style={styles.nutritionGrid}>
                     <View style={styles.nutritionItem}>
@@ -745,28 +757,28 @@ const CreatePostScreen: React.FC = () => {
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.calories, 0).toFixed(0)}
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.calories')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="weight-lifter" size={20} color="#3B82F6" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.protein, 0).toFixed(1)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.protein')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="water" size={20} color="#F59E0B" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.fat, 0).toFixed(1)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.fat')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="grain" size={20} color="#10B981" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.carbs, 0).toFixed(1)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.carbs')}</Text>
                     </View>
                   </View>
                 </View>
@@ -775,34 +787,34 @@ const CreatePostScreen: React.FC = () => {
               {/* Dietary Tags - only show for Recipe */}
               <Card style={styles.section}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle]}>
-                  Dietary Tags <Text style={[styles.optionalLabel, textStyles.caption]}>(optional)</Text>
+                  {t('forum.dietaryTags')} <Text style={[styles.optionalLabel, textStyles.caption]}>({t('common.optional')})</Text>
                 </Text>
                 <View style={styles.dietaryTagsContainer}>
                   <TouchableOpacity
                     style={[
                       styles.dietaryTagButton,
                       { borderColor: theme.border },
-                      selectedDietaryTags.includes(getTagIdByName('Vegan') || 0) && 
+                      selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.vegan) || 0) && 
                         { backgroundColor: '#10B981', borderColor: '#10B981' }
                     ]}
                     onPress={() => {
-                      const veganTagId = getTagIdByName('Vegan');
+                      const veganTagId = getTagIdByName(BACKEND_TAG_NAMES.vegan);
                       if (veganTagId) toggleDietaryTag(veganTagId);
                     }}
                   >
                     <Icon 
                       name="leaf" 
                       size={18} 
-                      color={selectedDietaryTags.includes(getTagIdByName('Vegan') || 0) ? '#FFFFFF' : theme.text} 
+                      color={selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.vegan) || 0) ? '#FFFFFF' : theme.text} 
                     />
                     <Text 
                       style={[
                         styles.dietaryTagText, 
                         textStyles.body,
-                        { color: selectedDietaryTags.includes(getTagIdByName('Vegan') || 0) ? '#FFFFFF' : theme.text }
+                        { color: selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.vegan) || 0) ? '#FFFFFF' : theme.text }
                       ]}
                     >
-                      Vegan
+                      {t('forum.dietaryTagVegan')}
                     </Text>
                   </TouchableOpacity>
                   
@@ -810,27 +822,27 @@ const CreatePostScreen: React.FC = () => {
                     style={[
                       styles.dietaryTagButton,
                       { borderColor: theme.border },
-                      selectedDietaryTags.includes(getTagIdByName('Halal') || 0) && 
+                      selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.halal) || 0) && 
                         { backgroundColor: '#8B5CF6', borderColor: '#8B5CF6' }
                     ]}
                     onPress={() => {
-                      const halalTagId = getTagIdByName('Halal');
+                      const halalTagId = getTagIdByName(BACKEND_TAG_NAMES.halal);
                       if (halalTagId) toggleDietaryTag(halalTagId);
                     }}
                   >
                     <Icon 
                       name="star-crescent" 
                       size={18} 
-                      color={selectedDietaryTags.includes(getTagIdByName('Halal') || 0) ? '#FFFFFF' : theme.text} 
+                      color={selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.halal) || 0) ? '#FFFFFF' : theme.text} 
                     />
                     <Text 
                       style={[
                         styles.dietaryTagText, 
                         textStyles.body,
-                        { color: selectedDietaryTags.includes(getTagIdByName('Halal') || 0) ? '#FFFFFF' : theme.text }
+                        { color: selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.halal) || 0) ? '#FFFFFF' : theme.text }
                       ]}
                     >
-                      Halal
+                      {t('forum.dietaryTagHalal')}
                     </Text>
                   </TouchableOpacity>
                   
@@ -838,40 +850,40 @@ const CreatePostScreen: React.FC = () => {
                     style={[
                       styles.dietaryTagButton,
                       { borderColor: theme.border },
-                      selectedDietaryTags.includes(getTagIdByName('High-Protein') || 0) && 
+                      selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.highProtein) || 0) && 
                         { backgroundColor: '#EF4444', borderColor: '#EF4444' }
                     ]}
                     onPress={() => {
-                      const highProteinTagId = getTagIdByName('High-Protein');
+                      const highProteinTagId = getTagIdByName(BACKEND_TAG_NAMES.highProtein);
                       if (highProteinTagId) toggleDietaryTag(highProteinTagId);
                     }}
                   >
                     <Icon 
                       name="dumbbell" 
                       size={18} 
-                      color={selectedDietaryTags.includes(getTagIdByName('High-Protein') || 0) ? '#FFFFFF' : theme.text} 
+                      color={selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.highProtein) || 0) ? '#FFFFFF' : theme.text} 
                     />
                     <Text 
                       style={[
                         styles.dietaryTagText, 
                         textStyles.body,
-                        { color: selectedDietaryTags.includes(getTagIdByName('High-Protein') || 0) ? '#FFFFFF' : theme.text }
+                        { color: selectedDietaryTags.includes(getTagIdByName(BACKEND_TAG_NAMES.highProtein) || 0) ? '#FFFFFF' : theme.text }
                       ]}
                     >
-                      High-Protein
+                      {t('forum.dietaryTagHighProtein')}
                     </Text>
                   </TouchableOpacity>
                 </View>
               </Card>
               
               <Card style={styles.section}>
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Ingredients</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('forum.ingredients')}</Text>
                 
                 {/* Ingredient Addition Form */}
                 <View style={styles.ingredientInputRow}>
                   <View style={styles.ingredientNameInputContainer}>
                     <TextInput
-                      placeholder="Search for ingredients..."
+                      placeholder={t('forum.create.searchIngredientsPlaceholder')}
                       value={foodSearchTerm}
                       onChangeText={setFoodSearchTerm}
                       containerStyle={styles.ingredientNameInput}
@@ -890,7 +902,7 @@ const CreatePostScreen: React.FC = () => {
                   </View>
                   
                   <Button
-                    title="Add"
+                    title={t('common.add')}
                     variant="primary"
                     onPress={addIngredient}
                     style={styles.addIngredientButton}
@@ -905,11 +917,11 @@ const CreatePostScreen: React.FC = () => {
                     {loadingFoods ? (
                       <View style={styles.foodSearchLoading}>
                         <ActivityIndicator size="small" color={theme.primary} />
-                        <Text style={[styles.foodSearchLoadingText, textStyles.caption]}>Loading foods...</Text>
+                        <Text style={[styles.foodSearchLoadingText, textStyles.caption]}>{t('common.loadingFoods')}</Text>
                       </View>
                     ) : foodOptions.length === 0 ? (
                       <Text style={[styles.noFoodsText, textStyles.caption]}>
-                        No foods found. Try a different search term.
+                        {t('food.noFoodsFoundTryDifferentSearch')}
                       </Text>
                     ) : (
                       <ScrollView style={styles.foodSearchList} nestedScrollEnabled>
@@ -926,7 +938,7 @@ const CreatePostScreen: React.FC = () => {
                             <View style={styles.foodSearchItemContent}>
                               <Text style={[styles.foodSearchItemName, textStyles.body]}>{food.name}</Text>
                               <Text style={[styles.foodSearchItemDetails, textStyles.caption]}>
-                                {food.category} • {food.proteinContent}g protein • {food.fatContent}g fat • {food.carbohydrateContent}g carbs • {food.caloriesPerServing} cal
+                                {food.category} • {food.proteinContent}g {t('food.protein')} • {food.fatContent}g {t('food.fat')} • {food.carbohydrateContent}g {t('food.carbs')} • {food.caloriesPerServing} {t('metrics.kcal')}
                               </Text>
                             </View>
                             {selectedFoodId === food.id && (
@@ -949,23 +961,23 @@ const CreatePostScreen: React.FC = () => {
                 {/* Total Nutritional Information */}
                 {ingredients.length > 0 && (
                   <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
-                    <Text style={[styles.nutritionSummaryTitle, textStyles.subtitle]}>Total Nutrition</Text>
+                    <Text style={[styles.nutritionSummaryTitle, textStyles.subtitle]}>{t('forum.create.totalNutrition')}</Text>
                     <View style={styles.nutritionGrid}>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.calories, 0).toFixed(1)}</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.calories')}</Text>
                       </View>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.protein, 0).toFixed(1)}g</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.protein')}</Text>
                       </View>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.fat, 0).toFixed(1)}g</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.fat')}</Text>
                       </View>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.carbs, 0).toFixed(1)}g</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.carbs')}</Text>
                       </View>
                     </View>
                   </View>
@@ -973,7 +985,7 @@ const CreatePostScreen: React.FC = () => {
                 
                 {/* Ingredients List */}
                 <View style={styles.ingredientsListContainer}>
-                  <Text style={[styles.ingredientsListTitle, textStyles.subtitle]}>Selected Ingredients:</Text>
+                  <Text style={[styles.ingredientsListTitle, textStyles.subtitle]}>{t('forum.create.selectedIngredients')}</Text>
                   {ingredients.map((ingredient) => (
                     <View key={ingredient.food_id} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
                       <View style={styles.ingredientInfo}>
@@ -994,15 +1006,15 @@ const CreatePostScreen: React.FC = () => {
                 
                 {ingredients.length === 0 && (
                   <Text style={[styles.noIngredientsText, textStyles.caption]}>
-                    No ingredients added yet. Add ingredients to continue.
+                    {t('forum.create.noIngredientsYet')}
                   </Text>
                 )}
               </Card>
               
               <Card style={styles.section}>
                 <TextInput
-                  label="Instructions"
-                  placeholder="Enter cooking instructions..."
+                  label={t('forum.instructions')}
+                  placeholder={t('forum.create.instructionsPlaceholder')}
                   value={recipeInstructions}
                   onChangeText={handleRecipeInstructionsChange}
                   onBlur={handleRecipeInstructionsBlur}
@@ -1012,7 +1024,7 @@ const CreatePostScreen: React.FC = () => {
                 />
                 
                 <Button
-                  title="Post Recipe"
+                  title={t('forum.create.postRecipe')}
                   onPress={handleSubmitRecipe}
                   loading={isSubmittingRecipe}
                   disabled={isSubmittingRecipe || !isRecipeFormValid()}
@@ -1025,12 +1037,12 @@ const CreatePostScreen: React.FC = () => {
             <Card style={styles.section}>
               <View style={styles.comingSoonContainer}>
                 <Icon name="calendar-clock" size={48} color={theme.textSecondary} />
-                <Text style={[styles.comingSoonTitle, textStyles.heading4]}>Coming Soon!</Text>
+                <Text style={[styles.comingSoonTitle, textStyles.heading4]}>{t('common.comingSoon')}</Text>
                 <Text style={[styles.comingSoonText, textStyles.body]}>
-                  Meal plan creation is not yet available. Check back later for this feature!
+                  {t('forum.create.mealPlanComingSoon')}
                 </Text>
                 <Button
-                  title="Go Back"
+                  title={t('common.goBack')}
                   onPress={() => setPostType('nutrition')}
                   variant="primary"
                   style={styles.comingSoonButton}

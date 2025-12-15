@@ -478,7 +478,7 @@ const PostDetail = () => {
                     <ul className="list-disc list-inside space-y-1 ml-2">
                         {recipe.ingredients.map((ingredient, index) => (
                             <li key={index} className="nh-ingredient-main-text">
-                                <span className="font-medium">{ingredient.food_name}</span> - {ingredient.amount}g
+                                <span className="font-medium">{ingredient.food_name}</span> - {ingredient.customAmount} {ingredient.customUnit}
                                 <span className="nh-ingredient-nutrient-text">
                                     ({ingredient.protein?.toFixed(1)}g protein, {ingredient.fat?.toFixed(1)}g fat, {ingredient.carbs?.toFixed(1)}g carbs)
                                 </span>

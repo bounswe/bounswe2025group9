@@ -76,11 +76,15 @@ class ApiClient {
       },
       async (error) => {
         const originalRequest = error.config;
+
+        const shouldAttemptRefresh =
+          !!originalRequest &&
+          error.response?.status === 401 &&
+          !originalRequest._retry &&
+          this.isTokenInvalidResponse(error);
         
-        // If the error is due to an expired token and we haven't tried to refresh yet
-        if (error.response?.status === 401 &&
-            !originalRequest._retry &&
-            error.response?.data?.detail?.includes('expired')) {
+        // If the error is due to an expired/invalid token and we haven't tried to refresh yet
+        if (shouldAttemptRefresh) {
           
           if (this.isRefreshing) {
             try {
@@ -139,16 +143,39 @@ class ApiClient {
         if (__DEV__) {
           const method = error.config?.method?.toUpperCase() || 'UNKNOWN';
           const url = error.config ? `${error.config.baseURL || ''}${error.config.url || ''}` : 'Unknown URL';
-          console.error(`❌ [${method}] ${url} - Error:`, {
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data,
-            message: error.message,
-          });
+          const status = error.response?.status;
+
+          // Suppress noisy logs for expected 404 on metrics (no data yet)
+          const isMetrics404 = status === 404 && url.includes('/users/metrics/');
+
+          if (!isMetrics404) {
+            console.error(`❌ [${method}] ${url} - Error:`, {
+              status,
+              statusText: error.response?.statusText,
+              data: error.response?.data,
+              message: error.message,
+            });
+          }
         }
         
         return Promise.reject(error);
       }
+    );
+  }
+
+  private isTokenInvalidResponse(error: any): boolean {
+    const detail = error?.response?.data?.detail;
+    const code = error?.response?.data?.code;
+    const detailText = typeof detail === 'string' ? detail.toLowerCase() : '';
+
+    return (
+      code === 'token_not_valid' ||
+      detailText.includes('token has expired') ||
+      detailText.includes('token is invalid or expired') ||
+      detailText.includes('token is invalid') ||
+      detailText.includes('given token not valid') ||
+      detailText.includes('expired token') ||
+      detailText.includes('signature has expired')
     );
   }
   

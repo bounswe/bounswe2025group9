@@ -1,6 +1,6 @@
 import React from 'react';
 import { Food } from '../lib/apiClient';
-import MacroRadarChart from './radarChart';
+import MacroRadarChart, { MineralRadarChart, VitaminRadarChart } from './radarChart';
 
 interface NutritionCompareProps {
     foods: Food[];
@@ -24,6 +24,30 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
                                 <MacroRadarChart food1={foods[0]} food2={foods[1]} food3={foods[2]} />
                             ) : (
                                 <MacroRadarChart food1={foods[0]} food2={foods[1]} />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Vitamins Radar Chart */}
+                    <div className="nh-card p-4">
+                        <h3 className="nh-subtitle mb-4">Vitamins (per 100g)</h3>
+                        <div className="w-full">
+                            {foods.length > 2 ? (
+                                <VitaminRadarChart food1={foods[0]} food2={foods[1]} food3={foods[2]} />
+                            ) : (
+                                <VitaminRadarChart food1={foods[0]} food2={foods[1]} />
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Minerals Radar Chart */}
+                    <div className="nh-card p-4">
+                        <h3 className="nh-subtitle mb-4">Minerals (per 100g)</h3>
+                        <div className="w-full">
+                            {foods.length > 2 ? (
+                                <MineralRadarChart food1={foods[0]} food2={foods[1]} food3={foods[2]} />
+                            ) : (
+                                <MineralRadarChart food1={foods[0]} food2={foods[1]} />
                             )}
                         </div>
                     </div>

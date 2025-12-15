@@ -10,7 +10,11 @@ from rest_framework.views import Response
 from forum.models import Post, Recipe, RecipeIngredient
 from foods.constants import DEFAULT_CURRENCY, PriceUnit
 from foods.models import FoodEntry, PriceAudit
-from foods.services import recalculate_recipes_for_food, update_food_price, FoodAccessService
+from foods.services import (
+    recalculate_recipes_for_food,
+    update_food_price,
+    FoodAccessService,
+)
 
 User = get_user_model()
 
@@ -72,8 +76,18 @@ class RecipeTests(TestCase):
                     "post_id": self.post.id,
                     "instructions": "1. Cook chicken. 2. Cook rice. 3. Serve together.",
                     "ingredients": [
-                        {"food_id": self.food1.id, "amount": 200, "customUnit": "g", "customAmount": 200},
-                        {"food_id": self.food2.id, "amount": 150, "customUnit": "g", "customAmount": 150},
+                        {
+                            "food_id": self.food1.id,
+                            "amount": 200,
+                            "customUnit": "gram",
+                            "customAmount": 200,
+                        },
+                        {
+                            "food_id": self.food2.id,
+                            "amount": 150,
+                            "customUnit": "gram",
+                            "customAmount": 150,
+                        },
                     ],
                 },
                 format="json",
@@ -170,9 +184,19 @@ class RecipeTests(TestCase):
                 {
                     "instructions": "Updated instructions",
                     "ingredients": [
-                        {"food_id": self.food1.id, "amount": 150, "customUnit": "g", "customAmount": 150},
-                        {"food_id": self.food2.id, "amount": 100, "customUnit": "g", "customAmount": 100},
-                     ],
+                        {
+                            "food_id": self.food1.id,
+                            "amount": 150,
+                            "customUnit": "gram",
+                            "customAmount": 150,
+                        },
+                        {
+                            "food_id": self.food2.id,
+                            "amount": 100,
+                            "customUnit": "gram",
+                            "customAmount": 100,
+                        },
+                    ],
                 },
                 format="json",
             ),

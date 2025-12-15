@@ -101,21 +101,29 @@ class NutritionService {
   /**
    * Get user metrics (height, weight, activity level)
    */
-  async getUserMetrics(): Promise<UserMetrics> {
+  async getUserMetrics(): Promise<UserMetrics | null> {
     try {
       const response = await apiClient.get<UserMetrics>('/users/metrics/');
+
+      // Treat missing metrics as "no data yet" instead of an error
+      if (response.status === 404) {
+        return null;
+      }
       if (response.error) {
-        const error: any = new Error(response.error);
-        error.status = response.status;
-        throw error;
+        const err: any = new Error(response.error);
+        err.status = response.status;
+        throw err;
       }
       if (!response.data) {
-        const error: any = new Error('No data returned');
-        error.status = 404;
-        throw error;
+        return null;
       }
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      // Gracefully handle 404 from backend
+      const status = error?.status || error?.response?.status;
+      if (status === 404) {
+        return null;
+      }
       console.error('Error fetching user metrics:', error);
       throw error;
     }
