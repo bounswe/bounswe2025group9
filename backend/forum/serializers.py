@@ -3,7 +3,8 @@ from decimal import Decimal
 from rest_framework import serializers
 from .models import Post, Tag, Comment, Recipe, RecipeIngredient
 from foods.models import FoodEntry
-from foods.services import recalculate_recipes_for_food
+from foods.services import recalculate_recipes_for_food, FoodAccessService
+from forum.constants import CUSTOM_UNITS
 
 
 class TagSerializer(serializers.ModelSerializer):
@@ -52,18 +53,15 @@ class PostSerializer(serializers.ModelSerializer):
         return hasattr(obj, "recipe")
 
     def get_author(self, obj):
-        author_data = {
-            'id': obj.author.id,
-            'username': obj.author.username
-        }
-        
+        author_data = {"id": obj.author.id, "username": obj.author.username}
+
         # Include profile image URL if available
         if obj.author.profile_image:
             # Use relative URL instead of absolute URL to work with nginx
-            author_data['profile_image'] = obj.author.profile_image.url
+            author_data["profile_image"] = obj.author.profile_image.url
         else:
-            author_data['profile_image'] = None
-            
+            author_data["profile_image"] = None
+
         return author_data
 
 
@@ -76,24 +74,23 @@ class CommentSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "author", "created_at"]
 
     def get_author(self, obj):
-        author_data = {
-            'id': obj.author.id,
-            'username': obj.author.username
-        }
-        
+        author_data = {"id": obj.author.id, "username": obj.author.username}
+
         # Include profile image URL if available
         if obj.author.profile_image:
             # Use relative URL instead of absolute URL to work with nginx
-            author_data['profile_image'] = obj.author.profile_image.url
+            author_data["profile_image"] = obj.author.profile_image.url
         else:
-            author_data['profile_image'] = None
-            
+            author_data["profile_image"] = None
+
         return author_data
 
 
 class RecipeIngredientSerializer(serializers.ModelSerializer):
     food_id = serializers.PrimaryKeyRelatedField(
-        queryset=FoodEntry.objects.all(), source="food", write_only=True
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
+        source="food",
+        write_only=True,
     )
     food_name = serializers.StringRelatedField(source="food.name", read_only=True)
     protein = serializers.FloatField(source="protein_content", read_only=True)
@@ -102,6 +99,18 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
     calories = serializers.FloatField(source="calorie_content", read_only=True)
     cost = serializers.SerializerMethodField()
 
+    def __init__(self, *args, **kwargs):
+        """Initialize and set accessible foods queryset based on user context"""
+        super().__init__(*args, **kwargs)
+        # Get user from context
+        request = self.context.get("request")
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Set queryset to only accessible foods for this user
+        self.fields["food_id"].queryset = FoodAccessService.get_accessible_foods(
+            user=user
+        )
+
     class Meta:
         model = RecipeIngredient
         fields = [
@@ -109,6 +118,8 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
             "food_id",
             "food_name",
             "amount",
+            "customUnit",
+            "customAmount",
             "protein",
             "fat",
             "carbs",
@@ -127,6 +138,14 @@ class RecipeIngredientSerializer(serializers.ModelSerializer):
 
     def get_cost(self, obj):
         return float(obj.estimated_cost.quantize(Decimal("0.01")))
+
+    def validate_customUnit(self, value):
+        """Validate that customUnit is one of the standard cooking measurement units"""
+        if value not in CUSTOM_UNITS:
+            raise serializers.ValidationError(
+                f"Invalid custom unit. Must be one of: {', '.join(CUSTOM_UNITS)}"
+            )
+        return value
 
 
 class RecipeSerializer(serializers.ModelSerializer):
@@ -180,6 +199,16 @@ class RecipeSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def get_fields(self):
+        fields = super().get_fields()
+        fields["ingredients"] = RecipeIngredientSerializer(
+            many=True, context=self.context
+        )
+        return fields
+
     def create(self, validated_data):
         ingredients_data = validated_data.pop("ingredients", [])
         recipe = Recipe.objects.create(**validated_data)
@@ -191,21 +220,20 @@ class RecipeSerializer(serializers.ModelSerializer):
         return recipe
 
     def get_author(self, obj):
-        author_data = {
-            'id': obj.post.author.id,
-            'username': obj.post.author.username
-        }
-        
+        author_data = {"id": obj.post.author.id, "username": obj.post.author.username}
+
         # Include profile image URL if available
         if obj.post.author.profile_image:
-            request = self.context.get('request')
+            request = self.context.get("request")
             if request:
-                author_data['profile_image'] = request.build_absolute_uri(obj.post.author.profile_image.url)
+                author_data["profile_image"] = request.build_absolute_uri(
+                    obj.post.author.profile_image.url
+                )
             else:
-                author_data['profile_image'] = obj.post.author.profile_image.url
+                author_data["profile_image"] = obj.post.author.profile_image.url
         else:
-            author_data['profile_image'] = None
-            
+            author_data["profile_image"] = None
+
         return author_data
 
     def update(self, instance, validated_data):

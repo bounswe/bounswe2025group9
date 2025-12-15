@@ -38,22 +38,24 @@ class AdminFoodEntry(admin.ModelAdmin):
 class AdminFoodProposal(admin.ModelAdmin):
     list_display = (
         "id",
-        "name",
-        "category",
-        "imageUrl",
-        "caloriesPerServing",
-        "proteinContent",
-        "fatContent",
-        "carbohydrateContent",
-        "nutritionScore",
+        "get_food_name",
+        "get_food_category",
         "isApproved",
         "createdAt",
         "proposedBy",
     )
     list_editable = ("isApproved",)
-    search_fields = ("name",)
+    search_fields = ("food_entry__name",)
     list_filter = ("isApproved",)
-    readonly_fields = ("createdAt", "proposedBy")
+    readonly_fields = ("createdAt", "proposedBy", "food_entry")
+
+    def get_food_name(self, obj):
+        return obj.food_entry.name if obj.food_entry else "N/A"
+    get_food_name.short_description = "Food Name"
+
+    def get_food_category(self, obj):
+        return obj.food_entry.category if obj.food_entry else "N/A"
+    get_food_category.short_description = "Category"
 
     def has_add_permission(self, request):
         return False
@@ -102,16 +104,40 @@ class IsAdminUser(BasePermission):
 
 
 class FoodProposalModerationSerializer(serializers.ModelSerializer):
-    """Serializer for listing and updating food proposals."""
+    # ---- FoodEntry fields (flat, read-only) ----
+    name = serializers.CharField(source="food_entry.name", read_only=True)
+    category = serializers.CharField(source="food_entry.category", read_only=True)
+    servingSize = serializers.FloatField(source="food_entry.servingSize", read_only=True)
+    caloriesPerServing = serializers.FloatField(
+        source="food_entry.caloriesPerServing", read_only=True
+    )
+    proteinContent = serializers.FloatField(
+        source="food_entry.proteinContent", read_only=True
+    )
+    fatContent = serializers.FloatField(
+        source="food_entry.fatContent", read_only=True
+    )
+    carbohydrateContent = serializers.FloatField(
+        source="food_entry.carbohydrateContent", read_only=True
+    )
+    dietaryOptions = serializers.ListField(
+        source="food_entry.dietaryOptions",
+        child=serializers.CharField(),
+        read_only=True,
+    )
+    nutritionScore = serializers.FloatField(
+        source="food_entry.nutritionScore", read_only=True
+    )
 
     proposedBy = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(read_only=True)
-    allergens = serializers.SerializerMethodField()
 
     class Meta:
         model = FoodProposal
         fields = [
             "id",
+
+            # flat food fields
             "name",
             "category",
             "servingSize",
@@ -119,18 +145,13 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "proteinContent",
             "fatContent",
             "carbohydrateContent",
+            "dietaryOptions",
             "nutritionScore",
-            "imageUrl",
+
+            # proposal fields
             "isApproved",
             "proposedBy",
             "createdAt",
-            "allergens",
-            "dietaryOptions",
-            "base_price",
-            "price_unit",
-            "currency",
-            "micronutrients",
-            "is_private",
         ]
         read_only_fields = [
             "id",
@@ -143,10 +164,11 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
         # nutritionScore should be calculated automatically, hence should not be editable.
 
     def get_proposedBy(self, obj):
-        return {"id": obj.proposedBy.id, "username": obj.proposedBy.username}
+        return {
+            "id": obj.proposedBy.id,
+            "username": obj.proposedBy.username,
+        }
 
-    def get_allergens(self, obj):
-        return [allergen.name for allergen in obj.allergens.all()]
 
 
 class FoodProposalActionSerializer(serializers.Serializer):
@@ -163,8 +185,8 @@ class FoodProposalModerationViewSet(viewsets.ModelViewSet):
 
     queryset = (
         FoodProposal.objects.all()
-        .select_related("proposedBy")
-        .prefetch_related("allergens")
+        .select_related("proposedBy", "food_entry")
+        .prefetch_related("food_entry__allergens")
     )
     serializer_class = FoodProposalModerationSerializer
     permission_classes = [IsAdminUser]
@@ -235,10 +257,10 @@ class FoodProposalModerationViewSet(viewsets.ModelViewSet):
 
         if approved:
             proposal, entry = approve_food_proposal(proposal, changed_by=request.user)
-            message = f"Food proposal '{proposal.name}' approved and added to catalog."
+            message = f"Food proposal '{proposal.food_entry.name}' approved and added to catalog."
         else:
             reject_food_proposal(proposal)
-            message = f"Food proposal '{proposal.name}' rejected."
+            message = f"Food proposal '{proposal.food_entry.name}' rejected."
 
         return Response({"message": message}, status=status.HTTP_200_OK)
 

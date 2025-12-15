@@ -1,11 +1,17 @@
-from django.test import TestCase
-from django.contrib.auth import get_user_model
-from rest_framework.test import APITestCase, APIClient
-from rest_framework import status
-from django.urls import reverse
+from datetime import date
 
-from .models import MealPlan
-from foods.models import FoodEntry
+from django.contrib.auth import get_user_model
+from django.test import TestCase
+from django.urls import reverse
+from rest_framework import status
+from rest_framework.test import APIClient, APITestCase
+
+from accounts.models import NutritionTargets
+from foods.models import FoodEntry, FoodEntryMicronutrient, Micronutrient
+from foods.services import FoodAccessService
+
+from .models import DailyNutritionLog, FoodLogEntry, MealPlan
+from .serializers import DailyNutritionLogSerializer
 
 
 def create_user(username="alice", email="alice@example.com", password="pass12345"):
@@ -26,7 +32,7 @@ def create_food(
     nutritionScore=80.0,
     imageUrl="https://example.com/chicken.jpg",
 ):
-    return FoodEntry.objects.create(
+    return FoodAccessService.create_validated_food_entry(
         name=name,
         category=category,
         servingSize=servingSize,
@@ -241,81 +247,131 @@ class MealPlanAPITests(APITestCase):
         self.assertEqual(res.status_code, status.HTTP_200_OK)
         self.assertEqual(res.data["id"], plan1.id)
 
-    def test_create_meal_plan_with_private_food(self):
-        from foods.models import FoodProposal
-        
-        # Create a private food
-        private_food = FoodProposal.objects.create(
-            name="My Secret Recipe",
-            proposedBy=self.user,
-            isApproved=False,
-            is_private=True,
-            servingSize=100,
-            caloriesPerServing=200,
-            proteinContent=10,
-            fatContent=10,
-            carbohydrateContent=10,
-            nutritionScore=5.0
-        )
-        
-        url = reverse("meal-plan-list-create")
-        payload = {
-            "name": "Private Plan",
-            "meals": [
-                {"private_food_id": private_food.id, "serving_size": 1.0, "meal_type": "dinner"}
-            ]
-        }
-        
-        res = self.client.post(url, payload, format="json")
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        
-        # Verify response contains full details
-        self.assertIn("total_calories", res.data)
-        self.assertEqual(float(res.data["total_calories"]), 200.0)
-        
-        # Verify DB
-        plan = MealPlan.objects.get(id=res.data["id"])
-        self.assertEqual(plan.meals[0]["private_food_id"], private_food.id)
 
-
-class DailyLogAPITests(APITestCase):
+class DailyNutritionHydrationTests(TestCase):
     def setUp(self):
-        self.user = create_user(username="logger", email="logger@example.com")
-        self.client.force_authenticate(user=self.user)
-        self.url = reverse("food-log-entry-list")
-        
-        from foods.models import FoodProposal
-        self.private_food = FoodProposal.objects.create(
-            name="Private Snack",
-            proposedBy=self.user,
-            isApproved=False,
-            is_private=True,
-            servingSize=100,
-            caloriesPerServing=150,
-            proteinContent=5,
-            fatContent=5,
-            carbohydrateContent=20,
-            nutritionScore=5.0
+        self.user = create_user(username="hydro", email="hydro@example.com")
+        self.food = create_food(
+            name="Hydration Hero",
+            category="Beverage",
+            servingSize=250.0,
+            caloriesPerServing=120.0,
+            proteinContent=4.0,
+            fatContent=1.0,
+            carbohydrateContent=25.0,
+            nutritionScore=8.4,
+            imageUrl="https://example.com/water.jpg",
+        )
+        self.water_target = 3000.0
+        self.water_micro, _ = Micronutrient.objects.get_or_create(
+            name="Water (g)", defaults={"unit": "g"}
+        )
+        FoodEntryMicronutrient.objects.create(
+            food_entry=self.food,
+            micronutrient=self.water_micro,
+            value=850.0,
+        )
+        NutritionTargets.objects.create(
+            user=self.user,
+            calories=2200,
+            protein=120,
+            carbohydrates=260,
+            fat=70,
+            micronutrients={"Water (g)": {"target": self.water_target}},
+            is_custom=True,
         )
 
-    def test_log_private_food(self):
-        payload = {
-            "private_food_id": self.private_food.id,
-            "serving_size": 2.0,
-            "meal_type": "snack",
-            "date": "2025-11-23"
-        }
-        
-        res = self.client.post(self.url, payload, format="json")
-        self.assertEqual(res.status_code, status.HTTP_201_CREATED)
-        
-        self.assertEqual(res.data["food_name"], "Private Snack")
-        self.assertEqual(float(res.data["calories"]), 300.0)  # 150 * 2
-        
-        # Verify DB
-        from .models import FoodLogEntry
-        entry = FoodLogEntry.objects.get(id=res.data["id"])
-        self.assertEqual(entry.private_food, self.private_food)
-        self.assertEqual(entry.calories, 300.0)
+    def _create_log_with_servings(self, serving_size: float) -> DailyNutritionLog:
+        log = DailyNutritionLog.objects.create(user=self.user, date=date.today())
+        FoodLogEntry.objects.create(
+            daily_log=log,
+            food=self.food,
+            serving_size=serving_size,
+            serving_unit="serving",
+            meal_type="breakfast",
+            calories=0,
+            protein=0,
+            carbohydrates=0,
+            fat=0,
+            micronutrients={},
+        )
+        log.refresh_from_db()
+        return log
 
+    def test_hydration_penalty_applied_when_under_target(self):
+        log = self._create_log_with_servings(0.5)
+        serializer = DailyNutritionLogSerializer(log)
+        data = serializer.data
+
+        expected_actual = round(850.0 * 0.5, 2)
+        expected_ratio = round(min(1.0, expected_actual / self.water_target), 3)
+        expected_penalty = round(-2.0 * (1.0 - expected_ratio), 2)
+        expected_base = round(self.food.nutritionScore, 2)
+        expected_adjusted = round(
+            max(0.0, min(10.0, expected_base + expected_penalty)), 2
+        )
+
+        self.assertEqual(data["hydration_actual"], expected_actual)
+        self.assertEqual(data["hydration_target"], round(self.water_target, 2))
+        self.assertEqual(data["hydration_ratio"], expected_ratio)
+        self.assertEqual(data["hydration_penalty"], expected_penalty)
+        self.assertAlmostEqual(data["base_nutrition_score"], expected_base)
+        self.assertAlmostEqual(data["hydration_adjusted_score"], expected_adjusted)
+
+    def test_hydration_penalty_zero_when_target_met(self):
+        log = self._create_log_with_servings(4)
+        serializer = DailyNutritionLogSerializer(log)
+        data = serializer.data
+
+        self.assertEqual(data["hydration_actual"], round(850.0 * 4, 2))
+        self.assertEqual(data["hydration_target"], round(self.water_target, 2))
+        self.assertEqual(data["hydration_ratio"], 1.0)
+        self.assertEqual(data["hydration_penalty"], 0.0)
+        self.assertEqual(
+            data["hydration_adjusted_score"], round(self.food.nutritionScore, 2)
+        )
+
+
+class DailyNutritionPrivateFoodRegressionTests(TestCase):
+    """Ensure daily log serialization works with private FoodEntry records."""
+
+    def setUp(self):
+        self.user = create_user(username="private", email="private@example.com")
+        self.food = FoodEntry.objects.create(
+            name="Secret Soup",
+            category="Homemade",
+            servingSize=200.0,
+            caloriesPerServing=250.0,
+            proteinContent=12.0,
+            fatContent=8.0,
+            carbohydrateContent=30.0,
+            dietaryOptions=[],
+            nutritionScore=6.5,
+            imageUrl="",
+            validated=False,
+            createdBy=self.user,
+        )
+
+    def test_serializer_handles_private_food_entry(self):
+        log = DailyNutritionLog.objects.create(user=self.user, date=date.today())
+        FoodLogEntry.objects.create(
+            daily_log=log,
+            food=self.food,
+            serving_size=1,
+            serving_unit="serving",
+            meal_type="lunch",
+            calories=0,
+            protein=0,
+            carbohydrates=0,
+            fat=0,
+            micronutrients={},
+        )
+
+        serializer = DailyNutritionLogSerializer(log)
+        data = serializer.data
+
+        expected_score = round(self.food.nutritionScore, 2)
+        self.assertEqual(data["base_nutrition_score"], expected_score)
+        self.assertEqual(data["hydration_penalty"], 0.0)
+        self.assertEqual(data["hydration_adjusted_score"], expected_score)
 

@@ -131,7 +131,6 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<Food[]>([]);
     const [loading, setLoading] = useState(false);
-    const [warning, setWarning] = useState<string | null>(null);
     const debounceRef = useRef<number | null>(null);
 
     useEffect(() => {
@@ -142,7 +141,6 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
 
         if (searchTerm.trim().length === 0) {
             setSearchResults([]);
-            setWarning(null);
             setLoading(false);
             return;
         }
@@ -156,14 +154,11 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                     const foods = response.results || [];
                     const ranked = rankFoodsByQuery(searchTerm, foods);
                     setSearchResults(ranked);
-                    setWarning(response.warning || null);
                 } else if (response.status === 204) {
                     setSearchResults([]);
-                    setWarning(response.warning || `No foods found for "${searchTerm}".`);
                 }
             } catch (err) {
                 console.error('Error searching foods:', err);
-                setWarning('Error searching for foods.');
                 setSearchResults([]);
             } finally {
                 setLoading(false);
@@ -177,14 +172,14 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
 
     return (
         <Dialog open={open} onClose={onClose} className="relative z-50">
-            <div 
-                className="fixed inset-0" 
+            <div
+                className="fixed inset-0"
                 style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
-                aria-hidden="true" 
+                aria-hidden="true"
             />
-            
+
             <div className="fixed inset-0 flex items-center justify-center p-4">
-                <Dialog.Panel 
+                <Dialog.Panel
                     className="mx-auto max-w-2xl w-full rounded-xl shadow-lg p-6"
                     style={{
                         backgroundColor: 'var(--color-bg-secondary)',
@@ -197,7 +192,7 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                         <Dialog.Title className="nh-subtitle">
                             Select Food Item
                         </Dialog.Title>
-                        <button 
+                        <button
                             onClick={onClose}
                             className="p-1 rounded-full transition-all"
                             style={{
@@ -270,8 +265,8 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                                         <div className="mt-2">
                                             <p className="nh-text text-sm">Category: {food.category}</p>
                                             <div className="mt-2">
-                                              <p className="nh-text text-sm mb-1">Nutrition Score:</p>
-                                              <NutritionScore score={food.nutritionScore} size="sm" />
+                                                <p className="nh-text text-sm mb-1">Nutrition Score:</p>
+                                                <NutritionScore score={food.nutritionScore} size="sm" />
                                             </div>
                                             <div className="mt-2 space-y-1">
                                                 <p className="nh-text text-sm">
@@ -296,9 +291,7 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                                 <p className="nh-text">No foods found matching your search.</p>
                             </div>
                         )}
-                        {!loading && warning && (
-                            <div className="text-center py-4 text-yellow-700">{warning}</div>
-                        )}
+
                     </div>
                 </Dialog.Panel>
             </div>

@@ -31,7 +31,25 @@ export interface FoodLogEntry {
   carbohydrates: number;
   fat: number;
   micronutrients?: { [key: string]: number };
+  water_grams?: number;
   logged_at: string;
+}
+
+export interface PlannedFoodEntry {
+  id: number;
+  food_id?: number | null;
+  food_name: string;
+  food_serving_size: number; // Original serving size of the food (e.g., 100g)
+  image_url: string; // Image URL from the food
+  serving_size: number;
+  serving_unit: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  micronutrients?: { [key: string]: number };
+  planned_at: string;
 }
 
 export interface DailyNutritionLog {
@@ -42,6 +60,7 @@ export interface DailyNutritionLog {
   total_fat: number;
   micronutrients_summary: { [key: string]: number };
   entries?: FoodLogEntry[]; // Optional because history endpoint doesn't return entries
+  planned_entries?: PlannedFoodEntry[]; // Planned food entries (not yet consumed)
   targets?: {
     calories: number;
     protein: number;
@@ -54,6 +73,12 @@ export interface DailyNutritionLog {
     carbohydrates: number;
     fat: number;
   };
+  hydration_actual?: number;
+  hydration_target?: number;
+  hydration_ratio?: number;
+  hydration_penalty?: number;
+  base_nutrition_score?: number | null;
+  hydration_adjusted_score?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -64,7 +89,7 @@ export interface NutritionTargets {
   carbohydrates: number; // in grams
   fat: number; // in grams
   micronutrients: {
-    [key: string]: number | { target: number; maximum: number };
+    [key: string]: number | { target: number; maximum?: number };
   };
   is_custom: boolean;
   bmr: number;

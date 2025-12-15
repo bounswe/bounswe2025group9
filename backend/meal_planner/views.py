@@ -7,13 +7,14 @@ from django.shortcuts import get_object_or_404
 from datetime import datetime, timedelta, date
 from django.db.models import Avg, Count
 
-from .models import MealPlan, DailyNutritionLog, FoodLogEntry
+from .models import MealPlan, DailyNutritionLog, FoodLogEntry, PlannedFoodEntry
 from .serializers import (
     MealPlanSerializer, 
     MealPlanCreateSerializer,
     DailyNutritionLogSerializer,
     DailyNutritionLogListSerializer,
     FoodLogEntrySerializer,
+    PlannedFoodEntrySerializer,
 )
 
 
@@ -31,21 +32,6 @@ class MealPlanListCreateView(generics.ListCreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
-    
-    def create(self, request, *args, **kwargs):
-        """Override create to return full meal plan details after creation"""
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        
-        # Refresh from database to get calculated fields
-        instance = serializer.instance
-        instance.refresh_from_db()
-        
-        # Return full meal plan details using MealPlanSerializer
-        output_serializer = MealPlanSerializer(instance, context={'request': request})
-        headers = self.get_success_headers(output_serializer.data)
-        return Response(output_serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class MealPlanDetailView(generics.RetrieveUpdateDestroyAPIView):
@@ -271,6 +257,121 @@ class FoodLogEntryViewSet(viewsets.ModelViewSet):
         
         entry.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class PlannedFoodEntryViewSet(viewsets.ModelViewSet):
+    """
+    ViewSet for managing planned food entries.
+    
+    POST /api/meal-planner/daily-log/planned/
+    PUT /api/meal-planner/daily-log/planned/{id}/
+    DELETE /api/meal-planner/daily-log/planned/{id}/
+    POST /api/meal-planner/daily-log/planned/{id}/convert/ - Convert to actual log entry
+    """
+    permission_classes = [IsAuthenticated]
+    serializer_class = PlannedFoodEntrySerializer
+
+    def get_queryset(self):
+        # Only return planned entries for the authenticated user's logs
+        return PlannedFoodEntry.objects.filter(daily_log__user=self.request.user)
+
+    def create(self, request):
+        """Create a new planned food entry."""
+        # Get or default the date
+        entry_date_str = request.data.get('date')
+        if entry_date_str:
+            try:
+                entry_date = datetime.strptime(entry_date_str, '%Y-%m-%d').date()
+            except ValueError:
+                return Response(
+                    {'error': 'Invalid date format. Use YYYY-MM-DD.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        else:
+            entry_date = date.today()
+        
+        # Get or create daily log for the date
+        daily_log, _ = DailyNutritionLog.objects.get_or_create(
+            user=request.user,
+            date=entry_date
+        )
+        
+        # Create the planned entry
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(daily_log=daily_log)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def update(self, request, pk=None):
+        """Update an existing planned food entry."""
+        try:
+            entry = self.get_queryset().get(pk=pk)
+        except PlannedFoodEntry.DoesNotExist:
+            return Response(
+                {'error': 'Planned food entry not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verify ownership
+        if entry.daily_log.user != request.user:
+            return Response(
+                {'error': 'You do not have permission to edit this entry.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        serializer = self.get_serializer(entry, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    def destroy(self, request, pk=None):
+        """Delete a planned food entry."""
+        try:
+            entry = self.get_queryset().get(pk=pk)
+        except PlannedFoodEntry.DoesNotExist:
+            return Response(
+                {'error': 'Planned food entry not found.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Verify ownership
+        if entry.daily_log.user != request.user:
+            return Response(
+                {'error': 'You do not have permission to delete this entry.'},
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        entry.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def convert_planned_to_log(request, pk):
+    """
+    Convert a planned food entry to an actual food log entry.
+    POST /api/meal-planner/daily-log/planned/{id}/convert/
+    """
+    try:
+        planned_entry = PlannedFoodEntry.objects.get(pk=pk, daily_log__user=request.user)
+    except PlannedFoodEntry.DoesNotExist:
+        return Response(
+            {'error': 'Planned food entry not found.'},
+            status=status.HTTP_404_NOT_FOUND
+        )
+    
+    # Convert to log entry (this also deletes the planned entry)
+    log_entry = planned_entry.convert_to_log_entry()
+    
+    serializer = FoodLogEntrySerializer(log_entry, context={'request': request})
+    return Response({
+        'message': 'Planned entry converted to log entry successfully.',
+        'entry': serializer.data
+    }, status=status.HTTP_201_CREATED)
 
 
 class NutritionStatisticsView(APIView):

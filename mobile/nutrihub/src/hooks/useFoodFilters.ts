@@ -40,8 +40,8 @@ const useFoodFilters = (items: FoodItem[]) => {
   // Filter state
   const [filters, setFilters] = useState<FoodFilters>({});
   
-  // Sort option state (default: name ascending)
-  const [sortOption, setSortOption] = useState<string>(FOOD_SORT_OPTIONS.NAME_A_TO_Z);
+  // Sort option state (no default sorting)
+  const [sortOption, setSortOption] = useState<string>('');
   
   /**
    * Set name filter
@@ -99,7 +99,7 @@ const useFoodFilters = (items: FoodItem[]) => {
    */
   const resetFilters = useCallback(() => {
     setFilters({});
-    setSortOption(FOOD_SORT_OPTIONS.NAME_A_TO_Z);
+    setSortOption('');
   }, []);
   
   /**

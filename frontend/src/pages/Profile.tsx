@@ -3,12 +3,14 @@ import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import ForumPostCard from '../components/ForumPostCard'
 import { subscribeLikeChanges, notifyLikeChange } from '../lib/likeNotifications'
-import { User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CaretDown, CaretRight, Trash, CalendarBlank, PencilSimple, ForkKnife } from '@phosphor-icons/react'
-import { apiClient, ForumPost, MealPlan } from '../lib/apiClient'
+import { Lock, User, Heart, BookOpen, Certificate, Warning, Plus, X, BookmarkSimple, Hamburger, CaretDown, CaretRight, Trash, CalendarBlank, PencilSimple, ForkKnife } from '@phosphor-icons/react'
+import { apiClient, Food, FoodProposalStatus, ForumPost, MealPlan } from '../lib/apiClient'
 import { UserMetrics } from '../types/nutrition'
 import NutritionSummary from '../components/NutritionSummary'
 import MealPlanner from './mealplanner/MealPlanner'
 import MealPlannerSidebar from '../components/MealPlannerSidebar'
+import { FoodItem } from './foods/Foods'
+import PrivateFoodDetail from './foods/PrivateFoodDetail'
 
 // Predefined allergen list
 const PREDEFINED_ALLERGENS = [
@@ -62,7 +64,7 @@ const Profile = () => {
   const { user, fetchUserProfile } = useAuth()
   const navigate = useNavigate()
   // State management
-  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics'>('overview')
+  const [activeTab, setActiveTab] = useState<'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics' | 'foodProposals'| 'privateFoods'>('overview')
   
   // Meal Planner state (for sidebar in profile)
   const [mealPlannerDietaryPreference, setMealPlannerDietaryPreference] = useState('high-protein')
@@ -74,6 +76,9 @@ const Profile = () => {
   const [customAllergen, setCustomAllergen] = useState('')
   const [likedPosts, setLikedPosts] = useState<ForumPost[]>([])
   const [likedRecipes, setLikedRecipes] = useState<ForumPost[]>([])
+  const [foodProposals, setFoodProposals] = useState<FoodProposalStatus[]>([])
+  const [privateFoods, setPrivateFoods] = useState<Food[]>([])
+  const [selectedFood, setSelectedFood] = useState<Food | null>(null);
   const [likedPostsMap, setLikedPostsMap] = useState<{ [key: number]: boolean }>({})
   const [professionTags, setProfessionTags] = useState<ProfessionTag[]>([])
   const [selectedProfession, setSelectedProfession] = useState('')
@@ -125,7 +130,7 @@ const Profile = () => {
   }, [user])
 
   // Function to handle tab change
-  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics') => {
+  const handleTabChange = (tab: 'overview' | 'allergens' | 'posts' | 'recipes' | 'tags' | 'report' | 'mealPlans' | 'mealPlanner' | 'metrics'| 'foodProposals' | 'privateFoods') => {
     setActiveTab(tab)
   }
 
@@ -180,6 +185,9 @@ const Profile = () => {
 
       // Load liked recipes
       await loadLikedRecipes()
+
+      await loadFoodProposals()
+      await loadPrivateFoods()
 
       // Load profile picture if available
       if (user.profile_image) {
@@ -296,6 +304,28 @@ const Profile = () => {
       console.error('Error loading liked recipes:', error)
       setLikedRecipes([])
     }
+  }
+
+  const loadFoodProposals = async () => {
+    try {
+      const response = await apiClient.getFoodProposals()
+      setFoodProposals(response || [])
+    } 
+    catch (error) {
+      console.error('Error loading food proposals:', error)
+      setFoodProposals([])
+    } 
+  }
+
+  const loadPrivateFoods = async () => {
+    try {
+      const response = await apiClient.getPrivateFoods()
+      setPrivateFoods(response || [])
+    } 
+    catch (error) {
+      console.error('Error loading private foods:', error)
+      setPrivateFoods([])
+    } 
   }
 
   // Handle like toggle for posts
@@ -1105,6 +1135,38 @@ const Profile = () => {
                   <span className="grow text-center">Saved Meal Plans</span>
                 </button>
 
+                <button
+                  onClick={() => handleTabChange('foodProposals')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'foodProposals'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'foodProposals'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <ForkKnife size={18} weight="fill" />
+                  <span className="grow text-center">Food Proposals</span>
+                </button>
+
+                <button
+                  onClick={() => handleTabChange('privateFoods')}
+                  className="flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow"
+                  style={{
+                    backgroundColor: activeTab === 'privateFoods'
+                      ? 'var(--forum-default-active-bg)'
+                      : 'var(--forum-default-bg)',
+                    color: activeTab === 'privateFoods'
+                      ? 'var(--forum-default-active-text)'
+                      : 'var(--forum-default-text)',
+                  }}
+                >
+                  <Lock size={18} weight="fill" />
+                  <span className="grow text-center">Private Foods</span>
+                </button>
+
               </div>
             </div>
           </div>
@@ -1754,6 +1816,117 @@ const Profile = () => {
               </div>
             )}
 
+            { activeTab === 'foodProposals' &&
+              <div className="mt-8 space-y-4">
+              <h2 className="nh-title">My Food Proposals</h2>
+
+              {isLoading ? (
+                <div className="nh-card text-center py-6">
+                  <p className="nh-text">Loading food proposals...</p>
+                </div>
+              ) : foodProposals.length > 0 ? (
+                <div className="nh-card p-0 overflow-hidden">
+                  <ul
+                    className="divide-y"
+                    style={{ borderColor: 'var(--color-border)' }}
+                  >
+                    {foodProposals.map(food => (
+                      <li
+                        key={food.id}
+                        className="px-5 py-4 flex items-center justify-between gap-4"
+                      >
+                        {/* Left: Thumbnail + Info */}
+                        <div className="flex items-center gap-4">
+                          {/* Thumbnail */}
+                          <div className="w-12 h-12 rounded overflow-hidden flex items-center justify-center bg-gray-100">
+                            {food.imageUrl ? (
+                              <img
+                                src={food.imageUrl}
+                                alt={food.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-xs nh-text opacity-50">No image</span>
+                            )}
+                          </div>
+
+                          {/* Text Info */}
+                          <div className="flex flex-col gap-1">
+                            <div className="font-medium">
+                              {food.name}
+                            </div>
+
+                            <div className="text-xs nh-text opacity-60">
+                              {food.category} · {food.servingSize} g
+                            </div>
+
+                            <div className="text-xs nh-text opacity-50">
+                              Submitted on {new Date(food.createdAt).toLocaleDateString()}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Approval Status */}
+                        <div className="shrink-0">
+                          {food.isApproved === null && (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+                              Pending Review
+                            </span>
+                          )}
+
+                          {food.isApproved === true && (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                              Approved
+                            </span>
+                          )}
+
+                          {food.isApproved === false && (
+                            <span className="px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                              Rejected
+                            </span>
+                          )}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ) : (
+                <div className="nh-card text-center py-8">
+                  <p className="nh-text opacity-60">
+                    You have not submitted any food proposals yet.
+                  </p>
+                </div>
+              )}
+            </div>
+
+          }
+
+          {activeTab === 'privateFoods' && (
+            <div className="space-y-6">
+              <h2 className="nh-title">My Private Foods</h2>
+
+              {privateFoods.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {privateFoods.map(food => (
+                    <FoodItem
+                      key={food.id}
+                      item={food}
+                      onClick={() => {
+                        setSelectedFood(food)
+                      }}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="nh-card text-center py-8">
+                  <p className="nh-text opacity-60">
+                    You have not created any private foods yet.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
             {/* Meal Planner Tab */}
             {activeTab === 'mealPlanner' && (
               <div className="space-y-6">
@@ -1811,6 +1984,12 @@ const Profile = () => {
             </div>
           </div>
         </div>
+        <PrivateFoodDetail 
+            food={selectedFood}
+            open={!!selectedFood}
+            onClose={() => setSelectedFood(null)}
+            onChanged={() => loadPrivateFoods()}
+        />
       </div>
     </div>
   )

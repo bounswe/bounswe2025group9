@@ -7,15 +7,22 @@ from rest_framework import status
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from foods.constants import DEFAULT_CURRENCY, PriceCategory, PriceUnit
-from foods.models import FoodEntry, FoodProposal, PriceAudit, Micronutrient, FoodEntryMicronutrient
+from foods.models import (
+    FoodEntry,
+    FoodProposal,
+    PriceAudit,
+    Micronutrient,
+    FoodEntryMicronutrient,
+    Allergen,
+)
 from foods.serializers import FoodEntrySerializer
 from foods.services import (
     approve_food_proposal,
     override_food_price_category,
     recalculate_price_thresholds,
     update_food_price,
+    FoodAccessService,
 )
-from accounts.models import Allergen
 from unittest.mock import patch
 import requests
 
@@ -45,7 +52,7 @@ def create_food_entry(
     }
     if base_price is not None:
         data["base_price"] = Decimal(str(base_price))
-    entry = FoodEntry.objects.create(**data)
+    entry = FoodAccessService.create_validated_food_entry(**data)
     entry.allergens.set([])
     return entry
 
@@ -63,7 +70,7 @@ class FoodCatalogTests(TestCase):
         self.client = APIClient()
         # Create sample FoodEntry objects
         for i in range(15):
-            food = FoodEntry.objects.create(
+            food = FoodAccessService.create_validated_food_entry(
                 name=f"Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
@@ -78,7 +85,7 @@ class FoodCatalogTests(TestCase):
             food.save()
         # Create 2 FoodEntry objects with category "Fruit"
         for i in range(2):
-            food = FoodEntry.objects.create(
+            food = FoodAccessService.create_validated_food_entry(
                 name=f"Fruit Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
@@ -96,7 +103,7 @@ class FoodCatalogTests(TestCase):
 
         # Create 13 FoodEntry objects with category "Vegetable"
         for i in range(13):
-            food = FoodEntry.objects.create(
+            food = FoodAccessService.create_validated_food_entry(
                 name=f"Vegetable Food {i}",
                 servingSize=100,
                 caloriesPerServing=100,
@@ -407,8 +414,8 @@ class FoodProposalTests(APITestCase):
         self.proposal_url = reverse("submit_food_proposal")
 
         # Create some allergens for testing
-        self.allergen1 = Allergen.objects.create(name="Peanuts", common=True)
-        self.allergen2 = Allergen.objects.create(name="Dairy", common=True)
+        self.allergen1 = Allergen.objects.create(name="Peanuts")
+        self.allergen2 = Allergen.objects.create(name="Dairy")
 
         # Get authentication token
         token_res = self.client.post(
@@ -416,81 +423,103 @@ class FoodProposalTests(APITestCase):
         )
         self.access_token = token_res.data["access"]
 
+    def _create_private_food(self, **kwargs):
+        """Helper to create a private FoodEntry"""
+        defaults = {
+            "name": "Test Food",
+            "category": "Test",
+            "servingSize": 100,
+            "caloriesPerServing": 100,
+            "proteinContent": 10,
+            "fatContent": 5,
+            "carbohydrateContent": 15,
+            "nutritionScore": 5.0,
+            "validated": False,
+            "createdBy": self.user,
+        }
+        defaults.update(kwargs)
+        return FoodEntry.objects.create(**defaults)
+
     def test_submit_food_proposal_success(self):
         """Test successful food proposal submission"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Organic Quinoa",
-            "category": "Grains",
-            "servingSize": 185,
-            "caloriesPerServing": 222,
-            "proteinContent": 8.14,
-            "fatContent": 3.55,
-            "carbohydrateContent": 39.4,
-            "dietaryOptions": ["Vegetarian", "Gluten-Free"],
-            "imageUrl": "https://example.com/quinoa.jpg",
-        }
+        # First create a private food entry
+        food_entry = self._create_private_food(
+            name="Organic Quinoa",
+            category="Grains",
+            servingSize=185,
+            caloriesPerServing=222,
+            proteinContent=8.14,
+            fatContent=3.55,
+            carbohydrateContent=39.4,
+            dietaryOptions=["Vegetarian", "Gluten-Free"],
+            imageUrl="https://example.com/quinoa.jpg",
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
         # Verify proposal was created
-        self.assertTrue(FoodProposal.objects.filter(name="Organic Quinoa").exists())
-        proposal = FoodProposal.objects.get(name="Organic Quinoa")
+        self.assertTrue(FoodProposal.objects.filter(food_entry=food_entry).exists())
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
         self.assertEqual(proposal.proposedBy, self.user)
-        self.assertEqual(proposal.category, "Grains")
-        self.assertEqual(float(proposal.servingSize), 185.0)
+        self.assertEqual(proposal.food_entry.name, "Organic Quinoa")
+        self.assertEqual(proposal.food_entry.category, "Grains")
 
     def test_submit_food_proposal_minimal_data(self):
         """Test submitting proposal with only required fields"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Simple Food",
-            "category": "Other",
-            "servingSize": 100,
-            "caloriesPerServing": 150,
-            "proteinContent": 5,
-            "fatContent": 3,
-            "carbohydrateContent": 20,
-        }
+        # Create a private food entry
+        food_entry = self._create_private_food(name="Simple Food")
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        proposal = FoodProposal.objects.get(name="Simple Food")
-        self.assertIsNotNone(proposal.nutritionScore)
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertIsNotNone(proposal.food_entry.nutritionScore)
 
     def test_submit_food_proposal_with_multiple_allergens(self):
         """Test submitting proposal with multiple allergens"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Peanut Butter",
-            "category": "Fats & Oils",
-            "servingSize": 32,
-            "caloriesPerServing": 188,
-            "proteinContent": 8,
-            "fatContent": 16,
-            "carbohydrateContent": 7,
-        }
+        # Create a private food entry with allergens
+        food_entry = self._create_private_food(
+            name="Peanut Butter",
+            category="Fats & Oils",
+            servingSize=32,
+            caloriesPerServing=188,
+            proteinContent=8,
+            fatContent=16,
+            carbohydrateContent=7,
+        )
+        # Set allergens on the food entry
+        food_entry.allergens.set([self.allergen1, self.allergen2])
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        proposal = FoodProposal.objects.get(name="Peanut Butter")
-        # Note: M2M fields need to be set after creation
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
         self.assertIsNotNone(proposal)
+        # Verify allergens are on the food entry
+        self.assertEqual(proposal.food_entry.allergens.count(), 2)
 
     def test_submit_food_proposal_missing_required_fields(self):
         """Test submitting proposal without required fields"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Incomplete Food",
-            # Missing required nutrition fields
-        }
+        # Try to submit without food_entry_id
+        data = {}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
@@ -556,29 +585,33 @@ class FoodProposalTests(APITestCase):
         """Test submitting proposal with dietary options"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Vegan Protein Bar",
-            "category": "Sweets & Snacks",
-            "servingSize": 60,
-            "caloriesPerServing": 200,
-            "proteinContent": 15,
-            "fatContent": 8,
-            "carbohydrateContent": 25,
-            "dietaryOptions": ["Vegan", "Gluten-Free", "High-Protein"],
-        }
+        # Create a private food entry with dietary options
+        food_entry = self._create_private_food(
+            name="Vegan Protein Bar",
+            category="Sweets & Snacks",
+            servingSize=60,
+            caloriesPerServing=200,
+            proteinContent=15,
+            fatContent=8,
+            carbohydrateContent=25,
+            dietaryOptions=["Vegan", "Gluten-Free", "High-Protein"],
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        proposal = FoodProposal.objects.get(name="Vegan Protein Bar")
-        self.assertEqual(len(proposal.dietaryOptions), 3)
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertEqual(len(proposal.food_entry.dietaryOptions), 3)
 
     def test_submit_duplicate_food_proposal(self):
         """Test submitting proposal for food that already exists"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        # Create existing food entry
-        FoodEntry.objects.create(
+        # Create existing validated food entry
+        FoodAccessService.create_validated_food_entry(
             name="Existing Food",
             category="Other",
             servingSize=100,
@@ -589,16 +622,19 @@ class FoodProposalTests(APITestCase):
             nutritionScore=5.0,
         )
 
-        # Try to propose it again
-        data = {
-            "name": "Existing Food",
-            "category": "Other",
-            "servingSize": 100,
-            "caloriesPerServing": 150,
-            "proteinContent": 5,
-            "fatContent": 3,
-            "carbohydrateContent": 20,
-        }
+        # Create a private food entry with similar data
+        food_entry = self._create_private_food(
+            name="Existing Food",
+            category="Other",
+            servingSize=100,
+            caloriesPerServing=150,
+            proteinContent=5,
+            fatContent=3,
+            carbohydrateContent=20,
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         # Should still accept the proposal (proposals can be duplicates)
@@ -608,20 +644,25 @@ class FoodProposalTests(APITestCase):
         """Test that nutrition score is calculated for proposals"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Healthy Food",
-            "category": "Vegetable",
-            "servingSize": 100,
-            "caloriesPerServing": 50,
-            "proteinContent": 3,
-            "fatContent": 0.5,
-            "carbohydrateContent": 10,
-        }
+        # Create a private food entry (nutrition score is set in _create_private_food)
+        food_entry = self._create_private_food(
+            name="Healthy Food",
+            category="Vegetable",
+            servingSize=100,
+            caloriesPerServing=50,
+            proteinContent=3,
+            fatContent=0.5,
+            carbohydrateContent=10,
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertIn("nutritionScore", response.data)
-        self.assertGreater(response.data["nutritionScore"], 0)
+
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertGreater(proposal.food_entry.nutritionScore, 0)
 
     def test_submit_food_proposal_long_name(self):
         """Test submitting proposal with very long name"""
@@ -647,192 +688,28 @@ class FoodProposalTests(APITestCase):
         """Test submitting proposal with custom image URL"""
         self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
 
-        data = {
-            "name": "Custom Image Food",
-            "category": "Other",
-            "servingSize": 100,
-            "caloriesPerServing": 150,
-            "proteinContent": 5,
-            "fatContent": 3,
-            "carbohydrateContent": 20,
-            "imageUrl": "https://example.com/custom-food.jpg",
-        }
+        # Create a private food entry with custom image URL
+        food_entry = self._create_private_food(
+            name="Custom Image Food",
+            category="Other",
+            servingSize=100,
+            caloriesPerServing=150,
+            proteinContent=5,
+            fatContent=3,
+            carbohydrateContent=20,
+            imageUrl="https://example.com/custom-food.jpg",
+        )
+
+        # Submit for approval
+        data = {"food_entry_id": food_entry.id}
         response = self.client.post(self.proposal_url, data, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
-        proposal = FoodProposal.objects.get(name="Custom Image Food")
-        self.assertEqual(proposal.imageUrl, "https://example.com/custom-food.jpg")
-
-
-class FoodNutritionInfoTests(APITestCase):
-    """Tests for food nutrition info endpoint using Open Food Facts API"""
-
-    def setUp(self):
-        self.user = User.objects.create_user(
-            username="testuser",
-            email="test@example.com",
-            password="testpass123",
+        proposal = FoodProposal.objects.get(food_entry=food_entry)
+        self.assertEqual(
+            proposal.food_entry.imageUrl, "https://example.com/custom-food.jpg"
         )
-        self.token_url = reverse("token_obtain_pair")
-        self.nutrition_info_url = reverse("food_nutrition_info")
-
-        # Get authentication token
-        token_res = self.client.post(
-            self.token_url, {"username": "testuser", "password": "testpass123"}
-        )
-        self.access_token = token_res.data["access"]
-
-    @patch("requests.get")
-    def test_get_nutrition_info_success(self, mock_get):
-        """Test successful nutrition info fetch from Open Food Facts API"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-
-        # Mock successful API response
-        mock_response = {
-            "products": [
-                {
-                    "nutriments": {
-                        "energy-kcal_100g": 52,
-                        "proteins_100g": 0.3,
-                        "fat_100g": 0.2,
-                        "carbohydrates_100g": 14,
-                        "fiber_100g": 2.4,
-                    }
-                }
-            ]
-        }
-
-        mock_get.return_value.json.return_value = mock_response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.raise_for_status = lambda: None
-
-        response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("food", response.data)
-        self.assertIn("calories", response.data)
-        self.assertIn("protein", response.data)
-        self.assertIn("fat", response.data)
-        self.assertIn("carbs", response.data)
-        self.assertIn("fiber", response.data)
-        self.assertEqual(response.data["food"], "apple")
-        self.assertEqual(response.data["calories"], 52)
-
-    def test_get_nutrition_info_missing_name(self):
-        """Test request without name parameter"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        response = self.client.get(self.nutrition_info_url)
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn("error", response.data)
-
-    def test_get_nutrition_info_no_auth(self):
-        """Test that endpoint requires authentication"""
-        response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
-
-    @patch("requests.get")
-    def test_get_nutrition_info_not_found(self, mock_get):
-        """Test when no products are found in API"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        mock_response = {"products": []}
-
-        mock_get.return_value.json.return_value = mock_response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.raise_for_status = lambda: None
-
-        response = self.client.get(
-            self.nutrition_info_url, {"name": "nonexistentfood12345"}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertIn("warning", response.data)
-
-    @patch("requests.get")
-    def test_get_nutrition_info_api_error(self, mock_get):
-        """Test handling of API errors"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        mock_get.side_effect = Exception("API Error")
-
-        response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertIn("error", response.data)
-
-    @patch("requests.get")
-    def test_get_nutrition_info_incomplete_data(self, mock_get):
-        """Test when API returns incomplete nutrition data"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        mock_response = {
-            "products": [
-                {
-                    "nutriments": {
-                        "energy-kcal_100g": 100,
-                        # Missing some nutrients
-                    }
-                }
-            ]
-        }
-
-        mock_get.return_value.json.return_value = mock_response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.raise_for_status = lambda: None
-
-        response = self.client.get(self.nutrition_info_url, {"name": "test"})
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        # Should still return structure with None values
-        self.assertIsNone(response.data.get("protein"))
-        self.assertIsNone(response.data.get("fat"))
-
-    @patch("requests.get")
-    def test_get_nutrition_info_timeout(self, mock_get):
-        """Test handling of timeout errors"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        mock_get.side_effect = requests.Timeout("Timeout")
-
-        response = self.client.get(self.nutrition_info_url, {"name": "apple"})
-
-        self.assertEqual(response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR)
-        self.assertIn("error", response.data)
-
-    @patch("requests.get")
-    def test_get_nutrition_info_empty_name(self, mock_get):
-        """Test with empty name parameter"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        response = self.client.get(self.nutrition_info_url, {"name": ""})
-
-        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
-    @patch("requests.get")
-    def test_get_nutrition_info_special_characters(self, mock_get):
-        """Test with food name containing special characters"""
-        self.client.credentials(HTTP_AUTHORIZATION=f"Bearer {self.access_token}")
-        mock_response = {
-            "products": [
-                {
-                    "nutriments": {
-                        "energy-kcal_100g": 100,
-                        "proteins_100g": 5,
-                        "fat_100g": 3,
-                        "carbohydrates_100g": 20,
-                        "fiber_100g": 2,
-                    }
-                }
-            ]
-        }
-
-        mock_get.return_value.json.return_value = mock_response
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.raise_for_status = lambda: None
-
-        response = self.client.get(
-            self.nutrition_info_url, {"name": "peanut-butter & jelly"}
-        )
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
 class PriceCategorizationTests(TestCase):
@@ -929,7 +806,8 @@ class FoodProposalApprovalTests(TestCase):
         seed_price_entries([12, 18, 30, 45, 60, 72])
 
     def _create_proposal(self, base_price: Decimal) -> FoodProposal:
-        return FoodProposal.objects.create(
+        # Create a private FoodEntry first
+        food_entry = FoodEntry.objects.create(
             name="Approved Food",
             category="Snacks",
             servingSize=100,
@@ -943,6 +821,12 @@ class FoodProposalApprovalTests(TestCase):
             base_price=base_price,
             price_unit=PriceUnit.PER_100G,
             currency=DEFAULT_CURRENCY,
+            validated=False,
+            createdBy=self.proposer,
+        )
+        # Create FoodProposal with reference to the food_entry
+        return FoodProposal.objects.create(
+            food_entry=food_entry,
             proposedBy=self.proposer,
         )
 
@@ -982,7 +866,8 @@ class ModeratorWorkflowTests(APITestCase):
         self.client.force_authenticate(user=self.moderator)
 
     def test_full_moderation_flow_records_price_audit(self):
-        proposal = FoodProposal.objects.create(
+        # Create a private FoodEntry first
+        food_entry = FoodEntry.objects.create(
             name="API Approved Food",
             category="Meals",
             servingSize=150,
@@ -996,6 +881,13 @@ class ModeratorWorkflowTests(APITestCase):
             base_price=Decimal("38.00"),
             price_unit=PriceUnit.PER_100G,
             currency=DEFAULT_CURRENCY,
+            validated=False,
+            createdBy=self.proposer,
+        )
+
+        # Create FoodProposal with reference to the food_entry
+        proposal = FoodProposal.objects.create(
+            food_entry=food_entry,
             proposedBy=self.proposer,
         )
 
@@ -1003,7 +895,7 @@ class ModeratorWorkflowTests(APITestCase):
         response = self.client.post(url, {"approved": True}, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        entry = FoodEntry.objects.get(name=proposal.name)
+        entry = FoodEntry.objects.get(name=proposal.food_entry.name)
         self.assertEqual(entry.price_category, PriceCategory.MID)
         self.assertTrue(
             entry.price_audits.filter(
@@ -1011,32 +903,10 @@ class ModeratorWorkflowTests(APITestCase):
             ).exists()
         )
 
-    def test_reject_food_proposal_marks_as_private(self):
-        """Test that rejecting a proposal marks it as private"""
-        proposal = FoodProposal.objects.create(
-            name="Rejected Private Food",
-            category="Meals",
-            servingSize=100,
-            caloriesPerServing=200,
-            proteinContent=10,
-            fatContent=5,
-            carbohydrateContent=30,
-            nutritionScore=5.0,
-            proposedBy=self.proposer,
-        )
-
-        url = reverse("moderation-food-proposals-approve", args=[proposal.id])
-        response = self.client.post(url, {"approved": False}, format="json")
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-        proposal.refresh_from_db()
-        self.assertFalse(proposal.isApproved)
-        self.assertTrue(proposal.is_private)
-
     def test_approve_proposal_with_micronutrients_with_units_in_name(self):
         """Test that approving a proposal with micronutrients that have units in the name works"""
-        proposal = FoodProposal.objects.create(
+        # Create a private FoodEntry first
+        food_entry = FoodEntry.objects.create(
             name="Spinach with Micronutrients",
             category="Vegetables",
             servingSize=100,
@@ -1045,12 +915,37 @@ class ModeratorWorkflowTests(APITestCase):
             fatContent=0.4,
             carbohydrateContent=3.6,
             nutritionScore=8.5,
-            micronutrients={
-                "Manganese, Mn (mg)": 0.07,
-                "Vitamin C (mg)": 28.1,
-                "Iron, Fe (mg)": 2.71,
-                "Calcium, Ca (mg)": 99.0,
-            },
+            validated=False,
+            createdBy=self.proposer,
+        )
+
+        # Create micronutrients and associate them with the food entry
+        micronutrient_data = {
+            "Manganese, Mn (mg)": 0.07,
+            "Vitamin C (mg)": 28.1,
+            "Iron, Fe (mg)": 2.71,
+            "Calcium, Ca (mg)": 99.0,
+        }
+
+        for micro_name, value in micronutrient_data.items():
+            # Parse name and unit from the string (e.g., "Vitamin C (mg)" -> "Vitamin C", "mg")
+            if "(" in micro_name and ")" in micro_name:
+                name_part = micro_name.split("(")[0].strip()
+                unit_part = micro_name.split("(")[1].split(")")[0].strip()
+            else:
+                name_part = micro_name
+                unit_part = "g"
+
+            micronutrient, _ = Micronutrient.objects.get_or_create(
+                name=name_part, defaults={"unit": unit_part}
+            )
+            FoodEntryMicronutrient.objects.create(
+                food_entry=food_entry, micronutrient=micronutrient, value=value
+            )
+
+        # Create FoodProposal with reference to the food_entry
+        proposal = FoodProposal.objects.create(
+            food_entry=food_entry,
             proposedBy=self.proposer,
         )
 
@@ -1059,13 +954,12 @@ class ModeratorWorkflowTests(APITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Verify the food entry was created
-        entry = FoodEntry.objects.get(name=proposal.name)
+        # Verify the food entry was validated (made public)
+        entry = FoodEntry.objects.get(name=proposal.food_entry.name)
         self.assertIsNotNone(entry)
+        self.assertTrue(entry.validated)
 
-        # Verify micronutrients were copied correctly
-        from foods.models import FoodEntryMicronutrient, Micronutrient
-
+        # Verify micronutrients were copied correctly (already present since they're on the food entry)
         # Check that micronutrients were created/found
         manganese = Micronutrient.objects.filter(name="Manganese, Mn").first()
         self.assertIsNotNone(manganese, "Manganese micronutrient should be created")
@@ -1236,7 +1130,6 @@ class MicronutrientFilteringTests(TestCase):
         FoodEntry.objects.all().delete()
         Micronutrient.objects.all().delete()
 
-
         # Create micronutrients with units
         self.iron = Micronutrient.objects.create(name="Iron", unit="mg")
         self.vitamin_c = Micronutrient.objects.create(name="Vitamin C", unit="mg")
@@ -1245,7 +1138,7 @@ class MicronutrientFilteringTests(TestCase):
 
         # Create food entries with different micronutrient values
         # Food 1: High iron (8mg), medium vitamin C (30mg)
-        self.food1 = FoodEntry.objects.create(
+        self.food1 = FoodAccessService.create_validated_food_entry(
             name="Spinach",
             category="Vegetable",
             servingSize=100,
@@ -1263,7 +1156,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 2: Low iron (2mg), high vitamin C (80mg), medium zinc (1.5mg)
-        self.food2 = FoodEntry.objects.create(
+        self.food2 = FoodAccessService.create_validated_food_entry(
             name="Orange",
             category="Fruit",
             servingSize=100,
@@ -1284,7 +1177,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 3: Medium iron (5mg), low vitamin C (10mg), high zinc (3mg)
-        self.food3 = FoodEntry.objects.create(
+        self.food3 = FoodAccessService.create_validated_food_entry(
             name="Beef",
             category="Meat",
             servingSize=100,
@@ -1305,7 +1198,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 4: No micronutrients
-        self.food4 = FoodEntry.objects.create(
+        self.food4 = FoodAccessService.create_validated_food_entry(
             name="Plain Water",
             category="Beverages",
             servingSize=100,
@@ -1317,7 +1210,7 @@ class MicronutrientFilteringTests(TestCase):
         )
 
         # Food 5: Only calcium (200mg)
-        self.food5 = FoodEntry.objects.create(
+        self.food5 = FoodAccessService.create_validated_food_entry(
             name="Milk",
             category="Dairy",
             servingSize=100,
@@ -1372,16 +1265,25 @@ class MicronutrientFilteringTests(TestCase):
         self.assertNotIn("Beef", names)
 
         # Check that if Orange is in the database, it should be in results
-        all_foods = [food["name"] for food in self.client.get(reverse("get_foods")).data.get("results", [])]
+        all_foods = [
+            food["name"]
+            for food in self.client.get(reverse("get_foods")).data.get("results", [])
+        ]
         if "Orange" in all_foods:
             self.assertIn("Orange", names)
 
     def test_case_insensitive_micronutrient_name(self):
         """Test that micronutrient name matching is case-insensitive"""
         # Test with different cases
-        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "IRON:5-10"})
-        response2 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:5-10"})
-        response3 = self.client.get(reverse("get_foods"), {"micronutrient": "IrOn:5-10"})
+        response1 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "IRON:5-10"}
+        )
+        response2 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "iron:5-10"}
+        )
+        response3 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "IrOn:5-10"}
+        )
 
         results1 = [f["name"] for f in response1.data.get("results", [])]
         results2 = [f["name"] for f in response2.data.get("results", [])]
@@ -1408,8 +1310,7 @@ class MicronutrientFilteringTests(TestCase):
         """Test that multiple filters create AND constraints"""
         # Filter for iron >= 4 AND vitamin C >= 25
         response = self.client.get(
-            reverse("get_foods"),
-            {"micronutrient": "iron:4-,vitamin c:25-"}
+            reverse("get_foods"), {"micronutrient": "iron:4-,vitamin c:25-"}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1444,7 +1345,9 @@ class MicronutrientFilteringTests(TestCase):
     def test_invalid_numbers_skipped(self):
         """Test that invalid numeric values are gracefully skipped"""
         # Non-numeric values
-        response = self.client.get(reverse("get_foods"), {"micronutrient": "iron:abc-xyz"})
+        response = self.client.get(
+            reverse("get_foods"), {"micronutrient": "iron:abc-xyz"}
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Should return all foods since filter is invalid
@@ -1453,8 +1356,7 @@ class MicronutrientFilteringTests(TestCase):
     def test_nonexistent_micronutrient(self):
         """Test filtering by micronutrient that doesn't exist"""
         response = self.client.get(
-            reverse("get_foods"),
-            {"micronutrient": "nonexistent:5-10"}
+            reverse("get_foods"), {"micronutrient": "nonexistent:5-10"}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1466,7 +1368,7 @@ class MicronutrientFilteringTests(TestCase):
         """Test filtering with zero as a boundary value"""
         # Create food with very low iron using unique name
         unique_name = "Test_Low_Iron_Food_Unique_12345"
-        food_low = FoodEntry.objects.create(
+        food_low = FoodAccessService.create_validated_food_entry(
             name=unique_name,
             category="Test",
             servingSize=100,
@@ -1482,8 +1384,7 @@ class MicronutrientFilteringTests(TestCase):
 
         # Search for our specific food with the filter to avoid pagination issues
         response = self.client.get(
-            reverse("get_foods"),
-            {"micronutrient": "iron:0-1", "search": unique_name}
+            reverse("get_foods"), {"micronutrient": "iron:0-1", "search": unique_name}
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1495,8 +1396,7 @@ class MicronutrientFilteringTests(TestCase):
 
         # Test that Orange (2mg) is excluded when we search for it
         response2 = self.client.get(
-            reverse("get_foods"),
-            {"micronutrient": "iron:0-1", "search": "Orange"}
+            reverse("get_foods"), {"micronutrient": "iron:0-1", "search": "Orange"}
         )
         results2 = response2.data.get("results", [])
         # Should be empty or not contain Orange since it has 2mg
@@ -1507,10 +1407,7 @@ class MicronutrientFilteringTests(TestCase):
         """Test micronutrient filter combined with category filter"""
         response = self.client.get(
             reverse("get_foods"),
-            {
-                "category": "Fruit,Vegetable",
-                "micronutrient": "vitamin c:20-"
-            }
+            {"category": "Fruit,Vegetable", "micronutrient": "vitamin c:20-"},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1527,10 +1424,7 @@ class MicronutrientFilteringTests(TestCase):
         """Test micronutrient filter combined with search"""
         response = self.client.get(
             reverse("get_foods"),
-            {
-                "search": "e",  # Matches Orange, Beef
-                "micronutrient": "zinc:1-"
-            }
+            {"search": "e", "micronutrient": "zinc:1-"},  # Matches Orange, Beef
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1546,7 +1440,9 @@ class MicronutrientFilteringTests(TestCase):
     def test_exact_boundary_values(self):
         """Test that boundary values are inclusive"""
         # Test lower boundary
-        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "iron:5-10"})
+        response1 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "iron:5-10"}
+        )
         results1 = [f["name"] for f in response1.data.get("results", [])]
         self.assertIn("Beef", results1)  # Exactly 5mg
 
@@ -1566,31 +1462,55 @@ class MicronutrientFilteringTests(TestCase):
 
         # Create a food WITH alcohol
         beer = create_food_entry("Beer")
-        FoodEntryMicronutrient.objects.create(food_entry=beer, micronutrient=alcohol, value=5.0)
+        FoodEntryMicronutrient.objects.create(
+            food_entry=beer, micronutrient=alcohol, value=5.0
+        )
 
         # Test 1: Filter for alcohol <= 0 should include Apple (no entry = 0)
-        response1 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:-0"})
+        response1 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "alcohol:-0"}
+        )
         results1 = [f["name"] for f in response1.data.get("results", [])]
-        self.assertIn("Apple", results1, "Apple (no alcohol entry) should match alcohol:-0")
-        self.assertNotIn("Beer", results1, "Beer (5g alcohol) should NOT match alcohol:-0")
+        self.assertIn(
+            "Apple", results1, "Apple (no alcohol entry) should match alcohol:-0"
+        )
+        self.assertNotIn(
+            "Beer", results1, "Beer (5g alcohol) should NOT match alcohol:-0"
+        )
 
         # Test 2: Filter for alcohol >= 1 should NOT include Apple
-        response2 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:1-"})
+        response2 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "alcohol:1-"}
+        )
         results2 = [f["name"] for f in response2.data.get("results", [])]
-        self.assertNotIn("Apple", results2, "Apple (no alcohol entry = 0) should NOT match alcohol:1-")
+        self.assertNotIn(
+            "Apple",
+            results2,
+            "Apple (no alcohol entry = 0) should NOT match alcohol:1-",
+        )
         self.assertIn("Beer", results2, "Beer (5g alcohol) should match alcohol:1-")
 
         # Test 3: Filter for 0 <= alcohol <= 10 should include both
-        response3 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:0-10"})
+        response3 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "alcohol:0-10"}
+        )
         results3 = [f["name"] for f in response3.data.get("results", [])]
-        self.assertIn("Apple", results3, "Apple (no alcohol entry = 0) should match alcohol:0-10")
+        self.assertIn(
+            "Apple", results3, "Apple (no alcohol entry = 0) should match alcohol:0-10"
+        )
         self.assertIn("Beer", results3, "Beer (5g alcohol) should match alcohol:0-10")
 
         # Test 4: Filter for alcohol <= 3 should include Apple but not Beer
-        response4 = self.client.get(reverse("get_foods"), {"micronutrient": "alcohol:-3"})
+        response4 = self.client.get(
+            reverse("get_foods"), {"micronutrient": "alcohol:-3"}
+        )
         results4 = [f["name"] for f in response4.data.get("results", [])]
-        self.assertIn("Apple", results4, "Apple (no alcohol entry = 0) should match alcohol:-3")
-        self.assertNotIn("Beer", results4, "Beer (5g alcohol) should NOT match alcohol:-3")
+        self.assertIn(
+            "Apple", results4, "Apple (no alcohol entry = 0) should match alcohol:-3"
+        )
+        self.assertNotIn(
+            "Beer", results4, "Beer (5g alcohol) should NOT match alcohol:-3"
+        )
 
     def test_empty_micronutrient_param(self):
         """Test with empty micronutrient parameter"""
@@ -1604,7 +1524,7 @@ class MicronutrientFilteringTests(TestCase):
         """Test that whitespace in filter is handled correctly"""
         response = self.client.get(
             reverse("get_foods"),
-            {"micronutrient": " iron : 5 - 10 , vitamin c : 20 - "}
+            {"micronutrient": " iron : 5 - 10 , vitamin c : 20 - "},
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
@@ -1643,3 +1563,549 @@ class MicronutrientFilteringTests(TestCase):
         self.assertIn("unit", beef["micronutrients"]["Zinc"])
 
 
+class MacronutrientFilteringTests(TestCase):
+    """Tests for macronutrient filtering in FoodCatalog"""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Clear all existing food data to ensure clean test state
+        FoodEntry.objects.all().delete()
+
+        # Create food entries with different macronutrient profiles
+        # Food 1: High protein (25g), low fat (2g), medium carbs (15g)
+        self.chicken_breast = FoodAccessService.create_validated_food_entry(
+            name="Chicken Breast",
+            category="Meat",
+            servingSize=100,
+            caloriesPerServing=165,
+            proteinContent=25.0,
+            fatContent=2.0,
+            carbohydrateContent=15.0,
+            nutritionScore=8.0,
+        )
+
+        # Food 2: Medium protein (10g), high fat (20g), low carbs (5g)
+        self.cheese = FoodAccessService.create_validated_food_entry(
+            name="Cheddar Cheese",
+            category="Dairy",
+            servingSize=100,
+            caloriesPerServing=403,
+            proteinContent=10.0,
+            fatContent=20.0,
+            carbohydrateContent=5.0,
+            nutritionScore=6.0,
+        )
+
+        # Food 3: Low protein (3g), low fat (1g), high carbs (50g)
+        self.rice = FoodAccessService.create_validated_food_entry(
+            name="White Rice",
+            category="Grains",
+            servingSize=100,
+            caloriesPerServing=130,
+            proteinContent=3.0,
+            fatContent=1.0,
+            carbohydrateContent=50.0,
+            nutritionScore=5.0,
+        )
+
+        # Food 4: Medium protein (8g), medium fat (10g), medium carbs (30g)
+        self.bread = FoodAccessService.create_validated_food_entry(
+            name="Whole Wheat Bread",
+            category="Grains",
+            servingSize=100,
+            caloriesPerServing=247,
+            proteinContent=8.0,
+            fatContent=10.0,
+            carbohydrateContent=30.0,
+            nutritionScore=7.0,
+        )
+
+    def test_protein_bounded_range(self):
+        """Test filtering with bounded protein range"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:8-12"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Cheese (10g) and Bread (8g)
+        self.assertIn("Cheddar Cheese", names)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Chicken (25g) or Rice (3g)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_protein_lower_bound_only(self):
+        """Test filtering with lower bound protein only"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:15-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include only Chicken (25g)
+        self.assertIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+        self.assertNotIn("Whole Wheat Bread", names)
+
+    def test_protein_upper_bound_only(self):
+        """Test filtering with upper bound protein only"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:-5"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include only Rice (3g)
+        self.assertIn("White Rice", names)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("Whole Wheat Bread", names)
+
+    def test_fat_range_filtering(self):
+        """Test filtering by fat content"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "fat:5-15"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Bread (10g)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Chicken (2g), Cheese (20g), or Rice (1g)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_carbohydrate_range_filtering(self):
+        """Test filtering by carbohydrate content"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "carbohydrates:20-40"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Bread (30g)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Chicken (15g), Cheese (5g), or Rice (50g)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_carbohydrate_alias_carbs(self):
+        """Test that 'carbs' alias works for carbohydrates"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "carbs:40-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Rice (50g)
+        self.assertIn("White Rice", names)
+
+    def test_carbohydrate_alias_carbohydrate_singular(self):
+        """Test that 'carbohydrate' (singular) alias works"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "carbohydrate:40-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Rice (50g)
+        self.assertIn("White Rice", names)
+
+    def test_fat_alias_fats(self):
+        """Test that 'fats' alias works for fat"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "fats:15-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Cheese (20g)
+        self.assertIn("Cheddar Cheese", names)
+
+    def test_multiple_macronutrient_filters_and(self):
+        """Test that multiple filters create AND constraints"""
+        # Filter for protein >= 8 AND fat <= 12
+        response = self.client.get(
+            reverse("get_foods"), {"macronutrient": "protein:8-,fat:-12"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Chicken (protein=25, fat=2) and Bread (protein=8, fat=10)
+        self.assertIn("Chicken Breast", names)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Cheese (protein=10, fat=20) or Rice (protein=3)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_case_insensitive_macronutrient_name(self):
+        """Test that macronutrient name matching is case-insensitive"""
+        response1 = self.client.get(reverse("get_foods"), {"macronutrient": "PROTEIN:20-"})
+        response2 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:20-"})
+        response3 = self.client.get(reverse("get_foods"), {"macronutrient": "PrOtEiN:20-"})
+
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        results3 = [f["name"] for f in response3.data.get("results", [])]
+
+        # All should return the same results
+        self.assertEqual(set(results1), set(results2))
+        self.assertEqual(set(results2), set(results3))
+
+    def test_invalid_macronutrient_name_ignored(self):
+        """Test that invalid macronutrient names are ignored"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "invalid:10-20"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        # Should return all foods since filter is invalid
+        self.assertGreaterEqual(len(results), 4)
+
+    def test_invalid_format_skipped(self):
+        """Test that invalid filter formats are gracefully skipped"""
+        # Missing colon
+        response1 = self.client.get(reverse("get_foods"), {"macronutrient": "protein10-20"})
+        # Missing dash
+        response2 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:1020"})
+        # Both numbers missing
+        response3 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:-"})
+
+        # All should return all foods (filter skipped)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK)
+
+        self.assertGreaterEqual(len(response1.data.get("results", [])), 4)
+        self.assertGreaterEqual(len(response2.data.get("results", [])), 4)
+        self.assertGreaterEqual(len(response3.data.get("results", [])), 4)
+
+    def test_invalid_numbers_skipped(self):
+        """Test that invalid numeric values are gracefully skipped"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:abc-xyz"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Should return all foods since filter is invalid
+        self.assertGreaterEqual(len(response.data.get("results", [])), 4)
+
+    def test_exact_boundary_values(self):
+        """Test that boundary values are inclusive"""
+        # Test lower boundary - Bread has exactly 8g protein
+        response1 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:8-15"})
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        self.assertIn("Whole Wheat Bread", results1)
+
+        # Test upper boundary - Cheese has exactly 10g protein
+        response2 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:5-10"})
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        self.assertIn("Cheddar Cheese", results2)
+
+    def test_combined_with_category_filter(self):
+        """Test macronutrient filter combined with category filter"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"category": "Grains", "macronutrient": "protein:5-15"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Bread (Grains, protein=8g)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Rice (Grains but protein=3g) or Chicken (Meat category)
+        self.assertNotIn("White Rice", names)
+        self.assertNotIn("Chicken Breast", names)
+
+    def test_combined_with_search(self):
+        """Test macronutrient filter combined with search"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"search": "cheese", "macronutrient": "fat:15-"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Cheese (matches search and fat=20g)
+        self.assertIn("Cheddar Cheese", names)
+
+    def test_empty_macronutrient_param(self):
+        """Test with empty macronutrient parameter"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": ""})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Should return all foods
+        self.assertGreaterEqual(len(response.data.get("results", [])), 4)
+
+    def test_whitespace_handling(self):
+        """Test that whitespace in filter is handled correctly"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"macronutrient": " protein : 20 - , fat : - 5 "}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Chicken (protein=25, fat=2)
+        self.assertIn("Chicken Breast", names)
+
+    def test_zero_values(self):
+        """Test filtering with zero as a boundary value"""
+        # Create a food with very low macros
+        low_macro_food = FoodAccessService.create_validated_food_entry(
+            name="Celery",
+            category="Vegetable",
+            servingSize=100,
+            caloriesPerServing=16,
+            proteinContent=0.7,
+            fatContent=0.2,
+            carbohydrateContent=3.0,
+            nutritionScore=9.0,
+        )
+
+        # Filter for protein 0-1
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:0-1"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Celery (0.7g)
+        self.assertIn("Celery", names)
+        # Should not include Chicken (25g)
+        self.assertNotIn("Chicken Breast", names)
+
+    def test_complex_multi_macro_filter(self):
+        """Test complex filter with all three macronutrients"""
+        # Filter for high protein, low fat, low carbs
+        response = self.client.get(
+            reverse("get_foods"),
+            {"macronutrient": "protein:20-,fat:-5,carbs:-20"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Chicken (protein=25, fat=2, carbs=15)
+        self.assertIn("Chicken Breast", names)
+        # Should not include others
+        self.assertNotIn("Cheddar Cheese", names)  # fat too high
+        self.assertNotIn("White Rice", names)  # protein too low
+        self.assertNotIn("Whole Wheat Bread", names)  # carbs too high
+
+    def test_decimal_values(self):
+        """Test filtering with decimal values"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:2.5-3.5"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Rice (exactly 3.0g)
+        self.assertIn("White Rice", names)
+
+
+class PrivateFoodAccessTest(TestCase):
+    """Tests for private food functionality and access control"""
+
+    def setUp(self):
+        """Set up test users and food entries"""
+        # Create test users
+        self.user1 = User.objects.create_user(
+            username="user1", email="user1@test.com", password="pass123"
+        )
+        self.user2 = User.objects.create_user(
+            username="user2", email="user2@test.com", password="pass123"
+        )
+
+        # Create public (validated) food
+        self.public_food = FoodEntry.objects.create(
+            name="Public Apple",
+            category="Fruits",
+            servingSize=100,
+            caloriesPerServing=52,
+            proteinContent=0.3,
+            fatContent=0.2,
+            carbohydrateContent=14,
+            nutritionScore=8.5,
+            validated=True,
+            createdBy=None,  # System food
+        )
+
+        # Create private food for user1
+        self.user1_private_food = FoodEntry.objects.create(
+            name="User1 Custom Protein Shake",
+            category="Beverages",
+            servingSize=250,
+            caloriesPerServing=200,
+            proteinContent=30,
+            fatContent=5,
+            carbohydrateContent=10,
+            nutritionScore=7.0,
+            validated=False,  # Private
+            createdBy=self.user1,
+        )
+
+        # Create private food for user2
+        self.user2_private_food = FoodEntry.objects.create(
+            name="User2 Custom Salad",
+            category="Vegetables",
+            servingSize=200,
+            caloriesPerServing=150,
+            proteinContent=5,
+            fatContent=10,
+            carbohydrateContent=12,
+            nutritionScore=8.0,
+            validated=False,  # Private
+            createdBy=self.user2,
+        )
+
+    def test_anonymous_user_sees_only_public_foods(self):
+        """Test that anonymous users can only see validated foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=None)
+
+        # Should see public food but not private foods
+        self.assertIn(self.public_food, accessible)
+        self.assertNotIn(self.user1_private_food, accessible)
+        self.assertNotIn(self.user2_private_food, accessible)
+
+    def test_user1_sees_public_and_own_private_foods(self):
+        """Test that user1 sees public foods and their own private foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=self.user1)
+
+        # Should see public food + their own private food, but not user2's private food
+        self.assertIn(self.public_food, accessible)
+        self.assertIn(self.user1_private_food, accessible)
+        self.assertNotIn(self.user2_private_food, accessible)
+
+    def test_user2_sees_public_and_own_private_foods(self):
+        """Test that user2 sees public foods and their own private foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=self.user2)
+
+        # Should see public food + their own private food, but not user1's private food
+        self.assertIn(self.public_food, accessible)
+        self.assertNotIn(self.user1_private_food, accessible)
+        self.assertIn(self.user2_private_food, accessible)
+
+
+class PrivateFoodVisibilityTests(TestCase):
+    """Tests for private food visibility and access control"""
+
+    def setUp(self):
+        # Create two regular users
+        self.user1 = User.objects.create_user(
+            username="user1", email="user1@test.com", password="pass123"
+        )
+        self.user2 = User.objects.create_user(
+            username="user2", email="user2@test.com", password="pass123"
+        )
+
+        # Create a private food for user1
+        self.private_food = FoodEntry.objects.create(
+            name="User1 Private Food",
+            category="Test",
+            servingSize=100,
+            caloriesPerServing=100,
+            proteinContent=10,
+            fatContent=5,
+            carbohydrateContent=20,
+            nutritionScore=5.0,
+            validated=False,  # Private
+            createdBy=self.user1,
+        )
+
+        # Create a public validated food
+        self.public_food = FoodAccessService.create_validated_food_entry(
+            name="Public Food",
+            category="Test",
+            servingSize=100,
+            caloriesPerServing=150,
+            proteinContent=12,
+            fatContent=6,
+            carbohydrateContent=25,
+            nutritionScore=6.0,
+        )
+
+    def test_user_can_access_own_private_food(self):
+        """Test that users can access their own private foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=self.user1)
+
+        # User1 should see both public food and their own private food
+        self.assertIn(self.private_food, accessible)
+        self.assertIn(self.public_food, accessible)
+
+    def test_user_cannot_access_others_private_food(self):
+        """Test that users cannot access other users' private foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=self.user2)
+
+        # User2 should only see public food, not user1's private food
+        self.assertNotIn(self.private_food, accessible)
+        self.assertIn(self.public_food, accessible)
+
+    def test_anonymous_can_only_access_public_foods(self):
+        """Test that anonymous users can only access validated foods"""
+        accessible = FoodAccessService.get_accessible_foods(user=None)
+
+        # Anonymous should only see public food, not private food
+        self.assertNotIn(self.private_food, accessible)
+        self.assertIn(self.public_food, accessible)
+
+    def test_can_access_food_validates_ownership(self):
+        """Test can_access_food method for access control"""
+        # Owner can access their private food
+        self.assertTrue(
+            FoodAccessService.can_access_food(self.private_food, self.user1)
+        )
+
+        # Other user cannot access private food
+        self.assertFalse(
+            FoodAccessService.can_access_food(self.private_food, self.user2)
+        )
+
+        # Anonymous cannot access private food
+        self.assertFalse(FoodAccessService.can_access_food(self.private_food, None))
+
+        # Everyone can access public food
+        self.assertTrue(FoodAccessService.can_access_food(self.public_food, self.user1))
+        self.assertTrue(FoodAccessService.can_access_food(self.public_food, self.user2))
+        self.assertTrue(FoodAccessService.can_access_food(self.public_food, None))
+
+    def test_approve_proposal_makes_food_public(self):
+        """Test that approving a proposal changes validated to True"""
+        # Create a food proposal
+        proposal = FoodProposal.objects.create(
+            food_entry=self.private_food, proposedBy=self.user1
+        )
+
+        # Initially private
+        self.assertFalse(self.private_food.validated)
+
+        # Approve the proposal
+        admin = User.objects.create_user(username="admin", is_staff=True)
+        approve_food_proposal(proposal, changed_by=admin)
+
+        # Refresh from database
+        self.private_food.refresh_from_db()
+
+        # Should now be validated (public)
+        self.assertTrue(self.private_food.validated)
+        self.assertTrue(proposal.isApproved)
+
+        # Now accessible to all users
+        self.assertIn(
+            self.private_food, FoodAccessService.get_accessible_foods(user=self.user2)
+        )
+        self.assertIn(
+            self.private_food, FoodAccessService.get_accessible_foods(user=None)
+        )

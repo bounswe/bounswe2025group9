@@ -1,11 +1,14 @@
 from django_filters.rest_framework import DjangoFilterBackend
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import viewsets, permissions, mixins
 from rest_framework.filters import OrderingFilter
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from fuzzywuzzy import fuzz
 import logging
+from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view
 
 from .models import Post, Tag, Comment, Like, Recipe, RecipeIngredient
 from .serializers import (
@@ -43,6 +46,7 @@ class IsPostOwnerOrReadOnly(permissions.BasePermission):
         return obj.post.author == request.user
 
 
+@extend_schema(tags=["forum"])
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
@@ -119,6 +123,20 @@ class PostViewSet(viewsets.ModelViewSet):
                 break
         return best_score
 
+    @extend_schema(
+        summary="Search posts with fuzzy matching",
+        description="Search posts by title and recipe ingredients using fuzzy string matching (Levenshtein distance). "
+                    "Returns posts with similarity score >= 75%",
+        parameters=[
+            OpenApiParameter(
+                name="q",
+                description="Search query term",
+                required=True,
+                type=str
+            )
+        ],
+        responses={200: PostSerializer(many=True)}
+    )
     @action(
         detail=False,
         methods=["get"],
@@ -241,3 +259,96 @@ class RecipeViewSet(viewsets.ModelViewSet):
                 "You can only add recipes to your own posts."
             )
         serializer.save()
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])  # Public endpoint for SEO
+def recipe_schema_json_view(request, pk):
+    """
+    Returns a rich Schema.org compatible JSON-LD representation of a Recipe.
+    This endpoint maximizes data output by inferring additional fields from existing data.
+    This endpoint is publicly accessible for external services.
+    """
+    recipe = get_object_or_404(
+        Recipe.objects.select_related('post__author')
+        .prefetch_related('ingredients__food', 'post__tags'), 
+        pk=pk
+    )
+    
+    # Build recipeIngredient list
+    recipe_ingredients = []
+    for ingredient in recipe.ingredients.all():
+        # Format: "{customAmount}{customUnit} of {food.name}"
+        ingredient_str = f"{ingredient.customAmount}{ingredient.customUnit} of {ingredient.food.name}"
+        recipe_ingredients.append(ingredient_str)
+    
+    # Build nutrition object
+    nutrition = {
+        "@type": "NutritionInformation",
+        "calories": f"{recipe.total_calories:.1f} calories",
+        "proteinContent": f"{recipe.total_protein:.1f}g",
+        "fatContent": f"{recipe.total_fat:.1f}g",
+        "carbohydrateContent": f"{recipe.total_carbohydrates:.1f}g"
+    }
+    
+    # Dietary inferences based on nutritional values
+    suitable_for_diet = []
+    if recipe.total_calories < 400:
+        suitable_for_diet.append("https://schema.org/LowCalorieDiet")
+    if recipe.total_fat < 10:
+        suitable_for_diet.append("https://schema.org/LowFatDiet")
+    
+    # Build keywords from post title and price category
+    keywords = []
+    # Extract words from title (lowercase, filter out short words)
+    title_words = [word.lower() for word in recipe.post.title.split() if len(word) > 2]
+    keywords.extend(title_words)
+    
+    # Add price category as keyword if available
+    if recipe.price_category:
+        # Map price category symbols to readable keywords
+        price_mapping = {
+            "₺": "budget",
+            "₺ ₺": "moderate",
+            "₺ ₺₺": "premium"
+        }
+        price_keyword = price_mapping.get(recipe.price_category, recipe.price_category.lower())
+        keywords.append(price_keyword)
+    
+    # Build the Schema.org Recipe JSON-LD
+    schema_data = {
+        "@context": "https://schema.org",
+        "@type": "Recipe",
+        "name": recipe.post.title,
+        "author": recipe.post.author.username if recipe.post.author else "Unknown",
+        "datePublished": recipe.post.created_at.isoformat(),
+        "dateModified": recipe.updated_at.isoformat(),
+        "description": recipe.post.body[:500] if recipe.post.body else "",
+        "recipeInstructions": recipe.instructions,
+        "recipeIngredient": recipe_ingredients,
+        "nutrition": nutrition
+    }
+    
+    # Add optional fields only if data exists
+    if suitable_for_diet:
+        schema_data["suitableForDiet"] = suitable_for_diet
+    
+    if keywords:
+        schema_data["keywords"] = keywords
+    
+    # Add estimatedCost if available
+    if recipe.total_cost:
+        schema_data["estimatedCost"] = {
+            "@type": "MonetaryAmount",
+            "value": str(recipe.total_cost),
+            "currency": recipe.currency
+        }
+    
+    # Add recipeCategory if tags exist
+    tags = recipe.post.tags.all()
+    if tags:
+        # Use the first tag as recipe category
+        schema_data["recipeCategory"] = tags[0].name
+    
+    return JsonResponse(schema_data)
+

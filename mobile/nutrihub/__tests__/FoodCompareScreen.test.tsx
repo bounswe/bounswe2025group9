@@ -112,7 +112,7 @@ describe('FoodCompareScreen - Basic Scenarios', () => {
     expect(getByText('Select 2 foods to compare their nutritional values')).toBeTruthy();
     
     // Verify helper text for when selecting foods
-    expect(getByText('Add Foods')).toBeTruthy();
+    expect(getByText('Add Food')).toBeTruthy();
     
     // The NutritionCompare component will be rendered when 2 foods are selected
     // Component structure: {selectedFoods.length === 2 ? <NutritionCompare foods={selectedFoods} /> : ...}

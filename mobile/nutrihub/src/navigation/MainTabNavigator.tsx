@@ -30,13 +30,17 @@ import AccountWarningsScreen from '../screens/user/AccountWarningsScreen';
 import ReportUserScreen from '../screens/user/ReportUserScreen';
 import FollowersListScreen from '../screens/user/FollowersListScreen';
 import FollowingListScreen from '../screens/user/FollowingListScreen';
+import LanguageSettingsScreen from '../screens/user/LanguageSettingsScreen';
+import PrivateFoodsScreen from '../screens/food/PrivateFoodsScreen';
 
 // Nutrition screens
 import NutritionTrackingScreen from '../screens/nutrition/NutritionTrackingScreen';
+import FoodProposalsScreen from '../screens/food/FoodProposalsScreen';
 
 import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -51,6 +55,7 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
   const navigation = useNavigation<NavigationProp>();
   const { logout, user } = useAuth();
   const { theme, themeType, toggleTheme, textStyles } = useTheme();
+  const { t } = useLanguage();
 
   // Get display name from user's name and surname
   const getDisplayName = () => {
@@ -65,9 +70,9 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
     <SafeAreaView edges={['top']} style={{ backgroundColor: theme.headerBackground }}>
       <View style={[styles.header, { backgroundColor: theme.headerBackground, borderBottomColor: theme.border }]}>
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/logo.png')} 
-            style={styles.logoImage} 
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
             resizeMode="contain"
           />
           <View style={styles.logoTextContainer}>
@@ -79,28 +84,28 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.rightContainer}>
           {/* Theme Toggle Button */}
-          <TouchableOpacity 
-            style={styles.iconButton} 
+          <TouchableOpacity
+            style={styles.iconButton}
             onPress={toggleTheme}
-            accessibilityRole="button" 
+            accessibilityRole="button"
             accessibilityLabel="Toggle theme"
           >
-            <Icon 
-              name={themeType === 'dark' ? 'weather-sunny' : 'weather-night'} 
-              size={22} 
-              color={theme.headerText} 
+            <Icon
+              name={themeType === 'dark' ? 'weather-sunny' : 'weather-night'}
+              size={22}
+              color={theme.headerText}
             />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: PALETTE.NEUTRAL.WHITE }]} 
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: PALETTE.NEUTRAL.WHITE }]}
             onPress={() => logout()}
           >
             <Icon name="logout" size={18} color={theme.headerBackground} />
-            <Text style={[styles.actionButtonText, { color: theme.headerBackground }]}>Log out</Text>
+            <Text style={[styles.actionButtonText, { color: theme.headerBackground }]}>{t('auth.logout')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -147,6 +152,9 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen name="AccountWarnings" component={AccountWarningsScreen} />
       <ProfileStack.Screen name="ReportUser" component={ReportUserScreen} />
       <ProfileStack.Screen name="NutritionTracking" component={NutritionTrackingScreen} />
+      <ProfileStack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
+      <ProfileStack.Screen name="FoodProposals" component={FoodProposalsScreen} />
+      <ProfileStack.Screen name="PrivateFoods" component={PrivateFoodsScreen} />
     </ProfileStack.Navigator>
   );
 };
@@ -156,13 +164,15 @@ const RootStack = createNativeStackNavigator<MainTabParamList>();
 
 const TabNavigator = () => {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({ 
-        headerShown: false, 
+      screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarActiveTintColor: theme.tabBarActiveColor,
         tabBarInactiveTintColor: theme.tabBarInactiveColor,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: theme.tabBarBackground,
           borderTopColor: 'transparent',
@@ -187,16 +197,16 @@ const TabNavigator = () => {
           } else if (route.name === 'MyProfile') {
             iconName = focused ? 'account' : 'account-outline';
           } else {
-            iconName = 'help-circle'; 
+            iconName = 'help-circle';
           }
-          return <Icon name={iconName} size={focused? 26 : 24} color={color} />;
+          return <Icon name={iconName} size={focused ? 26 : 24} color={color} />;
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Food" component={FoodStackNavigator} />
-      <Tab.Screen name="Forum" component={ForumStackNavigator} />
-      <Tab.Screen name="MyProfile" component={ProfileStackNavigator} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: t('navigation.home') }} />
+      <Tab.Screen name="Food" component={FoodStackNavigator} options={{ tabBarLabel: t('navigation.food') }} />
+      <Tab.Screen name="Forum" component={ForumStackNavigator} options={{ tabBarLabel: t('navigation.forum') }} />
+      <Tab.Screen name="MyProfile" component={ProfileStackNavigator} options={{ tabBarLabel: t('navigation.profile') }} />
     </Tab.Navigator>
   );
 };
@@ -222,8 +232,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md, 
-    paddingVertical: SPACING.sm, 
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
   },
   logoContainer: {

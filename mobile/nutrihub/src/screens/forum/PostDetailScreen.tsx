@@ -4,7 +4,7 @@
  * Displays the full content of a forum post with comments.
  */
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Alert,
+  Keyboard,
+  useWindowDimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
@@ -22,6 +24,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import ForumPost from '../../components/forum/ForumPost';
 import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
@@ -44,9 +47,11 @@ const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailNavigationProp>();
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const { posts, updatePost } = usePosts();
   const { user: currentUser } = useAuth();
-  
+  const { height: windowHeight } = useWindowDimensions();
+
   const postId = route.params.postId;
   const [post, setPost] = useState<ForumTopic | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -56,18 +61,38 @@ const PostDetailScreen: React.FC = () => {
   const [submittingComment, setSubmittingComment] = useState(false);
   const [recipe, setRecipe] = useState<RecipeDetail | null>(null);
   const [loadingRecipe, setLoadingRecipe] = useState(false);
-  
+
+  // Ref for ScrollView to auto-scroll when keyboard opens
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Listen for keyboard show events to auto-scroll to comment input
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      () => {
+        // Auto-scroll to bottom when keyboard opens to show comment input
+        setTimeout(() => {
+          scrollViewRef.current?.scrollToEnd({ animated: true });
+        }, 100);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+    };
+  }, []);
+
   // Preserve like status when loading post data
   const preserveLikeStatus = useCallback(async (newPost: ForumTopic, existingPosts: ForumTopic[]): Promise<ForumTopic> => {
     // Try to find the post in existing posts
     const existingPost = existingPosts.find(p => p.id === newPost.id);
-    
+
     // Check if post is in our locally stored liked posts
     try {
       const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
       const likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
       const isLocallyLiked = likedPosts.includes(newPost.id);
-      
+
       if (isLocallyLiked) {
         // If the post is in our locally stored liked posts, mark it as liked
         return {
@@ -79,32 +104,32 @@ const PostDetailScreen: React.FC = () => {
     } catch (error) {
       console.error('Error checking liked posts storage:', error);
     }
-    
+
     // If it exists and has like status, preserve that information
     if (existingPost && existingPost.isLiked !== undefined) {
       return {
         ...newPost,
         isLiked: existingPost.isLiked,
-        likesCount: existingPost.isLiked ? 
+        likesCount: existingPost.isLiked ?
           // If it was liked locally but not on server, ensure count is accurate
-          Math.max(newPost.likesCount, existingPost.likesCount) : 
+          Math.max(newPost.likesCount, existingPost.likesCount) :
           newPost.likesCount
       };
     }
-    
+
     // Otherwise return the new post as is
     return newPost;
   }, []);
-  
+
   // Get post and comments from API - no dependency on context methods
   const fetchPostData = useCallback(async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
       // First try to get the post from our posts array
       let postData = posts.find(p => p.id === postId);
-      
+
       // If not found in array, fetch from API
       if (!postData) {
         try {
@@ -116,14 +141,14 @@ const PostDetailScreen: React.FC = () => {
           throw err;
         }
       }
-      
+
       setPost(postData);
-      
+
       // Check if this is a recipe post
-      const isRecipePost = postData.tags.some(tag => 
+      const isRecipePost = postData.tags.some(tag =>
         tag.toLowerCase().includes('recipe')
       );
-      
+
       // Fetch recipe details if it's a recipe post
       if (isRecipePost) {
         setLoadingRecipe(true);
@@ -137,7 +162,7 @@ const PostDetailScreen: React.FC = () => {
           setLoadingRecipe(false);
         }
       }
-      
+
       // Fetch comments for the post
       try {
         const commentsData = await forumService.getComments(postId);
@@ -164,12 +189,12 @@ const PostDetailScreen: React.FC = () => {
       setIsLoading(false);
     }
   }, [postId, posts, preserveLikeStatus]);
-  
+
   // Fetch post and comments data
   useEffect(() => {
     fetchPostData();
   }, [fetchPostData]);
-  
+
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
     return date.toLocaleDateString('en-US', {
@@ -180,31 +205,31 @@ const PostDetailScreen: React.FC = () => {
       minute: '2-digit',
     });
   };
-  
+
   // Handle adding a new comment
   const handleAddComment = async () => {
     if (newComment.trim() && post) {
       setSubmittingComment(true);
-      
+
       try {
         // Submit comment to API
         const createdComment = await forumService.createComment({
           post: post.id,
           body: newComment.trim()
         });
-        
+
         // Add comment to list and update post comment count
         setComments(prevComments => [...prevComments, createdComment]);
-        
+
         // Update post in both local state and global context
         const updatedPost = {
           ...post,
           commentsCount: (post.commentsCount || 0) + 1
         };
-        
+
         setPost(updatedPost);
         updatePost(updatedPost); // Update in global context
-        
+
         setNewComment('');
       } catch (err) {
         console.error('Error adding comment:', err);
@@ -214,23 +239,23 @@ const PostDetailScreen: React.FC = () => {
       }
     }
   };
-  
+
   // Handle comment like
   const handleCommentLike = async (commentId: number) => {
     try {
       const isLiked = await forumService.toggleCommentLike(commentId);
-      
+
       // Update comment in the state with the new like status
       setComments(prevComments =>
         prevComments.map(comment =>
           comment.id === commentId
             ? {
-                ...comment,
-                isLiked: isLiked,
-                likesCount: isLiked 
-                  ? (comment.likesCount || 0) + 1 
-                  : Math.max((comment.likesCount || 0) - 1, 0) // Ensure count doesn't go below 0
-              }
+              ...comment,
+              isLiked: isLiked,
+              likesCount: isLiked
+                ? (comment.likesCount || 0) + 1
+                : Math.max((comment.likesCount || 0) - 1, 0) // Ensure count doesn't go below 0
+            }
             : comment
         )
       );
@@ -240,32 +265,32 @@ const PostDetailScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to update comment like status.');
     }
   };
-  
+
   // Handle post like
   const handlePostLike = async (postToLike: ForumTopic) => {
     try {
       const isLiked = await forumService.toggleLike(postToLike.id);
-      
+
       // Create an updated post with the new like status
       const updatedPost = {
         ...postToLike,
         isLiked: isLiked,
-        likesCount: isLiked 
-          ? (postToLike.likesCount || 0) + 1 
+        likesCount: isLiked
+          ? (postToLike.likesCount || 0) + 1
           : Math.max((postToLike.likesCount || 0) - 1, 0)
       };
-      
+
       // Update post in local state
       setPost(updatedPost);
-      
+
       // Update post in global context
       updatePost(updatedPost);
-      
+
       // Also update AsyncStorage for persistence across sessions
       try {
         const likedPostsString = await AsyncStorage.getItem(LIKED_POSTS_STORAGE_KEY);
         let likedPosts: number[] = likedPostsString ? JSON.parse(likedPostsString) : [];
-        
+
         if (isLiked) {
           // Add post ID if not already in the list
           if (!likedPosts.includes(postToLike.id)) {
@@ -275,7 +300,7 @@ const PostDetailScreen: React.FC = () => {
           // Remove post ID from the list
           likedPosts = likedPosts.filter(id => id !== postToLike.id);
         }
-        
+
         await AsyncStorage.setItem(LIKED_POSTS_STORAGE_KEY, JSON.stringify(likedPosts));
       } catch (error) {
         console.error('Error updating liked posts in storage:', error);
@@ -285,7 +310,7 @@ const PostDetailScreen: React.FC = () => {
       Alert.alert('Error', 'Failed to update like status. Please try again.');
     }
   };
-  
+
   // Render comment item
   const renderComment = (comment: Comment) => {
     if (__DEV__) {
@@ -297,7 +322,7 @@ const PostDetailScreen: React.FC = () => {
         fullComment: comment,
       });
     }
-    
+
     return (
       <Card key={comment.id} style={styles.commentCard}>
         <View style={styles.commentHeader}>
@@ -306,7 +331,7 @@ const PostDetailScreen: React.FC = () => {
             onPress={() => {
               const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
               const isSelf = !!currentUser && (comment.author === currentUser.username || (displayName && comment.author === displayName));
-              
+
               if (isSelf) {
                 // Navigate to own profile tab instead of UserProfile screen
                 navigation.navigate('MyProfile' as any);
@@ -318,37 +343,37 @@ const PostDetailScreen: React.FC = () => {
             accessibilityRole="button"
             accessibilityLabel={`View ${comment.author}'s profile`}
           >
-            <Avatar 
-              uri={comment.authorProfileImage} 
+            <Avatar
+              uri={comment.authorProfileImage}
               size={20}
             />
             <Text style={[styles.commentAuthor, textStyles.subtitle]}>{comment.author}</Text>
           </TouchableOpacity>
           <Text style={[styles.commentDate, textStyles.small]}>{formatDate(comment.createdAt)}</Text>
         </View>
-      <Text style={[styles.commentContent, textStyles.body]}>{comment.content}</Text>
-      <View style={styles.commentFooter}>
-        <TouchableOpacity 
-          style={styles.commentLikeButton}
-          onPress={() => handleCommentLike(comment.id)}
-        >
-          <Icon 
-            name={comment.isLiked ? "thumb-up" : "thumb-up-outline"} 
-            size={16} 
-            color={comment.isLiked ? theme.primary : theme.textSecondary} 
-          />
-          <Text style={[
-            styles.commentLikes, 
-            { color: comment.isLiked ? theme.primary : theme.textSecondary }
-          ]}>
-            {comment.likesCount || 0}
-          </Text>
-        </TouchableOpacity>
-      </View>
+        <Text style={[styles.commentContent, textStyles.body]}>{comment.content}</Text>
+        <View style={styles.commentFooter}>
+          <TouchableOpacity
+            style={styles.commentLikeButton}
+            onPress={() => handleCommentLike(comment.id)}
+          >
+            <Icon
+              name={comment.isLiked ? "thumb-up" : "thumb-up-outline"}
+              size={16}
+              color={comment.isLiked ? theme.primary : theme.textSecondary}
+            />
+            <Text style={[
+              styles.commentLikes,
+              { color: comment.isLiked ? theme.primary : theme.textSecondary }
+            ]}>
+              {comment.likesCount || 0}
+            </Text>
+          </TouchableOpacity>
+        </View>
       </Card>
     );
   };
-  
+
   if (isLoading) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -356,17 +381,17 @@ const PostDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.post')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading post...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('forum.loadingPost')}</Text>
         </View>
       </SafeAreaView>
     );
   }
-  
+
   if (error || !post) {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
@@ -374,19 +399,19 @@ const PostDetailScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Post Not Found</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.postNotFoundTitle')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.errorContainer}>
           <Icon name="alert-circle" size={64} color={theme.textSecondary} />
           <Text style={[styles.errorText, textStyles.heading4]}>
-            {error || 'Post not found'}
+            {error || t('forum.postNotFound')}
           </Text>
           <Text style={[styles.errorSubtext, textStyles.body]}>
-            This post may have been deleted or is no longer available.
+            {t('forum.postNotFoundDesc')}
           </Text>
           <Button
-            title="Go Back"
+            title={t('common.goBack')}
             onPress={() => navigation.goBack()}
             variant="primary"
             style={styles.errorButton}
@@ -395,26 +420,29 @@ const PostDetailScreen: React.FC = () => {
       </SafeAreaView>
     );
   }
-  
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]} edges={['bottom']}>
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={styles.keyboardAvoidingView}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? Math.max(44, windowHeight * 0.06) + 60 : 0}
       >
         {/* Header */}
         <View style={[styles.header, { borderBottomColor: theme.border }]}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.post')}</Text>
           <View style={styles.headerSpacer} />
         </View>
-        
-        <ScrollView 
+
+        <ScrollView
+          ref={scrollViewRef}
           style={styles.content}
+          contentContainerStyle={styles.contentContainer}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
           showsVerticalScrollIndicator={false}
         >
           {/* Post */}
@@ -426,7 +454,7 @@ const PostDetailScreen: React.FC = () => {
             onAuthorPress={() => {
               const displayName = currentUser ? `${currentUser.name || ''} ${currentUser.surname || ''}`.trim() : '';
               const isSelf = !!currentUser && (post.author === currentUser.username || (displayName && post.author === displayName));
-              
+
               if (isSelf) {
                 // Navigate to own profile tab instead of UserProfile screen
                 navigation.navigate('MyProfile' as any);
@@ -436,18 +464,18 @@ const PostDetailScreen: React.FC = () => {
               }
             }}
           />
-          
+
           {/* Recipe Details Section */}
           {loadingRecipe && (
             <Card style={styles.recipeCard}>
               <ActivityIndicator size="small" color={theme.primary} />
-              <Text style={[styles.loadingText, textStyles.body]}>Loading recipe details...</Text>
+              <Text style={[styles.loadingText, textStyles.body]}>{t('forum.loadingRecipeDetails')}</Text>
             </Card>
           )}
-          
+
           {recipe && (
             <Card style={styles.recipeCard}>
-              <Text style={[styles.recipeTitle, textStyles.heading3]}>Recipe Details</Text>
+              <Text style={[styles.recipeTitle, textStyles.heading3]}>{t('forum.recipeDetails')}</Text>
               
               {/* Nutritional Summary */}
               {recipe.ingredients && recipe.ingredients.length > 0 && (
@@ -458,37 +486,37 @@ const PostDetailScreen: React.FC = () => {
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_calories)}
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.calories')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="weight-lifter" size={20} color="#3B82F6" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_protein)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.protein')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="water" size={20} color="#F59E0B" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_fat)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.fat')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="grain" size={20} color="#10B981" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {Math.round(recipe.total_carbohydrates)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.carbs')}</Text>
                     </View>
                   </View>
                 </View>
               )}
-              
+
               {/* Ingredients */}
               {recipe.ingredients && recipe.ingredients.length > 0 && (
                 <>
-                  <Text style={[styles.sectionTitle, textStyles.heading4]}>Ingredients</Text>
+                  <Text style={[styles.sectionTitle, textStyles.heading4]}>{t('forum.ingredients')}</Text>
                   {recipe.ingredients.map((ingredient, index) => (
                     <View key={index} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant }]}>
                       <Text style={[styles.ingredientName, textStyles.body]}>
@@ -501,37 +529,37 @@ const PostDetailScreen: React.FC = () => {
                   ))}
                 </>
               )}
-              
+
               {/* Instructions */}
               {recipe.instructions && (
                 <>
-                  <Text style={[styles.sectionTitle, textStyles.heading4]}>Instructions</Text>
+                  <Text style={[styles.sectionTitle, textStyles.heading4]}>{t('forum.instructions')}</Text>
                   <Text style={[styles.instructions, textStyles.body]}>{recipe.instructions}</Text>
                 </>
               )}
             </Card>
           )}
-          
+
           {/* Comments Section */}
           <View style={styles.commentsSection}>
             <Text style={[styles.commentsTitle, textStyles.heading4]}>
-              Comments ({comments.length})
+              {t('forum.comments')} ({comments.length})
             </Text>
-            
+
             {comments.map(renderComment)}
-            
+
             {comments.length === 0 && (
               <Text style={[styles.noCommentsText, textStyles.body]}>
-                No comments yet. Be the first to comment!
+                {t('forum.noComments')} {t('forum.beFirstComment')}
               </Text>
             )}
           </View>
         </ScrollView>
-        
+
         {/* Comment Input */}
         <View style={[styles.commentInputContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
           <TextInput
-            placeholder="Add a comment..."
+            placeholder={t('forum.addComment')}
             value={newComment}
             onChangeText={setNewComment}
             multiline
@@ -539,7 +567,7 @@ const PostDetailScreen: React.FC = () => {
             editable={!submittingComment}
           />
           <Button
-            title="Submit"
+            title={t('common.submit')}
             onPress={handleAddComment}
             variant="primary"
             size="small"
@@ -578,6 +606,10 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: SPACING.lg,
   },
   loadingContainer: {
     flex: 1,
@@ -648,7 +680,7 @@ const styles = StyleSheet.create({
   },
   commentInputContainer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     padding: SPACING.md,
     borderTopWidth: 1,
   },

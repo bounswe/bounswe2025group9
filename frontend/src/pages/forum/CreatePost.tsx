@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, WarningCircle, Plus, X } from '@phosphor-icons/react'
-import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest } from '../../lib/apiClient'
+import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest, RecipeIngredient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
 import { Tag } from '@phosphor-icons/react'
+import { CUSTOM_UNITS, DEFAULT_CUSTOM_UNIT, UNIT_TO_GRAMS_CONVERSION } from './constants'
 
 // required post types
 const POST_TYPES = {
@@ -97,10 +98,13 @@ const CreatePost = () => {
     const [recipeInstructions, setRecipeInstructions] = useState('');
     const [foodOptions, setFoodOptions] = useState<Food[]>([]);
     const [loadingFoods, setLoadingFoods] = useState(false);
-    const [ingredients, setIngredients] = useState<{ food_id: number; food_name: string; amount: number }[]>([]);
+    const [ingredients, setIngredients] = useState<RecipeIngredient[]>([]);
     const [selectedFoodId, setSelectedFoodId] = useState<number | null>(null);
-    const [selectedFoodAmount, setSelectedFoodAmount] = useState<number>(100);
+    const [selectedFoodCustomAmount, setSelectedFoodCustomAmount] = useState<number>(1);
+    const [selectedFoodCustomUnit, setSelectedFoodCustomUnit] = useState<string>(DEFAULT_CUSTOM_UNIT);
+    const [showUnitDropdown, setShowUnitDropdown] = useState(false);
     const [foodSearchTerm, setFoodSearchTerm] = useState('');
+    const unitDropdownRef = useRef<HTMLDivElement>(null);
 
     // Check authentication status when component mounts
     useEffect(() => {
@@ -110,6 +114,20 @@ const CreatePost = () => {
             user
         });
     }, [isAuthenticated, user]);
+
+    // Handle click outside for unit dropdown
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (unitDropdownRef.current && !unitDropdownRef.current.contains(event.target as Node)) {
+                setShowUnitDropdown(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
+    }, []);
 
     // Fetch tags when component mounts
     useEffect(() => {
@@ -211,10 +229,27 @@ const CreatePost = () => {
             return;
         }
 
+        if (selectedFoodCustomAmount <= 0) {
+            setValidationError('Please enter a valid amount');
+            return;
+        }
+
         const selectedFood = foodOptions.find(food => food.id === selectedFoodId);
         if (!selectedFood) {
             setValidationError('Selected food not found');
             return;
+        }
+
+        // Calculate amount in grams from customAmount and customUnit
+        let amountInGrams: number;
+        
+        if (selectedFoodCustomUnit === 'serving') {
+            // For 'serving' unit, use the food item's servingSize
+            amountInGrams = selectedFoodCustomAmount * selectedFood.servingSize;
+        } else {
+            // For other units, use the standard conversion
+            const conversionRate = UNIT_TO_GRAMS_CONVERSION[selectedFoodCustomUnit as keyof typeof UNIT_TO_GRAMS_CONVERSION];
+            amountInGrams = selectedFoodCustomAmount * conversionRate;
         }
 
         // Check if ingredient already exists
@@ -222,7 +257,8 @@ const CreatePost = () => {
         if (existingIndex >= 0) {
             // Update existing ingredient
             const updatedIngredients = [...ingredients];
-            updatedIngredients[existingIndex].amount += selectedFoodAmount;
+            updatedIngredients[existingIndex].amount += amountInGrams;
+            updatedIngredients[existingIndex].customAmount += selectedFoodCustomAmount;
             setIngredients(updatedIngredients);
         } else {
             // Add new ingredient
@@ -231,14 +267,16 @@ const CreatePost = () => {
                 {
                     food_id: selectedFoodId,
                     food_name: selectedFood.name,
-                    amount: selectedFoodAmount
+                    amount: amountInGrams,
+                    customAmount: selectedFoodCustomAmount,
+                    customUnit: selectedFoodCustomUnit
                 }
             ]);
         }
 
         // Reset selection
         setSelectedFoodId(null);
-        setSelectedFoodAmount(100);
+        setSelectedFoodCustomAmount(1);
         setFoodSearchTerm('');
         setValidationError('');
     };
@@ -317,7 +355,9 @@ const CreatePost = () => {
                         instructions: recipeInstructions,
                         ingredients: ingredients.map(item => ({
                             food_id: item.food_id,
-                            amount: item.amount
+                            amount: item.amount,
+                            customAmount: item.customAmount,
+                            customUnit: item.customUnit
                         }))
                     };
 
@@ -609,17 +649,72 @@ const CreatePost = () => {
                                                             <input
                                                                 type="number"
                                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                placeholder="Amount (g)"
-                                                                value={selectedFoodAmount}
-                                                                onChange={(e) => setSelectedFoodAmount(parseInt(e.target.value))}
-                                                                min={1}
+                                                                placeholder="Quantity"
+                                                                value={selectedFoodCustomAmount}
+                                                                onChange={(e) => setSelectedFoodCustomAmount(parseFloat(e.target.value))}
+                                                                min={0.01}
+                                                                step={0.01}
                                                             />
                                                         </div>
+                                                        <div className="flex-grow-0 relative" ref={unitDropdownRef}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setShowUnitDropdown(!showUnitDropdown)}
+                                                                className="w-full px-3 py-2 border rounded-lg text-left focus:ring-primary focus:border-primary nh-forum-search cursor-pointer flex items-center justify-between"
+                                                            >
+                                                                <span>{selectedFoodCustomUnit}</span>
+                                                                <svg className="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                                                </svg>
+                                                            </button>
+
+                                                            {/* Unit dropdown */}
+                                                            {showUnitDropdown && (
+                                                                <div
+                                                                    className="absolute z-10 w-full mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+                                                                    style={{
+                                                                        backgroundColor: 'var(--color-bg-primary)',
+                                                                        border: '1px solid var(--color-border)'
+                                                                    }}
+                                                                >
+                                                                    {CUSTOM_UNITS.map((unit, index) => (
+                                                                        <button
+                                                                            key={unit}
+                                                                            type="button"
+                                                                            onClick={() => {
+                                                                                setSelectedFoodCustomUnit(unit);
+                                                                                setShowUnitDropdown(false);
+                                                                            }}
+                                                                            className="w-full px-3 py-2 text-left focus:outline-none transition-colors"
+                                                                            style={{
+                                                                                color: 'var(--color-text-primary)',
+                                                                                borderBottom: index < CUSTOM_UNITS.length - 1 ? '1px solid var(--color-border)' : 'none',
+                                                                                backgroundColor: selectedFoodCustomUnit === unit ? 'var(--color-bg-secondary)' : 'transparent'
+                                                                            }}
+                                                                            onMouseEnter={(e) => {
+                                                                                if (selectedFoodCustomUnit !== unit) {
+                                                                                    e.currentTarget.style.backgroundColor = 'var(--color-bg-secondary)';
+                                                                                }
+                                                                            }}
+                                                                            onMouseLeave={(e) => {
+                                                                                if (selectedFoodCustomUnit !== unit) {
+                                                                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                                                                }
+                                                                            }}
+                                                                        >
+                                                                            <span className="text-sm font-medium capitalize">{unit}</span>
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            )}
+                                                        </div>
+
                                                         <button
                                                             type="button"
                                                             className="nh-button-square nh-button-primary"
                                                             onClick={addIngredient}
                                                             disabled={!selectedFoodId}
+                                                            aria-label="Add ingredient"
                                                         >
                                                             <Plus size={20} weight="bold" className="mr-1" />
 
@@ -677,7 +772,7 @@ const CreatePost = () => {
                                                                     key={index}
                                                                     className="flex justify-between items-center p-2 border border-[var(--forum-search-border)] rounded-md"
                                                                 >
-                                                                    <span>{ingredient.food_name} ({ingredient.amount}g)</span>
+                                                                    <span>{ingredient.food_name} ({ingredient.customAmount} {ingredient.customUnit})</span>
                                                                     <button
                                                                         type="button"
                                                                         className="text-red-500 hover:text-red-700 p-1"

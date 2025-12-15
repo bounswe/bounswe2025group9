@@ -62,6 +62,16 @@ export interface FoodProposal {
     username: string;
   };
   createdAt: string;
+  isPrivate ?: boolean;
+}
+
+export interface FoodProposalStatus {
+  id: number;              // strongly recommended
+  name: string;
+  category: string;
+  servingSize: number;
+  isApproved: boolean | null;
+  imageUrl: string;
 }
 
 // Type for creating a new food proposal (omits backend-generated fields)
@@ -172,6 +182,8 @@ export interface RecipeIngredient {
   food_id: number;
   food_name?: string;
   amount: number;
+  customUnit: string; 
+  customAmount: number;
   protein?: number;
   fat?: number;
   carbs?: number;
@@ -199,6 +211,8 @@ export interface CreateRecipeRequest {
   ingredients: {
     food_id: number;
     amount: number;
+    customUnit: string;
+    customAmount: number;
   }[];
 }
 
@@ -399,7 +413,7 @@ async function fetchJson<T>(url: string, options?: RequestInit, useRealBackend: 
 // api endpoints
 export const apiClient = {
   // foods
-  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string, micronutrient?: string }) => {
+  getFoods: (params?: { page?: number, search?: string, sort_by?: string, order?: string, micronutrient?: string, macronutrient?: string }) => {
     let url = "/foods/";
     const queryParams = new URLSearchParams();
     if (params && params.page) {
@@ -417,6 +431,9 @@ export const apiClient = {
     if (params && params.micronutrient) {
       queryParams.append('micronutrient', params.micronutrient);
     }
+    if (params && params.macronutrient) {
+      queryParams.append('macronutrient', params.macronutrient);
+    }
     const queryString = queryParams.toString();
     if (queryString) {
       url += `?${queryString}`;
@@ -430,6 +447,36 @@ export const apiClient = {
     fetchJson<FoodProposalResponse>("/foods/manual-proposal/", {
       method: "POST",
       body: JSON.stringify(proposal),
+    }, true),
+
+    proposePrivateFood: (proposal: FoodProposal) =>
+    fetchJson<FoodProposalResponse>("/foods/private/", {
+      method: "POST",
+      body: JSON.stringify(proposal),
+    }, true),
+
+  getFoodProposals: () =>
+    fetchJson<FoodProposalStatus[]>("/foods/get-proposal-status/", {
+      method: "GET",
+    }, true),
+  
+  getPrivateFoods: () =>
+    fetchJson<Food[]>("/foods/private/", {
+      method: "GET",
+    }, true),
+  getPrivateFood: (id: number | number) => 
+   fetchJson<Food>(`/foods/private/${id}/`, {
+      method: "GET",
+    }, true),
+  deletePrivateFood: (id: number) =>
+    fetchJson<void>(`/foods/private/${id}/`, {
+      method: "DELETE",
+    }, true),
+
+  updatePrivateFood: (id: number, updateData: Partial<FoodProposal>) =>
+    fetchJson<Food>(`/foods/private/${id}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updateData),
     }, true),
 
   getAvailableMicronutrients: () =>
@@ -1222,6 +1269,40 @@ export const apiClient = {
   deleteFoodEntry: (id: number) =>
     fetchJson<void>(`/meal-planner/daily-log/entries/${id}/`, {
       method: "DELETE"
+    }, true),
+
+  // Planned Food Entries
+  addPlannedEntry: (entry: {
+    food_id: number;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+    date?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').PlannedFoodEntry>("/meal-planner/daily-log/planned/", {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }, true),
+
+  updatePlannedEntry: (id: number, update: {
+    food_id?: number;
+    serving_size?: number;
+    serving_unit?: string;
+    meal_type?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').PlannedFoodEntry>(`/meal-planner/daily-log/planned/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(update)
+    }, true),
+
+  deletePlannedEntry: (id: number) =>
+    fetchJson<void>(`/meal-planner/daily-log/planned/${id}/`, {
+      method: "DELETE"
+    }, true),
+
+  convertPlannedToLog: (id: number) =>
+    fetchJson<{ message: string; entry: import('../types/nutrition').FoodLogEntry }>(`/meal-planner/daily-log/planned/${id}/convert/`, {
+      method: "POST"
     }, true),
 
   // Nutrition Statistics

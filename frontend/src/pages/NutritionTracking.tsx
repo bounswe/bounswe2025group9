@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { CaretDown, CaretRight, Lightbulb } from '@phosphor-icons/react'
+import { CaretDown, CaretRight, Lightbulb, Info } from '@phosphor-icons/react'
 import NutritionTracking from '../components/NutritionTracking'
 import { apiClient } from '../lib/apiClient'
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition'
@@ -12,6 +12,7 @@ const NutritionTrackingPage = () => {
   const [showVitamins, setShowVitamins] = useState(false)
   const [showMinerals, setShowMinerals] = useState(false)
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [showHydrationInfo, setShowHydrationInfo] = useState(false)
 
   // Helper function to format date as YYYY-MM-DD in local timezone
   const formatDateString = (date: Date): string => {
@@ -47,6 +48,45 @@ const NutritionTrackingPage = () => {
   useEffect(() => {
     fetchNutritionData()
   }, [fetchNutritionData])
+
+  const waterTarget = (() => {
+    const raw = nutritionData.targets?.micronutrients?.['Water (g)'] as any;
+    if (typeof raw === 'number') return raw;
+    if (raw && typeof raw === 'object' && 'target' in raw) return raw.target as number;
+    return 0;
+  })();
+  const waterActual = nutritionData.todayLog?.micronutrients_summary?.['Water (g)'] ?? 0;
+  const waterRatio = waterTarget > 0 ? waterActual / waterTarget : 0;
+  const waterBarColor =
+    waterRatio === 0
+      ? 'var(--color-text-secondary)'
+      : waterRatio >= 1
+        ? 'var(--color-success)'
+        : 'var(--color-primary)';
+
+  // Calculate planned entries totals
+  const plannedTotals = {
+    calories: 0,
+    protein: 0,
+    carbohydrates: 0,
+    fat: 0
+  };
+  const plannedMicronutrients: { [key: string]: number } = {};
+  
+  if (nutritionData.todayLog?.planned_entries) {
+    nutritionData.todayLog.planned_entries.forEach(entry => {
+      plannedTotals.calories += Number(entry.calories) || 0;
+      plannedTotals.protein += Number(entry.protein) || 0;
+      plannedTotals.carbohydrates += Number(entry.carbohydrates) || 0;
+      plannedTotals.fat += Number(entry.fat) || 0;
+      // Sum micronutrients from planned entries
+      if (entry.micronutrients) {
+        Object.entries(entry.micronutrients).forEach(([key, value]) => {
+          plannedMicronutrients[key] = (plannedMicronutrients[key] || 0) + (Number(value) || 0);
+        });
+      }
+    });
+  }
 
   return (
     <div className="w-full py-12">
@@ -86,8 +126,37 @@ const NutritionTrackingPage = () => {
               <div className="nh-card rounded-lg shadow-md">
                 {nutritionData.targets ? (
                   <>
-                    <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
+                <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
                     <div className="space-y-2">
+                      {/* Hydration inside Daily Targets (matches macro rows) */}
+                      <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium">Hydration</span>
+                            <button
+                              className="p-1 rounded text-[var(--color-text-secondary)]"
+                              onClick={() => setShowHydrationInfo(true)}
+                              style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                              title="How hydration target is calculated"
+                            >
+                              <Info size={12} />
+                            </button>
+                          </div>
+                          <span className="text-xs font-bold" style={{ color: waterBarColor }}>
+                            {waterActual.toFixed(1)}/ {waterTarget.toFixed(1)}
+                          </span>
+                        </div>
+                        <div className="w-full rounded-full h-1.5" 
+                        style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+                          <div
+                            className="bg-blue-500 h-1.5 rounded-full transition-all"
+                            style={{
+                              width: `${Math.min(100, Math.max(0, waterRatio * 100))}%`,
+                              backgroundColor: 'var(--color-primary)'
+                            }}
+                          ></div>
+                        </div>
+                      </div>
                       {/* Calories */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
@@ -97,11 +166,12 @@ const NutritionTrackingPage = () => {
                           </span>
                         </div>
                         <div 
-                          className="w-full rounded-full h-1.5"
+                          className="w-full rounded-full h-1.5 relative overflow-hidden"
                           style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                         >
+                          {/* Logged bar */}
                           <div
-                            className="bg-orange-500 h-1.5 rounded-full transition-all"
+                            className={`bg-orange-500 h-1.5 transition-all absolute left-0 top-0 ${plannedTotals.calories > 0 ? 'rounded-l-full' : 'rounded-full'}`}
                             style={{
                               width: `${Math.min(
                                 ((nutritionData.todayLog?.total_calories || 0) / (nutritionData.targets?.calories || 1)) * 100,
@@ -109,6 +179,22 @@ const NutritionTrackingPage = () => {
                               )}%`
                             }}
                           ></div>
+                          {/* Planned bar (stacked) */}
+                          {plannedTotals.calories > 0 && (
+                            <div
+                              className="bg-purple-500 h-1.5 rounded-r-full transition-all absolute top-0"
+                              style={{
+                                left: `${Math.min(
+                                  ((nutritionData.todayLog?.total_calories || 0) / (nutritionData.targets?.calories || 1)) * 100,
+                                  100
+                                )}%`,
+                                width: `${Math.min(
+                                  (plannedTotals.calories / (nutritionData.targets?.calories || 1)) * 100,
+                                  100 - ((nutritionData.todayLog?.total_calories || 0) / (nutritionData.targets?.calories || 1)) * 100
+                                )}%`
+                              }}
+                            ></div>
+                          )}
                         </div>
                       </div>
 
@@ -121,11 +207,12 @@ const NutritionTrackingPage = () => {
                           </span>
                         </div>
                         <div 
-                          className="w-full rounded-full h-1.5"
+                          className="w-full rounded-full h-1.5 relative overflow-hidden"
                           style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                         >
+                          {/* Logged bar */}
                           <div
-                            className="bg-blue-500 h-1.5 rounded-full transition-all"
+                            className={`bg-blue-500 h-1.5 transition-all absolute left-0 top-0 ${plannedTotals.protein > 0 ? 'rounded-l-full' : 'rounded-full'}`}
                             style={{
                               width: `${Math.min(
                                 ((nutritionData.todayLog?.total_protein || 0) / (nutritionData.targets?.protein || 1)) * 100,
@@ -133,6 +220,22 @@ const NutritionTrackingPage = () => {
                               )}%`
                             }}
                           ></div>
+                          {/* Planned bar (stacked) */}
+                          {plannedTotals.protein > 0 && (
+                            <div
+                              className="bg-purple-500 h-1.5 rounded-r-full transition-all absolute top-0"
+                              style={{
+                                left: `${Math.min(
+                                  ((nutritionData.todayLog?.total_protein || 0) / (nutritionData.targets?.protein || 1)) * 100,
+                                  100
+                                )}%`,
+                                width: `${Math.min(
+                                  (plannedTotals.protein / (nutritionData.targets?.protein || 1)) * 100,
+                                  100 - ((nutritionData.todayLog?.total_protein || 0) / (nutritionData.targets?.protein || 1)) * 100
+                                )}%`
+                              }}
+                            ></div>
+                          )}
                         </div>
                       </div>
 
@@ -145,11 +248,12 @@ const NutritionTrackingPage = () => {
                           </span>
                         </div>
                         <div 
-                          className="w-full rounded-full h-1.5"
+                          className="w-full rounded-full h-1.5 relative overflow-hidden"
                           style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                         >
+                          {/* Logged bar */}
                           <div
-                            className="bg-green-500 h-1.5 rounded-full transition-all"
+                            className={`bg-green-500 h-1.5 transition-all absolute left-0 top-0 ${plannedTotals.carbohydrates > 0 ? 'rounded-l-full' : 'rounded-full'}`}
                             style={{
                               width: `${Math.min(
                                 ((nutritionData.todayLog?.total_carbohydrates || 0) / (nutritionData.targets?.carbohydrates || 1)) * 100,
@@ -157,6 +261,22 @@ const NutritionTrackingPage = () => {
                               )}%`
                             }}
                           ></div>
+                          {/* Planned bar (stacked) */}
+                          {plannedTotals.carbohydrates > 0 && (
+                            <div
+                              className="bg-purple-500 h-1.5 rounded-r-full transition-all absolute top-0"
+                              style={{
+                                left: `${Math.min(
+                                  ((nutritionData.todayLog?.total_carbohydrates || 0) / (nutritionData.targets?.carbohydrates || 1)) * 100,
+                                  100
+                                )}%`,
+                                width: `${Math.min(
+                                  (plannedTotals.carbohydrates / (nutritionData.targets?.carbohydrates || 1)) * 100,
+                                  100 - ((nutritionData.todayLog?.total_carbohydrates || 0) / (nutritionData.targets?.carbohydrates || 1)) * 100
+                                )}%`
+                              }}
+                            ></div>
+                          )}
                         </div>
                       </div>
 
@@ -169,11 +289,12 @@ const NutritionTrackingPage = () => {
                           </span>
                         </div>
                         <div 
-                          className="w-full rounded-full h-1.5"
+                          className="w-full rounded-full h-1.5 relative overflow-hidden"
                           style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                         >
+                          {/* Logged bar */}
                           <div
-                            className="bg-yellow-500 h-1.5 rounded-full transition-all"
+                            className={`bg-yellow-500 h-1.5 transition-all absolute left-0 top-0 ${plannedTotals.fat > 0 ? 'rounded-l-full' : 'rounded-full'}`}
                             style={{
                               width: `${Math.min(
                                 ((nutritionData.todayLog?.total_fat || 0) / (nutritionData.targets?.fat || 1)) * 100,
@@ -181,6 +302,22 @@ const NutritionTrackingPage = () => {
                               )}%`
                             }}
                           ></div>
+                          {/* Planned bar (stacked) */}
+                          {plannedTotals.fat > 0 && (
+                            <div
+                              className="bg-purple-500 h-1.5 rounded-r-full transition-all absolute top-0"
+                              style={{
+                                left: `${Math.min(
+                                  ((nutritionData.todayLog?.total_fat || 0) / (nutritionData.targets?.fat || 1)) * 100,
+                                  100
+                                )}%`,
+                                width: `${Math.min(
+                                  (plannedTotals.fat / (nutritionData.targets?.fat || 1)) * 100,
+                                  100 - ((nutritionData.todayLog?.total_fat || 0) / (nutritionData.targets?.fat || 1)) * 100
+                                )}%`
+                              }}
+                            ></div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -259,9 +396,10 @@ const NutritionTrackingPage = () => {
                                       {vitamins.map(([key, target]) => {
                                         const name = extractName(key);
                                         const unit = extractUnit(key);
-                                        const currentValue = typeof logMicronutrients[key] === 'number' 
-                                          ? logMicronutrients[key] 
+                                        const currentValue = typeof logMicronutrients[name] === 'number' 
+                                          ? logMicronutrients[name] 
                                           : 0;
+                                        const plannedValue = plannedMicronutrients[name] || 0;
                                         let targetValue = 0;
                                         if (typeof target === 'number') {
                                           targetValue = target;
@@ -280,13 +418,24 @@ const NutritionTrackingPage = () => {
                                             </div>
                                             {targetValue > 0 && (
                                               <div 
-                                                className="w-full rounded-full h-1"
+                                                className="w-full rounded-full h-1 relative overflow-hidden"
                                                 style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                                               >
+                                                {/* Logged bar */}
                                                 <div
-                                                  className="bg-purple-500 h-1 rounded-full transition-all"
+                                                  className={`bg-blue-500 h-1 transition-all absolute left-0 top-0 ${plannedValue > 0 ? 'rounded-l-full' : 'rounded-full'}`}
                                                   style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
                                                 ></div>
+                                                {/* Planned bar (stacked) */}
+                                                {plannedValue > 0 && (
+                                                  <div
+                                                    className="bg-purple-500 h-1 rounded-r-full transition-all absolute top-0"
+                                                    style={{
+                                                      left: `${Math.min((currentValue / targetValue) * 100, 100)}%`,
+                                                      width: `${Math.min((plannedValue / targetValue) * 100, 100 - (currentValue / targetValue) * 100)}%`
+                                                    }}
+                                                  ></div>
+                                                )}
                                               </div>
                                             )}
                                           </div>
@@ -317,9 +466,10 @@ const NutritionTrackingPage = () => {
                                       {minerals.map(([key, target]) => {
                                         const name = extractName(key);
                                         const unit = extractUnit(key);
-                                        const currentValue = typeof logMicronutrients[key] === 'number' 
-                                          ? logMicronutrients[key] 
+                                        const currentValue = typeof logMicronutrients[name] === 'number' 
+                                          ? logMicronutrients[name] 
                                           : 0;
+                                        const plannedValue = plannedMicronutrients[name] || 0;
                                         let targetValue = 0;
                                         if (typeof target === 'number') {
                                           targetValue = target;
@@ -338,13 +488,24 @@ const NutritionTrackingPage = () => {
                                             </div>
                                             {targetValue > 0 && (
                                               <div 
-                                                className="w-full rounded-full h-1"
+                                                className="w-full rounded-full h-1 relative overflow-hidden"
                                                 style={{ backgroundColor: 'var(--color-bg-secondary)' }}
                                               >
+                                                {/* Logged bar */}
                                                 <div
-                                                  className="bg-teal-500 h-1 rounded-full transition-all"
+                                                  className={`bg-blue-500 h-1 transition-all absolute left-0 top-0 ${plannedValue > 0 ? 'rounded-l-full' : 'rounded-full'}`}
                                                   style={{ width: `${Math.min((currentValue / targetValue) * 100, 100)}%` }}
                                                 ></div>
+                                                {/* Planned bar (stacked) */}
+                                                {plannedValue > 0 && (
+                                                  <div
+                                                    className="bg-purple-500 h-1 rounded-r-full transition-all absolute top-0"
+                                                    style={{
+                                                      left: `${Math.min((currentValue / targetValue) * 100, 100)}%`,
+                                                      width: `${Math.min((plannedValue / targetValue) * 100, 100 - (currentValue / targetValue) * 100)}%`
+                                                    }}
+                                                  ></div>
+                                                )}
                                               </div>
                                             )}
                                           </div>
@@ -373,9 +534,39 @@ const NutritionTrackingPage = () => {
           </div>
         </div>
       </div>
+
+    {/* Hydration info modal */}
+    {showHydrationInfo && (
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 px-4">
+        <div className="nh-card max-w-lg w-full relative">
+          <button
+            className="absolute top-3 right-3 text-[var(--color-text-secondary)] hover:text-white"
+            onClick={() => setShowHydrationInfo(false)}
+          >
+            ✕
+          </button>
+          <h3 className="nh-subtitle mb-2">Hydration target</h3>
+          <p className="nh-text text-sm mb-2">
+            Your daily water target comes from Nutrition Targets (Adequate Intake defaults: ~3700 g for males, ~2700 g for females).
+          </p>
+          <p className="nh-text text-sm mb-2">
+            Meeting or exceeding the target keeps your nutrition score stable. Being under target can reduce the score by up to -2.00.
+          </p>
+          <p className="nh-text text-sm">
+            Log water by adding foods that include “Water (g)” (e.g., plain water). To adjust your target, edit Nutrition Targets.
+          </p>
+          <div className="mt-4 flex justify-end">
+            <button className="nh-button nh-button-primary px-4 py-2 text-sm" onClick={() => setShowHydrationInfo(false)}>
+              Got it
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </div>
   )
 }
 
 export default NutritionTrackingPage
+
 

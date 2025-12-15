@@ -5,7 +5,7 @@
  */
 
 import React from 'react';
-import { render } from '@testing-library/react-native';
+import { render, waitFor } from '@testing-library/react-native';
 import NutritionTrackingScreen from '../src/screens/nutrition/NutritionTrackingScreen';
 
 // Mock ThemeContext
@@ -36,15 +36,59 @@ jest.mock('../src/context/ThemeContext', () => ({
   }),
 }));
 
+// Mock LanguageContext (i18n)
+jest.mock('../src/context/LanguageContext', () => ({
+  useLanguage: () => ({
+    t: (key: string, options?: any) => {
+      const dict: Record<string, string> = {
+        'nutrition.tracking': 'Nutrition Tracking',
+        'nutrition.breakfast': 'Breakfast',
+        'nutrition.lunch': 'Lunch',
+        'nutrition.dinner': 'Dinner',
+        'nutrition.snack': 'Snack',
+        'nutrition.meals': 'Meals',
+        'nutrition.todaysMeals': "Today's Meals",
+        'nutrition.loadingNutritionData': 'Loading nutrition data...',
+        'nutrition.setupRequired': 'Setup Required',
+        'nutrition.setupRequiredDesc': 'To track your nutrition, we need some basic information about you. Please set up your metrics to get started.',
+        'nutrition.nutritionPreview': 'Nutrition Preview',
+        'food.addFood': 'Add Food',
+        'food.calories': 'Calories',
+        'food.protein': 'Protein',
+        'food.carbohydrates': 'Carbs',
+        'food.fat': 'Fat',
+        'metrics.kcal': 'kcal',
+        'common.today': 'Today',
+        'common.thisWeek': 'This Week',
+        'common.daily': 'Daily',
+        'common.weekly': 'Weekly',
+        'common.item': 'item',
+        'common.items': 'items',
+        'common.update': 'Update',
+        'common.gotIt': 'Got it',
+        'profile.setMetrics': 'Set Up Metrics',
+      };
+
+      if (dict[key]) return dict[key];
+      if (options?.count !== undefined && typeof options?.count === 'number') {
+        return options.count === 1 ? 'item' : 'items';
+      }
+      return key;
+    },
+  }),
+}));
+
 // Mock navigation
+let mockFocusEffectCalled = false;
 jest.mock('@react-navigation/native', () => ({
   useNavigation: jest.fn(() => ({
     navigate: jest.fn(),
     goBack: jest.fn(),
   })),
   useFocusEffect: jest.fn((callback) => {
-    // Only call callback once to avoid infinite loops
-    if (typeof callback === 'function') {
+    // Only call callback once (across renders) to avoid infinite loops
+    if (!mockFocusEffectCalled && typeof callback === 'function') {
+      mockFocusEffectCalled = true;
       try {
         callback();
       } catch (e) {
@@ -77,8 +121,25 @@ jest.mock('../src/components/nutrition/MicronutrientPanel', () => {
 // Mock nutrition service
 jest.mock('../src/services/api/nutrition.service', () => ({
   nutritionService: {
-    getUserMetrics: jest.fn().mockRejectedValue({ status: 404 }),
-    getTargets: jest.fn().mockRejectedValue({ status: 404 }),
+    getUserMetrics: jest.fn().mockResolvedValue({
+      height: 175,
+      weight: 75,
+      age: 25,
+      gender: 'M',
+      activity_level: 'moderate',
+    }),
+    getTargets: jest.fn().mockResolvedValue({
+      calories: 2000,
+      protein: 150,
+      carbohydrates: 250,
+      fat: 70,
+      micronutrients: {},
+      is_custom: true,
+      bmr: 1500,
+      tdee: 2200,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    }),
     getDailyLog: jest.fn().mockResolvedValue({
       date: new Date().toISOString().split('T')[0],
       total_calories: 0,
@@ -86,9 +147,34 @@ jest.mock('../src/services/api/nutrition.service', () => ({
       total_carbohydrates: 0,
       total_fat: 0,
       micronutrients_summary: {},
-      entries: [],
+      entries: [
+        {
+          id: 1,
+          food_id: 101,
+          food_name: 'Eggs',
+          serving_size: 1,
+          serving_unit: 'serving',
+          meal_type: 'breakfast',
+          calories: 100,
+          protein: 10,
+          carbohydrates: 1,
+          fat: 7,
+          logged_at: new Date().toISOString(),
+        },
+      ],
     }),
     getLogsForRange: jest.fn().mockResolvedValue([]),
+    addFoodEntry: jest.fn(),
+    updateFoodEntry: jest.fn(),
+    deleteFoodEntry: jest.fn(),
+  },
+}));
+
+// Mock private food service (AsyncStorage-backed)
+jest.mock('../src/services/api/privateFood.service', () => ({
+  privateFoodService: {
+    getPrivateFoodEntries: jest.fn().mockResolvedValue([]),
+    addPrivateFoodEntry: jest.fn(),
   },
 }));
 
@@ -107,46 +193,10 @@ jest.mock('../src/components/common/TextInput', () => {
   return 'MockTextInput';
 });
 
-// Mock Alert
-jest.mock('react-native', () => {
-  const RN = jest.requireActual('react-native');
-  return {
-    ...RN,
-    Alert: {
-      alert: jest.fn(),
-    },
-    NativeModules: {
-      ...RN.NativeModules,
-      DevMenu: {
-        show: jest.fn(),
-      },
-    },
-  };
-});
-
-// Mock TurboModuleRegistry to prevent DevMenu errors
-jest.mock('react-native/Libraries/TurboModule/TurboModuleRegistry', () => ({
-  getEnforcing: jest.fn((name: string) => {
-    if (name === 'DevMenu') {
-      return {
-        show: jest.fn(),
-      };
-    }
-    return {};
-  }),
-  get: jest.fn((name: string) => {
-    if (name === 'DevMenu') {
-      return {
-        show: jest.fn(),
-      };
-    }
-    return null;
-  }),
-}));
-
 describe('NutritionTrackingScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFocusEffectCalled = false;
   });
 
   it('should render without crashing', () => {
@@ -160,8 +210,19 @@ describe('NutritionTrackingScreen', () => {
   });
 
   it('should handle component mount without errors', () => {
-    const { container } = render(<NutritionTrackingScreen />);
-    expect(container).toBeTruthy();
+    const { root } = render(<NutritionTrackingScreen />);
+    expect(root).toBeTruthy();
+  });
+
+  it('should render translated meal section labels', async () => {
+    const { getByText } = render(<NutritionTrackingScreen />);
+
+    await waitFor(() => {
+      expect(getByText('Breakfast')).toBeTruthy();
+      expect(getByText('Lunch')).toBeTruthy();
+      expect(getByText('Dinner')).toBeTruthy();
+      expect(getByText('Snack')).toBeTruthy();
+    });
   });
 });
 

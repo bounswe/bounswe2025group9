@@ -15,6 +15,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { User } from '../../types/types';
 import ProfilePhotoPicker from '../../components/user/ProfilePhotoPicker';
@@ -37,6 +38,7 @@ interface ProfileSection {
 
 const ProfileSettingsScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation();
   const { user: currentUser } = useAuth();
 
@@ -45,6 +47,10 @@ const ProfileSettingsScreen: React.FC = () => {
   const [metrics, setMetrics] = useState<UserMetrics | null>(null);
   const [showMetricsModal, setShowMetricsModal] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+
+  const handleNavigate = (screen: string) => {
+    (navigation as any).navigate(screen);
+  };
 
   // Load user profile on mount
   useEffect(() => {
@@ -99,31 +105,47 @@ const ProfileSettingsScreen: React.FC = () => {
   const profileSections: ProfileSection[] = [
     {
       id: 'user-metrics',
-      title: 'User Metrics',
-      description: metrics ? `${metrics.height}cm, ${metrics.weight}kg, ${metrics.age}yrs` : 'Set your height, weight, age, and activity level',
+      title: t('profile.userMetrics'),
+      description: metrics ? `${metrics.height}cm, ${metrics.weight}kg, ${metrics.age}yrs` : t('profile.setMetrics'),
       icon: 'human-male-height',
       onPress: () => setShowMetricsModal(true),
       badgeColor: theme.primary
     },
     {
+      id: 'food-proposals',
+      title: 'My Food Proposals',
+      description: 'Track pending, approved, or rejected food proposals',
+      icon: 'clipboard-list',
+      screen: 'FoodProposals',
+      badgeColor: theme.primary
+    },
+    {
+      id: 'private-foods',
+      title: 'My Private Foods',
+      description: 'View private foods you created',
+      icon: 'lock',
+      screen: 'PrivateFoods',
+      badgeColor: theme.success
+    },
+    {
       id: 'my-posts',
-      title: 'My Posts & Content',
-      description: 'View your posts, liked content, and recipes',
+      title: t('profile.myPosts'),
+      description: t('profile.viewPosts'),
       icon: 'post',
       screen: 'MyPosts'
     },
     {
       id: 'nutrition-tracking',
-      title: 'Nutrition Tracking',
-      description: 'Track daily food intake and nutrients',
+      title: t('profile.nutritionTracking'),
+      description: t('profile.trackDaily'),
       icon: 'food-apple',
       screen: 'NutritionTracking',
       badgeColor: theme.success
     },
     {
       id: 'allergens',
-      title: 'Allergens',
-      description: 'Manage your food allergies and sensitivities',
+      title: t('profile.allergens'),
+      description: t('profile.manageAllergens'),
       icon: 'alert-circle',
       screen: 'AllergenSelection',
       badge: user?.allergens?.length ? `${user.allergens.length + (user.custom_allergens?.length || 0)}` : undefined,
@@ -131,31 +153,39 @@ const ProfileSettingsScreen: React.FC = () => {
     },
     {
       id: 'recipes',
-      title: 'Personal Recipes',
-      description: 'View and manage your personal recipe collection',
+      title: t('profile.personalRecipes'),
+      description: t('profile.viewRecipes'),
       icon: 'chef-hat',
       screen: 'PersonalRecipes'
     },
     {
       id: 'contact',
-      title: 'Contact Information',
-      description: 'Update your contact details and privacy settings',
+      title: t('profile.contactInfo'),
+      description: t('profile.updateContact'),
       icon: 'account-edit',
       screen: 'ContactInfo'
     },
     {
       id: 'profession-tags',
-      title: 'Profession Tags',
-      description: 'Manage your professional credentials and certifications',
+      title: t('profile.professionTags'),
+      description: t('profile.manageTags'),
       icon: 'badge-account',
       screen: 'ProfessionTags',
       badge: user?.profession_tags?.length ? `${user.profession_tags.length}` : undefined,
       badgeColor: theme.warning
     },
     {
+      id: 'language',
+      title: t('profile.language'),
+      description: t('profile.changeLanguage'),
+      icon: 'translate',
+      screen: 'LanguageSettings',
+      badgeColor: theme.info
+    },
+    {
       id: 'account-warnings',
-      title: 'Account Warnings',
-      description: 'View warnings, post removals, bans and suspensions',
+      title: t('profile.accountWarnings'),
+      description: t('profile.viewWarnings'),
       icon: 'alert',
       screen: 'AccountWarnings',
       badge: user?.account_warnings?.filter(w => w.is_active).length ? `${user.account_warnings.filter(w => w.is_active).length}` : undefined,
@@ -167,8 +197,7 @@ const ProfileSettingsScreen: React.FC = () => {
     if (item.onPress) {
       item.onPress();
     } else if (item.screen) {
-      // Navigate to the specific screen
-      (navigation as any).navigate(item.screen);
+      handleNavigate(item.screen);
     }
   };
 
@@ -265,7 +294,7 @@ const ProfileSettingsScreen: React.FC = () => {
           <View style={styles.metricsHeader}>
             <Icon name="human-male-height" size={20} color={theme.primary} />
             <Text style={[textStyles.heading4, { color: theme.text, marginLeft: SPACING.xs }]}>
-              Your Metrics
+              {t('profile.yourMetrics')}
             </Text>
             <TouchableOpacity
               onPress={() => setShowMetricsModal(true)}
@@ -276,27 +305,27 @@ const ProfileSettingsScreen: React.FC = () => {
           </View>
           <View style={styles.metricsGrid}>
             <View style={styles.metricItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Height</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('metrics.height')}</Text>
               <Text style={[textStyles.heading4, { color: theme.text }]}>
-                {metrics.height} cm
+                {metrics.height} {t('metrics.cm')}
               </Text>
             </View>
             <View style={styles.metricItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Weight</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('metrics.weight')}</Text>
               <Text style={[textStyles.heading4, { color: theme.text }]}>
-                {metrics.weight} kg
+                {metrics.weight} {t('metrics.kg')}
               </Text>
             </View>
             <View style={styles.metricItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Age</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('metrics.age')}</Text>
               <Text style={[textStyles.heading4, { color: theme.text }]}>
-                {metrics.age} yrs
+                {metrics.age} {t('metrics.yrs')}
               </Text>
             </View>
             <View style={styles.metricItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Gender</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('metrics.gender')}</Text>
               <Text style={[textStyles.heading4, { color: theme.text }]}>
-                {metrics.gender === 'M' ? 'Male' : 'Female'}
+                {metrics.gender === 'M' ? t('metrics.male') : t('metrics.female')}
               </Text>
             </View>
           </View>
@@ -304,7 +333,7 @@ const ProfileSettingsScreen: React.FC = () => {
             <View style={[styles.calculatedMetrics, { borderTopColor: theme.border }]}>
               <View style={styles.calculatedHeader}>
                 <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '600' }]}>
-                  Calculated Values
+                  {t('profile.calculatedValues')}
                 </Text>
                 <TouchableOpacity
                   onPress={() => setShowInfoModal(true)}
@@ -315,15 +344,15 @@ const ProfileSettingsScreen: React.FC = () => {
               </View>
               <View style={styles.calculatedRow}>
                 <View style={styles.calculatedItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>BMR</Text>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.bmr')}</Text>
                   <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                    {Math.round(metrics.bmr)} kcal
+                    {Math.round(metrics.bmr)} {t('metrics.kcal')}
                   </Text>
                 </View>
                 <View style={styles.calculatedItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>TDEE</Text>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.tdee')}</Text>
                   <Text style={[textStyles.body, { color: theme.success, fontWeight: '600' }]}>
-                    {Math.round(metrics.tdee)} kcal
+                    {Math.round(metrics.tdee)} {t('metrics.kcal')}
                   </Text>
                 </View>
               </View>
@@ -339,7 +368,7 @@ const ProfileSettingsScreen: React.FC = () => {
             {user?.tags?.length || 0}
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            Profession Tags
+            {t('profile.professionTags')}
           </Text>
         </View>
         <View style={styles.statItem}>
@@ -347,7 +376,7 @@ const ProfileSettingsScreen: React.FC = () => {
             {user?.badges?.length || 0}
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            Badges
+            {t('profile.badges')}
           </Text>
         </View>
         <View style={styles.statItem}>
@@ -355,7 +384,7 @@ const ProfileSettingsScreen: React.FC = () => {
             {(user?.allergens?.length || 0) + (user?.custom_allergens?.length || 0)}
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-            Allergens
+            {t('profile.allergens')}
           </Text>
         </View>
       </View>
@@ -393,7 +422,7 @@ const ProfileSettingsScreen: React.FC = () => {
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
           <Text style={[textStyles.body, { color: theme.text, marginTop: SPACING.md }]}>
-            Loading profile...
+            {t('common.loading')}
           </Text>
         </View>
       </SafeAreaView>
@@ -404,7 +433,7 @@ const ProfileSettingsScreen: React.FC = () => {
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       {/* Header */}
       <View style={[styles.header, { borderBottomColor: theme.border }]}>
-        <Text style={[styles.headerTitle, textStyles.heading3]}>My Profile</Text>
+        <Text style={[styles.headerTitle, textStyles.heading3]}>{t('profile.myProfile')}</Text>
         <TouchableOpacity style={styles.settingsButton}>
           <Icon name="cog" size={24} color={theme.text} />
         </TouchableOpacity>

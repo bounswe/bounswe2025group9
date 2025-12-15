@@ -7,24 +7,31 @@ interface FoodDetailProps {
   food: Food | null;
   open: boolean;
   onClose: () => void;
+  actions?: React.ReactNode;
 }
 
-const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
+const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions }) => {
   const [showRecommendations, setShowRecommendations] = useState(false);
   const [selectedNutrient, setSelectedNutrient] = useState<string | null>(null);
+  const [customGrams, setCustomGrams] = useState<number>(0);
+  const [selectedServingSize, setSelectedServingSize] = useState<number>(0); // Main serving size selector
   const [recommendations, setRecommendations] = useState<{
     calories: number;
     protein: number;
     carbohydrates: number;
     fat: number;
     micronutrients: {
-      [key: string]: number | { target: number; maximum: number };
+      [key: string]: number | { target: number; maximum?: number };
     };
   } | null>(null);
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState<string | null>(null);
   const [todayLog, setTodayLog] = useState<{
     micronutrients_summary: { [key: string]: number };
+    total_calories?: number;
+    total_protein?: number;
+    total_carbohydrates?: number;
+    total_fat?: number;
   } | null>(null);
 
   // Fetch recommendations and today's log when modal opens
@@ -34,6 +41,13 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
       fetchTodayLog();
     }
   }, [open]);
+
+  // Initialize selected serving size when food changes
+  useEffect(() => {
+    if (food) {
+      setSelectedServingSize(food.servingSize);
+    }
+  }, [food]);
 
   const fetchRecommendations = async () => {
     setLoadingRecommendations(true);
@@ -66,57 +80,199 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     }
   };
 
-  const handleHelpClick = (nutrient: string) => {
+  const handleHelpClick = (e: React.MouseEvent, nutrient: string) => {
+    e.stopPropagation(); // Prevent event bubbling
+    e.preventDefault();
     setSelectedNutrient(nutrient);
+    setCustomGrams(selectedServingSize || food?.servingSize || 100); // Initialize with selected serving size
     setShowRecommendations(true);
   };
 
-  const closeRecommendationsModal = () => {
-    setShowRecommendations(false);
-    setSelectedNutrient(null);
-  };
-
-  const getNutrientRecommendation = (nutrient: string): number | null => {
-    if (!recommendations) return null;
+  // Get today's consumed macronutrient value
+  const getTodayMacroConsumed = (nutrient: string): number => {
+    if (!todayLog) return 0;
+    
+    // Helper to ensure we get a number
+    const toNum = (val: unknown): number => {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') return parseFloat(val) || 0;
+      return 0;
+    };
+    
     switch (nutrient) {
       case 'calories':
-        return recommendations.calories;
+        return toNum(todayLog.total_calories);
       case 'protein':
-        return recommendations.protein;
+        return toNum(todayLog.total_protein);
       case 'fat':
-        return recommendations.fat;
+        return toNum(todayLog.total_fat);
       case 'carbs':
-        return recommendations.carbohydrates;
+        return toNum(todayLog.total_carbohydrates);
       default:
-        return null;
+        return toNum(todayLog.micronutrients_summary?.[nutrient]);
     }
   };
 
-  const getNutrientValue = (nutrient: string): number => {
-    if (!food) return 0;
+  // Calculate scaled nutrient value based on selected serving size
+  const getScaledNutrientValue = (nutrient: string): number => {
+    if (!food || !food.servingSize) return 0;
+    
+    // Helper to ensure we get a number
+    const toNum = (val: unknown): number => {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') return parseFloat(val) || 0;
+      return 0;
+    };
+    
+    const multiplier = (selectedServingSize || 100) / 100;
+    
     switch (nutrient) {
       case 'calories':
-        return food.caloriesPerServing;
+        return toNum(food.caloriesPerServing) * multiplier;
       case 'protein':
-        return food.proteinContent;
+        return toNum(food.proteinContent) * multiplier;
       case 'fat':
-        return food.fatContent;
+        return toNum(food.fatContent) * multiplier;
       case 'carbs':
-        return food.carbohydrateContent;
+        return toNum(food.carbohydrateContent) * multiplier;
       default:
-        // Check if it's a micronutrient
         if (food.micronutrients && food.micronutrients[nutrient]) {
-          return food.micronutrients[nutrient].value;
+          const microValue = food.micronutrients[nutrient];
+          const value = typeof microValue === 'object' && microValue !== null && 'value' in microValue
+            ? toNum(microValue.value)
+            : toNum(microValue);
+          return value * multiplier;
         }
         return 0;
     }
   };
 
-  const getPercentageOfDaily = (nutrient: string): number | null => {
-    const recommendation = getNutrientRecommendation(nutrient) || getNutrientTarget(nutrient);
-    if (!recommendation) return null;
-    const value = getNutrientValue(nutrient);
-    return (value / recommendation) * 100;
+  // Check if adding this food would exceed target (for main view warnings)
+  const wouldExceedTarget = (nutrient: string): boolean => {
+    const target = getNutrientRecommendation(nutrient) || getNutrientTarget(nutrient);
+    if (!target) return false;
+    
+    const todayConsumed = nutrient === 'calories' || nutrient === 'protein' || nutrient === 'fat' || nutrient === 'carbs'
+      ? getTodayMacroConsumed(nutrient)
+      : todayLog?.micronutrients_summary?.[nutrient] || 0;
+    const foodAmount = getScaledNutrientValue(nutrient);
+    return (todayConsumed + foodAmount) > target;
+  };
+
+  // Check if adding this food would exceed maximum (for main view warnings)
+  const wouldExceedMaximum = (nutrient: string): boolean => {
+    const maximum = getNutrientMaximum(nutrient);
+    if (!maximum) return false;
+    
+    const todayConsumed = nutrient === 'calories' || nutrient === 'protein' || nutrient === 'fat' || nutrient === 'carbs'
+      ? getTodayMacroConsumed(nutrient)
+      : todayLog?.micronutrients_summary?.[nutrient] || 0;
+    const foodAmount = getScaledNutrientValue(nutrient);
+    return (todayConsumed + foodAmount) > maximum;
+  };
+
+  const closeRecommendationsModal = () => {
+    setShowRecommendations(false);
+    setSelectedNutrient(null);
+    setCustomGrams(0);
+  };
+
+  const getNutrientRecommendation = (nutrient: string): number | null => {
+    if (!recommendations) return null;
+    
+    // Helper to ensure we get a number
+    const toNumber = (val: unknown): number | null => {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') {
+        const parsed = parseFloat(val);
+        return isNaN(parsed) ? null : parsed;
+      }
+      return null;
+    };
+    
+    switch (nutrient) {
+      case 'calories':
+        return toNumber(recommendations.calories);
+      case 'protein':
+        return toNumber(recommendations.protein);
+      case 'fat':
+        return toNumber(recommendations.fat);
+      case 'carbs':
+        return toNumber(recommendations.carbohydrates);
+      default:
+        return null;
+    }
+  };
+
+  const getNutrientValue = (nutrient: string, grams?: number): number => {
+    if (!food || !food.servingSize) return 0;
+    
+    // Helper to ensure we get a number
+    const toNum = (val: unknown): number => {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') return parseFloat(val) || 0;
+      return 0;
+    };
+    
+    // Use custom grams if provided, otherwise use serving size
+    const servingGrams = grams !== undefined && grams > 0 ? grams : food.servingSize;
+    const multiplier = servingGrams / food.servingSize;
+    
+    switch (nutrient) {
+      case 'calories':
+        return toNum(food.caloriesPerServing) * multiplier;
+      case 'protein':
+        return toNum(food.proteinContent) * multiplier;
+      case 'fat':
+        return toNum(food.fatContent) * multiplier;
+      case 'carbs':
+        return toNum(food.carbohydrateContent) * multiplier;
+      default:
+        // Check if it's a micronutrient
+        if (food.micronutrients && food.micronutrients[nutrient]) {
+          const microValue = food.micronutrients[nutrient];
+          // Handle both number and object types
+          const value = typeof microValue === 'object' && microValue !== null && 'value' in microValue
+            ? microValue.value 
+            : typeof microValue === 'number'
+            ? microValue
+            : 0;
+          return value * multiplier;
+        }
+        return 0;
+    }
+  };
+
+  // Helper to find matching micronutrient key in recommendations
+  // Food data has keys like "Vitamin E (alpha-tocopherol)" 
+  // Recommendations have keys like "Vitamin E (alpha-tocopherol) (mg)"
+  const findMicronutrientInRecommendations = (nutrient: string): number | { target: number; maximum?: number } | null => {
+    if (!recommendations?.micronutrients) return null;
+    
+    // First try exact match
+    if (recommendations.micronutrients[nutrient]) {
+      return recommendations.micronutrients[nutrient];
+    }
+    
+    // Try to find a key that starts with the nutrient name (to handle unit suffix)
+    // e.g., "Vitamin E (alpha-tocopherol)" should match "Vitamin E (alpha-tocopherol) (mg)"
+    for (const key of Object.keys(recommendations.micronutrients)) {
+      if (key.startsWith(nutrient)) {
+        return recommendations.micronutrients[key];
+      }
+    }
+    
+    // Also try the reverse - if the nutrient has a unit suffix, try without it
+    // e.g., "Vitamin E (alpha-tocopherol) (mg)" should match "Vitamin E (alpha-tocopherol)"
+    const nutrientWithoutUnit = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    for (const key of Object.keys(recommendations.micronutrients)) {
+      const keyWithoutUnit = key.replace(/\s*\([^)]*\)\s*$/, '').trim();
+      if (keyWithoutUnit === nutrientWithoutUnit || key.startsWith(nutrientWithoutUnit)) {
+        return recommendations.micronutrients[key];
+      }
+    }
+    
+    return null;
   };
 
   const getNutrientMaximum = (nutrient: string): number | null => {
@@ -127,10 +283,10 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
       return null;
     }
     
-    // For micronutrients, check the micronutrients object
-    const micronutrient = recommendations.micronutrients?.[nutrient];
+    // For micronutrients, find matching key and check for maximum
+    const micronutrient = findMicronutrientInRecommendations(nutrient);
     if (micronutrient && typeof micronutrient === 'object' && 'maximum' in micronutrient) {
-      return micronutrient.maximum;
+      return micronutrient.maximum ?? null;
     }
     
     return null;
@@ -139,8 +295,8 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
   const getNutrientTarget = (nutrient: string): number | null => {
     if (!recommendations) return null;
     
-    // For micronutrients
-    const micronutrient = recommendations.micronutrients?.[nutrient];
+    // For micronutrients, find matching key
+    const micronutrient = findMicronutrientInRecommendations(nutrient);
     if (micronutrient) {
       if (typeof micronutrient === 'object' && 'target' in micronutrient) {
         return micronutrient.target;
@@ -153,26 +309,28 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     return null;
   };
 
-  const isExceedingTarget = (nutrient: string): boolean => {
+  const isExceedingTarget = (nutrient: string | null, grams?: number): boolean => {
+    if (!nutrient) return false;
     const target = getNutrientRecommendation(nutrient) || getNutrientTarget(nutrient);
     if (!target) return false;
     
-    const todayConsumed = todayLog?.micronutrients_summary?.[nutrient] || 0;
-    const foodAmount = getNutrientValue(nutrient);
+    const todayConsumed = getTodayConsumed(nutrient);
+    const foodAmount = getNutrientValue(nutrient, grams);
     const totalAfterEating = todayConsumed + foodAmount;
     
     return totalAfterEating > target;
   };
 
-  const isOverdosing = (nutrient: string): boolean => {
+  const isOverdosing = (nutrient: string | null, grams?: number): boolean => {
+    if (!nutrient) return false;
     const maximum = getNutrientMaximum(nutrient);
     if (!maximum) return false; // No maximum means no overdose risk
     
     // Get today's consumed amount
-    const todayConsumed = todayLog?.micronutrients_summary?.[nutrient] || 0;
+    const todayConsumed = getTodayConsumed(nutrient);
     
     // Get this food's amount
-    const foodAmount = getNutrientValue(nutrient);
+    const foodAmount = getNutrientValue(nutrient, grams);
     
     // Check if today's total + this food would exceed maximum
     const totalAfterEating = todayConsumed + foodAmount;
@@ -180,32 +338,82 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
     return totalAfterEating > maximum;
   };
 
-  const getPercentageOfMaximum = (nutrient: string): number | null => {
+  const getPercentageOfMaximum = (nutrient: string | null, grams?: number): number | null => {
+    if (!nutrient) return null;
     const maximum = getNutrientMaximum(nutrient);
     if (!maximum) return null;
     
     // Calculate based on total after eating this food
     const todayConsumed = todayLog?.micronutrients_summary?.[nutrient] || 0;
-    const foodAmount = getNutrientValue(nutrient);
+    const foodAmount = getNutrientValue(nutrient, grams);
     const totalAfterEating = todayConsumed + foodAmount;
     
     return (totalAfterEating / maximum) * 100;
   };
 
   const getTodayConsumed = (nutrient: string): number => {
-    return todayLog?.micronutrients_summary?.[nutrient] || 0;
+    if (!todayLog) return 0;
+    
+    // Helper to ensure we get a number
+    const toNumber = (val: unknown): number => {
+      if (typeof val === 'number') return val;
+      if (typeof val === 'string') return parseFloat(val) || 0;
+      return 0;
+    };
+    
+    // Handle macronutrients
+    switch (nutrient) {
+      case 'calories':
+        return toNumber(todayLog.total_calories);
+      case 'protein':
+        return toNumber(todayLog.total_protein);
+      case 'fat':
+        return toNumber(todayLog.total_fat);
+      case 'carbs':
+        return toNumber(todayLog.total_carbohydrates);
+      default:
+        return toNumber(todayLog.micronutrients_summary?.[nutrient]);
+    }
   };
 
-  const getTotalAfterEating = (nutrient: string): number => {
+  const getTotalAfterEating = (nutrient: string, grams?: number): number => {
     const todayConsumed = getTodayConsumed(nutrient);
-    const foodAmount = getNutrientValue(nutrient);
+    const foodAmount = getNutrientValue(nutrient, grams);
     return todayConsumed + foodAmount;
   };
 
   const getUnitForNutrient = (nutrient: string): string => {
-    // Extract unit from nutrient name (e.g., "Copper, Cu (mg)" -> "mg")
-    const match = nutrient.match(/\(([^)]+)\)$/);
-    return match ? match[1] : 'g';
+    // For macronutrients, return their standard units
+    switch (nutrient) {
+      case 'calories':
+        return 'kcal';
+      case 'protein':
+      case 'fat':
+      case 'carbs':
+        return 'g';
+      default:
+        // For micronutrients, get the unit from the food's micronutrients data
+        try {
+          if (food?.micronutrients && food.micronutrients[nutrient]) {
+            const microData = food.micronutrients[nutrient];
+            if (typeof microData === 'object' && microData !== null && 'unit' in microData) {
+              return microData.unit;
+            }
+          }
+          // Fallback: try to extract from nutrient name (last parentheses that looks like a unit)
+          const matches = nutrient.match(/\(([^)]+)\)/g);
+          if (matches && matches.length > 0) {
+            const lastMatch = matches[matches.length - 1].replace(/[()]/g, '');
+            // Only return if it looks like a unit (g, mg, µg, ug, mcg, IU)
+            if (/^(g|mg|µg|ug|mcg|IU)$/i.test(lastMatch)) {
+              return lastMatch;
+            }
+          }
+        } catch (e) {
+          console.error('Error getting unit for nutrient:', nutrient, e);
+        }
+        return 'mg'; // Default to mg for vitamins/minerals
+    }
   };
 
   if (!food) return null;
@@ -304,6 +512,8 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
           {/* Food title */}
           <h2 className="flex-1 text-xl md:text-2xl font-bold text-[var(--color-text-primary)]">{food.name}</h2>
 
+          {/* Optional actions (edit/delete) */}
+          {actions}
           {/* Close button */}
           <button 
             onClick={onClose}
@@ -346,24 +556,94 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 />
               </div>
                 
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                <p className="text-[var(--color-text-secondary)] text-sm">Serving Size</p>
-                <p className="font-medium text-[var(--color-text-primary)] mt-1">{food.servingSize}g</p>
+              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Default Serving Size */}
+                  <div>
+                    <p className="text-[var(--color-text-secondary)] text-sm mb-2">Default Serving Size</p>
+                    <p className="font-medium text-[var(--color-text-primary)]">{food.servingSize}g</p>
+                  </div>
+                  
+                  {/* Adjust Serving Size */}
+                  <div>
+                    <p className="text-[var(--color-text-secondary)] text-sm mb-2">Adjust Serving Size</p>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min="1"
+                        max="10000"
+                        value={selectedServingSize || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === '') {
+                            setSelectedServingSize(0);
+                          } else {
+                            setSelectedServingSize(Math.max(0, parseInt(val) || 0));
+                          }
+                        }}
+                        onBlur={() => {
+                          if (selectedServingSize < 1) {
+                            setSelectedServingSize(food?.servingSize || 100);
+                          }
+                        }}
+                        className="w-20 px-2 py-1 rounded border text-sm font-semibold"
+                        style={{
+                          backgroundColor: 'var(--color-bg-primary)',
+                          color: 'var(--color-text-primary)',
+                          borderColor: 'var(--color-border)',
+                        }}
+                      />
+                      <span className="text-xs text-[var(--color-text-secondary)]">g</span>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => setSelectedServingSize(food.servingSize)}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          Default
+                        </button>
+                        <button
+                          onClick={() => setSelectedServingSize(100)}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          100g
+                        </button>
+                        <button
+                          onClick={() => setSelectedServingSize(selectedServingSize * 2)}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          ×2
+                        </button>
+                        <button
+                          onClick={() => setSelectedServingSize(Math.max(1, Math.floor(selectedServingSize / 2)))}
+                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                        >
+                          ÷2
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
             
-          {/* Nutrition Information - Per Serving */}
+          {/* Nutrition Information - Per Selected Serving */}
           <div className="mb-6">
             <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
               <Fire size={20} weight="fill" className="text-[var(--color-accent)]" />
-              Nutrition Information (per {food.servingSize}g serving)
+              Nutrition Information (per {selectedServingSize}g serving)
             </h3>
               
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
+              <div className={`p-4 rounded-lg border text-center relative ${
+                wouldExceedMaximum('calories') 
+                  ? 'bg-red-500/10 border-red-500/50' 
+                  : wouldExceedTarget('calories')
+                  ? 'bg-yellow-500/10 border-yellow-500/50'
+                  : 'bg-[var(--color-bg-secondary)] border-[var(--color-border)]'
+              }`}>
                 <button
-                  onClick={() => handleHelpClick('calories')}
+                  onClick={(e) => handleHelpClick(e, 'calories')}
                   className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
                   title="View daily recommendation"
                 >
@@ -372,13 +652,22 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 <div className="flex justify-center mb-2">
                   <Fire size={24} weight="fill" className="text-red-500" />
                 </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.caloriesPerServing} kcal</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{getScaledNutrientValue('calories').toFixed(1)} kcal</p>
                 <p className="text-[var(--color-text-secondary)] text-sm mt-1">Calories</p>
+                {wouldExceedTarget('calories') && !wouldExceedMaximum('calories') && (
+                  <p className="text-xs text-yellow-600 mt-1">⚠️ Exceeds target</p>
+                )}
               </div>
                 
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
+              <div className={`p-4 rounded-lg border text-center relative ${
+                wouldExceedMaximum('protein') 
+                  ? 'bg-red-500/10 border-red-500/50' 
+                  : wouldExceedTarget('protein')
+                  ? 'bg-yellow-500/10 border-yellow-500/50'
+                  : 'bg-[var(--color-bg-secondary)] border-[var(--color-border)]'
+              }`}>
                 <button
-                  onClick={() => handleHelpClick('protein')}
+                  onClick={(e) => handleHelpClick(e, 'protein')}
                   className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
                   title="View daily recommendation"
                 >
@@ -387,13 +676,22 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 <div className="flex justify-center mb-2">
                   <Scales size={24} weight="fill" className="text-blue-500" />
                 </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.proteinContent}g</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{getScaledNutrientValue('protein').toFixed(1)}g</p>
                 <p className="text-[var(--color-text-secondary)] text-sm mt-1">Protein</p>
+                {wouldExceedTarget('protein') && !wouldExceedMaximum('protein') && (
+                  <p className="text-xs text-yellow-600 mt-1">⚠️ Exceeds target</p>
+                )}
               </div>
                 
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
+              <div className={`p-4 rounded-lg border text-center relative ${
+                wouldExceedMaximum('fat') 
+                  ? 'bg-red-500/10 border-red-500/50' 
+                  : wouldExceedTarget('fat')
+                  ? 'bg-yellow-500/10 border-yellow-500/50'
+                  : 'bg-[var(--color-bg-secondary)] border-[var(--color-border)]'
+              }`}>
                 <button
-                  onClick={() => handleHelpClick('fat')}
+                  onClick={(e) => handleHelpClick(e, 'fat')}
                   className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
                   title="View daily recommendation"
                 >
@@ -402,13 +700,22 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 <div className="flex justify-center mb-2">
                   <Scales size={24} weight="fill" className="text-yellow-500" />
                 </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.fatContent}g</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{getScaledNutrientValue('fat').toFixed(1)}g</p>
                 <p className="text-[var(--color-text-secondary)] text-sm mt-1">Fat</p>
+                {wouldExceedTarget('fat') && !wouldExceedMaximum('fat') && (
+                  <p className="text-xs text-yellow-600 mt-1">⚠️ Exceeds target</p>
+                )}
               </div>
                 
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
+              <div className={`p-4 rounded-lg border text-center relative ${
+                wouldExceedMaximum('carbs') 
+                  ? 'bg-red-500/10 border-red-500/50' 
+                  : wouldExceedTarget('carbs')
+                  ? 'bg-yellow-500/10 border-yellow-500/50'
+                  : 'bg-[var(--color-bg-secondary)] border-[var(--color-border)]'
+              }`}>
                 <button
-                  onClick={() => handleHelpClick('carbs')}
+                  onClick={(e) => handleHelpClick(e, 'carbs')}
                   className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
                   title="View daily recommendation"
                 >
@@ -417,78 +724,11 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 <div className="flex justify-center mb-2">
                   <Scales size={24} weight="fill" className="text-green-500" />
                 </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{food.carbohydrateContent}g</p>
+                <p className="text-xl font-bold text-[var(--color-text-primary)]">{getScaledNutrientValue('carbs').toFixed(1)}g</p>
                 <p className="text-[var(--color-text-secondary)] text-sm mt-1">Carbs</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Nutrition Information - Per 100g */}
-          <div className="mb-8">
-            <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
-              <Scales size={20} weight="fill" className="text-[var(--color-accent)]" />
-              Nutrition Information (per 100g)
-            </h3>
-              
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('calories')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Fire size={24} weight="fill" className="text-red-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.caloriesPerServing / food.servingSize) * 100).toFixed(1)} kcal</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Calories</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('protein')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-blue-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.proteinContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Protein</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('fat')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-yellow-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.fatContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Fat</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={() => handleHelpClick('carbs')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-green-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.carbohydrateContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Carbs</p>
+                {wouldExceedTarget('carbs') && !wouldExceedMaximum('carbs') && (
+                  <p className="text-xs text-yellow-600 mt-1">⚠️ Exceeds target</p>
+                )}
               </div>
             </div>
           </div>
@@ -498,29 +738,47 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
             <div className="mb-8">
               <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
                 <Pill size={20} weight="fill" className="text-[var(--color-accent)]" />
-                Micronutrients (per {food.servingSize}g serving)
+                Micronutrients (per {selectedServingSize}g serving)
               </h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                 {displayedMicronutrients.map(([nutrient, amount, unit]) => {
                   // Remove only the unit part (last parentheses) from the name
                   const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
+                  // Calculate scaled amount based on selected serving size
+                  const scaledAmount = (amount * selectedServingSize / food.servingSize);
+                  const exceedsMax = wouldExceedMaximum(nutrient);
+                  const exceedsTarget = wouldExceedTarget(nutrient);
 
                   return (
                     <div
                       key={nutrient}
-                      className="p-3 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] flex justify-between items-center relative"
+                      className={`p-3 rounded-lg border flex justify-between items-center relative ${
+                        exceedsMax 
+                          ? 'bg-red-500/10 border-red-500/50' 
+                          : exceedsTarget
+                          ? 'bg-yellow-500/10 border-yellow-500/50'
+                          : 'bg-[var(--color-bg-secondary)] border-[var(--color-border)]'
+                      }`}
                     >
                       <button
-                        onClick={() => handleHelpClick(nutrient)}
+                        onClick={(e) => handleHelpClick(e, nutrient)}
                         className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors z-10"
                         title="View daily recommendation"
                       >
                         <Question size={12} weight="bold" className="text-white" />
                       </button>
-                      <span className="text-[var(--color-text-secondary)] text-sm flex-1">{nutrientName}</span>
+                      <div className="flex-1">
+                        <span className="text-[var(--color-text-secondary)] text-sm">{nutrientName}</span>
+                        {exceedsMax && (
+                          <p className="text-xs text-red-600">⚠️ Exceeds max</p>
+                        )}
+                        {exceedsTarget && !exceedsMax && (
+                          <p className="text-xs text-yellow-600">⚠️ Exceeds target</p>
+                        )}
+                      </div>
                       <span className="font-semibold text-[var(--color-text-primary)] ml-2 pr-8">
-                        {amount}{unit}
+                        {scaledAmount.toFixed(2)}{unit}
                       </span>
                     </div>
                   );
@@ -603,55 +861,194 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
               </div>
             ) : recommendations && selectedNutrient ? (
               <div className="space-y-4">
-                <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
-                  <p className="text-sm text-[var(--color-text-secondary)] mb-1">Your Daily Target</p>
-                  <p className="text-2xl font-bold text-[var(--color-text-primary)]">
-                    {getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient)}
-                    {selectedNutrient === 'calories' ? ' kcal' : selectedNutrient.includes('(') ? '' : 'g'}
-                  </p>
-                  <p className="text-sm text-[var(--color-text-secondary)] mt-1">
-                    {selectedNutrient === 'carbs' ? 'Carbohydrates' : selectedNutrient}
-                  </p>
-                  {getNutrientMaximum(selectedNutrient) && (
-                    <p className="text-xs text-orange-500 mt-2">
-                      Safe Maximum: {getNutrientMaximum(selectedNutrient)}
-                      {selectedNutrient.includes('(') ? '' : 'g'}
-                    </p>
-                  )}
-                </div>
+                {(() => {
+                  if (!selectedNutrient) return null;
+                  const target = getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient);
+                  const unit = getUnitForNutrient(selectedNutrient);
+                  const maximum = getNutrientMaximum(selectedNutrient);
+                  // Clean up nutrient name for display (remove unit parentheses at end)
+                  let displayName = selectedNutrient;
+                  if (selectedNutrient === 'carbs') {
+                    displayName = 'Carbohydrates';
+                  } else if (selectedNutrient === 'calories') {
+                    displayName = 'Calories';
+                  } else if (selectedNutrient === 'protein') {
+                    displayName = 'Protein';
+                  } else if (selectedNutrient === 'fat') {
+                    displayName = 'Fat';
+                  } else {
+                    displayName = selectedNutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
+                  }
+                  
+                  return (
+                    <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
+                      <p className="text-sm text-[var(--color-text-secondary)] mb-1">Your Daily Target</p>
+                      <p className="text-2xl font-bold text-[var(--color-text-primary)]">
+                        {target !== null ? `${target} ${unit}` : 'Not set'}
+                      </p>
+                      <p className="text-sm text-[var(--color-text-secondary)] mt-1">
+                        {displayName}
+                      </p>
+                      {maximum && (
+                        <p className="text-xs text-orange-500 mt-2">
+                          Safe Maximum: {maximum} {unit}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
 
-                <div className={`p-4 rounded-lg border ${
-                  isOverdosing(selectedNutrient) 
-                    ? 'bg-red-500/10 border-red-500/30' 
-                    : isExceedingTarget(selectedNutrient)
-                    ? 'bg-yellow-500/10 border-yellow-500/30'
-                    : 'bg-blue-500/10 border-blue-500/30'
-                }`}>
-                  <p className="text-sm text-[var(--color-text-secondary)] mb-1">This Serving Provides</p>
-                  <p className="text-xl font-bold text-[var(--color-text-primary)]">
-                    {getNutrientValue(selectedNutrient).toFixed(1)}
-                    {selectedNutrient === 'calories' ? ' kcal' : selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
-                  </p>
-                  <div className="mt-2">
-                    <div className="flex justify-between text-sm mb-1">
-                      <span className="text-[var(--color-text-secondary)]">% of Daily Target</span>
-                      <span className="font-medium text-[var(--color-text-primary)]">
-                        {getPercentageOfDaily(selectedNutrient)?.toFixed(1)}%
-                      </span>
-                    </div>
-                    <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div
-                        className={`h-2 rounded-full transition-all ${
-                          isOverdosing(selectedNutrient) ? 'bg-red-500' : isExceedingTarget(selectedNutrient) ? 'bg-yellow-500' : 'bg-blue-500'
-                        }`}
-                        style={{ width: `${Math.min(getPercentageOfDaily(selectedNutrient) || 0, 100)}%` }}
-                      ></div>
-                    </div>
+                {/* Custom Gram Input */}
+                <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
+                  <label className="text-sm text-[var(--color-text-secondary)] mb-2 block">
+                    Adjust Serving Size (grams)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="number"
+                      min="1"
+                      max="10000"
+                      value={customGrams || ''}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val === '') {
+                          setCustomGrams(0);
+                          setSelectedServingSize(0);
+                        } else {
+                          const newValue = Math.max(0, parseInt(val) || 0);
+                          setCustomGrams(newValue);
+                          setSelectedServingSize(newValue);
+                        }
+                      }}
+                      onBlur={() => {
+                        if (customGrams < 1) {
+                          const defaultVal = food?.servingSize || 100;
+                          setCustomGrams(defaultVal);
+                          setSelectedServingSize(defaultVal);
+                        }
+                      }}
+                      className="flex-1 px-3 py-2 rounded-lg border text-lg font-semibold"
+                      style={{
+                        backgroundColor: 'var(--color-bg-primary)',
+                        color: 'var(--color-text-primary)',
+                        borderColor: 'var(--color-border)',
+                      }}
+                    />
+                    <span className="text-sm text-[var(--color-text-secondary)]">grams</span>
+                  </div>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    <button
+                      onClick={() => {
+                        const val = food?.servingSize || 100;
+                        setCustomGrams(val);
+                        setSelectedServingSize(val);
+                      }}
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                    >
+                      Default ({food?.servingSize}g)
+                    </button>
+                    <button
+                      onClick={() => {
+                        setCustomGrams(100);
+                        setSelectedServingSize(100);
+                      }}
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                    >
+                      100g
+                    </button>
+                    <button
+                      onClick={() => {
+                        const val = customGrams * 2;
+                        setCustomGrams(val);
+                        setSelectedServingSize(val);
+                      }}
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                    >
+                      ×2
+                    </button>
+                    <button
+                      onClick={() => {
+                        const val = Math.max(1, Math.floor(customGrams / 2));
+                        setCustomGrams(val);
+                        setSelectedServingSize(val);
+                      }}
+                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
+                    >
+                      ÷2
+                    </button>
                   </div>
                 </div>
 
+                {/* Today's Progress Section - Combined Bar */}
+                {(() => {
+                  if (!selectedNutrient) return null;
+                  const target = getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient);
+                  const consumed = getTodayConsumed(selectedNutrient);
+                  const foodValue = getNutrientValue(selectedNutrient, customGrams);
+                  const totalAfter = getTotalAfterEating(selectedNutrient, customGrams);
+                  const unit = getUnitForNutrient(selectedNutrient);
+                  const overdosing = isOverdosing(selectedNutrient, customGrams);
+                  const exceedingTarget = isExceedingTarget(selectedNutrient, customGrams);
+                  
+                  // Calculate percentages for the combined bar
+                  const consumedPercentage = target ? (consumed / target) * 100 : 0;
+                  const totalPercentage = target ? (totalAfter / target) * 100 : 0;
+                  
+                  return (
+                    <div className={`p-4 rounded-lg border ${
+                      overdosing 
+                        ? 'bg-red-500/10 border-red-500/30' 
+                        : exceedingTarget
+                        ? 'bg-yellow-500/10 border-yellow-500/30'
+                        : 'bg-blue-500/10 border-blue-500/30'
+                    }`}>
+                      <p className="text-sm font-semibold text-[var(--color-text-primary)] mb-3">Today's Progress</p>
+                      
+                      {/* Combined Progress Bar */}
+                      <div className="space-y-3">
+                        <div className="flex justify-between text-xs">
+                          <span className="text-green-600 dark:text-green-400 font-medium">Already consumed: {consumed.toFixed(1)} {unit}</span>
+                          <span className={`font-medium ${
+                            overdosing ? 'text-red-600 dark:text-red-400' 
+                            : exceedingTarget ? 'text-yellow-600 dark:text-yellow-400' 
+                            : 'text-blue-600 dark:text-blue-400'
+                          }`}>This serving: {foodValue.toFixed(1)} {unit}</span>
+                        </div>
+                        
+                        {/* Single combined bar */}
+                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3 overflow-hidden">
+                          <div className="flex h-full">
+                            {/* Already consumed (green) */}
+                            <div
+                              className="bg-green-500 h-full transition-all"
+                              style={{ width: `${Math.min(consumedPercentage, 100)}%` }}
+                            ></div>
+                            {/* This food (blue/yellow/red based on status) */}
+                            <div
+                              className={`h-full transition-all ${
+                                overdosing ? 'bg-red-500' : exceedingTarget ? 'bg-yellow-500' : 'bg-blue-500'
+                              }`}
+                              style={{ width: `${Math.min(Math.max(0, totalPercentage - consumedPercentage), 100 - Math.min(consumedPercentage, 100))}%` }}
+                            ></div>
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center">
+                          <p className="text-xs text-[var(--color-text-tertiary)]">
+                            Total after eating: <span className="font-semibold text-[var(--color-text-primary)]">{totalAfter.toFixed(1)} {unit}</span>
+                          </p>
+                          <p className="text-xs text-[var(--color-text-tertiary)]">
+                            {totalPercentage.toFixed(1)}% of target
+                            {!target && <span className="text-orange-500 ml-1">(no target)</span>}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
                 {/* Target Exceeded Warning (Yellow) */}
-                {!isOverdosing(selectedNutrient) && isExceedingTarget(selectedNutrient) && (
+                {selectedNutrient && !isOverdosing(selectedNutrient, customGrams) && isExceedingTarget(selectedNutrient, customGrams) && (
                   <div className="p-4 rounded-lg bg-yellow-500/20 border-2 border-yellow-500">
                     <div className="flex items-start gap-2">
                       <svg className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -662,13 +1059,13 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                           ⚠️ Would Exceed Daily Target
                         </p>
                         <p className="text-xs text-yellow-700 dark:text-yellow-400 mb-2">
-                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)} {getUnitForNutrient(selectedNutrient)}
                           <br />
-                          <strong>This serving:</strong> +{getNutrientValue(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong>This serving ({customGrams}g):</strong> +{getNutrientValue(selectedNutrient, customGrams).toFixed(1)} {getUnitForNutrient(selectedNutrient)}
                           <br />
-                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient, customGrams).toFixed(1)} {getUnitForNutrient(selectedNutrient)}
                           <br />
-                          <strong className="text-yellow-800 dark:text-yellow-300">Daily target:</strong> {(getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient))}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong className="text-yellow-800 dark:text-yellow-300">Daily target:</strong> {(getNutrientRecommendation(selectedNutrient) || getNutrientTarget(selectedNutrient))} {getUnitForNutrient(selectedNutrient)}
                         </p>
                         <p className="text-xs text-yellow-700 dark:text-yellow-400 mt-2 italic">
                           💡 You would exceed your recommended daily intake. Consider a smaller portion if you want to stay within your target.
@@ -679,7 +1076,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                 )}
 
                 {/* Overdose Warning (Red) */}
-                {isOverdosing(selectedNutrient) && getNutrientMaximum(selectedNutrient) && (
+                {selectedNutrient && isOverdosing(selectedNutrient, customGrams) && getNutrientMaximum(selectedNutrient) && (
                   <div className="p-4 rounded-lg bg-red-500/20 border-2 border-red-500 animate-pulse">
                     <div className="flex items-start gap-2">
                       <svg className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
@@ -690,24 +1087,24 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose }) => {
                           ⚠️ Would Exceed Safe Maximum!
                         </p>
                         <p className="text-xs text-red-600 dark:text-red-400 mb-2">
-                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong>Today consumed:</strong> {getTodayConsumed(selectedNutrient).toFixed(1)} {getUnitForNutrient(selectedNutrient)}
                           <br />
-                          <strong>This serving:</strong> +{getNutrientValue(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong>This serving ({customGrams}g):</strong> +{getNutrientValue(selectedNutrient, customGrams).toFixed(1)} {getUnitForNutrient(selectedNutrient)}
                           <br />
-                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient).toFixed(1)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong>Total after eating:</strong> {getTotalAfterEating(selectedNutrient, customGrams).toFixed(1)} {getUnitForNutrient(selectedNutrient)}
                           <br />
-                          <strong className="text-red-700 dark:text-red-300">Safe maximum:</strong> {getNutrientMaximum(selectedNutrient)}{selectedNutrient.includes('(') ? getUnitForNutrient(selectedNutrient) : 'g'}
+                          <strong className="text-red-700 dark:text-red-300">Safe maximum:</strong> {getNutrientMaximum(selectedNutrient)} {getUnitForNutrient(selectedNutrient)}
                         </p>
                         <div className="flex justify-between text-xs mb-1">
                           <span className="text-red-600 dark:text-red-400">Total % of Safe Maximum</span>
                           <span className="font-bold text-red-600 dark:text-red-400">
-                            {getPercentageOfMaximum(selectedNutrient)?.toFixed(1)}%
+                            {getPercentageOfMaximum(selectedNutrient, customGrams)?.toFixed(1)}%
                           </span>
                         </div>
                         <div className="w-full bg-red-200 dark:bg-red-900/30 rounded-full h-2">
                           <div
                             className="bg-red-600 h-2 rounded-full transition-all"
-                            style={{ width: `${Math.min(getPercentageOfMaximum(selectedNutrient) || 0, 100)}%` }}
+                            style={{ width: `${Math.min(getPercentageOfMaximum(selectedNutrient, customGrams) || 0, 100)}%` }}
                           ></div>
                         </div>
                         <p className="text-xs text-red-600 dark:text-red-400 mt-2 italic">

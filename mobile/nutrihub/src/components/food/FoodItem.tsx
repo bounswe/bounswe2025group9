@@ -10,6 +10,7 @@ import { View, Text, StyleSheet, ViewStyle, TextStyle, GestureResponderEvent, Im
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING, getValidIconName } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Card from '../common/Card';
 import { FoodItem as FoodItemType } from '../../types/types';
 import { getPriceCategoryText, getPriceCategoryColor } from '../../utils/priceUtils';
@@ -74,6 +75,7 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
   testID,
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   
   // Handle press event
   const handlePress = (event: GestureResponderEvent) => {
@@ -344,25 +346,25 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
               <Text style={[styles.macroValue, textStyles.body]}>
                 {item.macronutrients.calories}
               </Text>
-              <Text style={[styles.macroLabel, textStyles.caption]}>Calories</Text>
+              <Text style={[styles.macroLabel, textStyles.caption]}>{t('food.calories')}</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={[styles.macroValue, textStyles.body]}>
                 {item.macronutrients.protein}g
               </Text>
-              <Text style={[styles.macroLabel, textStyles.caption]}>Protein</Text>
+              <Text style={[styles.macroLabel, textStyles.caption]}>{t('food.protein')}</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={[styles.macroValue, textStyles.body]}>
                 {item.macronutrients.carbohydrates}g
               </Text>
-              <Text style={[styles.macroLabel, textStyles.caption]}>Carbs</Text>
+              <Text style={[styles.macroLabel, textStyles.caption]}>{t('food.carbs')}</Text>
             </View>
             <View style={styles.macroItem}>
               <Text style={[styles.macroValue, textStyles.body]}>
                 {item.macronutrients.fat}g
               </Text>
-              <Text style={[styles.macroLabel, textStyles.caption]}>Fat</Text>
+              <Text style={[styles.macroLabel, textStyles.caption]}>{t('food.fat')}</Text>
             </View>
           </View>
         </View>
@@ -373,7 +375,7 @@ const FoodItemComponent: React.FC<FoodItemProps> = ({
         <View style={styles.detailedPriceContainer}>
           <View style={styles.detailedPriceHeader}>
             <Text style={[styles.detailedPriceLabel, textStyles.caption]}>
-              Price Category
+              {t('food.priceCategory')}
             </Text>
             {renderPriceCategoryBadge()}
           </View>

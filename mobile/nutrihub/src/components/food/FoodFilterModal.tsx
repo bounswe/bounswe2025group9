@@ -17,6 +17,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import TextInput from '../common/TextInput';
@@ -37,6 +38,7 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
   onApplyFilters,
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const [localFilters, setLocalFilters] = React.useState<FoodFilters>(filters);
 
   // Reset local filters when modal opens
@@ -94,7 +96,7 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
     >
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
-          <Text style={[styles.title, textStyles.heading3]}>Filter Foods</Text>
+          <Text style={[styles.title, textStyles.heading3]}>{t('food.filterFoods')}</Text>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <Icon name="close" size={24} color={theme.text} />
           </TouchableOpacity>
@@ -103,7 +105,7 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
         <ScrollView contentContainerStyle={styles.content}>
           {/* Categories */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Category</Text>
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.category')}</Text>
             <View style={styles.optionsGrid}>
               {Object.values(FOOD_CATEGORIES).map((category) => (
                 <TouchableOpacity
@@ -137,7 +139,7 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
 
           {/* Dietary Options */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Dietary Options</Text>
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.dietaryOptions')}</Text>
             <View style={styles.optionsGrid}>
               {Object.values(DIETARY_OPTIONS).map((option) => {
                 const isSelected = localFilters.dietaryOptions?.includes(option);
@@ -174,7 +176,7 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
 
           {/* Price Category */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Price Category</Text>
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.priceCategory')}</Text>
             <View style={styles.optionsGrid}>
               {['$', '$$', '$$$'].map((category) => {
                 const isSelected = localFilters.priceCategory === category;
@@ -216,18 +218,18 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
 
           {/* Nutrition Score Range */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Nutrition Score (0-10)</Text>
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.nutritionScoreRange')}</Text>
             <View style={styles.rangeContainer}>
               <TextInput
-                placeholder="Min"
+                placeholder={t('common.min')}
                 value={localFilters.minNutritionScore?.toString() || ''}
                 onChangeText={(value) => handleNutritionScoreChange('minNutritionScore', value)}
                 keyboardType="decimal-pad"
                 containerStyle={styles.rangeInput}
               />
-              <Text style={[styles.rangeSeparator, textStyles.body]}>to</Text>
+              <Text style={[styles.rangeSeparator, textStyles.body]}>{t('common.to')}</Text>
               <TextInput
-                placeholder="Max"
+                placeholder={t('common.max')}
                 value={localFilters.maxNutritionScore?.toString() || ''}
                 onChangeText={(value) => handleNutritionScoreChange('maxNutritionScore', value)}
                 keyboardType="decimal-pad"
@@ -239,13 +241,13 @@ const FoodFilterModal: React.FC<FoodFilterModalProps> = ({
 
         <View style={[styles.footer, { borderTopColor: theme.divider }]}>
           <Button
-            title="Reset"
+            title={t('common.reset')}
             variant="outline"
             onPress={handleReset}
             style={styles.footerButton}
           />
           <Button
-            title="Apply Filters"
+            title={t('food.applyFilters')}
             variant="primary"
             onPress={handleApply}
             style={styles.footerButton}

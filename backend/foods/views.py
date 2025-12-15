@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+from django.db.models.deletion import ProtectedError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from foods.models import (
@@ -21,6 +22,7 @@ from foods.serializers import (
     PriceReportCreateSerializer,
     PriceReportUpdateSerializer,
     PriceThresholdRecalculateSerializer,
+    FoodProposalStatusSerializer,
 )
 from rest_framework.generics import ListAPIView, ListCreateAPIView, RetrieveUpdateAPIView
 from rest_framework import status, generics
@@ -42,6 +44,15 @@ from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
 import re
 
+# OpenAPI documentation imports
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, extend_schema_view
+from foods.schemas import (
+    FoodSearchRequestSerializer,
+    FOOD_SEARCH_EXAMPLES,
+    PRIVATE_FOOD_CREATE_EXAMPLE,
+    FOOD_PROPOSAL_EXAMPLE,
+)
+
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "api", "db_initialization")
 )
@@ -54,6 +65,7 @@ from foods.services import (
     override_food_price_category,
     clear_food_price_override,
     recalculate_price_thresholds,
+    FoodAccessService,
 )
 
 # Global thread pool for background image caching (max 5 concurrent downloads)
@@ -62,14 +74,75 @@ _image_cache_executor = ThreadPoolExecutor(
 )
 
 
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=["foods"],
+        summary="List and search foods",
+        description="Retrieve foods with advanced filtering capabilities including search, category filtering, "
+                    "micronutrient range filtering, and sorting. Supports pagination.",
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                description="Search term to filter foods by name (case-insensitive)",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="category",
+                description="Comma-separated list of categories (e.g., 'Vegetables,Fruits')",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="micronutrient",
+                description="Micronutrient range filtering. Format: name:low-high (e.g., 'iron:3-10,vitamin c:20-'). "
+                           "Supports: name:low-high (bounded), name:low- (minimum), name:-high (maximum)",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="sort_by",
+                description="Field to sort by",
+                required=False,
+                type=str,
+                enum=["nutrition-score", "protein", "carbohydrate", "fat", "price", "cost-nutrition-ratio", "name"]
+            ),
+            OpenApiParameter(
+                name="order",
+                description="Sort order",
+                required=False,
+                type=str,
+                enum=["asc", "desc"]
+            ),
+        ],
+        responses={200: FoodEntrySerializer(many=True)},
+    ),
+    post=extend_schema(
+        tags=["foods"],
+        summary="Advanced food search (POST)",
+        description="Advanced food search with micronutrient filtering via POST body. "
+                    "Supports all GET parameters plus structured micronutrient filters.",
+        request=FoodSearchRequestSerializer,
+        responses={200: FoodEntrySerializer(many=True)},
+        examples=FOOD_SEARCH_EXAMPLES,
+    ),
+)
 class FoodCatalog(ListAPIView):
+
     permission_classes = [AllowAny]
     serializer_class = FoodEntrySerializer
 
     def get_queryset(self):
-        queryset = FoodEntry.objects.all().prefetch_related('micronutrient_values__micronutrient')
+        # Get accessible foods for the current user (validated + their own private foods)
+        user = self.request.user if self.request.user.is_authenticated else None
+        queryset = FoodAccessService.get_accessible_foods(user=user)
+        queryset = queryset.prefetch_related("micronutrient_values__micronutrient")
+
+        # Get available categories from accessible foods
         available_categories = list(
-            FoodEntry.objects.values_list("category", flat=True).distinct()
+            FoodAccessService.get_accessible_foods(user=user).values_list("category", flat=True).distinct()
         )
         available_categories_lc = [cat.lower() for cat in available_categories]
 
@@ -228,6 +301,80 @@ class FoodCatalog(ListAPIView):
             # Use distinct() to avoid duplicate results from join
             queryset = queryset.distinct()
 
+        # --- MACRONUTRIENT RANGE FILTERING (NEW) ---
+        #
+        # Query parameter: `macronutrient`
+        #
+        # Syntax (comma-separated list):
+        #
+        #     macronutrient=<name>:<low>-<high>,<name>:<low>-,<name>:-<high>,...
+        #
+        # Rules:
+        #   • <name> is case-insensitive (protein, carbohydrates, fat)
+        #   • <low> and <high> are numeric (float); invalid values are ignored
+        #   • Ranges support:
+        #         low-high   → bounded range
+        #         low-       → lower-bounded (>= low)
+        #         -high      → upper-bounded (<= high)
+        #   • Each item creates an AND constraint:
+        #         protein:10-20,fat:5-15  → must satisfy both
+        #
+        # Examples:
+        #     macronutrient=protein:10-20
+        #     macronutrient=fat:5-
+        #     macronutrient=carbohydrates:-50
+        #     macronutrient=protein:10-20,fat:5-15
+        #
+        # Note: Values are per 100g
+        macronutrient_param = self.request.query_params.get("macronutrient", "")
+        if macronutrient_param.strip():
+            parts = [p.strip() for p in macronutrient_param.split(",") if p.strip()]
+
+            for part in parts:
+                if ":" not in part or "-" not in part:
+                    continue
+
+                name, rng = part.split(":", 1)
+                low_str, high_str = rng.split("-", 1)
+
+                name = name.strip().lower()
+
+                # Map macronutrient names to field names
+                field_map = {
+                    'protein': 'proteinContent',
+                    'carbohydrates': 'carbohydrateContent',
+                    'carbohydrate': 'carbohydrateContent',
+                    'carbs': 'carbohydrateContent',
+                    'fat': 'fatContent',
+                    'fats': 'fatContent',
+                }
+
+                field_name = field_map.get(name)
+                if not field_name:
+                    continue
+
+                # Parse numbers only if they exist
+                low = None
+                high = None
+
+                if low_str.strip():
+                    try:
+                        low = float(low_str)
+                    except ValueError:
+                        continue
+
+                if high_str.strip():
+                    try:
+                        high = float(high_str)
+                    except ValueError:
+                        continue
+
+                # Apply filters (macronutrients are direct fields, so this is simpler)
+                if low is not None:
+                    queryset = queryset.filter(**{f'{field_name}__gte': low})
+                if high is not None:
+                    queryset = queryset.filter(**{f'{field_name}__lte': high})
+
         # --- Sorting support ---
         # Support both separate parameters (sort_by + order) and combined format (sort_by="name-asc")
         sort_by = self.request.query_params.get("sort_by", "").strip()
@@ -365,9 +512,13 @@ class FoodCatalog(ListAPIView):
         return Response(data)
     
     def post(self, request, *args, **kwargs):
-        queryset = FoodEntry.objects.all()
+        # Get accessible foods for the current user (validated + their own private foods)
+        user = request.user if request.user.is_authenticated else None
+        queryset = FoodAccessService.get_accessible_foods(user=user)
+
+        # Get available categories from accessible foods
         available_categories = list(
-            FoodEntry.objects.values_list("category", flat=True).distinct()
+            FoodAccessService.get_accessible_foods(user=user).values_list("category", flat=True).distinct()
         )
         available_categories_lc = [cat.lower() for cat in available_categories]
 
@@ -620,17 +771,144 @@ class FoodCatalog(ListAPIView):
         return Response(data)
 
 
+@extend_schema(tags=["foods"])
+class PrivateFoodView(APIView):
+    """
+    CRUD for user's private foods.
+
+    - LIST   /api/foods/private/
+    - CREATE /api/foods/private/
+    - GET    /api/foods/private/<id>/
+    - UPDATE /api/foods/private/<id>/
+    - DELETE /api/foods/private/<id>/
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    # ------------------------
+    # GET (LIST / RETRIEVE)
+    # ------------------------
+    @extend_schema(
+        summary="List or retrieve private foods",
+        description="Get all private foods for the authenticated user, or retrieve a specific private food by ID",
+        responses={200: FoodEntrySerializer(many=True)}
+    )
+    def get(self, request, pk=None):
+        user = request.user
+
+        if pk:
+            food = get_object_or_404(
+                FoodEntry.objects.prefetch_related("micronutrient_values__micronutrient"),
+                id=pk,
+                createdBy=user,
+                validated=False,
+            )
+            serializer = FoodEntrySerializer(food, context={'request': request})
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        foods = FoodEntry.objects.filter(
+            createdBy=user,
+            validated=False,
+        ).prefetch_related("micronutrient_values__micronutrient")
+
+        serializer = FoodEntrySerializer(
+            foods, many=True, context={'request': request}
+        )
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    # ------------------------
+    # POST (CREATE)
+    # ------------------------
+    @extend_schema(
+        summary="Create private food",
+        description="Create a new private food entry visible only to you",
+        request=FoodEntrySerializer,
+        responses={201: FoodEntrySerializer},
+        examples=[PRIVATE_FOOD_CREATE_EXAMPLE]
+    )
+    def post(self, request):
+        serializer = FoodEntrySerializer(data=request.data, context={'request': request})
+
+        if serializer.is_valid():
+            serializer.save(
+                createdBy=request.user,
+                validated=False,  # 🔒 private by default
+            )
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # ------------------------
+    # PUT / PATCH (UPDATE)
+    # ------------------------
+    def put(self, request, pk):
+        return self._update(request, pk)
+
+    def patch(self, request, pk):
+        return self._update(request, pk, partial=True)
+
+    def _update(self, request, pk, partial=False):
+        food = get_object_or_404(
+            FoodEntry,
+            id=pk,
+            createdBy=request.user,
+            validated=False,
+        )
+
+        serializer = FoodEntrySerializer(
+            food,
+            data=request.data,
+            partial=partial,
+            context={'request': request},
+        )
+
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # ------------------------
+    # DELETE
+    # ------------------------
+    def delete(self, request, pk):
+        food = get_object_or_404(
+            FoodEntry,
+            id=pk,
+            createdBy=request.user,
+            validated=False,
+        )
+        try:
+            food.delete()
+        except ProtectedError:
+            return Response(
+                {
+                    "detail": (
+                        "This food cannot be deleted because it is currently "
+                        "used in your nutrition tracker or another record."
+                    )
+                },
+                status=status.HTTP_409_CONFLICT,
+            )
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
+    
+
 class AvailableMicronutrientsView(APIView):
     """
-    Returns a list of all available micronutrients that have at least one entry in the database.
+    Returns a list of all available micronutrients that have at least one entry in accessible foods.
     Each micronutrient includes its name and unit.
     """
     permission_classes = [AllowAny]
 
     def get(self, request):
-        # Get all micronutrients that have at least one food entry
+        # Get accessible food IDs for the current user
+        user = request.user if request.user.is_authenticated else None
+        accessible_food_ids = FoodAccessService.get_accessible_foods(user=user).values_list('id', flat=True)
+
+        # Get all micronutrients that have at least one entry in accessible foods
         micronutrients = Micronutrient.objects.filter(
-            entries__isnull=False
+            entries__food_entry_id__in=accessible_food_ids
         ).distinct().values('name', 'unit').order_by('name')
 
         return Response({
@@ -639,218 +917,61 @@ class AvailableMicronutrientsView(APIView):
         }, status=status.HTTP_200_OK)
 
 
-class GetOrFetchFoodEntry(APIView):
-    def get(self, request):
-        food_name = request.query_params.get("name")
-        if not food_name:
-            return Response(
-                {"error": "Missing 'name' parameter"},
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-        try:
-            food = FoodEntry.objects.get(name__iexact=food_name)
-            serializer = FoodEntrySerializer(food)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        except FoodEntry.DoesNotExist:
-            pass
-
-        try:
-            search = make_request("foods.search", {"search_expression": food_name})
-            foods = search.get("foods", {}).get("food", [])
-            if not foods:
-                return Response(
-                    {"error": "Food not found in FatSecret API"},
-                    status=status.HTTP_404_NOT_FOUND,
-                )
-
-            food_id = foods[0]["food_id"]
-            details = make_request("food.get", {"food_id": food_id})
-            parsed = extract_food_info(details)
-
-            if not parsed:
-                return Response(
-                    {"error": "Could not parse FatSecret response"},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
-
-            image_url = get_fatsecret_image_url(details["food"]["food_url"])
-
-            with transaction.atomic():
-                food = FoodProposal.objects.create(
-                    name=parsed["food_name"],
-                    category="Unknown",
-                    servingSize=parsed.get("serving_amount", 100.0),
-                    caloriesPerServing=parsed.get("calories", 0.0),
-                    proteinContent=parsed.get("protein", 0.0),
-                    fatContent=parsed.get("fat", 0.0),
-                    carbohydrateContent=parsed.get("carbohydrates", 0.0),
-                    dietaryOptions=[],
-                    nutritionScore=0.0,
-                    imageUrl=image_url,
-                    proposedBy=request.user,
-                )
-
-            serializer = FoodProposalSerializer(food)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-
-        except Exception as e:
-            traceback.print_exc()
-            return Response(
-                {"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-
-
-# get food_name as parameter
-# make api call to https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}
-# check if the response is not empty
-# return meals/strMeal and
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def suggest_recipe(request):
-    food_name = request.query_params.get("food_name", "")
-    if not food_name:
-        return Response({"error": "food_name parameter is required."}, status=400)
-
-    url = f"https://www.themealdb.com/api/json/v1/1/search.php?s={food_name}"
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        meals = data.get("meals")
-        if not meals:
-            return Response(
-                {"warning": "No recipe found for the given food name.", "results": []},
-                status=404,
-            )
-        meal = meals[0]
-        return Response(
-            {
-                "Meal": meal.get("strMeal"),
-                "Instructions": meal.get("strInstructions"),
-            }
-        )
-    except requests.RequestException as e:
-        return Response({"error": f"Failed to fetch recipe: {str(e)}"}, status=500)
-
-
-@api_view(["GET"])
-@permission_classes([AllowAny])
-def get_random_meal(request):
-    url = "https://www.themealdb.com/api/json/v1/1/random.php"
-    try:
-        response = requests.get(url, timeout=5)
-        response.raise_for_status()
-        data = response.json()
-        meals = data.get("meals")
-        if not meals:
-            return Response(
-                {"warning": "No random meal found.", "results": []},
-                status=404,
-            )
-        meal = meals[0]
-        return Response(
-            {
-                "id": meal.get("idMeal"),
-                "name": meal.get("strMeal"),
-                "category": meal.get("strCategory"),
-                "area": meal.get("strArea"),
-                "instructions": meal.get("strInstructions"),
-                "image": meal.get("strMealThumb"),
-                "tags": meal.get("strTags"),
-                "youtube": meal.get("strYoutube"),
-                "ingredients": [
-                    {
-                        "ingredient": meal.get(f"strIngredient{i}"),
-                        "measure": meal.get(f"strMeasure{i}"),
-                    }
-                    for i in range(1, 21)
-                    if meal.get(f"strIngredient{i}")
-                ],
-            }
-        )
-    except requests.RequestException as e:
-        return Response(
-            {"error": f"Failed to fetch random meal: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-    except Exception as e:
-        return Response(
-            {"error": f"An unexpected error occurred: {str(e)}"},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
-
-
+@extend_schema(tags=["foods"])
 @permission_classes([IsAuthenticated])
 class FoodProposalSubmitView(APIView):
+    """
+    Submit a private FoodEntry for approval/validation.
+
+    POST /api/foods/proposals/submit/
+    Body: {"food_entry_id": 123}
+
+    The food_entry must be:
+    - Created by the requesting user (createdBy=request.user)
+    - Private (validated=False)
+    - Not already proposed
+    """
+    @extend_schema(
+        summary="Submit food for approval",
+        description="Submit a private food entry for moderator approval to make it public",
+        request=FoodProposalSerializer,
+        responses={201: FoodProposalSerializer},
+        examples=[FOOD_PROPOSAL_EXAMPLE]
+    )
     def post(self, request):
-        serializer = FoodProposalSerializer(data=request.data)
+        serializer = FoodProposalSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
-            nutrition_score = calculate_nutrition_score(serializer.validated_data)
-            serializer.save(proposedBy=request.user, nutritionScore=nutrition_score)
+            serializer.save(proposedBy=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+    @extend_schema(
+        summary="Get my food proposals",
+        description="List all food proposals submitted by the authenticated user",
+        responses={200: FoodProposalStatusSerializer(many=True)}
+    )
+    def get(self, request):
+        proposals = FoodProposal.objects.filter(proposedBy=request.user).order_by('-createdAt')
+        serializer = FoodProposalStatusSerializer(proposals, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class UserFoodProposalListView(ListAPIView):
     """
     List all food proposals created by the authenticated user.
-    This includes pending, approved, and rejected (private) proposals.
+    This includes pending, approved, and rejected proposals.
     """
     permission_classes = [IsAuthenticated]
     serializer_class = FoodProposalSerializer
-    
+
     def get_queryset(self):
         # Return all proposals by the user, ordered by creation date (newest first)
-        return FoodProposal.objects.filter(proposedBy=self.request.user).order_by('-createdAt')
+        return FoodProposal.objects.filter(proposedBy=self.request.user).select_related('food_entry').order_by('-createdAt')
 
-
-@api_view(["GET"])
-def food_nutrition_info(request):
-    """
-    GET /food/nutrition-info/?name={food_name}
-    Fetches nutrition facts for a food using the Open Food Facts API (free to use).
-    Returns calories, protein, fat, carbs, etc. if available.
-    """
-    food_name = request.query_params.get("name")
-    if not food_name:
-        return Response(
-            {"error": "name parameter is required"}, status=status.HTTP_400_BAD_REQUEST
-        )
-
-    try:
-        api_url = "https://world.openfoodfacts.org/cgi/search.pl"
-        params = {
-            "search_terms": food_name,
-            "search_simple": 1,
-            "action": "process",
-            "json": 1,
-            "page_size": 1,
-        }
-        resp = requests.get(api_url, params=params, timeout=5)
-        resp.raise_for_status()
-        data = resp.json()
-        products = data.get("products", [])
-        if not products:
-            return Response(
-                {"warning": f"No nutrition info found for '{food_name}'."}, status=404
-            )
-        product = products[0]
-        nutriments = product.get("nutriments", {})
-        result = {
-            "food": food_name,
-            "calories": nutriments.get("energy-kcal_100g"),
-            "protein": nutriments.get("proteins_100g"),
-            "fat": nutriments.get("fat_100g"),
-            "carbs": nutriments.get("carbohydrates_100g"),
-            "fiber": nutriments.get("fiber_100g"),
-        }
-        return Response(result)
-    except Exception as e:
-        return Response(
-            {"error": f"Failed to fetch nutrition info: {str(e)}"}, status=500
-        )
-
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context['request'] = self.request
+        return context
 
 def _download_and_cache_image(image_url, url_hash):
     """
