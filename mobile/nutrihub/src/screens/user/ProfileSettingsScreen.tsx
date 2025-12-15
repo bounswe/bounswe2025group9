@@ -153,6 +153,14 @@ const ProfileSettingsScreen: React.FC = () => {
       badgeColor: theme.warning
     },
     {
+      id: 'language',
+      title: 'Language',
+      description: 'Change app language (English, Türkçe, العربية)',
+      icon: 'translate',
+      screen: 'LanguageSettings',
+      badgeColor: theme.info
+    },
+    {
       id: 'account-warnings',
       title: 'Account Warnings',
       description: 'View warnings, post removals, bans and suspensions',

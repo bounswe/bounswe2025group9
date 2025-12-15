@@ -30,6 +30,7 @@ import AccountWarningsScreen from '../screens/user/AccountWarningsScreen';
 import ReportUserScreen from '../screens/user/ReportUserScreen';
 import FollowersListScreen from '../screens/user/FollowersListScreen';
 import FollowingListScreen from '../screens/user/FollowingListScreen';
+import LanguageSettingsScreen from '../screens/user/LanguageSettingsScreen';
 
 // Nutrition screens
 import NutritionTrackingScreen from '../screens/nutrition/NutritionTrackingScreen';
@@ -147,6 +148,7 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen name="AccountWarnings" component={AccountWarningsScreen} />
       <ProfileStack.Screen name="ReportUser" component={ReportUserScreen} />
       <ProfileStack.Screen name="NutritionTracking" component={NutritionTrackingScreen} />
+      <ProfileStack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
     </ProfileStack.Navigator>
   );
 };

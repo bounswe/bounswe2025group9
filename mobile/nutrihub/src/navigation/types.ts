@@ -208,6 +208,11 @@ export type ProfileStackParamList = {
    * Nutrition tracking screen
    */
   NutritionTracking: undefined;
+  
+  /**
+   * Language settings screen
+   */
+  LanguageSettings: undefined;
 };
 
 /**
