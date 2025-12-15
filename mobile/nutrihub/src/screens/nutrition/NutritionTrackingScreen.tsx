@@ -84,7 +84,8 @@ const isMineral = (name: string): boolean => {
 const NutritionTrackingScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation();
-  const { t } = useLanguage();
+  const { t, currentLanguage } = useLanguage();
+  const locale = currentLanguage || 'en-US';
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
@@ -150,7 +151,7 @@ const NutritionTrackingScreen: React.FC = () => {
           setLoading(false);
           return;
         } else {
-          Alert.alert('Error', 'Failed to load user metrics. Please try again.');
+          Alert.alert(t('common.error'), t('nutrition.failedToLoadUserMetrics'));
         }
       }
 
@@ -169,13 +170,13 @@ const NutritionTrackingScreen: React.FC = () => {
               setShowMetricsModal(true);
             }
           } else {
-            Alert.alert('Error', 'Failed to load nutrition targets. Please try again.');
+            Alert.alert(t('common.error'), t('nutrition.failedToLoadTargets'));
           }
         }
       }
     } catch (error: any) {
       console.error('Error fetching initial data:', error);
-      Alert.alert('Error', 'Failed to load nutrition data. Please try again.');
+      Alert.alert(t('common.error'), t('nutrition.failedToLoadNutritionData'));
     } finally {
       setLoading(false);
     }
@@ -316,7 +317,7 @@ const NutritionTrackingScreen: React.FC = () => {
     // Validate serving size
     const numServingSize = typeof servingSize === 'string' ? parseFloat(servingSize) : servingSize;
     if (!numServingSize || numServingSize <= 0 || isNaN(numServingSize)) {
-      Alert.alert('Invalid Serving Size', 'Please enter a valid serving size greater than 0');
+      Alert.alert(t('nutrition.invalidServingSizeTitle'), t('nutrition.invalidServingSizeMessage'));
       return;
     }
 
@@ -337,7 +338,7 @@ const NutritionTrackingScreen: React.FC = () => {
 
       // Validate multiplier
       if (multiplier > 9999.999999) {
-        Alert.alert('Serving Size Too Large', 'The serving size is too large. Please reduce the amount.');
+        Alert.alert(t('nutrition.servingTooLargeTitle'), t('nutrition.servingTooLargeMessage'));
         setLoading(false);
         return;
       }
@@ -350,7 +351,7 @@ const NutritionTrackingScreen: React.FC = () => {
 
         const entryData = {
           food_id: selectedFood.id,
-          food_name: selectedFood.title + ' (Private)',
+          food_name: `${selectedFood.title} (${t('food.privateFoods')})`,
           serving_size: numServingSize,
           serving_unit: servingUnit,
           meal_type: selectedMeal,
@@ -382,11 +383,9 @@ const NutritionTrackingScreen: React.FC = () => {
           });
         }
 
-        Alert.alert(
-          'Private Food Added',
-          'Private food saved to your log.',
-          [{ text: 'OK' }]
-        );
+        Alert.alert(t('nutrition.privateFoodAddedTitle'), t('nutrition.privateFoodAddedMessage'), [
+          { text: t('common.ok') },
+        ]);
       } else {
         // Regular food - send to backend
         await nutritionService.addFoodEntry({
@@ -413,7 +412,7 @@ const NutritionTrackingScreen: React.FC = () => {
       setEditingEntry(null);
     } catch (error: any) {
       console.error('Error adding food entry:', error);
-      Alert.alert('Error', error?.message || 'Failed to add food entry. Please try again.');
+      Alert.alert(t('common.error'), error?.message || t('nutrition.failedToAddFoodEntry'));
     } finally {
       setLoading(false);
     }
@@ -457,7 +456,7 @@ const NutritionTrackingScreen: React.FC = () => {
     // Validate serving size
     const numServingSize = typeof servingSize === 'string' ? parseFloat(servingSize) : servingSize;
     if (!numServingSize || numServingSize <= 0 || isNaN(numServingSize)) {
-      Alert.alert('Invalid Serving Size', 'Please enter a valid serving size greater than 0');
+      Alert.alert(t('nutrition.invalidServingSizeTitle'), t('nutrition.invalidServingSizeMessage'));
       return;
     }
 
@@ -477,7 +476,7 @@ const NutritionTrackingScreen: React.FC = () => {
 
       // Validate multiplier
       if (multiplier > 9999.999999) {
-        Alert.alert('Serving Size Too Large', 'The serving size is too large. Please reduce the amount.');
+        Alert.alert(t('nutrition.servingTooLargeTitle'), t('nutrition.servingTooLargeMessage'));
         setLoading(false);
         return;
       }
@@ -502,7 +501,7 @@ const NutritionTrackingScreen: React.FC = () => {
       setServingUnit('serving');
     } catch (error: any) {
       console.error('Error updating entry:', error);
-      Alert.alert('Error', error?.message || 'Failed to update entry. Please try again.');
+      Alert.alert(t('common.error'), error?.message || t('nutrition.failedToUpdateEntry'));
     } finally {
       setLoading(false);
     }
@@ -511,12 +510,12 @@ const NutritionTrackingScreen: React.FC = () => {
   // Handle deleting an entry
   const handleDeleteEntry = (entryId: number) => {
     Alert.alert(
-      'Delete Entry',
-      'Are you sure you want to delete this food entry?',
+      t('nutrition.deleteEntryTitle'),
+      t('nutrition.deleteEntryMessage'),
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: t('common.cancel'), style: 'cancel' },
         {
-          text: 'Delete',
+          text: t('common.delete'),
           style: 'destructive',
           onPress: async () => {
             try {
@@ -531,7 +530,7 @@ const NutritionTrackingScreen: React.FC = () => {
               ]);
             } catch (error: any) {
               console.error('Error deleting entry:', error);
-              Alert.alert('Error', error?.message || 'Failed to delete entry. Please try again.');
+              Alert.alert(t('common.error'), error?.message || t('nutrition.failedToDeleteEntry'));
             } finally {
               setLoading(false);
             }
@@ -577,13 +576,13 @@ const NutritionTrackingScreen: React.FC = () => {
     const dateYear = date.getFullYear();
 
     if (currentYear === dateYear) {
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(locale, {
         weekday: 'short',
         month: 'short',
         day: 'numeric'
       });
     }
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric',
       year: 'numeric'
@@ -595,11 +594,11 @@ const NutritionTrackingScreen: React.FC = () => {
     endDate.setDate(endDate.getDate() + 6);
     const currentYear = new Date().getFullYear();
 
-    const startStr = startDate.toLocaleDateString('en-US', {
+    const startStr = startDate.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric'
     });
-    const endStr = endDate.toLocaleDateString('en-US', {
+    const endStr = endDate.toLocaleDateString(locale, {
       month: 'short',
       day: 'numeric'
     });
@@ -650,15 +649,15 @@ const NutritionTrackingScreen: React.FC = () => {
   const getWeeklyDayDetailedInfo = (log: DailyNutritionLog, percentage: number) => {
     if (!targets || !log) {
       return {
-        title: 'Loading...',
-        message: 'Please wait while we load your targets.',
+        title: t('common.loading'),
+        message: t('nutrition.weeklyInfo.loadingTargets'),
         icon: 'dots-horizontal',
         color: theme.textSecondary,
       };
     }
 
     const date = new Date(log.date);
-    const dayName = date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' });
+    const dayName = date.toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' });
     const isLogToday = date.toDateString() === new Date().toDateString();
 
     const isVeryLow = percentage < 50;
@@ -676,8 +675,11 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (percentage === 100) {
       return {
-        title: `${dayName} - Perfect! 🎉`,
-        message: `You hit exactly ${formatNumber(logCalories)} calories, meeting your daily target perfectly! This is optimal for maintaining your health goals.${isLogToday ? '\n\nKeep up this excellent balance for the rest of today!' : ''}`,
+        title: t('nutrition.weeklyInfo.perfectTitle', { day: dayName }),
+        message: t('nutrition.weeklyInfo.perfectMessage', {
+          calories: formatNumber(logCalories),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'check-circle',
         color: theme.success,
       };
@@ -685,8 +687,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (isOnTrack) {
       return {
-        title: `${dayName} - Almost There (${percentage}%)`,
-        message: `You consumed ${formatNumber(logCalories)} calories, which is ${formatNumber(remaining)} calories short of your ${formatNumber(targetCalories)} target. This is still within a healthy range.${isLogToday ? '\n\nJust a bit more to reach your goal!' : ''}`,
+        title: t('nutrition.weeklyInfo.almostTitle', { day: dayName, percent: percentage }),
+        message: t('nutrition.weeklyInfo.almostMessage', {
+          calories: formatNumber(logCalories),
+          remaining: formatNumber(remaining),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'chart-line',
         color: theme.success,
       };
@@ -694,8 +700,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (isFair) {
       return {
-        title: `${dayName} - Fair Progress (${percentage}%)`,
-        message: `You've consumed ${formatNumber(logCalories)} of your ${formatNumber(targetCalories)} calorie target. You need ${formatNumber(remaining)} more calories.${isLogToday ? '\n\nTry to add more nutritious foods to your remaining meals today.' : '\n\nConsider adding more calorie-dense, healthy foods to meet your targets.'}`,
+        title: t('nutrition.weeklyInfo.fairTitle', { day: dayName, percent: percentage }),
+        message: t('nutrition.weeklyInfo.fairMessage', {
+          calories: formatNumber(logCalories),
+          remaining: formatNumber(remaining),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'alert',
         color: theme.warning,
       };
@@ -703,8 +713,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (isLow) {
       return {
-        title: `${dayName} - Low (${percentage}%)`,
-        message: `You consumed only ${formatNumber(logCalories)} of your ${formatNumber(targetCalories)} calorie target. This is significantly low and may affect your energy levels and metabolism.${isLogToday ? '\n\nMake sure to eat substantial meals for the rest of the day.' : '\n\nConsistently low intake can impact your health negatively.'}`,
+        title: t('nutrition.weeklyInfo.lowTitle', { day: dayName, percent: percentage }),
+        message: t('nutrition.weeklyInfo.lowMessage', {
+          calories: formatNumber(logCalories),
+          remaining: formatNumber(remaining),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'alert-circle',
         color: theme.error,
       };
@@ -712,8 +726,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (isVeryLow) {
       return {
-        title: `${dayName} - Very Low! (${percentage}%)`,
-        message: `You consumed only ${formatNumber(logCalories)} calories, which is critically below your ${formatNumber(targetCalories)} target. This level of intake is concerning and can harm your metabolism, energy levels, and overall health.${isLogToday ? '\n\nPlease ensure you eat adequate meals for the rest of today.' : '\n\nConsult a healthcare professional if this pattern continues.'}`,
+        title: t('nutrition.weeklyInfo.veryLowTitle', { day: dayName, percent: percentage }),
+        message: t('nutrition.weeklyInfo.veryLowMessage', {
+          calories: formatNumber(logCalories),
+          remaining: formatNumber(remaining),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'close-circle',
         color: theme.error,
       };
@@ -721,8 +739,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (isMinorOver) {
       return {
-        title: `${dayName} - Slightly Over (${percentage}%)`,
-        message: `You consumed ${formatNumber(logCalories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targetCalories)} target. This is a minor excess and shouldn't be a major concern.${isLogToday ? '\n\nConsider lighter options for the rest of the day.' : '\n\nTry to balance this tomorrow with slightly reduced portions.'}`,
+        title: t('nutrition.weeklyInfo.slightlyOverTitle', { day: dayName, percent: percentage }),
+        message: t('nutrition.weeklyInfo.slightlyOverMessage', {
+          calories: formatNumber(logCalories),
+          over: formatNumber(over),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'alert',
         color: theme.warning,
       };
@@ -730,8 +752,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     if (isModerateOver) {
       return {
-        title: `${dayName} - Moderately Over (${percentage}%)`,
-        message: `You consumed ${formatNumber(logCalories)} calories, exceeding your ${formatNumber(targetCalories)} target by ${formatNumber(over)} calories. This is a moderate excess that can impact your health goals.${isLogToday ? '\n\nConsider skipping snacks and choosing lighter options.' : '\n\nBalance this by reducing intake tomorrow and increasing physical activity.'}`,
+        title: t('nutrition.weeklyInfo.moderatelyOverTitle', { day: dayName, percent: percentage }),
+        message: t('nutrition.weeklyInfo.moderatelyOverMessage', {
+          calories: formatNumber(logCalories),
+          over: formatNumber(over),
+          target: formatNumber(targetCalories),
+        }),
         icon: 'alert-circle',
         color: theme.error,
       };
@@ -739,8 +765,12 @@ const NutritionTrackingScreen: React.FC = () => {
 
     // Severe over
     return {
-      title: `${dayName} - Significantly Over! (${percentage}%)`,
-      message: `You consumed ${formatNumber(logCalories)} calories, which is ${formatNumber(over)} over your ${formatNumber(targetCalories)} target. This is a substantial excess that can significantly impact your health goals.${isLogToday ? '\n\nPlease avoid additional meals and snacks for the rest of today.' : '\n\nFocus on portion control, increase physical activity, and aim to balance this over the next few days.'}`,
+      title: t('nutrition.weeklyInfo.significantlyOverTitle', { day: dayName, percent: percentage }),
+      message: t('nutrition.weeklyInfo.significantlyOverMessage', {
+        calories: formatNumber(logCalories),
+        over: formatNumber(over),
+        target: formatNumber(targetCalories),
+      }),
       icon: 'alert',
       color: '#dc2626',
     };
@@ -840,7 +870,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   <View style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: SPACING.sm }}>
                       <Text style={[textStyles.body, { color: theme.text, fontWeight: '700', fontSize: 15 }]}>
-                        {date.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+                        {date.toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' })}
                       </Text>
                     </View>
                     {isLogToday && (
@@ -978,10 +1008,10 @@ const NutritionTrackingScreen: React.FC = () => {
                   {/* Nutrition Info */}
                   <View style={styles.nutritionInfo}>
                     <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                      {formatNumber(entry.calories)} kcal
+                      {formatNumber(entry.calories)} {t('metrics.kcal')}
                     </Text>
                     <Text style={[textStyles.caption, { color: theme.textSecondary }]} numberOfLines={1}>
-                      P: {formatNumber(entry.protein)}g • C: {formatNumber(entry.carbohydrates)}g • F: {formatNumber(entry.fat)}g
+                      {t('nutrition.macroP')}: {formatNumber(entry.protein)}g • {t('nutrition.macroC')}: {formatNumber(entry.carbohydrates)}g • {t('nutrition.macroF')}: {formatNumber(entry.fat)}g
                     </Text>
                   </View>
                 </View>
@@ -1010,7 +1040,7 @@ const NutritionTrackingScreen: React.FC = () => {
           <View style={styles.emptyMeal}>
             <Icon name="food" size={48} color={theme.textSecondary} style={{ opacity: 0.3 }} />
             <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.sm }]}>
-              No foods logged for {mealType}
+              {t('nutrition.noFoodsLogged', { mealType: t(`nutrition.${mealType}`) })}
             </Text>
           </View>
         )}
@@ -1088,9 +1118,9 @@ const NutritionTrackingScreen: React.FC = () => {
             } else {
               // If no metrics, show alert that metrics are required
               Alert.alert(
-                'Metrics Required',
-                'You need to set up your metrics to use nutrition tracking. Please fill in the form and save.',
-                [{ text: 'OK' }]
+                t('nutrition.metricsRequiredTitle'),
+                t('nutrition.metricsRequiredMessage'),
+                [{ text: t('common.ok') }]
               );
             }
           }}
@@ -1276,7 +1306,11 @@ const NutritionTrackingScreen: React.FC = () => {
             ) : (
               <View style={[styles.macroSection, { alignItems: 'center', padding: SPACING.xl }]}>
                 <Text style={[textStyles.body, { color: theme.textSecondary }]}>
-                  {!metrics ? 'Please set up your metrics first.' : !targets ? 'Please set your nutrition targets.' : 'No data for this day.'}
+                  {!metrics
+                    ? t('nutrition.metricsFirst')
+                    : !targets
+                      ? t('nutrition.targetsFirst')
+                      : t('nutrition.noDataForDay')}
                 </Text>
               </View>
             )}
@@ -1528,9 +1562,9 @@ const NutritionTrackingScreen: React.FC = () => {
           } else {
             // If no metrics, show alert that metrics are required
             Alert.alert(
-              'Metrics Required',
-              'You need to set up your metrics to use nutrition tracking. Please fill in the form and save.',
-              [{ text: 'OK' }]
+              t('nutrition.metricsRequiredTitle'),
+              t('nutrition.metricsRequiredMessage'),
+              [{ text: t('common.ok') }]
             );
           }
         }}
@@ -1576,24 +1610,24 @@ const NutritionTrackingScreen: React.FC = () => {
                 <View style={styles.weeklyModalStatItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.consumed')}</Text>
                   <Text style={[textStyles.heading4, { color: theme.primary }]}>
-                    {formatNumber(selectedWeeklyDay.log.total_calories)} kcal
+                    {formatNumber(selectedWeeklyDay.log.total_calories)} {t('metrics.kcal')}
                   </Text>
                 </View>
                 <View style={styles.weeklyModalStatItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.targetGoals')}</Text>
                   <Text style={[textStyles.heading4, { color: theme.text }]}>
-                    {formatNumber(targets.calories)} kcal
+                    {formatNumber(targets.calories)} {t('metrics.kcal')}
                   </Text>
                 </View>
                 <View style={styles.weeklyModalStatItem}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                    {selectedWeeklyDay.percentage > 100 ? 'Over' : 'Remaining'}
+                    {selectedWeeklyDay.percentage > 100 ? t('nutrition.over') : t('nutrition.remaining')}
                   </Text>
                   <Text style={[textStyles.heading4, { color: getWeeklyDayDetailedInfo(selectedWeeklyDay.log, selectedWeeklyDay.percentage).color }]}>
                     {selectedWeeklyDay.percentage > 100
                       ? formatNumber(selectedWeeklyDay.log.total_calories - targets.calories)
                       : formatNumber(targets.calories - selectedWeeklyDay.log.total_calories)
-                    } kcal
+                    } {t('metrics.kcal')}
                   </Text>
                 </View>
               </View>

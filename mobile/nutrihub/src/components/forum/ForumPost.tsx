@@ -105,6 +105,21 @@ const ForumPost: React.FC<ForumPostProps> = ({
 }) => {
   const { theme, textStyles } = useTheme();
   const { t } = useLanguage();
+
+  // Backend sends tag names in English; map known tags to translated labels for display.
+  const getTagLabel = (tagName: string): string => {
+    const normalized = tagName.trim().toLowerCase();
+
+    if (normalized === 'dietary tip') return t('forum.dietaryTips');
+    if (normalized === 'recipe') return t('forum.recipes');
+    if (normalized === 'meal plan') return t('forum.mealPlans');
+
+    if (normalized === 'vegan') return t('forum.dietaryTagVegan');
+    if (normalized === 'halal') return t('forum.dietaryTagHalal');
+    if (normalized === 'high-protein' || normalized === 'high protein') return t('forum.dietaryTagHighProtein');
+
+    return tagName;
+  };
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -203,7 +218,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
     >
       <Icon name={getTagIcon(tag)} size={12} color={getTagColor(tag)} style={styles.tagIcon} />
       <Text style={[styles.tagText, { color: getTagColor(tag) }]}>
-        {tag}
+        {getTagLabel(tag)}
       </Text>
     </View>
   );

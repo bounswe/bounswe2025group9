@@ -36,6 +36,14 @@ const LIKED_POSTS_STORAGE_KEY = 'nutrihub_liked_posts';
 const SEARCH_DEBOUNCE_MS = 400;
 const FUZZY_SIMILARITY_THRESHOLD = 75;
 
+// Backend tag names are expected to be in English (as returned by API).
+// We keep these constants for lookup, but display translated labels in the UI.
+const BACKEND_FORUM_TAG_NAMES = {
+  dietaryTip: 'Dietary tip',
+  recipe: 'Recipe',
+  mealPlan: 'Meal plan',
+} as const;
+
 const levenshteinDistance = (source: string, target: string): number => {
   const lenSource = source.length;
   const lenTarget = target.length;
@@ -816,25 +824,25 @@ const ForumScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.filterOption,
-              selectedTagIds.includes(findTagByName('Dietary tip')?.id || -1) && { 
+              selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.dietaryTip)?.id || -1) && { 
                 backgroundColor: theme.primary 
               }
             ]}
             onPress={() => {
-              const tag = findTagByName('Dietary tip');
+              const tag = findTagByName(BACKEND_FORUM_TAG_NAMES.dietaryTip);
               if (tag && tag.id) toggleTagFilter(tag.id);
             }}
           >
             <Icon
               name="food-apple" 
               size={16}
-              color={selectedTagIds.includes(findTagByName('Dietary tip')?.id || -1) ? 
+              color={selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.dietaryTip)?.id || -1) ? 
                 '#fff' : theme.text}
             />
             <Text
               style={[
                 styles.filterOptionText,
-                selectedTagIds.includes(findTagByName('Dietary tip')?.id || -1) && {
+                selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.dietaryTip)?.id || -1) && {
                   color: '#fff'
                 }
               ]}
@@ -847,25 +855,25 @@ const ForumScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.filterOption,
-              selectedTagIds.includes(findTagByName('Recipe')?.id || -1) && { 
+              selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.recipe)?.id || -1) && { 
                 backgroundColor: theme.primary 
               }
             ]}
             onPress={() => {
-              const tag = findTagByName('Recipe');
+              const tag = findTagByName(BACKEND_FORUM_TAG_NAMES.recipe);
               if (tag && tag.id) toggleTagFilter(tag.id);
             }}
           >
             <Icon
               name="chef-hat" 
               size={16}
-              color={selectedTagIds.includes(findTagByName('Recipe')?.id || -1) ? 
+              color={selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.recipe)?.id || -1) ? 
                 '#fff' : theme.text}
             />
             <Text
               style={[
                 styles.filterOptionText,
-                selectedTagIds.includes(findTagByName('Recipe')?.id || -1) && {
+                selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.recipe)?.id || -1) && {
                   color: '#fff'
                 }
               ]}
@@ -878,25 +886,25 @@ const ForumScreen: React.FC = () => {
           <TouchableOpacity
             style={[
               styles.filterOption,
-              selectedTagIds.includes(findTagByName('Meal plan')?.id || -1) && { 
+              selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.mealPlan)?.id || -1) && { 
                 backgroundColor: theme.primary 
               }
             ]}
             onPress={() => {
-              const tag = findTagByName('Meal plan');
+              const tag = findTagByName(BACKEND_FORUM_TAG_NAMES.mealPlan);
               if (tag && tag.id) toggleTagFilter(tag.id);
             }}
           >
             <Icon
               name="calendar-text" 
               size={16}
-              color={selectedTagIds.includes(findTagByName('Meal plan')?.id || -1) ? 
+              color={selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.mealPlan)?.id || -1) ? 
                 '#fff' : theme.text}
             />
             <Text
               style={[
                 styles.filterOptionText,
-                selectedTagIds.includes(findTagByName('Meal plan')?.id || -1) && {
+                selectedTagIds.includes(findTagByName(BACKEND_FORUM_TAG_NAMES.mealPlan)?.id || -1) && {
                   color: '#fff'
                 }
               ]}
