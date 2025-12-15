@@ -1262,6 +1262,40 @@ export const apiClient = {
       method: "DELETE"
     }, true),
 
+  // Planned Food Entries
+  addPlannedEntry: (entry: {
+    food_id: number;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+    date?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').PlannedFoodEntry>("/meal-planner/daily-log/planned/", {
+      method: "POST",
+      body: JSON.stringify(entry)
+    }, true),
+
+  updatePlannedEntry: (id: number, update: {
+    food_id?: number;
+    serving_size?: number;
+    serving_unit?: string;
+    meal_type?: string;
+  }) =>
+    fetchJson<import('../types/nutrition').PlannedFoodEntry>(`/meal-planner/daily-log/planned/${id}/`, {
+      method: "PUT",
+      body: JSON.stringify(update)
+    }, true),
+
+  deletePlannedEntry: (id: number) =>
+    fetchJson<void>(`/meal-planner/daily-log/planned/${id}/`, {
+      method: "DELETE"
+    }, true),
+
+  convertPlannedToLog: (id: number) =>
+    fetchJson<{ message: string; entry: import('../types/nutrition').FoodLogEntry }>(`/meal-planner/daily-log/planned/${id}/convert/`, {
+      method: "POST"
+    }, true),
+
   // Nutrition Statistics
   getNutritionStatistics: (period: 'week' | 'month' = 'week') =>
     fetchJson<import('../types/nutrition').NutritionStatistics>(`/meal-planner/nutrition-statistics/?period=${period}`, {

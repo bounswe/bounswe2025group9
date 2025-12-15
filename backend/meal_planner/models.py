@@ -259,3 +259,108 @@ class FoodLogEntry(models.Model):
 def recalculate_daily_log_on_delete(sender, instance, **kwargs):
     """Update daily log totals when a food entry is deleted."""
     instance.daily_log.recalculate_totals()
+
+
+class PlannedFoodEntry(models.Model):
+    """
+    Planned food entry for a specific date.
+    Unlike FoodLogEntry, these are not actually consumed - they're planned/scheduled foods.
+    Can be converted to FoodLogEntry when the user confirms consumption.
+    """
+    MEAL_TYPE_CHOICES = [
+        ('breakfast', 'Breakfast'),
+        ('lunch', 'Lunch'),
+        ('dinner', 'Dinner'),
+        ('snack', 'Snack'),
+    ]
+    
+    daily_log = models.ForeignKey(
+        DailyNutritionLog,
+        on_delete=models.CASCADE,
+        related_name='planned_entries'
+    )
+    food = models.ForeignKey(
+        'foods.FoodEntry',
+        on_delete=models.PROTECT,
+        related_name='planned_log_entries',
+        null=True,
+        blank=True
+    )
+    serving_size = models.DecimalField(
+        max_digits=10,
+        decimal_places=6,
+        help_text="Serving size multiplier (e.g., 2 for two servings)"
+    )
+    serving_unit = models.CharField(
+        max_length=50,
+        default='serving',
+        help_text="Unit of measurement (e.g., serving, cup, gram)"
+    )
+    meal_type = models.CharField(max_length=20, choices=MEAL_TYPE_CHOICES)
+    
+    # Calculated nutrition values (stored for this specific serving)
+    calories = models.DecimalField(max_digits=8, decimal_places=2)
+    protein = models.DecimalField(max_digits=7, decimal_places=2)
+    carbohydrates = models.DecimalField(max_digits=7, decimal_places=2)
+    fat = models.DecimalField(max_digits=7, decimal_places=2)
+    micronutrients = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Micronutrient values for this serving"
+    )
+    
+    planned_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['planned_at']
+        verbose_name_plural = "Planned Food Entries"
+    
+    def __str__(self):
+        food_name = self.food.name if self.food else "Unknown"
+        return f"[Planned] {food_name} ({self.serving_size} {self.serving_unit}) - {self.meal_type}"
+    
+    def save(self, *args, **kwargs):
+        """Calculate nutrition values before saving."""
+        food_source = self.food
+        
+        if food_source:
+            # Calculate nutrition based on serving size and round to 2 decimal places
+            serving_size_float = float(self.serving_size)
+            
+            self.calories = Decimal(str(food_source.caloriesPerServing * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.protein = Decimal(str(food_source.proteinContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.fat = Decimal(str(food_source.fatContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            self.carbohydrates = Decimal(str(food_source.carbohydrateContent * serving_size_float)).quantize(
+                Decimal('0.01'), rounding=ROUND_HALF_UP
+            )
+            
+            # Handle micronutrients
+            if food_source.micronutrient_values.exists():
+                self.micronutrients = {
+                    mv.micronutrient.name: mv.value * serving_size_float
+                    for mv in food_source.micronutrient_values.select_related("micronutrient")
+                }
+        
+        self.full_clean()
+        super().save(*args, **kwargs)
+    
+    def convert_to_log_entry(self):
+        """
+        Convert this planned entry to an actual FoodLogEntry.
+        Returns the created FoodLogEntry and deletes this planned entry.
+        """
+        log_entry = FoodLogEntry.objects.create(
+            daily_log=self.daily_log,
+            food=self.food,
+            serving_size=self.serving_size,
+            serving_unit=self.serving_unit,
+            meal_type=self.meal_type,
+        )
+        self.delete()
+        return log_entry
