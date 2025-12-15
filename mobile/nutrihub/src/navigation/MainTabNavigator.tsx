@@ -32,6 +32,7 @@ import FollowersListScreen from '../screens/user/FollowersListScreen';
 import FollowingListScreen from '../screens/user/FollowingListScreen';
 import LanguageSettingsScreen from '../screens/user/LanguageSettingsScreen';
 import PrivateFoodsScreen from '../screens/food/PrivateFoodsScreen';
+import PrivateFoodDetailScreen from '../screens/food/PrivateFoodDetailScreen';
 
 // Nutrition screens
 import NutritionTrackingScreen from '../screens/nutrition/NutritionTrackingScreen';
@@ -155,6 +156,7 @@ const ProfileStackNavigator = () => {
       <ProfileStack.Screen name="LanguageSettings" component={LanguageSettingsScreen} />
       <ProfileStack.Screen name="FoodProposals" component={FoodProposalsScreen} />
       <ProfileStack.Screen name="PrivateFoods" component={PrivateFoodsScreen} />
+      <ProfileStack.Screen name="PrivateFoodDetail" component={PrivateFoodDetailScreen} />
     </ProfileStack.Navigator>
   );
 };
