@@ -15,6 +15,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import MacronutrientCard from '../../components/nutrition/MacronutrientCard';
 import MicronutrientPanel from '../../components/nutrition/MicronutrientPanel';
@@ -83,6 +84,7 @@ const isMineral = (name: string): boolean => {
 const NutritionTrackingScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const navigation = useNavigation();
+  const { t } = useLanguage();
 
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
@@ -786,13 +788,13 @@ const NutritionTrackingScreen: React.FC = () => {
         <View style={styles.sectionHeader}>
           <Icon name="chart-line" size={28} color={theme.primary} />
           <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm }]}>
-            Weekly Summary
+            {t('nutrition.weeklySummary')}
           </Text>
         </View>
 
         {sortedLogs.length === 0 ? (
           <View style={{ padding: SPACING.lg, alignItems: 'center' }}>
-            <Text style={[textStyles.body, { color: theme.textSecondary }]}>No logs found for this week.</Text>
+            <Text style={[textStyles.body, { color: theme.textSecondary }]}>{t('nutrition.noLogsForWeek')}</Text>
           </View>
         ) : (
           sortedLogs.map((log: DailyNutritionLog) => {
@@ -843,7 +845,7 @@ const NutritionTrackingScreen: React.FC = () => {
                     </View>
                     {isLogToday && (
                       <View style={[styles.todayBadge, { backgroundColor: theme.success, marginTop: SPACING.sm }]}>
-                        <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>Today</Text>
+                        <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>{t('common.today')}</Text>
                       </View>
                     )}
                   </View>
@@ -871,7 +873,7 @@ const NutritionTrackingScreen: React.FC = () => {
                 </View>
 
                 <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.md, fontWeight: '500' }]}>
-                  {formatNumber(logCalories)} / {formatNumber(targetCalories)} kcal
+                  {formatNumber(logCalories)} / {formatNumber(targetCalories)} {t('metrics.kcal')}
                 </Text>
 
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -925,10 +927,10 @@ const NutritionTrackingScreen: React.FC = () => {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[textStyles.heading4, { color: theme.text, textTransform: 'capitalize', fontWeight: '700' }]}>
-                {mealType}
+                {t(`nutrition.${mealType}`)}
               </Text>
               <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.xs / 2 }]}>
-                {formatNumber(totals.calories)} kcal • {entries.length} {entries.length === 1 ? 'item' : 'items'}
+                {formatNumber(totals.calories)} {t('metrics.kcal')} • {entries.length} {entries.length === 1 ? t('common.item') : t('common.items')}
               </Text>
             </View>
           </View>
@@ -943,7 +945,7 @@ const NutritionTrackingScreen: React.FC = () => {
           >
             <View style={styles.addButtonContent}>
               <Icon name="plus-circle" size={20} color="#fff" />
-              <Text style={[textStyles.body, { color: '#fff', marginLeft: 6, fontWeight: '600', fontSize: 14 }]}>Add Food</Text>
+              <Text style={[textStyles.body, { color: '#fff', marginLeft: 6, fontWeight: '600', fontSize: 14 }]}>{t('food.addFood')}</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -1017,25 +1019,25 @@ const NutritionTrackingScreen: React.FC = () => {
         {entries.length > 0 && (
           <View style={[styles.mealTotals, { borderTopColor: theme.border }]}>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Calories</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('food.calories')}</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
                 {formatNumber(totals.calories)}
               </Text>
             </View>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Protein</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>{t('food.protein')}</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
                 {formatNumber(totals.protein)}g
               </Text>
             </View>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Carbs</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>{t('food.carbs')}</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
                 {formatNumber(totals.carbs)}g
               </Text>
             </View>
             <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>Fat</Text>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>{t('food.fat')}</Text>
               <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
                 {formatNumber(totals.fat)}g
               </Text>
@@ -1051,7 +1053,7 @@ const NutritionTrackingScreen: React.FC = () => {
     return (
       <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color={theme.primary} />
-        <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.md }]}>Loading nutrition data...</Text>
+        <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.md }]}>{t('nutrition.loadingNutritionData')}</Text>
       </View>
     );
   }
@@ -1063,16 +1065,16 @@ const NutritionTrackingScreen: React.FC = () => {
         <View style={[styles.container, { backgroundColor: theme.background, justifyContent: 'center', alignItems: 'center', padding: SPACING.xl }]}>
           <Icon name="chart-line" size={64} color={theme.textSecondary} style={{ opacity: 0.3, marginBottom: SPACING.lg }} />
           <Text style={[textStyles.heading3, { color: theme.text, marginBottom: SPACING.md, textAlign: 'center' }]}>
-            Setup Required
+            {t('nutrition.setupRequired')}
           </Text>
           <Text style={[textStyles.body, { color: theme.textSecondary, textAlign: 'center', marginBottom: SPACING.xl }]}>
-            To track your nutrition, we need some basic information about you. Please set up your metrics to get started.
+            {t('nutrition.setupRequiredDesc')}
           </Text>
           <TouchableOpacity
             style={[styles.modalButton, { backgroundColor: theme.primary, paddingHorizontal: SPACING.xl, paddingVertical: SPACING.md }]}
             onPress={() => setShowMetricsModal(true)}
           >
-            <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Set Up Metrics</Text>
+            <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>{t('profile.setMetrics')}</Text>
           </TouchableOpacity>
         </View>
         {/* User Metrics Modal - render even on setup screen */}
@@ -1109,7 +1111,7 @@ const NutritionTrackingScreen: React.FC = () => {
         >
           <Icon name="arrow-left" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[textStyles.heading3, { color: theme.text, fontWeight: '700' }]}>Nutrition Tracking</Text>
+        <Text style={[textStyles.heading3, { color: theme.text, fontWeight: '700' }]}>{t('nutrition.tracking')}</Text>
         <TouchableOpacity
           activeOpacity={0.7}
           onPress={() => setShowMetricsModal(true)}
@@ -1152,7 +1154,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   fontWeight: viewMode === 'daily' ? '700' : '500'
                 }
               ]}>
-                Daily
+                {t('common.daily')}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -1183,7 +1185,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   fontWeight: viewMode === 'weekly' ? '700' : '500'
                 }
               ]}>
-                Weekly
+                {t('common.weekly')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1209,12 +1211,12 @@ const NutritionTrackingScreen: React.FC = () => {
               </Text>
               {viewMode === 'daily' && isToday && (
                 <View style={[styles.todayBadge, { backgroundColor: theme.success }]}>
-                  <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>Today</Text>
+                  <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>{t('common.today')}</Text>
                 </View>
               )}
               {viewMode === 'weekly' && isCurrentWeek && (
                 <View style={[styles.todayBadge, { backgroundColor: theme.success }]}>
-                  <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>This Week</Text>
+                  <Text style={[textStyles.small, { color: '#fff', fontWeight: '600' }]}>{t('common.thisWeek')}</Text>
                 </View>
               )}
             </View>
@@ -1239,7 +1241,7 @@ const NutritionTrackingScreen: React.FC = () => {
             {dailyLog && targets && metrics ? (
               <View style={styles.macroSection}>
                 <MacronutrientCard
-                  name="Calories"
+                  name={t('food.calories')}
                   current={dailyLog.total_calories}
                   target={targets.calories}
                   unit=""
@@ -1247,7 +1249,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   mealBreakdown={mealBreakdown}
                 />
                 <MacronutrientCard
-                  name="Protein"
+                  name={t('food.protein')}
                   current={dailyLog.total_protein}
                   target={targets.protein}
                   unit="g"
@@ -1255,7 +1257,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   icon="P"
                 />
                 <MacronutrientCard
-                  name="Carbohydrates"
+                  name={t('food.carbohydrates')}
                   current={dailyLog.total_carbohydrates}
                   target={targets.carbohydrates}
                   unit="g"
@@ -1263,7 +1265,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   icon="C"
                 />
                 <MacronutrientCard
-                  name="Fat"
+                  name={t('food.fat')}
                   current={dailyLog.total_fat}
                   target={targets.fat}
                   unit="g"
@@ -1284,7 +1286,7 @@ const NutritionTrackingScreen: React.FC = () => {
               <View style={styles.sectionHeader}>
                 <Icon name="silverware-fork-knife" size={28} color={theme.primary} />
                 <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm, flex: 1 }]}>
-                  {isToday ? "Today's Meals" : "Meals"}
+                  {isToday ? t('nutrition.todaysMeals') : t('nutrition.meals')}
                 </Text>
               </View>
 
@@ -1341,7 +1343,7 @@ const NutritionTrackingScreen: React.FC = () => {
           <View style={[styles.modalContent, { backgroundColor: theme.surface }]}>
             <View style={styles.modalHeader}>
               <Text style={[textStyles.heading3, { color: theme.text, flex: 1 }]}>
-                {editingEntry ? 'Edit Entry' : 'Add Food'}
+                {editingEntry ? t('nutrition.editEntry') : t('food.addFood')}
               </Text>
               <TouchableOpacity
                 onPress={() => {
@@ -1363,7 +1365,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   </Text>
                   {selectedFood.macronutrients && (
                     <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                      Per {selectedFood.servingSize || 100}g: {selectedFood.macronutrients.calories} kcal • P: {selectedFood.macronutrients.protein}g • C: {selectedFood.macronutrients.carbohydrates}g • F: {selectedFood.macronutrients.fat}g
+                      {t('nutrition.perAmount', { grams: selectedFood.servingSize || 100 })}: {selectedFood.macronutrients.calories} {t('metrics.kcal')} • {t('nutrition.macroP')}: {selectedFood.macronutrients.protein}g • {t('nutrition.macroC')}: {selectedFood.macronutrients.carbohydrates}g • {t('nutrition.macroF')}: {selectedFood.macronutrients.fat}g
                     </Text>
                   )}
                 </View>
@@ -1371,16 +1373,16 @@ const NutritionTrackingScreen: React.FC = () => {
 
               <View style={{ marginBottom: SPACING.lg }}>
                 <TextInput
-                  label="Serving Size"
+                  label={t('nutrition.servingSize')}
                   value={servingSize.toString()}
                   onChangeText={setServingSize}
                   keyboardType="numeric"
                   placeholder={servingUnit === 'g' ? (selectedFood?.servingSize ? String(selectedFood.servingSize) : '100') : '1'}
-                  helperText={`Enter the amount consumed in ${servingUnit === 'g' ? 'grams' : 'servings'}`}
+                  helperText={t('nutrition.servingHelp', { unit: servingUnit === 'g' ? t('nutrition.grams') : t('nutrition.servings') })}
                 />
 
                 <Text style={[textStyles.body, { color: theme.text, marginBottom: SPACING.xs, marginTop: SPACING.sm }]}>
-                  Unit
+                  {t('nutrition.unit')}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: SPACING.md }}>
                   <TouchableOpacity
@@ -1400,7 +1402,7 @@ const NutritionTrackingScreen: React.FC = () => {
                       textStyles.body,
                       { color: servingUnit === 'g' ? '#fff' : theme.text }
                     ]}>
-                      Grams (g)
+                      {t('nutrition.grams')} (g)
                     </Text>
                   </TouchableOpacity>
 
@@ -1420,7 +1422,7 @@ const NutritionTrackingScreen: React.FC = () => {
                       textStyles.body,
                       { color: servingUnit === 'serving' ? '#fff' : theme.text }
                     ]}>
-                      Servings
+                      {t('nutrition.servings')}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1435,11 +1437,11 @@ const NutritionTrackingScreen: React.FC = () => {
                   marginBottom: SPACING.lg
                 }}>
                   <Text style={[textStyles.caption, { color: theme.textSecondary, marginBottom: SPACING.sm }]}>
-                    Nutrition Preview ({servingSize} {servingUnit})
+                    {t('nutrition.nutritionPreview', { size: servingSize, unit: servingUnit })}
                   </Text>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <View>
-                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Calories</Text>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('food.calories')}</Text>
                       <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700' }]}>
                         {(() => {
                           const size = Number(servingSize);
@@ -1454,7 +1456,7 @@ const NutritionTrackingScreen: React.FC = () => {
                       </Text>
                     </View>
                     <View>
-                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Protein</Text>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('food.protein')}</Text>
                       <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
                         {(() => {
                           const size = Number(servingSize);
@@ -1469,7 +1471,7 @@ const NutritionTrackingScreen: React.FC = () => {
                       </Text>
                     </View>
                     <View>
-                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Carbs</Text>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('food.carbs')}</Text>
                       <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
                         {(() => {
                           const size = Number(servingSize);
@@ -1484,7 +1486,7 @@ const NutritionTrackingScreen: React.FC = () => {
                       </Text>
                     </View>
                     <View>
-                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Fat</Text>
+                      <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('food.fat')}</Text>
                       <Text style={[textStyles.body, { color: theme.text, fontWeight: '600' }]}>
                         {(() => {
                           const size = Number(servingSize);
@@ -1508,7 +1510,7 @@ const NutritionTrackingScreen: React.FC = () => {
               onPress={editingEntry ? handleUpdateEntry : handleConfirmServing}
             >
               <Text style={[textStyles.body, { color: '#fff', fontWeight: '600' }]}>
-                {editingEntry ? 'Update Entry' : 'Add Food'}
+                {editingEntry ? t('common.update') : t('food.addFood')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -1572,13 +1574,13 @@ const NutritionTrackingScreen: React.FC = () => {
 
               <View style={styles.weeklyModalStats}>
                 <View style={styles.weeklyModalStatItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Consumed</Text>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.consumed')}</Text>
                   <Text style={[textStyles.heading4, { color: theme.primary }]}>
                     {formatNumber(selectedWeeklyDay.log.total_calories)} kcal
                   </Text>
                 </View>
                 <View style={styles.weeklyModalStatItem}>
-                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Target</Text>
+                  <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.targetGoals')}</Text>
                   <Text style={[textStyles.heading4, { color: theme.text }]}>
                     {formatNumber(targets.calories)} kcal
                   </Text>
@@ -1601,7 +1603,7 @@ const NutritionTrackingScreen: React.FC = () => {
                 onPress={() => setSelectedWeeklyDay(null)}
                 activeOpacity={0.8}
               >
-                <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Got it</Text>
+                <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>{t('common.gotIt')}</Text>
               </TouchableOpacity>
             </View>
           </View>

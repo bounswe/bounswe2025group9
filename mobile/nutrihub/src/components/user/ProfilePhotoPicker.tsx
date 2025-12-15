@@ -4,6 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 export interface ProfilePhotoPickerProps {
@@ -29,6 +30,7 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({
   showFormatInfo = true,
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const [localUploading, setLocalUploading] = useState(false);
 
   const isUploading = uploading || localUploading;
@@ -137,12 +139,14 @@ const ProfilePhotoPicker: React.FC<ProfilePhotoPickerProps> = ({
         <View style={styles.actions}>
           <TouchableOpacity style={[styles.button, { backgroundColor: theme.primary }]} onPress={pickImage} disabled={isUploading}>
             <Icon name="image" size={16} color="#fff" />
-            <Text style={[styles.buttonText, textStyles.caption, { color: '#fff' }]}>{isUploading ? 'Uploading...' : (uri ? 'Change photo' : 'Upload photo')}</Text>
+            <Text style={[styles.buttonText, textStyles.caption, { color: '#fff' }]}>
+              {isUploading ? t('common.uploading') : (uri ? t('profile.changePhoto') : t('profile.uploadPhoto'))}
+            </Text>
           </TouchableOpacity>
           {uri && removable && (
             <TouchableOpacity style={[styles.button, styles.secondaryButton, { borderColor: theme.border }]} onPress={removeImage} disabled={isUploading}>
               <Icon name="delete" size={16} color={theme.text} />
-              <Text style={[styles.buttonText, textStyles.caption]}>{'Remove'}</Text>
+              <Text style={[styles.buttonText, textStyles.caption]}>{t('common.remove')}</Text>
             </TouchableOpacity>
           )}
         </View>
