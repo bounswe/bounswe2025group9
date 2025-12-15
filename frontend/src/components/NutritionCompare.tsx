@@ -1,7 +1,7 @@
 import React from 'react';
 import { Food } from '../lib/apiClient';
-import { useLanguage } from '../context/LanguageContext';
 import MacroRadarChart, { MineralRadarChart, VitaminRadarChart } from './radarChart';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NutritionCompareProps {
     foods: Food[];
@@ -9,6 +9,7 @@ interface NutritionCompareProps {
 
 const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
     const { t } = useLanguage();
+
     // Calculate per 100g values
     const calculatePer100g = (value: number, servingSize: number) => {
         return ((value / servingSize) * 100).toFixed(1);
@@ -32,7 +33,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
 
                     {/* Vitamins Radar Chart */}
                     <div className="nh-card p-4">
-                        <h3 className="nh-subtitle mb-4">Vitamins (per 100g)</h3>
+                        <h3 className="nh-subtitle mb-4">{t('food.vitaminsPer100g')}</h3>
                         <div className="w-full">
                             {foods.length > 2 ? (
                                 <VitaminRadarChart food1={foods[0]} food2={foods[1]} food3={foods[2]} />
@@ -44,7 +45,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
 
                     {/* Minerals Radar Chart */}
                     <div className="nh-card p-4">
-                        <h3 className="nh-subtitle mb-4">Minerals (per 100g)</h3>
+                        <h3 className="nh-subtitle mb-4">{t('food.mineralsPer100g')}</h3>
                         <div className="w-full">
                             {foods.length > 2 ? (
                                 <MineralRadarChart food1={foods[0]} food2={foods[1]} food3={foods[2]} />
@@ -125,7 +126,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
                             <table className="w-full text-sm">
                                 <thead>
                                     <tr className="border-b border-[var(--color-border)]">
-                                        <th className="text-left py-3 px-2 nh-text font-semibold">{t('food.nutrient')}</th>
+                                        <th className="text-left py-3 px-2 nh-text font-semibold">Nutrient</th>
                                         {foods.map((food, idx) => (
                                             <th key={idx} className="text-center py-3 px-2 nh-text font-semibold">
                                                 {food.name}
@@ -135,7 +136,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
                                 </thead>
                                 <tbody>
                                     <tr className="border-b border-[var(--color-border)]">
-                                        <td className="py-3 px-2 nh-text">{t('food.calories')}</td>
+                                        <td className="py-3 px-2 nh-text">Calories</td>
                                         {foods.map((food, idx) => (
                                             <td key={idx} className="text-center py-3 px-2 nh-text font-medium">
                                                 {calculatePer100g(food.caloriesPerServing, food.servingSize)} kcal
@@ -143,7 +144,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
                                         ))}
                                     </tr>
                                     <tr className="border-b border-[var(--color-border)]">
-                                        <td className="py-3 px-2 nh-text">{t('food.protein')}</td>
+                                        <td className="py-3 px-2 nh-text">Protein</td>
                                         {foods.map((food, idx) => (
                                             <td key={idx} className="text-center py-3 px-2 nh-text font-medium">
                                                 {calculatePer100g(food.proteinContent, food.servingSize)}g
@@ -151,7 +152,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
                                         ))}
                                     </tr>
                                     <tr className="border-b border-[var(--color-border)]">
-                                        <td className="py-3 px-2 nh-text">{t('food.fat')}</td>
+                                        <td className="py-3 px-2 nh-text">Fat</td>
                                         {foods.map((food, idx) => (
                                             <td key={idx} className="text-center py-3 px-2 nh-text font-medium">
                                                 {calculatePer100g(food.fatContent, food.servingSize)}g
@@ -159,7 +160,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
                                         ))}
                                     </tr>
                                     <tr>
-                                        <td className="py-3 px-2 nh-text">{t('food.carbohydrates')}</td>
+                                        <td className="py-3 px-2 nh-text">Carbohydrates</td>
                                         {foods.map((food, idx) => (
                                             <td key={idx} className="text-center py-3 px-2 nh-text font-medium">
                                                 {calculatePer100g(food.carbohydrateContent, food.servingSize)}g
@@ -173,7 +174,7 @@ const NutritionCompare: React.FC<NutritionCompareProps> = ({ foods }) => {
 
                 </div>
             ) : (
-                <p className="text-center nh-text col-span-full">{t('food.selectTwoOrThreeFoodsToCompare')}</p>
+                <p className="text-center nh-text col-span-full">{t('food.selectFoodsToCompare')}</p>
             )}
         </div>
     );

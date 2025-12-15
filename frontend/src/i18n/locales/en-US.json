@@ -244,7 +244,18 @@
     "viewCalorieContent": "View calorie content per serving",
     "checkDietaryCompatibility": "Check dietary compatibility",
     "foodAlreadySelected": "This food is already selected for comparison.",
-    "canCompareUpToThree": "You can compare up to 3 foods only."
+    "canCompareUpToThree": "You can compare up to 3 foods only.",
+    "food1": "Food 1",
+    "food2": "Food 2",
+    "food3": "Food 3",
+    "macronutrientsPer100g": "Macronutrients (per 100g)",
+    "vitaminsPer100g": "Vitamins (per 100g)",
+    "mineralsPer100g": "Minerals (per 100g)",
+    "nutritionComparisonPerServing": "Nutrition Comparison (Per Serving)",
+    "nutritionComparisonPer100g": "Nutrition Comparison (Per 100g)",
+    "nutrient": "Nutrient",
+    "selectFoodsToCompare": "Select two or three foods to compare",
+    "noMicronutrientData": "Micronutrient data is not available for the selected foods."
   },
   "forum": {
     "title": "Forum",

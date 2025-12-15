@@ -244,7 +244,18 @@
     "viewCalorieContent": "Porsiyon başına kalori içeriğini görüntüleyin",
     "checkDietaryCompatibility": "Diyet uyumluluğunu kontrol edin",
     "foodAlreadySelected": "Bu yiyecek zaten karşılaştırma için seçilmiş.",
-    "canCompareUpToThree": "Sadece 3 yiyeceğe kadar karşılaştırabilirsiniz."
+    "canCompareUpToThree": "Sadece 3 yiyeceğe kadar karşılaştırabilirsiniz.",
+    "food1": "Yiyecek 1",
+    "food2": "Yiyecek 2",
+    "food3": "Yiyecek 3",
+    "macronutrientsPer100g": "Makrobesinler (100g başına)",
+    "vitaminsPer100g": "Vitaminler (100g başına)",
+    "mineralsPer100g": "Mineraller (100g başına)",
+    "nutritionComparisonPerServing": "Beslenme Karşılaştırması (Porsiyon Başına)",
+    "nutritionComparisonPer100g": "Beslenme Karşılaştırması (100g Başına)",
+    "nutrient": "Besin",
+    "selectFoodsToCompare": "Karşılaştırmak için iki veya üç yiyecek seçin",
+    "noMicronutrientData": "Seçilen yiyecekler için mikrobesin verisi mevcut değil."
   },
   "forum": {
     "title": "Forum",

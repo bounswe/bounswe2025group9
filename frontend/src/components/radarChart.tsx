@@ -167,6 +167,68 @@ const MacroRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }
     );
 };
 
+const MicronutrientRadarChart: React.FC<MicronutrientRadarChartProps> = ({ food1, food2, food3, nutrients }) => {
+    const { t } = useLanguage();
+    const data: MicronutrientDatum[] = nutrients.map((nutrient) => {
+        const f1 = formatMicronutrientValue(food1, nutrient);
+        const f2 = formatMicronutrientValue(food2, nutrient);
+        const emptyMicronutrient: MicronutrientValue = { value: 0, unit: '', label: 'N/A' };
+        const f3 = food3 ? formatMicronutrientValue(food3, nutrient) : emptyMicronutrient;
+        const unit: MicronutrientUnit = f1.unit || f2.unit || f3.unit;
+        const nutrientMax = Math.max(f1.value, f2.value, f3.value);
+        const normalize = (val: number) => nutrientMax > 0 ? (val / nutrientMax) * 100 : 0;
+
+        return {
+            nutrient,
+            f1: toSigFigs(normalize(f1.value), 3),
+            f2: toSigFigs(normalize(f2.value), 3),
+            f3: food3 ? toSigFigs(normalize(f3.value), 3) : undefined,
+            unit,
+            display: {
+                f1: f1.label,
+                f2: f2.label,
+                ...(food3 ? { f3: f3.label } : {}),
+            },
+            actual: {
+                f1: f1.label,
+                f2: f2.label,
+                ...(food3 ? { f3: f3.label } : {}),
+            },
+        };
+    });
+
+    const hasAnyData = data.some((d) => (d.f1 > 0 || d.f2 > 0 || (d.f3 ?? 0) > 0));
+
+    if (!hasAnyData) {
+        return (
+            <div style={{ width: '100%', height: 360, maxWidth: '700px' }} className="flex items-center justify-center">
+                <p className="nh-text text-sm text-center px-4">
+                    {t('food.noMicronutrientData')}
+                </p>
+            </div>
+        );
+    }
+
+    return (
+        <div style={{ width: '100%', height: 360, maxWidth: '700px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+                <RadarChart data={data} outerRadius="80%">
+                    <PolarGrid />
+                    <PolarAngleAxis dataKey="nutrient" />
+                    <PolarRadiusAxis angle={90} type="number" domain={[0, 100]} />
+                    <Tooltip content={<MicronutrientTooltip />} />
+                    <Radar name={food1?.name || t('food.food1')} dataKey="f1" stroke={colors[0].stroke} fill={colors[0].fill} fillOpacity={0} strokeWidth={2} />
+                    <Radar name={food2?.name || t('food.food2')} dataKey="f2" stroke={colors[1].stroke} fill={colors[1].fill} fillOpacity={0} strokeWidth={2} />
+                    {food3 && (
+                        <Radar name={food3?.name || t('food.food3')} dataKey="f3" stroke={colors[2].stroke} fill={colors[2].fill} fillOpacity={0} strokeWidth={2} />
+                    )}
+                    <Legend verticalAlign="bottom" />
+                </RadarChart>
+            </ResponsiveContainer>
+        </div>
+    );
+};
+
 export const VitaminRadarChart: React.FC<MacroRadarChartProps> = ({ food1, food2, food3 }) => {
     const vitaminKeys = [
         'Vitamin A, RAE',
