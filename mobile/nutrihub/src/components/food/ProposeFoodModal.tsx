@@ -174,6 +174,8 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
       micronutrients: {},
     },
     validationRules,
+    // Re-validate as user types so "required" errors clear immediately
+    validateOnChange: true,
     onSubmit: async (formValues) => {
       const submitData = {
         ...formValues,

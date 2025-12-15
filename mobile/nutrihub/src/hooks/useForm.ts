@@ -178,13 +178,7 @@ function useForm<T extends Record<string, any>>({
       ...prevValues,
       [name]: value,
     }));
-    
-    // Mark field as touched
-    setTouched((prevTouched) => ({
-      ...prevTouched,
-      [name]: true,
-    }));
-    
+
     // Validate field on change if enabled
     if (validateOnChange) {
       const error = validateField(name, value);
