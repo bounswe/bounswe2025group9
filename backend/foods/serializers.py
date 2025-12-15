@@ -1,3 +1,4 @@
+import logging
 from urllib.parse import quote
 
 from rest_framework import serializers
@@ -11,6 +12,8 @@ from foods.models import (
     PriceCategoryThreshold,
     PriceReport,
 )
+
+logger = logging.getLogger(__name__)
 
 
 # Serializer for FoodEntry model
@@ -94,6 +97,12 @@ class FoodProposalSerializer(serializers.ModelSerializer):
     nutritionScore = serializers.FloatField(
         source="food_entry.nutritionScore", required=False
     )
+    imageUrl = serializers.URLField(
+        source="food_entry.imageUrl", 
+        required=False, 
+        allow_blank=True,
+        help_text="Optional image URL. If not provided, an AI-generated image will be created."
+    )
 
     class Meta:
         model = FoodProposal
@@ -109,6 +118,7 @@ class FoodProposalSerializer(serializers.ModelSerializer):
             "carbohydrateContent",
             "dietaryOptions",
             "nutritionScore",
+            "imageUrl",
             "isApproved",
             "createdAt",
             "proposedBy",
@@ -135,6 +145,29 @@ class FoodProposalSerializer(serializers.ModelSerializer):
 
         return attrs
 
+    def _trigger_background_image_generation(self, food_entry_id: int, food_name: str) -> None:
+        """
+        Trigger background AI image generation for the food entry.
+        This is non-blocking - the image will be generated and saved asynchronously.
+        """
+        try:
+            print(f"[Serializer] Triggering background image generation for: {food_name} (ID: {food_entry_id})")
+            from foods.image_generation import generate_food_image_async, is_image_generation_enabled
+            
+            if not is_image_generation_enabled():
+                print("[Serializer] AI image generation is NOT enabled (missing credentials)")
+                logger.info("AI image generation is not configured, skipping")
+                return
+            
+            print(f"[Serializer] Calling generate_food_image_async...")
+            logger.info(f"Triggering background image generation for food proposal: {food_name} (ID: {food_entry_id})")
+            generate_food_image_async(food_entry_id, food_name)
+            print(f"[Serializer] Background generation triggered successfully")
+            
+        except Exception as e:
+            print(f"[Serializer] ERROR: {e}")
+            logger.error(f"Error triggering background image generation for {food_name}: {e}")
+
     def create(self, validated_data):
         request = self.context["request"]
 
@@ -150,16 +183,31 @@ class FoodProposalSerializer(serializers.ModelSerializer):
         # Flat fields path
         food_entry_data = validated_data.pop("food_entry")
 
-        food_entry_data['nutritionScore']= calculate_nutrition_score(food_entry_data)
+        food_entry_data['nutritionScore'] = calculate_nutrition_score(food_entry_data)
+        
+        # Check if we need to generate an image (no imageUrl provided)
+        needs_image_generation = not food_entry_data.get('imageUrl')
+        food_name = food_entry_data.get('name', '')
+        
+        # Create the FoodEntry first (without image if we need to generate one)
         food_entry = FoodEntry.objects.create(
             **food_entry_data,
             validated=False,
             createdBy=request.user,
         )
-        return FoodProposal.objects.create(
+        
+        # Create the proposal
+        proposal = FoodProposal.objects.create(
             food_entry=food_entry,
             proposedBy=request.user,
         )
+        
+        # Trigger background image generation AFTER creating the entry
+        # This allows the API to return immediately while image generates in background
+        if needs_image_generation and food_name:
+            self._trigger_background_image_generation(food_entry.id, food_name)
+        
+        return proposal
 
 class FoodProposalStatusSerializer(serializers.ModelSerializer):
     name = serializers.CharField(source="food_entry.name", read_only=True)
