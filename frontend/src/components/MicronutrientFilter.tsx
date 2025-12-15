@@ -36,7 +36,7 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
   return (
     <NutrientFilter
       title="Micronutrient Filters"
-      description="Filter foods by their micronutrient content. Start typing to see suggestions."
+      description=""
       availableNutrients={availableMicronutrients}
       loading={loading}
       filters={filters}
