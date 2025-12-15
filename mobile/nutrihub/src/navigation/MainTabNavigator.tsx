@@ -196,7 +196,7 @@ const TabNavigator = () => {
           } else if (route.name === 'Forum') {
             iconName = focused ? 'forum' : 'forum-outline';
           } else if (route.name === 'Nutrition') {
-            iconName = focused ? 'chart-arc' : 'chart-arc';
+            iconName = focused ? 'silverware-fork-knife' : 'silverware-fork-knife';
           } else if (route.name === 'MyProfile') {
             iconName = focused ? 'account' : 'account-outline';
           } else {
