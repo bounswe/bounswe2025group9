@@ -72,6 +72,7 @@ export interface FoodProposalStatus {
   servingSize: number;
   isApproved: boolean | null;
   imageUrl: string;
+  createdAt: string;
 }
 
 // Type for creating a new food proposal (omits backend-generated fields)
@@ -449,7 +450,7 @@ export const apiClient = {
       body: JSON.stringify(proposal),
     }, true),
 
-    proposePrivateFood: (proposal: FoodProposal) =>
+    proposePrivateFood: (proposal: CreateFoodProposalRequest) =>
     fetchJson<FoodProposalResponse>("/foods/private/", {
       method: "POST",
       body: JSON.stringify(proposal),

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft, WarningCircle } from '@phosphor-icons/react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FoodProposal, CreateFoodProposalRequest, apiClient } from '../../lib/apiClient';
+import { CreateFoodProposalRequest, apiClient } from '../../lib/apiClient';
 
 // Available dietary options
 const dietaryOptions = [

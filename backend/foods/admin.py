@@ -51,10 +51,12 @@ class AdminFoodProposal(admin.ModelAdmin):
 
     def get_food_name(self, obj):
         return obj.food_entry.name if obj.food_entry else "N/A"
+
     get_food_name.short_description = "Food Name"
 
     def get_food_category(self, obj):
         return obj.food_entry.category if obj.food_entry else "N/A"
+
     get_food_category.short_description = "Category"
 
     def has_add_permission(self, request):
@@ -107,16 +109,16 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
     # ---- FoodEntry fields (flat, read-only) ----
     name = serializers.CharField(source="food_entry.name", read_only=True)
     category = serializers.CharField(source="food_entry.category", read_only=True)
-    servingSize = serializers.FloatField(source="food_entry.servingSize", read_only=True)
+    servingSize = serializers.FloatField(
+        source="food_entry.servingSize", read_only=True
+    )
     caloriesPerServing = serializers.FloatField(
         source="food_entry.caloriesPerServing", read_only=True
     )
     proteinContent = serializers.FloatField(
         source="food_entry.proteinContent", read_only=True
     )
-    fatContent = serializers.FloatField(
-        source="food_entry.fatContent", read_only=True
-    )
+    fatContent = serializers.FloatField(source="food_entry.fatContent", read_only=True)
     carbohydrateContent = serializers.FloatField(
         source="food_entry.carbohydrateContent", read_only=True
     )
@@ -136,7 +138,6 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
         model = FoodProposal
         fields = [
             "id",
-
             # flat food fields
             "name",
             "category",
@@ -147,7 +148,6 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "carbohydrateContent",
             "dietaryOptions",
             "nutritionScore",
-
             # proposal fields
             "isApproved",
             "proposedBy",
@@ -168,7 +168,6 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "id": obj.proposedBy.id,
             "username": obj.proposedBy.username,
         }
-
 
 
 class FoodProposalActionSerializer(serializers.Serializer):
@@ -229,14 +228,14 @@ class FoodProposalModerationViewSet(viewsets.ModelViewSet):
         instance.refresh_from_db()
         nutrition_score = calculate_nutrition_score(
             {
-                "caloriesPerServing": instance.caloriesPerServing,
-                "proteinContent": instance.proteinContent,
-                "fatContent": instance.fatContent,
-                "carbohydrateContent": instance.carbohydrateContent,
+                "caloriesPerServing": instance.food_entry.caloriesPerServing,
+                "proteinContent": instance.food_entry.proteinContent,
+                "fatContent": instance.food_entry.fatContent,
+                "carbohydrateContent": instance.food_entry.carbohydrateContent,
             }
         )
-        instance.nutritionScore = nutrition_score
-        instance.save(update_fields=["nutritionScore"])
+        instance.food_entry.nutritionScore = nutrition_score
+        instance.food_entry.save(update_fields=["nutritionScore"])
 
         return Response(serializer.data)
 
