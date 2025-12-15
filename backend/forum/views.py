@@ -8,6 +8,7 @@ from rest_framework.filters import OrderingFilter
 from rest_framework.decorators import action, api_view, permission_classes
 from fuzzywuzzy import fuzz
 import logging
+from drf_spectacular.utils import extend_schema, OpenApiParameter, extend_schema_view
 
 from .models import Post, Tag, Comment, Like, Recipe, RecipeIngredient
 from .serializers import (
@@ -45,6 +46,7 @@ class IsPostOwnerOrReadOnly(permissions.BasePermission):
         return obj.post.author == request.user
 
 
+@extend_schema(tags=["forum"])
 class PostViewSet(viewsets.ModelViewSet):
     serializer_class = PostSerializer
     permission_classes = [permissions.IsAuthenticated, IsOwnerOrReadOnly]
@@ -121,6 +123,20 @@ class PostViewSet(viewsets.ModelViewSet):
                 break
         return best_score
 
+    @extend_schema(
+        summary="Search posts with fuzzy matching",
+        description="Search posts by title and recipe ingredients using fuzzy string matching (Levenshtein distance). "
+                    "Returns posts with similarity score >= 75%",
+        parameters=[
+            OpenApiParameter(
+                name="q",
+                description="Search query term",
+                required=True,
+                type=str
+            )
+        ],
+        responses={200: PostSerializer(many=True)}
+    )
     @action(
         detail=False,
         methods=["get"],

@@ -497,19 +497,17 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
       // Convert serving size based on unit
       // Backend expects serving_size as a multiplier
-      let multiplier = numServingSize;
-
+      // All nutrients are now per 100g
+      let multiplier;
       if (servingUnit === 'g') {
-        // If unit is "g", we need to convert grams to multiplier
-        // Use editingFoodData if available, otherwise use the entry's food_serving_size
-        let foodServingSize = editingEntry.food_serving_size || 100; // Fallback to 100g
-        if (editingFoodData?.servingSize) {
-          foodServingSize = editingFoodData.servingSize;
-        }
-        // Convert grams to multiplier (e.g., 100g / 100g = 1.0 servings)
-        multiplier = numServingSize / foodServingSize;
+        // All nutrients are now per 100g, so divide by 100
+        multiplier = numServingSize / 100;
+      } else {
+        // servingUnit === 'serving'
+        // Convert servings to grams first, then to multiplier
+        const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+        multiplier = (numServingSize * foodServingSize) / 100;
       }
-      // If unit is "serving", multiplier is already correct (servingSize = number of servings)
 
       // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
       multiplier = Math.round(multiplier * 1000000) / 1000000;
@@ -777,17 +775,19 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <p className="text-xs nh-text opacity-70">
                     {(() => {
                       // Convert serving_size (multiplier) back to display value
-                      // ALWAYS show grams when unit is 'g'
-                      const servingSizeNum = Number(entry.serving_size);
-                      const foodServingSize = entry.food_serving_size || 100; // Fallback to 100g if missing
+                      const multiplier = Number(entry.serving_size);
+                      const foodServingSize = entry.food_serving_size || 100;
 
                       if (entry.serving_unit === 'g') {
-                        // Multiply multiplier by food's serving size to get grams
-                        const grams = servingSizeNum * foodServingSize;
+                        // Multiply multiplier by 100 to get grams (since all nutrients are per 100g)
+                        const grams = multiplier * 100;
                         return `${Math.round(grams)}g`;
                       } else {
-                        // For "serving" unit, show multiplier directly
-                        return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
+                        // For "serving" unit, calculate back to number of servings
+                        // multiplier = (numServings * foodServingSize) / 100
+                        // numServings = (multiplier * 100) / foodServingSize
+                        const numServings = (multiplier * 100) / foodServingSize;
+                        return `${numServings.toFixed(2)} ${entry.serving_unit}${Math.abs(numServings - 1) < 0.01 ? '' : 's'}`;
                       }
                     })()}
                   </p>
@@ -1761,7 +1761,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{selectedFood.name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {selectedFood.caloriesPerServing} kcal per {selectedFood.servingSize}g
+                      {selectedFood.caloriesPerServing} kcal per 100g
                     </p>
                   </div>
                 </div>
@@ -1788,7 +1788,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{editingEntry.food_name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {editingFoodData.caloriesPerServing} kcal per {editingFoodData.servingSize}g
+                      {editingFoodData.caloriesPerServing} kcal per 100g
                     </p>
                   </div>
                 </div>
@@ -1819,16 +1819,23 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
                 Serving Size
-                {editingEntry && editingEntry.food_serving_size && servingUnit === 'g' && (
-                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / editingEntry.food_serving_size * 100) / 100} servings)
-                  </span>
-                )}
-                {!editingEntry && selectedFood && servingUnit === 'g' && (
-                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize * 100) / 100} servings)
-                  </span>
-                )}
+                {editingEntry && servingUnit === 'g' && (() => {
+                  const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+                  const numServings = (typeof servingSize === 'number' ? servingSize : Number(servingSize)) / foodServingSize;
+                  return (
+                    <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                      ({Math.round(numServings * 100) / 100} servings)
+                    </span>
+                  );
+                })()}
+                {!editingEntry && selectedFood && servingUnit === 'g' && (() => {
+                  const numServings = (typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize;
+                  return (
+                    <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                      ({Math.round(numServings * 100) / 100} servings)
+                    </span>
+                  );
+                })()}
               </label>
               <div className="flex gap-2">
                 <input
@@ -1873,7 +1880,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     const oldUnit = servingUnit;
                     const currentSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
 
-                    // Get the food's serving size (with fallback)
+                    // Get the food's serving size
                     let foodServingSize = 100; // Default fallback
                     if (editingEntry) {
                       foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
@@ -1909,23 +1916,25 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             {/* Calculated Nutrition (for edit entries) */}
             {editingEntry && editingFoodData && (() => {
               const numServingSize = typeof servingSize === 'string' ? (servingSize === '' ? 0 : Number(servingSize)) : servingSize;
-              const calculateNutrition = (valuePerServing: number) => {
+              const calculateNutrition = (valuePer100g: number) => {
                 if (numServingSize <= 0 || isNaN(numServingSize)) {
                   return 0;
                 }
                 if (servingUnit === 'serving') {
-                  // If serving unit, multiply directly (e.g., 2 servings = 2 * valuePerServing)
-                  return valuePerServing * numServingSize;
+                  // Convert servings to grams first, then calculate
+                  const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+                  const grams = numServingSize * foodServingSize;
+                  return (valuePer100g / 100) * grams;
                 } else {
-                  // If gram unit, convert: (value per servingSize grams / servingSize) * entered grams
-                  return (valuePerServing / editingFoodData.servingSize) * numServingSize;
+                  // All nutrients are per 100g, so convert: (value per 100g / 100) * entered grams
+                  return (valuePer100g / 100) * numServingSize;
                 }
               };
 
               // Calculate total grams
               const totalGrams = servingUnit === 'g'
                 ? numServingSize
-                : numServingSize * editingFoodData.servingSize;
+                : numServingSize * (editingEntry.food_serving_size || editingFoodData?.servingSize || 100);
 
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
@@ -1963,21 +1972,21 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             {/* Calculated Nutrition (for new entries) */}
             {selectedFood && !editingEntry && (() => {
               // Calculate nutrition based on unit type
-              // Food data shows nutrition for 1 serving (which equals food.servingSize grams)
-              // If unit is "serving": nutrition = valuePerServing * servingSize (e.g., 2 servings = 2 * value)
-              // If unit is "g": nutrition = (valuePerServing / food.servingSize) * enteredGrams
+              // All nutrients are per 100g
+              // If unit is "serving": convert to grams first, then calculate
+              // If unit is "g": nutrition = (valuePer100g / 100) * enteredGrams
               const numServingSize = typeof servingSize === 'string' ? (servingSize === '' ? 0 : Number(servingSize)) : servingSize;
-              const calculateNutrition = (valuePerServing: number) => {
+              const calculateNutrition = (valuePer100g: number) => {
                 if (numServingSize <= 0 || isNaN(numServingSize)) {
                   return 0;
                 }
                 if (servingUnit === 'serving') {
-                  // If serving unit, multiply directly (e.g., 2 servings = 2 * valuePerServing)
-                  return valuePerServing * numServingSize;
+                  // Convert servings to grams first, then calculate
+                  const grams = numServingSize * selectedFood.servingSize;
+                  return (valuePer100g / 100) * grams;
                 } else {
-                  // If gram unit, convert: (value per servingSize grams / servingSize) * entered grams
-                  // This gives us the nutrition for the entered grams
-                  return (valuePerServing / selectedFood.servingSize) * numServingSize;
+                  // All nutrients are per 100g, so convert: (value per 100g / 100) * entered grams
+                  return (valuePer100g / 100) * numServingSize;
                 }
               };
 
