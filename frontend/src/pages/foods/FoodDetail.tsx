@@ -124,7 +124,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
       return 0;
     };
     
-    const multiplier = (selectedServingSize || food.servingSize) / food.servingSize;
+    const multiplier = (selectedServingSize || 100) / 100;
     
     switch (nutrient) {
       case 'calories':
@@ -729,76 +729,6 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
                 {wouldExceedTarget('carbs') && !wouldExceedMaximum('carbs') && (
                   <p className="text-xs text-yellow-600 mt-1">⚠️ Exceeds target</p>
                 )}
-              </div>
-            </div>
-          </div>
-
-          {/* Nutrition Information - Per 100g */}
-          <div className="mb-8">
-            <h3 className="flex items-center gap-2 text-[var(--color-text-primary)] mb-4 font-semibold text-lg">
-              <Scales size={20} weight="fill" className="text-[var(--color-accent)]" />
-              Nutrition Information (per 100g)
-            </h3>
-              
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={(e) => handleHelpClick(e, 'calories')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Fire size={24} weight="fill" className="text-red-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.caloriesPerServing / food.servingSize) * 100).toFixed(1)} kcal</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Calories</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={(e) => handleHelpClick(e, 'protein')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-blue-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.proteinContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Protein</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={(e) => handleHelpClick(e, 'fat')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-yellow-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.fatContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Fat</p>
-              </div>
-                
-              <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)] text-center relative">
-                <button
-                  onClick={(e) => handleHelpClick(e, 'carbs')}
-                  className="absolute top-2 right-2 p-1 rounded-full bg-blue-500 hover:bg-blue-600 transition-colors"
-                  title="View daily recommendation"
-                >
-                  <Question size={14} weight="bold" className="text-white" />
-                </button>
-                <div className="flex justify-center mb-2">
-                  <Scales size={24} weight="fill" className="text-green-500" />
-                </div>
-                <p className="text-xl font-bold text-[var(--color-text-primary)]">{((food.carbohydrateContent / food.servingSize) * 100).toFixed(1)}g</p>
-                <p className="text-[var(--color-text-secondary)] text-sm mt-1">Carbs</p>
               </div>
             </div>
           </div>

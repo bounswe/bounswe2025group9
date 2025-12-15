@@ -44,6 +44,15 @@ from rest_framework.exceptions import PermissionDenied
 from django.utils import timezone
 import re
 
+# OpenAPI documentation imports
+from drf_spectacular.utils import extend_schema, OpenApiParameter, OpenApiExample, extend_schema_view
+from foods.schemas import (
+    FoodSearchRequestSerializer,
+    FOOD_SEARCH_EXAMPLES,
+    PRIVATE_FOOD_CREATE_EXAMPLE,
+    FOOD_PROPOSAL_EXAMPLE,
+)
+
 sys.path.append(
     os.path.join(os.path.dirname(__file__), "..", "api", "db_initialization")
 )
@@ -65,7 +74,63 @@ _image_cache_executor = ThreadPoolExecutor(
 )
 
 
+
+
+@extend_schema_view(
+    get=extend_schema(
+        tags=["foods"],
+        summary="List and search foods",
+        description="Retrieve foods with advanced filtering capabilities including search, category filtering, "
+                    "micronutrient range filtering, and sorting. Supports pagination.",
+        parameters=[
+            OpenApiParameter(
+                name="search",
+                description="Search term to filter foods by name (case-insensitive)",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="category",
+                description="Comma-separated list of categories (e.g., 'Vegetables,Fruits')",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="micronutrient",
+                description="Micronutrient range filtering. Format: name:low-high (e.g., 'iron:3-10,vitamin c:20-'). "
+                           "Supports: name:low-high (bounded), name:low- (minimum), name:-high (maximum)",
+                required=False,
+                type=str
+            ),
+            OpenApiParameter(
+                name="sort_by",
+                description="Field to sort by",
+                required=False,
+                type=str,
+                enum=["nutrition-score", "protein", "carbohydrate", "fat", "price", "cost-nutrition-ratio", "name"]
+            ),
+            OpenApiParameter(
+                name="order",
+                description="Sort order",
+                required=False,
+                type=str,
+                enum=["asc", "desc"]
+            ),
+        ],
+        responses={200: FoodEntrySerializer(many=True)},
+    ),
+    post=extend_schema(
+        tags=["foods"],
+        summary="Advanced food search (POST)",
+        description="Advanced food search with micronutrient filtering via POST body. "
+                    "Supports all GET parameters plus structured micronutrient filters.",
+        request=FoodSearchRequestSerializer,
+        responses={200: FoodEntrySerializer(many=True)},
+        examples=FOOD_SEARCH_EXAMPLES,
+    ),
+)
 class FoodCatalog(ListAPIView):
+
     permission_classes = [AllowAny]
     serializer_class = FoodEntrySerializer
 
@@ -235,6 +300,80 @@ class FoodCatalog(ListAPIView):
 
             # Use distinct() to avoid duplicate results from join
             queryset = queryset.distinct()
+
+        # --- MACRONUTRIENT RANGE FILTERING (NEW) ---
+        #
+        # Query parameter: `macronutrient`
+        #
+        # Syntax (comma-separated list):
+        #
+        #     macronutrient=<name>:<low>-<high>,<name>:<low>-,<name>:-<high>,...
+        #
+        # Rules:
+        #   • <name> is case-insensitive (protein, carbohydrates, fat)
+        #   • <low> and <high> are numeric (float); invalid values are ignored
+        #   • Ranges support:
+        #         low-high   → bounded range
+        #         low-       → lower-bounded (>= low)
+        #         -high      → upper-bounded (<= high)
+        #   • Each item creates an AND constraint:
+        #         protein:10-20,fat:5-15  → must satisfy both
+        #
+        # Examples:
+        #     macronutrient=protein:10-20
+        #     macronutrient=fat:5-
+        #     macronutrient=carbohydrates:-50
+        #     macronutrient=protein:10-20,fat:5-15
+        #
+        # Note: Values are per 100g
+        macronutrient_param = self.request.query_params.get("macronutrient", "")
+        if macronutrient_param.strip():
+            parts = [p.strip() for p in macronutrient_param.split(",") if p.strip()]
+
+            for part in parts:
+                if ":" not in part or "-" not in part:
+                    continue
+
+                name, rng = part.split(":", 1)
+                low_str, high_str = rng.split("-", 1)
+
+                name = name.strip().lower()
+
+                # Map macronutrient names to field names
+                field_map = {
+                    'protein': 'proteinContent',
+                    'carbohydrates': 'carbohydrateContent',
+                    'carbohydrate': 'carbohydrateContent',
+                    'carbs': 'carbohydrateContent',
+                    'fat': 'fatContent',
+                    'fats': 'fatContent',
+                }
+
+                field_name = field_map.get(name)
+                if not field_name:
+                    continue
+
+                # Parse numbers only if they exist
+                low = None
+                high = None
+
+                if low_str.strip():
+                    try:
+                        low = float(low_str)
+                    except ValueError:
+                        continue
+
+                if high_str.strip():
+                    try:
+                        high = float(high_str)
+                    except ValueError:
+                        continue
+
+                # Apply filters (macronutrients are direct fields, so this is simpler)
+                if low is not None:
+                    queryset = queryset.filter(**{f'{field_name}__gte': low})
+                if high is not None:
+                    queryset = queryset.filter(**{f'{field_name}__lte': high})
 
         # --- Sorting support ---
         # Support both separate parameters (sort_by + order) and combined format (sort_by="name-asc")
@@ -632,6 +771,7 @@ class FoodCatalog(ListAPIView):
         return Response(data)
 
 
+@extend_schema(tags=["foods"])
 class PrivateFoodView(APIView):
     """
     CRUD for user's private foods.
@@ -648,6 +788,11 @@ class PrivateFoodView(APIView):
     # ------------------------
     # GET (LIST / RETRIEVE)
     # ------------------------
+    @extend_schema(
+        summary="List or retrieve private foods",
+        description="Get all private foods for the authenticated user, or retrieve a specific private food by ID",
+        responses={200: FoodEntrySerializer(many=True)}
+    )
     def get(self, request, pk=None):
         user = request.user
 
@@ -674,6 +819,13 @@ class PrivateFoodView(APIView):
     # ------------------------
     # POST (CREATE)
     # ------------------------
+    @extend_schema(
+        summary="Create private food",
+        description="Create a new private food entry visible only to you",
+        request=FoodEntrySerializer,
+        responses={201: FoodEntrySerializer},
+        examples=[PRIVATE_FOOD_CREATE_EXAMPLE]
+    )
     def post(self, request):
         serializer = FoodEntrySerializer(data=request.data, context={'request': request})
 
@@ -765,6 +917,7 @@ class AvailableMicronutrientsView(APIView):
         }, status=status.HTTP_200_OK)
 
 
+@extend_schema(tags=["foods"])
 @permission_classes([IsAuthenticated])
 class FoodProposalSubmitView(APIView):
     """
@@ -778,6 +931,13 @@ class FoodProposalSubmitView(APIView):
     - Private (validated=False)
     - Not already proposed
     """
+    @extend_schema(
+        summary="Submit food for approval",
+        description="Submit a private food entry for moderator approval to make it public",
+        request=FoodProposalSerializer,
+        responses={201: FoodProposalSerializer},
+        examples=[FOOD_PROPOSAL_EXAMPLE]
+    )
     def post(self, request):
         serializer = FoodProposalSerializer(data=request.data, context={'request': request})
         if serializer.is_valid():
@@ -785,6 +945,11 @@ class FoodProposalSubmitView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
+    @extend_schema(
+        summary="Get my food proposals",
+        description="List all food proposals submitted by the authenticated user",
+        responses={200: FoodProposalStatusSerializer(many=True)}
+    )
     def get(self, request):
         proposals = FoodProposal.objects.filter(proposedBy=request.user).order_by('-createdAt')
         serializer = FoodProposalStatusSerializer(proposals, many=True)

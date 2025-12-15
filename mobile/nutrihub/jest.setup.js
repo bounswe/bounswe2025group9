@@ -58,3 +58,38 @@ jest.mock('@expo/vector-icons', () => {
     }),
   };
 }); 
+
+// Global mock for LanguageContext (i18n)
+// Many components call useLanguage() directly; tests should not need a real provider.
+jest.mock('./src/context/LanguageContext', () => {
+  const mockEnUS = require('./src/i18n/locales/en-US.json');
+
+  const mockGetByPath = (obj, path) => {
+    return path.split('.').reduce((acc, part) => (acc && acc[part] !== undefined ? acc[part] : undefined), obj);
+  };
+
+  const mockInterpolate = (template, options) => {
+    if (!options) return template;
+    return template.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_, key) => {
+      const value = options[key.trim()];
+      return value === undefined || value === null ? '' : String(value);
+    });
+  };
+
+  return {
+    useLanguage: () => ({
+      currentLanguage: 'en-US',
+      isRTL: false,
+      changeLanguage: jest.fn(),
+      t: (key, options) => {
+        const value = mockGetByPath(mockEnUS, key);
+        if (typeof value === 'string') return mockInterpolate(value, options);
+        // basic plural fallback used in a couple places
+        if (options && typeof options.count === 'number') {
+          return options.count === 1 ? 'item' : 'items';
+        }
+        return key;
+      },
+    }),
+  };
+});

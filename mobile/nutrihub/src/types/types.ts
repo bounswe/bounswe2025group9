@@ -41,6 +41,7 @@ export interface FoodItem {
   priceUnit?: 'per_100g' | 'per_unit'; // Price unit (per 100g or per unit)
   priceCategory?: string | null; // Price category ('$', '$$', '$$$')
   currency?: string; // Currency code (e.g., 'USD', 'TRY')
+  isPrivate?: boolean; // mark private foods (local/private catalog)
 }
 
 /**

@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Button from '../../components/common/Button';
 import TextInput from '../../components/common/TextInput';
 import Card from '../../components/common/Card';
@@ -47,6 +48,7 @@ interface RegisterFormData {
  */
 const RegisterScreen: React.FC = () => {
   const { theme, textStyles, themeType } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<RegisterScreenNavigationProp>();
   const { register, error: authError, clearError } = useAuth();
   const [registrationSuccess, setRegistrationSuccess] = useState(false);
@@ -230,14 +232,14 @@ const RegisterScreen: React.FC = () => {
             <Icon name="check-circle" size={80} color={theme.success} />
           </View>
           
-          <Text style={[styles.successTitle, textStyles.heading2]}>Registration Successful!</Text>
+          <Text style={[styles.successTitle, textStyles.heading2]}>{t('auth.registrationSuccess')}</Text>
           
           <Text style={[styles.successMessage, textStyles.body]}>
-            {successMessage}
+            {successMessage || t('auth.registrationSuccessMessage')}
           </Text>
           
           <Text style={[styles.redirectingText, textStyles.caption]}>
-            Redirecting to login page...
+            {t('auth.redirectingToLogin')}
           </Text>
         </View>
       </SafeAreaView>
@@ -271,7 +273,7 @@ const RegisterScreen: React.FC = () => {
           <View style={[styles.cardContainer, { backgroundColor: theme.surface }]}>
             <View style={styles.cardHeader}>
               <Icon name="account-plus" size={28} color={themeType === 'light' ? theme.text : "white"} style={styles.cardIcon} />
-              <Text style={[styles.cardTitle, textStyles.heading2]}>Sign Up</Text>
+              <Text style={[styles.cardTitle, textStyles.heading2]}>{t('auth.signUp')}</Text>
             </View>
             
             {/* Authentication Error Message */}
@@ -297,7 +299,7 @@ const RegisterScreen: React.FC = () => {
               <View style={styles.nameRow}>
                 <View style={styles.nameColumn}>
                   <TextInput
-                    label="First Name"
+                    label={t('auth.firstName')}
                     value={values.name}
                     onChangeText={handleChange('name')}
                     onBlur={handleBlur('name')}
@@ -311,7 +313,7 @@ const RegisterScreen: React.FC = () => {
                 
                 <View style={styles.nameColumn}>
                   <TextInput
-                    label="Last Name"
+                    label={t('auth.lastName')}
                     value={values.surname}
                     onChangeText={handleChange('surname')}
                     onBlur={handleBlur('surname')}
@@ -325,7 +327,7 @@ const RegisterScreen: React.FC = () => {
               </View>
               
               <TextInput
-                label="Email"
+                label={t('auth.email')}
                 value={values.email}
                 onChangeText={handleChange('email')}
                 onBlur={handleBlur('email')}
@@ -338,7 +340,7 @@ const RegisterScreen: React.FC = () => {
               />
               
               <TextInput
-                label="Username"
+                label={t('auth.username')}
                 value={values.username}
                 onChangeText={handleChange('username')}
                 onBlur={handleBlur('username')}
@@ -350,7 +352,7 @@ const RegisterScreen: React.FC = () => {
               />
               
               <TextInput
-                label="Password"
+                label={t('auth.password')}
                 value={values.password}
                 onChangeText={handleChange('password')}
                 onBlur={handleBlur('password')}
@@ -368,33 +370,33 @@ const RegisterScreen: React.FC = () => {
                   backgroundColor: theme.surfaceVariant,
                   borderColor: theme.border
                 }]}>
-                  <Text style={[styles.criteriaTitle, { color: theme.text }]}>Password must have:</Text>
+                  <Text style={[styles.criteriaTitle, { color: theme.text }]}>{t('auth.passwordMustHave')}</Text>
                   <View style={styles.criteriaList}>
                     <View style={styles.criteriaItem}>
                       {criteriaIcon(passwordCriteria.minLength)}
                       <Text style={[styles.criteriaText, { color: theme.text }]}>
-                        At least 8 characters
+                        {t('auth.atLeast8Chars')}
                       </Text>
                     </View>
                     
                     <View style={styles.criteriaItem}>
                       {criteriaIcon(passwordCriteria.hasUppercase)}
                       <Text style={[styles.criteriaText, { color: theme.text }]}>
-                        At least one uppercase letter
+                        {t('auth.atLeastOneUppercase')}
                       </Text>
                     </View>
                     
                     <View style={styles.criteriaItem}>
                       {criteriaIcon(passwordCriteria.hasLowercase)}
                       <Text style={[styles.criteriaText, { color: theme.text }]}>
-                        At least one lowercase letter
+                        {t('auth.atLeastOneLowercase')}
                       </Text>
                     </View>
                     
                     <View style={styles.criteriaItem}>
                       {criteriaIcon(passwordCriteria.hasNumber)}
                       <Text style={[styles.criteriaText, { color: theme.text }]}>
-                        At least one number
+                        {t('auth.atLeastOneNumber')}
                       </Text>
                     </View>
                   </View>
@@ -402,7 +404,7 @@ const RegisterScreen: React.FC = () => {
               )}
               
               <TextInput
-                label="Confirm Password"
+                label={t('auth.confirmPassword')}
                 value={values.confirmPassword}
                 onChangeText={handleChange('confirmPassword')}
                 onBlur={handleBlur('confirmPassword')}
@@ -421,13 +423,13 @@ const RegisterScreen: React.FC = () => {
                     styles.passwordMatchText, 
                     { color: passwordCriteria.passwordsMatch ? theme.success : theme.error }
                   ]}>
-                    {passwordCriteria.passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                    {passwordCriteria.passwordsMatch ? t('auth.passwordsMatch') : t('auth.passwordsDoNotMatch')}
                   </Text>
                 </View>
               )}
               
               <Button
-                title="Create Account"
+                title={t('auth.createAccount')}
                 onPress={handleSubmit}
                 loading={isSubmitting}
                 disabled={isSubmitting}
@@ -440,13 +442,13 @@ const RegisterScreen: React.FC = () => {
             </View>
             
             <View style={styles.loginLinkContainer}>
-              <Text style={[styles.loginLinkText, textStyles.body]}>Already have an account? </Text>
+              <Text style={[styles.loginLinkText, textStyles.body]}>{t('auth.hasAccount')} </Text>
               <TouchableOpacity 
                 onPress={handleNavigateToLogin}
                 testID="login-link-button"
                 disabled={isSubmitting}
               >
-                <Text style={[styles.loginLink, { color: theme.primary }]}>Sign In</Text>
+                <Text style={[styles.loginLink, { color: theme.primary }]}>{t('auth.signIn')}</Text>
               </TouchableOpacity>
             </View>
           </View>

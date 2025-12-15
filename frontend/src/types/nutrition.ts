@@ -35,6 +35,23 @@ export interface FoodLogEntry {
   logged_at: string;
 }
 
+export interface PlannedFoodEntry {
+  id: number;
+  food_id?: number | null;
+  food_name: string;
+  food_serving_size: number; // Original serving size of the food (e.g., 100g)
+  image_url: string; // Image URL from the food
+  serving_size: number;
+  serving_unit: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  micronutrients?: { [key: string]: number };
+  planned_at: string;
+}
+
 export interface DailyNutritionLog {
   date: string; // ISO date string (YYYY-MM-DD)
   total_calories: number;
@@ -130,5 +147,59 @@ export interface NutritionStatistics {
       fat: number;
     };
   };
+}
+
+// Saved Meal Plan Types - Reusable meal plan templates
+export interface SavedMealPlanEntry {
+  id: number;
+  food_id?: number | null;
+  food_name: string;
+  food_serving_size: number;
+  image_url: string;
+  serving_size: number;
+  serving_unit: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  micronutrients?: { [key: string]: number };
+  created_at: string;
+}
+
+export interface SavedMealPlan {
+  id: number;
+  name: string;
+  description: string;
+  total_calories: number;
+  total_protein: number;
+  total_carbohydrates: number;
+  total_fat: number;
+  micronutrients_summary?: { [key: string]: number };
+  entries?: SavedMealPlanEntry[];
+  entry_count?: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SavedMealPlanCreateRequest {
+  name: string;
+  description?: string;
+  entries?: {
+    food_id: number;
+    serving_size: number;
+    serving_unit: string;
+    meal_type: string;
+  }[];
+}
+
+export interface CreateFromLogRequest {
+  name: string;
+  description?: string;
+  date?: string;
+  include_logged?: boolean;
+  include_planned?: boolean;
+  entry_ids?: number[];
+  planned_entry_ids?: number[];
 }
 

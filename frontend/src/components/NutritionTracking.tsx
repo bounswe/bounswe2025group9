@@ -9,24 +9,29 @@ import {
   ChartLine,
   CaretLeft,
   CaretRight,
+  CaretDown,
   Plus,
   ForkKnife,
   Coffee,
   Hamburger,
   X,
-  ArrowClockwise
+  ArrowClockwise,
+  Clock,
+  Check,
+  CalendarPlus
 } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
 import { apiClient, Food } from '../lib/apiClient';
-import { DailyNutritionLog, NutritionTargets, FoodLogEntry } from '../types/nutrition';
+import { DailyNutritionLog, NutritionTargets, FoodLogEntry, PlannedFoodEntry } from '../types/nutrition';
 
 interface NutritionTrackingProps {
   onDateChange?: (date: Date) => void;
   onDataChange?: () => void; // Callback to notify parent when data changes (add/edit/delete)
+  refreshTrigger?: number; // Increment this to trigger a data refresh from parent
 }
 
-const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
+const NutritionTracking = ({ onDateChange, onDataChange, refreshTrigger }: NutritionTrackingProps = {}) => {
   // Helper function to normalize date to midnight local time (avoids timezone issues)
   const normalizeToMidnight = (date: Date): Date => {
     const normalized = new Date(date);
@@ -40,8 +45,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   const [selectedMeal, setSelectedMeal] = useState<'breakfast' | 'lunch' | 'dinner' | 'snack'>('breakfast');
   const [showServingDialog, setShowServingDialog] = useState(false);
   const [selectedFood, setSelectedFood] = useState<Food | null>(null);
-  const [servingSize, setServingSize] = useState<number | string>(100);
-  const [servingUnit, setServingUnit] = useState('g');
+  const [servingSize, setServingSize] = useState<number | string>(1);
+  const [servingUnit, setServingUnit] = useState('serving');
   const [editingEntry, setEditingEntry] = useState<FoodLogEntry | null>(null);
   const [editingFoodData, setEditingFoodData] = useState<Food | null>(null);
   const [viewMode, setViewMode] = useState<'daily' | 'weekly'>('daily');
@@ -52,6 +57,20 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metricsMissing, setMetricsMissing] = useState(false);
+  // Default all meal sections to collapsed
+  const [collapsedMealSections, setCollapsedMealSections] = useState<{ [key: string]: boolean }>({
+    breakfast: true,
+    lunch: true,
+    dinner: true,
+    snack: true
+  });
+
+  const toggleMealSection = (mealType: string) => {
+    setCollapsedMealSections(prev => ({
+      ...prev,
+      [mealType]: !prev[mealType]
+    }));
+  };
 
   useEffect(() => {
     fetchData();
@@ -61,6 +80,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, viewMode]);
+
+  // Refresh data when parent triggers a refresh (e.g., after logging a meal plan)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -322,8 +349,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
   const handleFoodSelect = (food: Food) => {
     setSelectedFood(food);
-    setServingSize(food.servingSize);
-    setServingUnit('g');
+    setServingSize(1);
+    setServingUnit('serving');
     setShowAddFood(false);
     setShowServingDialog(true);
   };
@@ -338,29 +365,29 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       return;
     }
 
+    // Convert serving size based on unit
+    // Backend expects serving_size as a multiplier
+    // If unit is "g", convert grams to multiplier: grams / food.servingSize
+    // If unit is "serving", use servingSize directly as multiplier
+    let multiplier = numServingSize;
+    if (servingUnit === 'g') {
+      // Convert grams to multiplier (e.g., 200g / 100g = 2.0 servings)
+      multiplier = numServingSize / selectedFood.servingSize;
+    }
+
+    // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
+    multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+    // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
+    if (multiplier > 9999.999999) {
+      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      return;
+    }
+
+    // Save to backend
     try {
       setLoading(true);
       const dateStr = formatDateString(selectedDate);
-
-      // Convert serving size based on unit
-      // Backend expects serving_size as a multiplier
-      // If unit is "g", convert grams to multiplier: grams / food.servingSize
-      // If unit is "serving", use servingSize directly as multiplier
-      let multiplier = numServingSize;
-      if (servingUnit === 'g') {
-        // Convert grams to multiplier (e.g., 200g / 100g = 2.0 servings)
-        multiplier = numServingSize / selectedFood.servingSize;
-      }
-
-      // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
-      multiplier = Math.round(multiplier * 1000000) / 1000000;
-
-      // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
-      if (multiplier > 9999.999999) {
-        alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
-        setLoading(false);
-        return;
-      }
 
       await apiClient.addFoodEntry({
         food_id: selectedFood.id,
@@ -391,6 +418,64 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
   };
 
+  // Plan a food entry (saves to backend)
+  const handlePlanFood = async () => {
+    if (!selectedFood) return;
+
+    // Validate serving size
+    const numServingSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
+    if (!numServingSize || numServingSize <= 0) {
+      alert('Please enter a valid serving size');
+      return;
+    }
+
+    // Convert serving size based on unit
+    let multiplier = numServingSize;
+    if (servingUnit === 'g') {
+      multiplier = numServingSize / selectedFood.servingSize;
+    }
+
+    // Round to 6 decimal places for precision
+    multiplier = Math.round(multiplier * 1000000) / 1000000;
+
+    // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
+    if (multiplier > 9999.999999) {
+      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const dateStr = formatDateString(selectedDate);
+
+      await apiClient.addPlannedEntry({
+        food_id: selectedFood.id,
+        serving_size: multiplier,
+        serving_unit: servingUnit,
+        meal_type: selectedMeal,
+        date: dateStr
+      });
+
+      // Refresh data to get updated planned entries
+      await fetchData();
+      if (onDataChange) {
+        onDataChange();
+      }
+      setShowServingDialog(false);
+      setSelectedFood(null);
+    } catch (err: any) {
+      console.error('Error planning food:', err);
+      const errorMessage = err?.data?.serving_size?.[0] ||
+        err?.data?.error ||
+        err?.data?.detail ||
+        err?.message ||
+        'Failed to plan food entry';
+      alert(errorMessage);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleEditEntry = async (entry: FoodLogEntry) => {
     setEditingEntry(entry);
 
@@ -407,15 +492,21 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
 
     // Convert serving_size (multiplier) back to display value
-    // If unit is "g", convert multiplier back to grams: multiplier * food_serving_size
-    // If unit is "serving", use multiplier directly
-    let displaySize = entry.serving_size;
+    // The multiplier is based on per-100g values
+    // If unit is "g", convert multiplier back to grams: multiplier * 100
+    // If unit is "serving", convert multiplier back to servings: (multiplier * 100) / food_serving_size
     const foodServingSize = entry.food_serving_size || 100; // Fallback to 100g if missing
+    let displaySize: number;
 
     if (entry.serving_unit === 'g') {
-      displaySize = entry.serving_size * foodServingSize;
+      // multiplier * 100 gives grams
+      displaySize = Number(entry.serving_size) * 100;
+    } else {
+      // For servings: multiplier = (numServings * foodServingSize) / 100
+      // So numServings = (multiplier * 100) / foodServingSize
+      displaySize = (Number(entry.serving_size) * 100) / foodServingSize;
     }
-    setServingSize(displaySize);
+    setServingSize(parseFloat(displaySize.toFixed(2)));
     setServingUnit(entry.serving_unit);
     setSelectedMeal(entry.meal_type as 'breakfast' | 'lunch' | 'dinner' | 'snack');
     setShowServingDialog(true);
@@ -436,19 +527,17 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
       // Convert serving size based on unit
       // Backend expects serving_size as a multiplier
-      let multiplier = numServingSize;
-
+      // All nutrients are now per 100g
+      let multiplier;
       if (servingUnit === 'g') {
-        // If unit is "g", we need to convert grams to multiplier
-        // Use editingFoodData if available, otherwise use the entry's food_serving_size
-        let foodServingSize = editingEntry.food_serving_size || 100; // Fallback to 100g
-        if (editingFoodData?.servingSize) {
-          foodServingSize = editingFoodData.servingSize;
-        }
-        // Convert grams to multiplier (e.g., 100g / 100g = 1.0 servings)
-        multiplier = numServingSize / foodServingSize;
+        // All nutrients are now per 100g, so divide by 100
+        multiplier = numServingSize / 100;
+      } else {
+        // servingUnit === 'serving'
+        // Convert servings to grams first, then to multiplier
+        const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+        multiplier = (numServingSize * foodServingSize) / 100;
       }
-      // If unit is "serving", multiplier is already correct (servingSize = number of servings)
 
       // Round to 6 decimal places for precision (backend now supports up to 6 decimal places)
       multiplier = Math.round(multiplier * 1000000) / 1000000;
@@ -538,6 +627,50 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
   };
 
+  // Planned entry handlers
+  const handleConfirmPlannedEntry = async (id: number) => {
+    try {
+      setLoading(true);
+
+      // Convert planned entry to actual log entry via API
+      await apiClient.convertPlannedToLog(id);
+
+      // Refresh data
+      await fetchData();
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (err: any) {
+      console.error('Error confirming planned entry:', err);
+      alert(err?.data?.detail || err?.data?.error || 'Failed to log planned food');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDeletePlannedEntry = async (id: number) => {
+    try {
+      setLoading(true);
+      await apiClient.deletePlannedEntry(id);
+
+      // Refresh data
+      await fetchData();
+      if (onDataChange) {
+        onDataChange();
+      }
+    } catch (err: any) {
+      console.error('Error deleting planned entry:', err);
+      alert(err?.data?.detail || err?.data?.error || 'Failed to delete planned food');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter planned entries by meal type (from API response)
+  const getPlannedEntriesForMeal = (mealType: string): PlannedFoodEntry[] => {
+    return todayLog?.planned_entries?.filter(e => e.meal_type === mealType) || [];
+  };
+
   const getMealIcon = (mealType: string) => {
     switch (mealType) {
       case 'breakfast': return <Coffee size={24} weight="fill" />;
@@ -604,13 +737,19 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   ) => {
     const totals = calculateMealTotals(entries);
     const mealColor = getMealColor(mealType);
+    const plannedEntries = getPlannedEntriesForMeal(mealType);
+    // Only use logged entries for totals display (not planned)
+    const isCollapsed = collapsedMealSections[mealType];
 
     return (
       <div className="nh-card" key={mealType}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => toggleMealSection(mealType)}
+            className="flex items-center gap-3 flex-1 text-left cursor-pointer"
+          >
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
                 backgroundColor: `${mealColor}20`,
                 color: mealColor
@@ -618,32 +757,186 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             >
               {getMealIcon(mealType)}
             </div>
-            <div>
-              <h3 className="font-semibold text-lg capitalize">{mealType}</h3>
-              <p className="text-xs nh-text opacity-70">
-                {Math.round(totals.calories)} kcal • {entries.length} items
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold capitalize">{mealType}</h3>
+                <span className="text-xs opacity-50">
+                  ({entries.length} items{plannedEntries.length > 0 && <span style={{ color: '#8b5cf6' }}> + {plannedEntries.length} planned</span>})
+                </span>
+              </div>
+              {/* Always show nutrition totals (logged only, not planned) */}
+              <div className="flex items-center gap-3 text-xs mt-0.5">
+                <span className="text-orange-500 font-medium">{Math.round(totals.calories)} kcal</span>
+                <span className="opacity-60">P: {totals.protein.toFixed(0)}g</span>
+                <span className="opacity-60">C: {totals.carbs.toFixed(0)}g</span>
+                <span className="opacity-60">F: {totals.fat.toFixed(0)}g</span>
+              </div>
             </div>
-          </div>
+            {isCollapsed ? (
+              <CaretRight size={18} className="opacity-50" />
+            ) : (
+              <CaretDown size={18} className="opacity-50" />
+            )}
+          </button>
+
+          {/* Small food icons when collapsed */}
+          {isCollapsed && (entries.length > 0 || plannedEntries.length > 0) && (
+            <div className="flex items-center gap-1 ml-2">
+              {[...entries.slice(0, 4), ...plannedEntries.slice(0, Math.max(0, 4 - entries.length))].map((entry, idx) => (
+                <div key={idx} className="relative">
+                  {entry.image_url ? (
+                    <img 
+                      src={entry.image_url} 
+                      alt="" 
+                      className="w-8 h-8 rounded-md object-cover"
+                      style={{ 
+                        border: 'id' in entry && plannedEntries.some(p => p.id === (entry as any).id) ? '2px solid #8b5cf6' : '2px solid transparent'
+                      }}
+                    />
+                  ) : (
+                    <div 
+                      className="w-8 h-8 rounded-md flex items-center justify-center"
+                      style={{ 
+                        backgroundColor: 'var(--forum-search-border)',
+                        border: 'id' in entry && plannedEntries.some(p => p.id === (entry as any).id) ? '2px solid #8b5cf6' : '2px solid transparent'
+                      }}
+                    >
+                      <Hamburger size={14} className="opacity-50" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {(entries.length + plannedEntries.length) > 4 && (
+                <span className="text-xs opacity-50 ml-1">+{entries.length + plannedEntries.length - 4}</span>
+              )}
+            </div>
+          )}
 
           <button
             onClick={() => handleAddFood(mealType)}
-            className="nh-button nh-button-primary flex items-center gap-2 whitespace-nowrap"
+            className="nh-button nh-button-primary flex items-center gap-2 whitespace-nowrap ml-2"
             style={{ padding: '0.5rem 1rem', display: 'flex' }}
           >
             <Plus size={18} weight="bold" />
-            <span>Add Food</span>
           </button>
         </div>
 
-        {/* Food Entries */}
-        {entries.length > 0 ? (
-          <div className="space-y-2">
-            {entries.map((entry) => (
+        {/* Food Entries - only show when not collapsed */}
+        {!isCollapsed && (
+          <>
+            {entries.length > 0 ? (
+              <div className="space-y-2 mt-4">
+                {entries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:shadow-sm transition-all"
+                    style={{ backgroundColor: 'var(--dietary-option-bg)' }}
+                  >
+                    {/* Food Image */}
+                    {entry.image_url ? (
+                      <img
+                        src={entry.image_url}
+                        alt={entry.food_name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="w-16 h-16 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: 'var(--forum-search-border)' }}
+                      >
+                        <Hamburger size={28} weight="fill" className="opacity-50" />
+                      </div>
+                    )}
+
+                    {/* Food Info */}
+                    <div className="flex-1">
+                      <h4 className="font-medium">{entry.food_name}</h4>
+                      <p className="text-xs nh-text opacity-70">
+                        {(() => {
+                          // Convert serving_size (multiplier) back to display value
+                          const multiplier = Number(entry.serving_size);
+                          const foodServingSize = entry.food_serving_size || 100;
+
+                          if (entry.serving_unit === 'g') {
+                            // Multiply multiplier by 100 to get grams (since all nutrients are per 100g)
+                            const grams = multiplier * 100;
+                            return `${Math.round(grams)}g`;
+                          } else {
+                            // For "serving" unit, calculate back to number of servings
+                            // multiplier = (numServings * foodServingSize) / 100
+                            // numServings = (multiplier * 100) / foodServingSize
+                            const numServings = (multiplier * 100) / foodServingSize;
+                            return `${numServings.toFixed(2)} ${entry.serving_unit}${Math.abs(numServings - 1) < 0.01 ? '' : 's'}`;
+                          }
+                        })()}
+                      </p>
+                    </div>
+
+                    {/* Nutrition Info */}
+                    <div className="text-right">
+                      <p className="font-semibold text-primary">{Math.round(Number(entry.calories))} kcal</p>
+                      <p className="text-xs nh-text opacity-70">
+                        P: {Number(entry.protein).toFixed(2)}g • C: {Number(entry.carbohydrates).toFixed(2)}g • F: {Number(entry.fat).toFixed(2)}g
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="p-2 rounded transition-colors"
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        title="Edit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditEntry(entry);
+                        }}
+                      >
+                        <PencilSimple size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded transition-colors text-red-600"
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        title="Delete"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteEntry(entry.id);
+                        }}
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+                }
+              </div >
+            ) : plannedEntries.length === 0 ? (
+              <div className="text-center py-8 nh-text opacity-50">
+                <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No foods logged for {mealType}</p>
+              </div>
+            ) : null}
+          </>
+        )}
+
+        {/* Planned Entries - shown after regular entries, sorted by planned_at */}
+        {!isCollapsed && plannedEntries.length > 0 && (
+          <div className={`space-y-2 ${entries.length > 0 ? 'mt-3' : 'mt-4'}`}>
+            {[...plannedEntries]
+              .sort((a, b) => new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime())
+              .map((entry) => (
               <div
                 key={entry.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:shadow-sm transition-all"
-                style={{ backgroundColor: 'var(--dietary-option-bg)' }}
+                className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed transition-all"
+                style={{ 
+                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                  borderColor: '#8b5cf6'
+                }}
               >
                 {/* Food Image */}
                 {entry.image_url ? (
@@ -651,6 +944,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     src={entry.image_url}
                     alt={entry.food_name}
                     className="w-16 h-16 rounded-lg object-cover"
+                    style={{ filter: 'grayscale(20%)' }}
                   />
                 ) : (
                   <div
@@ -663,31 +957,37 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
                 {/* Food Info */}
                 <div className="flex-1">
-                  <h4 className="font-medium">{entry.food_name}</h4>
+                  <div className="flex items-center gap-2">
+                    <h4 className="font-medium" style={{ color: '#7c3aed' }}>{entry.food_name}</h4>
+                    <span 
+                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                      style={{ 
+                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                        color: '#7c3aed'
+                      }}
+                    >
+                      <Clock size={12} weight="fill" />
+                      Planned
+                    </span>
+                  </div>
                   <p className="text-xs nh-text opacity-70">
                     {(() => {
-                      // Convert serving_size (multiplier) back to display value
-                      // ALWAYS show grams when unit is 'g'
                       const servingSizeNum = Number(entry.serving_size);
-                      const foodServingSize = entry.food_serving_size || 100; // Fallback to 100g if missing
-
+                      const foodServingSize = Number(entry.food_serving_size) || 100;
                       if (entry.serving_unit === 'g') {
-                        // Multiply multiplier by food's serving size to get grams
                         const grams = servingSizeNum * foodServingSize;
                         return `${Math.round(grams)}g`;
-                      } else {
-                        // For "serving" unit, show multiplier directly
-                        return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
                       }
+                      return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
                     })()}
                   </p>
                 </div>
 
                 {/* Nutrition Info */}
                 <div className="text-right">
-                  <p className="font-semibold text-primary">{Math.round(Number(entry.calories))} kcal</p>
+                  <p className="font-semibold" style={{ color: '#7c3aed' }}>{Math.round(Number(entry.calories))} kcal</p>
                   <p className="text-xs nh-text opacity-70">
-                    P: {Number(entry.protein).toFixed(2)}g • C: {Number(entry.carbohydrates).toFixed(2)}g • F: {Number(entry.fat).toFixed(2)}g
+                    P: {Number(entry.protein).toFixed(1)}g • C: {Number(entry.carbohydrates).toFixed(1)}g • F: {Number(entry.fat).toFixed(1)}g
                   </p>
                 </div>
 
@@ -695,69 +995,31 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                 <div className="flex gap-1">
                   <button
                     type="button"
+                    onClick={() => handleConfirmPlannedEntry(entry.id)}
                     className="p-2 rounded transition-colors"
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Edit"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleEditEntry(entry);
+                    style={{ 
+                      backgroundColor: 'var(--color-success)',
+                      color: 'white'
                     }}
+                    title="Log this food"
                   >
-                    <PencilSimple size={18} />
+                    <Check size={18} weight="bold" />
                   </button>
                   <button
                     type="button"
+                    onClick={() => handleDeletePlannedEntry(entry.id)}
                     className="p-2 rounded transition-colors text-red-600"
                     onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
                     onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Delete"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleDeleteEntry(entry.id);
-                    }}
+                    title="Remove planned food"
                   >
                     <Trash size={18} />
                   </button>
                 </div>
               </div>
-            ))
-            }
-          </div >
-        ) : (
-          <div className="text-center py-8 nh-text opacity-50">
-            <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No foods logged for {mealType}</p>
+            ))}
           </div>
         )}
-
-        {/* Meal Totals */}
-        {
-          entries.length > 0 && (
-            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
-              <div className="grid grid-cols-4 gap-4 text-center text-sm">
-                <div>
-                  <p className="nh-text opacity-70">Calories</p>
-                  <p className="font-bold">{Math.round(Number(totals.calories))}</p>
-                </div>
-                <div>
-                  <p className="nh-text opacity-70">Protein</p>
-                  <p className="font-bold">{Number(totals.protein).toFixed(2)}g</p>
-                </div>
-                <div>
-                  <p className="nh-text opacity-70">Carbs</p>
-                  <p className="font-bold">{Number(totals.carbs).toFixed(2)}g</p>
-                </div>
-                <div>
-                  <p className="nh-text opacity-70">Fat</p>
-                  <p className="font-bold">{Number(totals.fat).toFixed(2)}g</p>
-                </div>
-              </div>
-            </div>
-          )
-        }
       </div >
     );
   };
@@ -1106,6 +1368,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
           </button>
         </div>
       </div>
+
 
       {/* Meals Section (Daily View) */}
       {viewMode === 'daily' && (
@@ -1553,7 +1816,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{selectedFood.name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {selectedFood.caloriesPerServing} kcal per {selectedFood.servingSize}g
+                      {selectedFood.caloriesPerServing} kcal per 100g
                     </p>
                   </div>
                 </div>
@@ -1580,7 +1843,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   <div>
                     <p className="nh-text font-medium">{editingEntry.food_name}</p>
                     <p className="text-xs nh-text opacity-70">
-                      {editingFoodData.caloriesPerServing} kcal per {editingFoodData.servingSize}g
+                      {editingFoodData.caloriesPerServing} kcal per 100g
                     </p>
                   </div>
                 </div>
@@ -1611,16 +1874,23 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             <div className="mb-4">
               <label className="block text-sm font-medium mb-2">
                 Serving Size
-                {editingEntry && editingEntry.food_serving_size && servingUnit === 'g' && (
-                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / editingEntry.food_serving_size * 100) / 100} servings)
-                  </span>
-                )}
-                {!editingEntry && selectedFood && servingUnit === 'g' && (
-                  <span className="text-xs font-normal nh-text opacity-70 ml-2">
-                    ({Math.round((typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize * 100) / 100} servings)
-                  </span>
-                )}
+                {editingEntry && servingUnit === 'g' && (() => {
+                  const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+                  const numServings = (typeof servingSize === 'number' ? servingSize : Number(servingSize)) / foodServingSize;
+                  return (
+                    <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                      ({Math.round(numServings * 100) / 100} servings)
+                    </span>
+                  );
+                })()}
+                {!editingEntry && selectedFood && servingUnit === 'g' && (() => {
+                  const numServings = (typeof servingSize === 'number' ? servingSize : Number(servingSize)) / selectedFood.servingSize;
+                  return (
+                    <span className="text-xs font-normal nh-text opacity-70 ml-2">
+                      ({Math.round(numServings * 100) / 100} servings)
+                    </span>
+                  );
+                })()}
               </label>
               <div className="flex gap-2">
                 <input
@@ -1665,7 +1935,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     const oldUnit = servingUnit;
                     const currentSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
 
-                    // Get the food's serving size (with fallback)
+                    // Get the food's serving size
                     let foodServingSize = 100; // Default fallback
                     if (editingEntry) {
                       foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
@@ -1692,8 +1962,8 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                     appearance: 'auto'
                   }}
                 >
-                  <option value="g">grams (g)</option>
                   <option value="serving">serving</option>
+                  <option value="g">grams (g)</option>
                 </select>
               </div>
             </div>
@@ -1701,23 +1971,25 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             {/* Calculated Nutrition (for edit entries) */}
             {editingEntry && editingFoodData && (() => {
               const numServingSize = typeof servingSize === 'string' ? (servingSize === '' ? 0 : Number(servingSize)) : servingSize;
-              const calculateNutrition = (valuePerServing: number) => {
+              const calculateNutrition = (valuePer100g: number) => {
                 if (numServingSize <= 0 || isNaN(numServingSize)) {
                   return 0;
                 }
                 if (servingUnit === 'serving') {
-                  // If serving unit, multiply directly (e.g., 2 servings = 2 * valuePerServing)
-                  return valuePerServing * numServingSize;
+                  // Convert servings to grams first, then calculate
+                  const foodServingSize = editingEntry.food_serving_size || editingFoodData?.servingSize || 100;
+                  const grams = numServingSize * foodServingSize;
+                  return (valuePer100g / 100) * grams;
                 } else {
-                  // If gram unit, convert: (value per servingSize grams / servingSize) * entered grams
-                  return (valuePerServing / editingFoodData.servingSize) * numServingSize;
+                  // All nutrients are per 100g, so convert: (value per 100g / 100) * entered grams
+                  return (valuePer100g / 100) * numServingSize;
                 }
               };
 
               // Calculate total grams
               const totalGrams = servingUnit === 'g'
                 ? numServingSize
-                : numServingSize * editingFoodData.servingSize;
+                : numServingSize * (editingEntry.food_serving_size || editingFoodData?.servingSize || 100);
 
               return (
                 <div className="mb-4 p-3 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
@@ -1755,21 +2027,21 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             {/* Calculated Nutrition (for new entries) */}
             {selectedFood && !editingEntry && (() => {
               // Calculate nutrition based on unit type
-              // Food data shows nutrition for 1 serving (which equals food.servingSize grams)
-              // If unit is "serving": nutrition = valuePerServing * servingSize (e.g., 2 servings = 2 * value)
-              // If unit is "g": nutrition = (valuePerServing / food.servingSize) * enteredGrams
+              // All nutrients are per 100g
+              // If unit is "serving": convert to grams first, then calculate
+              // If unit is "g": nutrition = (valuePer100g / 100) * enteredGrams
               const numServingSize = typeof servingSize === 'string' ? (servingSize === '' ? 0 : Number(servingSize)) : servingSize;
-              const calculateNutrition = (valuePerServing: number) => {
+              const calculateNutrition = (valuePer100g: number) => {
                 if (numServingSize <= 0 || isNaN(numServingSize)) {
                   return 0;
                 }
                 if (servingUnit === 'serving') {
-                  // If serving unit, multiply directly (e.g., 2 servings = 2 * valuePerServing)
-                  return valuePerServing * numServingSize;
+                  // Convert servings to grams first, then calculate
+                  const grams = numServingSize * selectedFood.servingSize;
+                  return (valuePer100g / 100) * grams;
                 } else {
-                  // If gram unit, convert: (value per servingSize grams / servingSize) * entered grams
-                  // This gives us the nutrition for the entered grams
-                  return (valuePerServing / selectedFood.servingSize) * numServingSize;
+                  // All nutrients are per 100g, so convert: (value per 100g / 100) * entered grams
+                  return (valuePer100g / 100) * numServingSize;
                 }
               };
 
@@ -1821,7 +2093,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
                   setEditingEntry(null);
                   setEditingFoodData(null);
                 }}
-                className="flex-1 px-4 py-2 rounded-lg border transition-colors"
+                className="px-4 py-2 rounded-lg border transition-colors"
                 style={{
                   borderColor: 'var(--dietary-option-border)',
                   color: 'var(--color-text)'
@@ -1835,6 +2107,28 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               >
                 Cancel
               </button>
+              {/* Plan button - only shown for new entries, not editing */}
+              {!editingEntry && (
+                <button
+                  type="button"
+                  onClick={handlePlanFood}
+                  className="flex-1 px-4 py-2 rounded-lg flex items-center justify-center gap-2 transition-colors font-medium"
+                  style={{
+                    backgroundColor: '#8b5cf6',
+                    color: 'white',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = '#7c3aed';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = '#8b5cf6';
+                  }}
+                  disabled={loading}
+                >
+                  <CalendarPlus size={18} weight="bold" />
+                  Plan
+                </button>
+              )}
               <button
                 type="button"
                 onClick={editingEntry ? handleUpdateEntry : handleConfirmServing}

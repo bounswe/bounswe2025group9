@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 
 interface MacronutrientCardProps {
@@ -28,6 +29,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   mealBreakdown
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const [showInfoModal, setShowInfoModal] = useState(false);
 
   const isHydration = name.toLowerCase() === 'hydration';
@@ -128,8 +130,15 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   const getStatusMessage = () => {
     if (!isOverTarget) {
       const remainingFormatted = formatNumber(remaining);
-      if (isVeryLow) return `Only ${percentage}% of target - ${remainingFormatted}${unit} remaining`;
-      return `${remainingFormatted}${unit} remaining to reach goal`;
+      if (isVeryLow) {
+        return t('nutrition.status.onlyPercentOfTarget', {
+          percent: percentage,
+          remaining: `${remainingFormatted}${unit}`,
+        });
+      }
+      return t('nutrition.status.remainingToReachGoal', {
+        remaining: `${remainingFormatted}${unit}`,
+      });
     }
 
     const overAmount = formatNumber(current - target);
@@ -222,7 +231,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           <View>
             <Text style={[textStyles.heading4, { color: theme.text }]}>{name}</Text>
             <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-              Daily Target: {formatNumber(target)}{unit}
+              {t('nutrition.dailyGoal')}: {formatNumber(target)}{unit}
             </Text>
           </View>
         </View>
@@ -321,36 +330,36 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
           </Text>
           {isSevereOver && (
             <Text style={[textStyles.caption, { color: statusColor, marginTop: 4, fontWeight: '600' }]}>
-              ⚠️ Consider reducing intake
+              {t('nutrition.considerReducingIntake')}
             </Text>
           )}
         </View>
 
         {/* Show badge based on status */}
-        {percentage === 100 && renderStatusBadge('Met', theme.success, 'check-circle')}
-        {isNearTarget && percentage < 100 && renderStatusBadge('Almost', theme.success, 'chart-line')}
-        {(name === 'Protein' && isMinorOver) && renderStatusBadge('Met', theme.success, 'check-circle')}
+        {percentage === 100 && renderStatusBadge(t('common.met'), theme.success, 'check-circle')}
+        {isNearTarget && percentage < 100 && renderStatusBadge(t('common.almost'), theme.success, 'chart-line')}
+        {(name === 'Protein' && isMinorOver) && renderStatusBadge(t('common.met'), theme.success, 'check-circle')}
       </View>
 
       {/* Meal Breakdown for Calories */}
       {name === 'Calories' && mealBreakdown && (
         <View style={[styles.mealBreakdown, { borderTopColor: theme.border }]}>
           <View style={styles.mealItem}>
-            <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Breakfast</Text>
+            <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.breakfast')}</Text>
             <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-              {formatNumber(mealBreakdown.breakfast)} kcal
+              {formatNumber(mealBreakdown.breakfast)} {t('metrics.kcal')}
             </Text>
           </View>
           <View style={styles.mealItem}>
-            <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Lunch</Text>
+            <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.lunch')}</Text>
             <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-              {formatNumber(mealBreakdown.lunch)} kcal
+              {formatNumber(mealBreakdown.lunch)} {t('metrics.kcal')}
             </Text>
           </View>
           <View style={styles.mealItem}>
-            <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Dinner</Text>
+            <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.dinner')}</Text>
             <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-              {formatNumber(mealBreakdown.dinner)} kcal
+              {formatNumber(mealBreakdown.dinner)} {t('metrics.kcal')}
             </Text>
           </View>
         </View>
@@ -378,20 +387,20 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
 
             <View style={styles.modalStats}>
               <View style={styles.modalStatItem}>
-                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Current</Text>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('common.current')}</Text>
                 <Text style={[textStyles.heading4, { color: theme.primary }]}>
                   {formatNumber(current)}{unit}
                 </Text>
               </View>
               <View style={styles.modalStatItem}>
-                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>Target</Text>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('nutrition.target')}</Text>
                 <Text style={[textStyles.heading4, { color: theme.text }]}>
                   {formatNumber(target)}{unit}
                 </Text>
               </View>
               <View style={styles.modalStatItem}>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                  {isOverTarget ? 'Over' : 'Remaining'}
+                  {isOverTarget ? t('nutrition.over') : t('nutrition.remaining')}
                 </Text>
                 <Text style={[textStyles.heading4, { color: statusColor }]}>
                   {isOverTarget ? formatNumber(current - target) : formatNumber(remaining)}{unit}
@@ -404,7 +413,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
               onPress={() => setShowInfoModal(false)}
               activeOpacity={0.8}
             >
-              <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>Got it</Text>
+              <Text style={[textStyles.body, { color: '#fff', fontWeight: '700' }]}>{t('common.gotIt')}</Text>
             </TouchableOpacity>
           </View>
         </View>

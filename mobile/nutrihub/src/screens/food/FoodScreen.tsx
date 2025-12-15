@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PALETTE, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import FoodItemComponent from '../../components/food/FoodItem';
 import FoodDetailModal from '../../components/food/FoodDetailModal';
@@ -34,6 +35,7 @@ import { FoodItem, FoodCategoryType, DietaryOptionType, FoodFilters } from '../.
 import { FoodStackParamList } from '../../navigation/types';
 import { FOOD_CATEGORIES, DIETARY_OPTIONS, FOOD_SORT_OPTIONS } from '../../constants/foodConstants';
 import { getFoodCatalog, submitFoodProposal } from '../../services/api/food.service';
+import { getPrivateFoodsAsFoodItems } from '../../services/api/privateFood.service';
 import { API_CONFIG } from '../../config';
 
 type FoodScreenNavigationProp = NativeStackNavigationProp<FoodStackParamList, 'FoodList'>;
@@ -70,6 +72,7 @@ const SuccessNotification: React.FC<{
  */
 const FoodScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<FoodScreenNavigationProp>();
 
   // Layout mode state
@@ -77,6 +80,7 @@ const FoodScreen: React.FC = () => {
 
   // Food data state
   const [foodData, setFoodData] = useState<FoodItem[]>([]);
+  const [privateFoodData, setPrivateFoodData] = useState<FoodItem[]>([]);
 
   // Ref to track if we're already fetching
   const isFetchingRef = React.useRef(false);
@@ -134,15 +138,8 @@ const FoodScreen: React.FC = () => {
         return { sortBy: 'name', sortOrder: 'asc' };
       case FOOD_SORT_OPTIONS.NAME_Z_TO_A:
         return { sortBy: 'name', sortOrder: 'desc' };
-      case FOOD_SORT_OPTIONS.PRICE_LOW_TO_HIGH:
-        return { sortBy: 'price', sortOrder: 'asc' };
-      case FOOD_SORT_OPTIONS.PRICE_HIGH_TO_LOW:
-        return { sortBy: 'price', sortOrder: 'desc' };
       case FOOD_SORT_OPTIONS.NUTRITION_SCORE:
         return { sortBy: 'nutritionscore', sortOrder: 'desc' };
-      case FOOD_SORT_OPTIONS.COST_TO_NUTRITION_RATIO:
-        // Cost-to-nutrition ratio: sort by price/nutritionScore ratio (ascending = best value)
-        return { sortBy: 'cost-nutrition-ratio', sortOrder: 'asc' };
       default:
         return {};
     }
@@ -171,27 +168,15 @@ const FoodScreen: React.FC = () => {
     }
     
     // Apply price category filter (not handled by backend)
-    if (filters.priceCategory) {
+    const priceCategoryFilter = filters.priceCategory;
+    if (priceCategoryFilter) {
       result = result.filter(item => {
         if (!item.priceCategory) return false;
         // Normalize category (handle both $ and ₺ symbols, remove spaces)
         const normalizedItemCategory = item.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
-        const normalizedFilterCategory = filters.priceCategory.replace(/₺/g, '$').replace(/\s+/g, '').trim();
+        const normalizedFilterCategory = priceCategoryFilter.replace(/₺/g, '$').replace(/\s+/g, '').trim();
         return normalizedItemCategory === normalizedFilterCategory;
       });
-    }
-    
-    // Apply price range filter (not handled by backend)
-    if (filters.minPrice !== undefined) {
-      result = result.filter(item => 
-        item.price !== undefined && item.price >= (filters.minPrice as number)
-      );
-    }
-    
-    if (filters.maxPrice !== undefined) {
-      result = result.filter(item => 
-        item.price !== undefined && item.price <= (filters.maxPrice as number)
-      );
     }
     
     // Apply nutrition score range filter (not handled by backend)
@@ -224,8 +209,15 @@ const FoodScreen: React.FC = () => {
       isFetchingRef.current = true;
 
       if (loadMore) {
+        // Don't try to load more if there's no existing data (e.g., search returned no results)
+        if (foodData.length === 0) {
+          console.log('Cannot load more: no existing data');
+          isFetchingRef.current = false;
+          return;
+        }
         if (!pagination.hasMore || pagination.loading) {
           console.log('No more items or already loading, skipping fetch');
+          isFetchingRef.current = false;
           return;
         }
         setPagination(prev => ({ ...prev, loading: true }));
@@ -262,6 +254,8 @@ const FoodScreen: React.FC = () => {
       if (response.error) {
         console.error('API Error:', response.error);
         setError(response.error);
+        // Stop processing - don't continue with invalid data
+        setPagination(prev => ({ ...prev, loading: false }));
         return;
       }
 
@@ -295,11 +289,14 @@ const FoodScreen: React.FC = () => {
           const nextPage = pageToFetch + 1;
           console.log(`Setting next page to ${nextPage}`);
 
+          // If we received no new items, there are no more pages to load
+          const hasMorePages = response.hasMore && newItems.length > 0;
+
           // Update pagination state
           setPagination(prev => ({
             ...prev,
             page: nextPage,
-            hasMore: response.hasMore,
+            hasMore: hasMorePages,
             total: response.total,
             loading: false
           }));
@@ -311,21 +308,33 @@ const FoodScreen: React.FC = () => {
           return [...prevData, ...newItems];
         });
       } else {
-        // Replace all data for initial load or refresh
-        setFoodData(responseData);
+        // Also fetch private foods (once per refresh)
+        const privates = await getPrivateFoodsAsFoodItems();
+        setPrivateFoodData(privates);
+
+        // Replace all data for initial load or refresh (public + private)
+        const allFoodData = [...responseData, ...privates];
+        setFoodData(allFoodData);
+
+        // If no results were returned, there are no more pages to load
+        // This prevents trying to fetch page 2 when search returns no results
+        const hasMorePages = response.hasMore && responseData.length > 0;
 
         // Update pagination state for first load
         const nextPage = 2; // Since we just loaded page 1
         setPagination(prev => ({
           ...prev,
           page: nextPage,
-          hasMore: response.hasMore,
-          total: response.total,
+          hasMore: hasMorePages,
+          // Include private items in the displayed total so the counter is accurate
+          total: (response.total ?? 0) + privates.length,
           loading: false
         }));
 
         // Update the ref
         currentPageRef.current = nextPage;
+        
+        console.log(`Initial load complete: ${allFoodData.length} items, hasMore=${hasMorePages}`);
       }
     } catch (err: any) {
       console.error('Error in fetchFoodData:', err);
@@ -336,7 +345,7 @@ const FoodScreen: React.FC = () => {
       isFetchingRef.current = false;
     }
   // Only include stable dependencies to prevent infinite loops
-  }, [filters.category, filters.name, sortOption, pagination.limit, pagination.hasMore, pagination.loading]);
+  }, [filters.category, filters.name, sortOption, pagination.limit, pagination.hasMore, pagination.loading, foodData.length]);
   
   // Load initial data
   useEffect(() => {
@@ -381,6 +390,12 @@ const FoodScreen: React.FC = () => {
   
   // Handle load more when reaching end of list
   const handleLoadMore = useCallback(() => {
+    // Don't try to load more if there's no data yet (e.g., search returned no results)
+    if (foodData.length === 0) {
+      console.log('Skipping load more: no data loaded yet');
+      return;
+    }
+
     if (!pagination.hasMore || isLoading || pagination.loading || isFetchingRef.current) {
       console.log('Skipping load more:', {
         hasMore: pagination.hasMore,
@@ -393,7 +408,7 @@ const FoodScreen: React.FC = () => {
 
     console.log('Loading more items from page:', currentPageRef.current);
     fetchFoodData(true);
-  }, [fetchFoodData, pagination.hasMore, isLoading, pagination.loading]);
+  }, [fetchFoodData, pagination.hasMore, isLoading, pagination.loading, foodData.length]);
 
   // Toggle layout mode
   const toggleLayoutMode = () => {
@@ -550,7 +565,7 @@ const FoodScreen: React.FC = () => {
         {pagination.loading ? (
           <>
             <ActivityIndicator size="small" color={theme.primary} />
-            <Text style={[styles.footerText, textStyles.caption]}>Loading more items...</Text>
+            <Text style={[styles.footerText, textStyles.caption]}>{t('common.loadingMore')}</Text>
           </>
         ) : pagination.hasMore ? (
           <Text style={[styles.footerText, textStyles.caption]}>
@@ -558,7 +573,7 @@ const FoodScreen: React.FC = () => {
           </Text>
         ) : (
           <Text style={[styles.footerText, textStyles.caption]}>
-            {foodData.length > 0 ? 'End of list' : 'No items found'}
+            {foodData.length > 0 ? t('common.endOfList') : t('common.noItemsFound')}
           </Text>
         )}
       </View>
@@ -583,10 +598,10 @@ const FoodScreen: React.FC = () => {
       {/* Header  @claude this is the component */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={[styles.headerTitle, textStyles.heading2]}>Foods Catalog</Text>
+          <Text style={[styles.headerTitle, textStyles.heading2]}>{t('food.catalog')}</Text>
           <View style={styles.headerButtons}>
             <Button
-              title="Compare"
+              title={t('food.compareFood')}
               variant="primary"
               size="small"
               iconName="chart-line"
@@ -594,7 +609,7 @@ const FoodScreen: React.FC = () => {
               style={styles.compareButton}
             />
             <Button
-              title="Propose Food"
+              title={t('food.proposeFood')}
               variant="primary"
               size="small"
               iconName="plus"
@@ -606,7 +621,7 @@ const FoodScreen: React.FC = () => {
         {/* Search and filter bar */}
         <View style={styles.searchContainer}>
           <TextInput
-            placeholder="Search foods..."
+            placeholder={t('food.searchPlaceholder')}
             onChangeText={setNameFilter}
             value={filters.name}
             iconName="magnify"
@@ -640,7 +655,7 @@ const FoodScreen: React.FC = () => {
         {/* Active filters display */}
         {hasActiveFilters && (
           <View style={styles.activeFiltersContainer}>
-            <Text style={[styles.activeFiltersLabel, textStyles.caption]}>Active filters:</Text>
+            <Text style={[styles.activeFiltersLabel, textStyles.caption]}>{t('food.activeFilters')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -687,7 +702,7 @@ const FoodScreen: React.FC = () => {
                   onPress={() => setPriceCategory(undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Price: {filters.priceCategory}
+                    {t('food.priceCategory')}: {filters.priceCategory}
                   </Text>
                   <Icon
                     name="close"
@@ -704,7 +719,7 @@ const FoodScreen: React.FC = () => {
                   onPress={() => setNutritionScoreRange(undefined, undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Nutrition: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
+                    {t('food.nutritionScore')}: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
                   </Text>
                   <Icon
                     name="close"
@@ -720,7 +735,7 @@ const FoodScreen: React.FC = () => {
 
         {/* Sort options */}
         <View style={styles.sortOptionsContainer}>
-          <Text style={[styles.sortByText, textStyles.body]}>Sort by:</Text>
+          <Text style={[styles.sortByText, textStyles.body]}>{t('food.sortBy')}:</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -751,7 +766,7 @@ const FoodScreen: React.FC = () => {
                     },
                   ]}
                 >
-                  {key.replace(/_/g, ' ')}
+                  {t(`food.sortOptions.${key}`)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -763,15 +778,15 @@ const FoodScreen: React.FC = () => {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading foods...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('food.loadingFoods')}</Text>
         </View>
       ) : error ? (
         <View style={styles.emptyContainer}>
           <Icon name="alert-circle" size={64} color={theme.error} />
-          <Text style={[styles.emptyTitle, textStyles.heading4]}>Error loading foods</Text>
+          <Text style={[styles.emptyTitle, textStyles.heading4]}>{t('food.errorLoadingFoods')}</Text>
           <Text style={[styles.emptyText, textStyles.body]}>{error}</Text>
           <Button
-            title="Retry"
+            title={t('common.retry')}
             onPress={() => fetchFoodData(false)}
             variant="primary"
             style={styles.emptyButton}
@@ -787,7 +802,7 @@ const FoodScreen: React.FC = () => {
               fetchFoodData();
             }}
           >
-            <Text style={styles.debugText}>Debug API Connection</Text>
+            <Text style={styles.debugText}>{t('common.debugApiConnection')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -829,14 +844,14 @@ const FoodScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Icon name="food-off" size={64} color={theme.textSecondary} />
-              <Text style={[styles.emptyTitle, textStyles.heading4]}>No foods found</Text>
+              <Text style={[styles.emptyTitle, textStyles.heading4]}>{t('food.noFoodsFound')}</Text>
               <Text style={[styles.emptyText, textStyles.body]}>
                 {hasActiveFilters
-                  ? 'Try adjusting your filters to see more results'
-                  : 'Start by adding some foods to the catalog'}
+                  ? t('food.tryAdjustingFilters')
+                  : t('food.startByAddingFoods')}
               </Text>
               <Button
-                title={hasActiveFilters ? "Reset Filters" : "Add Food"}
+                title={hasActiveFilters ? t('food.resetFilters') : t('food.addFood')}
                 onPress={hasActiveFilters ? resetFilters : () => setProposeFoodModalVisible(true)}
                 variant="primary"
                 style={styles.emptyButton}

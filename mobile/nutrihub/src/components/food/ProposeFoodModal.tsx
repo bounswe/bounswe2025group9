@@ -21,6 +21,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Picker } from '@react-native-picker/picker';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import TextInput from '../common/TextInput';
@@ -96,6 +97,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
   onSubmit,
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const [selectedCategory, setSelectedCategory] = useState<FoodCategoryType | null>(null);
   const [selectedDietaryOptions, setSelectedDietaryOptions] = useState<string[]>([]);
   const [priceUnit, setPriceUnit] = useState<'per_100g' | 'per_unit'>('per_100g');
@@ -274,7 +276,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
         >
           <View style={[styles.header, { borderBottomColor: theme.divider }]}>
             <Icon name="food-apple" size={24} color={theme.primary} />
-            <Text style={[styles.title, textStyles.heading3]}>Propose New Food</Text>
+            <Text style={[styles.title, textStyles.heading3]}>{t('food.proposeNewFood')}</Text>
             <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
               <Icon name="close" size={24} color={theme.text} />
             </TouchableOpacity>
@@ -288,12 +290,12 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
             <Card style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="information" size={20} color={theme.primary} />
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Basic Information</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.basicInformation')}</Text>
               </View>
 
               <TextInput
-                label="Food Name *"
-                placeholder="Enter food name"
+                label={t('food.foodNameRequired')}
+                placeholder={t('food.enterFoodName')}
                 value={values.name}
                 onChangeText={handleChange('name')}
                 onBlur={handleBlur('name')}
@@ -301,7 +303,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
               />
 
               <View style={styles.categorySection}>
-                <Text style={[styles.fieldLabel, textStyles.body]}>Food Category *</Text>
+                <Text style={[styles.fieldLabel, textStyles.body]}>{t('food.foodCategoryRequired')}</Text>
                 <View style={styles.categoryGrid}>
                   {Object.values(FOOD_CATEGORIES).map((category) => (
                     <TouchableOpacity
@@ -349,7 +351,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
             <Card style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="nutrition" size={20} color={theme.primary} />
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Nutrition Information</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.nutritionInformation')}</Text>
               </View>
 
               <View style={styles.row}>
@@ -382,7 +384,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
             <Card style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="chart-donut" size={20} color={theme.primary} />
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Macronutrients (per serving)</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.macronutrientsPerServing')}</Text>
               </View>
 
               <View style={styles.row}>
@@ -446,7 +448,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
             <Card style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="leaf" size={20} color={theme.primary} />
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Dietary Options</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.dietaryOptions')}</Text>
               </View>
 
               <View style={styles.dietaryGrid}>
@@ -485,7 +487,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
             <Card style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="currency-usd" size={20} color={theme.primary} />
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Pricing (Optional)</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.pricingOptional')}</Text>
               </View>
 
               <View style={styles.row}>
@@ -511,7 +513,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
               </View>
 
               <View style={styles.priceUnitContainer}>
-                <Text style={[styles.fieldLabel, textStyles.body]}>Price Unit</Text>
+                <Text style={[styles.fieldLabel, textStyles.body]}>{t('food.priceUnit')}</Text>
                 <View style={styles.priceUnitToggle}>
                   <TouchableOpacity
                     style={[
@@ -611,7 +613,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
                     >
                       <Icon name="plus" size={20} color="#FFFFFF" />
                       <Text style={[styles.addMicroButtonText, { color: '#FFFFFF' }]}>
-                        Add Micronutrient
+                        {t('food.addMicronutrient')}
                       </Text>
                     </TouchableOpacity>
                   )}
@@ -623,7 +625,7 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
             <Card style={styles.section}>
               <View style={styles.sectionHeader}>
                 <Icon name="image" size={20} color={theme.primary} />
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Image (Optional)</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('food.imageOptional')}</Text>
               </View>
 
               <TextInput
@@ -700,10 +702,10 @@ const ProposeFoodModal: React.FC<ProposeFoodModalProps> = ({
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.microModal, { backgroundColor: theme.card }]}>
-            <Text style={[styles.microModalTitle, textStyles.heading4]}>Add Micronutrient</Text>
+            <Text style={[styles.microModalTitle, textStyles.heading4]}>{t('food.addMicronutrient')}</Text>
 
             <View style={styles.pickerContainer}>
-              <Text style={[styles.fieldLabel, textStyles.body]}>Select Micronutrient</Text>
+              <Text style={[styles.fieldLabel, textStyles.body]}>{t('food.selectMicronutrient')}</Text>
               <View style={[styles.pickerWrapper, { backgroundColor: theme.surfaceVariant }]}>
                 <Picker
                   selectedValue={selectedMicroKey}

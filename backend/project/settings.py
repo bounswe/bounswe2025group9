@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt.token_blacklist",
     "rest_framework_simplejwt",
+    "drf_spectacular",
     "accounts",
     "api",
     "foods",
@@ -173,6 +174,7 @@ REST_FRAMEWORK = {
     "DEFAULT_FILTER_BACKENDS": ["django_filters.rest_framework.DjangoFilterBackend"],
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 12,
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
 }
 
 SIMPLE_JWT = {
@@ -215,3 +217,40 @@ CORS_ALLOW_CREDENTIALS = True
 DEEPL_API_KEY = os.environ.get(
     "DEEPL_API_KEY", "7225230f-59a5-42eb-b576-7fb2d5cf2db1:fx"
 )
+
+# drf-spectacular settings for OpenAPI/Swagger documentation
+SPECTACULAR_SETTINGS = {
+    "TITLE": "NutriHub API",
+    "DESCRIPTION": "Comprehensive nutrition tracking and food community platform API. "
+                   "Features include food catalog with micronutrient filtering, "
+                   "meal planning, nutrition logging, community forum with recipes, "
+                   "and user profile management.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": r"/api/",
+    "SERVERS": [
+        {"url": "https://nutrihub.fit", "description": "Production server"},
+        {"url": "http://localhost:8080", "description": "Development server"},
+    ],
+    "TAGS": [
+        {"name": "authentication", "description": "User authentication and registration"},
+        {"name": "users", "description": "User profile management"},
+        {"name": "foods", "description": "Food catalog and nutrition data"},
+        {"name": "forum", "description": "Community posts, recipes, and comments"},
+        {"name": "meal-planner", "description": "Meal planning and nutrition tracking"},
+    ],
+    "APPEND_COMPONENTS": {
+        "securitySchemes": {
+            "jwtAuth": {
+                "type": "http",
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "description": "JWT token authentication. Obtain token via /api/users/token/ endpoint."
+            }
+        }
+    },
+    "SECURITY": [{"jwtAuth": []}],
+    "PREPROCESSING_HOOKS": [],
+    "POSTPROCESSING_HOOKS": [],
+}
