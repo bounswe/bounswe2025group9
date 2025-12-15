@@ -42,7 +42,7 @@ const FoodCompare: React.FC = () => {
             <div className="nh-container">
                 <div className="flex flex-col md:flex-row gap-6">
                     {/* Left Column - Search Items */}
-                    <div className="w-full md:w-1/5">
+                    <div className="w-full md:w-[28%]">
                         <div className="sticky top-20">
                             <div className="nh-card p-4">
                                 <div className="flex items-center justify-between mb-3">
@@ -56,19 +56,29 @@ const FoodCompare: React.FC = () => {
                                     {selectedFoods.length > 0 ? (
                                         <div className="flex flex-col gap-2">
                                             {selectedFoods.map(food => (
-                                                <div key={food.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800">
+                                                <div key={food.id} className="flex items-center gap-3 p-2 rounded-lg bg-gray-50 dark:bg-gray-800 min-w-0">
                                                     {food.imageUrl ? (
-                                                        <img src={food.imageUrl} alt={food.name} className="w-10 h-10 object-cover rounded" onError={(e)=>{ (e.target as HTMLImageElement).style.display='none'; }} />
+                                                        <img src={food.imageUrl} alt={food.name} className="w-10 h-10 object-cover rounded shrink-0" onError={(e)=>{ (e.target as HTMLImageElement).style.display='none'; }} />
                                                     ) : (
-                                                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-sm text-gray-500">—</div>
+                                                        <div className="w-10 h-10 bg-gray-100 rounded flex items-center justify-center text-sm text-gray-500 shrink-0">—</div>
                                                     )}
-                                                    <div className="flex-1">
-                                                        <div className="nh-text font-medium truncate">{food.name}</div>
-                                                        <div className="text-xs text-gray-500 truncate">{food.category}</div>
+                                                    <div className="flex-1 min-w-0 space-y-1">
+                                                        <div
+                                                            className="nh-text font-medium leading-tight whitespace-nowrap overflow-x-auto pr-1"
+                                                            title={food.name}
+                                                        >
+                                                            {food.name}
+                                                        </div>
+                                                        <div
+                                                            className="text-xs text-gray-500 leading-tight break-words"
+                                                            title={food.category}
+                                                        >
+                                                            {food.category}
+                                                        </div>
                                                     </div>
                                                     <button
                                                         onClick={() => handleRemoveFood(food.id)}
-                                                        className="flex items-center justify-center w-8 h-8 rounded hover:bg-red-100 transition-colors"
+                                                        className="flex items-center justify-center w-8 h-8 rounded hover:bg-red-100 transition-colors shrink-0"
                                                         title="Remove food"
                                                     >
                                                         <X size={16} weight="bold" style={{ color: 'var(--color-primary)' }} />
@@ -105,7 +115,7 @@ const FoodCompare: React.FC = () => {
                     </div>
 
                     {/* Middle Columns - Foods to Compare */}
-                    <div className="w-full md:w-3/5">
+                    <div className="w-full md:w-[55%]">
                         {selectedFoods.length > 0 ? (
                             <div className="nh-card p-6">
                                 <h2 className="nh-subtitle mb-6">Comparison Results</h2>
@@ -119,7 +129,7 @@ const FoodCompare: React.FC = () => {
                     </div>
 
                     {/* Right Column - Tips */}
-                    <div className="w-full md:w-1/5">
+                    <div className="w-full md:w-[17%]">
                         <div className="sticky top-20 flex flex-col gap-4">
                             <div className="nh-card rounded-lg shadow-md">
                                 <h3 className="nh-subtitle mb-3 text-sm">Comparison Tips</h3>
