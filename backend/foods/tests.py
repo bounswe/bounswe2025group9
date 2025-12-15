@@ -1228,6 +1228,359 @@ class MicronutrientFilteringTests(TestCase):
         self.assertIn("unit", beef["micronutrients"]["Zinc"])
 
 
+class MacronutrientFilteringTests(TestCase):
+    """Tests for macronutrient filtering in FoodCatalog"""
+
+    def setUp(self):
+        self.client = APIClient()
+
+        # Clear all existing food data to ensure clean test state
+        FoodEntry.objects.all().delete()
+
+        # Create food entries with different macronutrient profiles
+        # Food 1: High protein (25g), low fat (2g), medium carbs (15g)
+        self.chicken_breast = FoodAccessService.create_validated_food_entry(
+            name="Chicken Breast",
+            category="Meat",
+            servingSize=100,
+            caloriesPerServing=165,
+            proteinContent=25.0,
+            fatContent=2.0,
+            carbohydrateContent=15.0,
+            nutritionScore=8.0,
+        )
+
+        # Food 2: Medium protein (10g), high fat (20g), low carbs (5g)
+        self.cheese = FoodAccessService.create_validated_food_entry(
+            name="Cheddar Cheese",
+            category="Dairy",
+            servingSize=100,
+            caloriesPerServing=403,
+            proteinContent=10.0,
+            fatContent=20.0,
+            carbohydrateContent=5.0,
+            nutritionScore=6.0,
+        )
+
+        # Food 3: Low protein (3g), low fat (1g), high carbs (50g)
+        self.rice = FoodAccessService.create_validated_food_entry(
+            name="White Rice",
+            category="Grains",
+            servingSize=100,
+            caloriesPerServing=130,
+            proteinContent=3.0,
+            fatContent=1.0,
+            carbohydrateContent=50.0,
+            nutritionScore=5.0,
+        )
+
+        # Food 4: Medium protein (8g), medium fat (10g), medium carbs (30g)
+        self.bread = FoodAccessService.create_validated_food_entry(
+            name="Whole Wheat Bread",
+            category="Grains",
+            servingSize=100,
+            caloriesPerServing=247,
+            proteinContent=8.0,
+            fatContent=10.0,
+            carbohydrateContent=30.0,
+            nutritionScore=7.0,
+        )
+
+    def test_protein_bounded_range(self):
+        """Test filtering with bounded protein range"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:8-12"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Cheese (10g) and Bread (8g)
+        self.assertIn("Cheddar Cheese", names)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Chicken (25g) or Rice (3g)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_protein_lower_bound_only(self):
+        """Test filtering with lower bound protein only"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:15-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include only Chicken (25g)
+        self.assertIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+        self.assertNotIn("Whole Wheat Bread", names)
+
+    def test_protein_upper_bound_only(self):
+        """Test filtering with upper bound protein only"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:-5"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include only Rice (3g)
+        self.assertIn("White Rice", names)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("Whole Wheat Bread", names)
+
+    def test_fat_range_filtering(self):
+        """Test filtering by fat content"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "fat:5-15"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Bread (10g)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Chicken (2g), Cheese (20g), or Rice (1g)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_carbohydrate_range_filtering(self):
+        """Test filtering by carbohydrate content"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "carbohydrates:20-40"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Bread (30g)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Chicken (15g), Cheese (5g), or Rice (50g)
+        self.assertNotIn("Chicken Breast", names)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_carbohydrate_alias_carbs(self):
+        """Test that 'carbs' alias works for carbohydrates"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "carbs:40-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Rice (50g)
+        self.assertIn("White Rice", names)
+
+    def test_carbohydrate_alias_carbohydrate_singular(self):
+        """Test that 'carbohydrate' (singular) alias works"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "carbohydrate:40-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Rice (50g)
+        self.assertIn("White Rice", names)
+
+    def test_fat_alias_fats(self):
+        """Test that 'fats' alias works for fat"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "fats:15-"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Cheese (20g)
+        self.assertIn("Cheddar Cheese", names)
+
+    def test_multiple_macronutrient_filters_and(self):
+        """Test that multiple filters create AND constraints"""
+        # Filter for protein >= 8 AND fat <= 12
+        response = self.client.get(
+            reverse("get_foods"), {"macronutrient": "protein:8-,fat:-12"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Chicken (protein=25, fat=2) and Bread (protein=8, fat=10)
+        self.assertIn("Chicken Breast", names)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Cheese (protein=10, fat=20) or Rice (protein=3)
+        self.assertNotIn("Cheddar Cheese", names)
+        self.assertNotIn("White Rice", names)
+
+    def test_case_insensitive_macronutrient_name(self):
+        """Test that macronutrient name matching is case-insensitive"""
+        response1 = self.client.get(reverse("get_foods"), {"macronutrient": "PROTEIN:20-"})
+        response2 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:20-"})
+        response3 = self.client.get(reverse("get_foods"), {"macronutrient": "PrOtEiN:20-"})
+
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        results3 = [f["name"] for f in response3.data.get("results", [])]
+
+        # All should return the same results
+        self.assertEqual(set(results1), set(results2))
+        self.assertEqual(set(results2), set(results3))
+
+    def test_invalid_macronutrient_name_ignored(self):
+        """Test that invalid macronutrient names are ignored"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "invalid:10-20"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        # Should return all foods since filter is invalid
+        self.assertGreaterEqual(len(results), 4)
+
+    def test_invalid_format_skipped(self):
+        """Test that invalid filter formats are gracefully skipped"""
+        # Missing colon
+        response1 = self.client.get(reverse("get_foods"), {"macronutrient": "protein10-20"})
+        # Missing dash
+        response2 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:1020"})
+        # Both numbers missing
+        response3 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:-"})
+
+        # All should return all foods (filter skipped)
+        self.assertEqual(response1.status_code, status.HTTP_200_OK)
+        self.assertEqual(response2.status_code, status.HTTP_200_OK)
+        self.assertEqual(response3.status_code, status.HTTP_200_OK)
+
+        self.assertGreaterEqual(len(response1.data.get("results", [])), 4)
+        self.assertGreaterEqual(len(response2.data.get("results", [])), 4)
+        self.assertGreaterEqual(len(response3.data.get("results", [])), 4)
+
+    def test_invalid_numbers_skipped(self):
+        """Test that invalid numeric values are gracefully skipped"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:abc-xyz"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Should return all foods since filter is invalid
+        self.assertGreaterEqual(len(response.data.get("results", [])), 4)
+
+    def test_exact_boundary_values(self):
+        """Test that boundary values are inclusive"""
+        # Test lower boundary - Bread has exactly 8g protein
+        response1 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:8-15"})
+        results1 = [f["name"] for f in response1.data.get("results", [])]
+        self.assertIn("Whole Wheat Bread", results1)
+
+        # Test upper boundary - Cheese has exactly 10g protein
+        response2 = self.client.get(reverse("get_foods"), {"macronutrient": "protein:5-10"})
+        results2 = [f["name"] for f in response2.data.get("results", [])]
+        self.assertIn("Cheddar Cheese", results2)
+
+    def test_combined_with_category_filter(self):
+        """Test macronutrient filter combined with category filter"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"category": "Grains", "macronutrient": "protein:5-15"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Bread (Grains, protein=8g)
+        self.assertIn("Whole Wheat Bread", names)
+        # Should not include Rice (Grains but protein=3g) or Chicken (Meat category)
+        self.assertNotIn("White Rice", names)
+        self.assertNotIn("Chicken Breast", names)
+
+    def test_combined_with_search(self):
+        """Test macronutrient filter combined with search"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"search": "cheese", "macronutrient": "fat:15-"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Cheese (matches search and fat=20g)
+        self.assertIn("Cheddar Cheese", names)
+
+    def test_empty_macronutrient_param(self):
+        """Test with empty macronutrient parameter"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": ""})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        # Should return all foods
+        self.assertGreaterEqual(len(response.data.get("results", [])), 4)
+
+    def test_whitespace_handling(self):
+        """Test that whitespace in filter is handled correctly"""
+        response = self.client.get(
+            reverse("get_foods"),
+            {"macronutrient": " protein : 20 - , fat : - 5 "}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Chicken (protein=25, fat=2)
+        self.assertIn("Chicken Breast", names)
+
+    def test_zero_values(self):
+        """Test filtering with zero as a boundary value"""
+        # Create a food with very low macros
+        low_macro_food = FoodAccessService.create_validated_food_entry(
+            name="Celery",
+            category="Vegetable",
+            servingSize=100,
+            caloriesPerServing=16,
+            proteinContent=0.7,
+            fatContent=0.2,
+            carbohydrateContent=3.0,
+            nutritionScore=9.0,
+        )
+
+        # Filter for protein 0-1
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:0-1"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Celery (0.7g)
+        self.assertIn("Celery", names)
+        # Should not include Chicken (25g)
+        self.assertNotIn("Chicken Breast", names)
+
+    def test_complex_multi_macro_filter(self):
+        """Test complex filter with all three macronutrients"""
+        # Filter for high protein, low fat, low carbs
+        response = self.client.get(
+            reverse("get_foods"),
+            {"macronutrient": "protein:20-,fat:-5,carbs:-20"}
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Chicken (protein=25, fat=2, carbs=15)
+        self.assertIn("Chicken Breast", names)
+        # Should not include others
+        self.assertNotIn("Cheddar Cheese", names)  # fat too high
+        self.assertNotIn("White Rice", names)  # protein too low
+        self.assertNotIn("Whole Wheat Bread", names)  # carbs too high
+
+    def test_decimal_values(self):
+        """Test filtering with decimal values"""
+        response = self.client.get(reverse("get_foods"), {"macronutrient": "protein:2.5-3.5"})
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+        results = response.data.get("results", [])
+        names = [food["name"] for food in results]
+
+        # Should include Rice (exactly 3.0g)
+        self.assertIn("White Rice", names)
+
+
 class PrivateFoodAccessTest(TestCase):
     """Tests for private food functionality and access control"""
 

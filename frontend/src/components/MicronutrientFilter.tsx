@@ -1,13 +1,9 @@
-import { useState, useEffect, useRef } from 'react';
-import { Plus, X } from '@phosphor-icons/react';
+import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/apiClient';
 import { useLanguage } from '../context/LanguageContext';
+import { NutrientFilter, NutrientFilterItem, buildNutrientQuery } from './NutrientFilter';
 
-export interface MicronutrientFilterItem {
-  name: string;
-  min?: number;
-  max?: number;
-}
+export interface MicronutrientFilterItem extends NutrientFilterItem {}
 
 interface MicronutrientFilterProps {
   filters: MicronutrientFilterItem[];
@@ -26,9 +22,6 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
   const [newFilterMax, setNewFilterMax] = useState('');
   const [availableMicronutrients, setAvailableMicronutrients] = useState<AvailableMicronutrient[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showSuggestions, setShowSuggestions] = useState(false);
-  const [filteredSuggestions, setFilteredSuggestions] = useState<AvailableMicronutrient[]>([]);
-  const suggestionsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const fetchMicronutrients = async () => {
@@ -44,64 +37,6 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
 
     fetchMicronutrients();
   }, []);
-
-  // Click outside handler to close suggestions
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (suggestionsRef.current && !suggestionsRef.current.contains(event.target as Node)) {
-        setShowSuggestions(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (newFilterName.trim()) {
-      const searchTerm = newFilterName.toLowerCase();
-      const filtered = availableMicronutrients.filter(m =>
-        m.name.toLowerCase().includes(searchTerm)
-      ); // Show all matching results
-      setFilteredSuggestions(filtered);
-    } else {
-      // Show all micronutrients when input is empty
-      setFilteredSuggestions(availableMicronutrients);
-    }
-  }, [newFilterName, availableMicronutrients]);
-
-  const addFilter = () => {
-    if (!newFilterName.trim()) return;
-
-    const newFilter: MicronutrientFilterItem = {
-      name: newFilterName.trim(),
-      ...(newFilterMin && { min: parseFloat(newFilterMin) }),
-      ...(newFilterMax && { max: parseFloat(newFilterMax) })
-    };
-
-    onChange([...filters, newFilter]);
-    setNewFilterName('');
-    setNewFilterMin('');
-    setNewFilterMax('');
-    setShowSuggestions(false);
-  };
-
-  const selectSuggestion = (micronutrient: AvailableMicronutrient) => {
-    setNewFilterName(micronutrient.name);
-    setShowSuggestions(false);
-  };
-
-  const removeFilter = (index: number) => {
-    onChange(filters.filter((_, i) => i !== index));
-  };
-
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      addFilter();
-    }
-  };
 
   return (
     <div className="w-full">
@@ -258,13 +193,16 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
         </p>
       )}
     </div>
+    <NutrientFilter
+      title="Micronutrient Filters"
+      description="Filter foods by their micronutrient content. Start typing to see suggestions."
+      availableNutrients={availableMicronutrients}
+      loading={loading}
+      filters={filters}
+      onChange={onChange}
+      placeholder="Nutrient name (e.g., iron, vitamin c)"
+    />
   );
 };
 
-export const buildMicronutrientQuery = (filters: MicronutrientFilterItem[]): string => {
-  return filters.map(({ name, min, max }) => {
-    const low = min !== undefined ? min : '';
-    const high = max !== undefined ? max : '';
-    return `${name}:${low}-${high}`;
-  }).join(',');
-};
+export const buildMicronutrientQuery = buildNutrientQuery;

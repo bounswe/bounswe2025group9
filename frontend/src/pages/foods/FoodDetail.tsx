@@ -126,7 +126,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
       return 0;
     };
     
-    const multiplier = (selectedServingSize || food.servingSize) / food.servingSize;
+    const multiplier = (selectedServingSize || 100) / 100;
     
     switch (nutrient) {
       case 'calories':
