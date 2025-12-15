@@ -246,7 +246,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
   // Helper to find matching micronutrient key in recommendations
   // Food data has keys like "Vitamin E (alpha-tocopherol)" 
   // Recommendations have keys like "Vitamin E (alpha-tocopherol) (mg)"
-  const findMicronutrientInRecommendations = (nutrient: string): number | { target: number; maximum: number } | null => {
+  const findMicronutrientInRecommendations = (nutrient: string): number | { target: number; maximum?: number } | null => {
     if (!recommendations?.micronutrients) return null;
     
     // First try exact match
