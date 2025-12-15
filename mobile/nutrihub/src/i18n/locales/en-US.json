@@ -84,7 +84,8 @@
     "min": "Min",
     "max": "Max",
     "to": "to",
-    "and": "and"
+    "and": "and",
+    "loadingFoods": "Loading foods..."
   },
   "home": {
     "yourFeed": "Your NutriFeed",
@@ -212,7 +213,14 @@
     "noLikedRecipes": "No liked recipes yet",
     "reportUser": "Report User",
     "blockUser": "Block User",
-    "loadingProfile": "Loading profile..."
+    "loadingProfile": "Loading profile...",
+    "profile": "Profile",
+    "unverified": "Unverified",
+    "noPostsFromUser": "No posts from this user yet.",
+    "postsPrivate": "This user keeps their posts private.",
+    "professionTagsPrivate": "This user keeps their profession tags private.",
+    "badgesPrivate": "This user keeps their badges private.",
+    "recipesPrivate": "This user keeps their recipes private."
   },
   "settings": {
     "title": "Settings",

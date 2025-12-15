@@ -84,7 +84,8 @@
     "min": "Min",
     "max": "Maks",
     "to": "ile",
-    "and": "ve"
+    "and": "ve",
+    "loadingFoods": "Yiyecekler yükleniyor..."
   },
   "home": {
     "yourFeed": "NutriFeed'iniz",
@@ -212,7 +213,14 @@
     "noLikedRecipes": "Henüz beğenilen tarif yok",
     "reportUser": "Kullanıcıyı Şikayet Et",
     "blockUser": "Kullanıcıyı Engelle",
-    "loadingProfile": "Profil yükleniyor..."
+    "loadingProfile": "Profil yükleniyor...",
+    "profile": "Profil",
+    "unverified": "Doğrulanmamış",
+    "noPostsFromUser": "Bu kullanıcının henüz gönderisi yok.",
+    "postsPrivate": "Bu kullanıcı gönderilerini gizli tutuyor.",
+    "professionTagsPrivate": "Bu kullanıcı meslek etiketlerini gizli tutuyor.",
+    "badgesPrivate": "Bu kullanıcı rozetlerini gizli tutuyor.",
+    "recipesPrivate": "Bu kullanıcı tariflerini gizli tutuyor."
   },
   "settings": {
     "title": "Ayarlar",

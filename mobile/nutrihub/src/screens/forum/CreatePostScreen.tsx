@@ -739,7 +739,7 @@ const CreatePostScreen: React.FC = () => {
               
               {/* Recipe Details summary (always visible in Recipe mode) */}
               <Card style={styles.section}>
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Recipe Details</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('forum.recipeDetails')}</Text>
                 <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
                   <View style={styles.nutritionGrid}>
                     <View style={styles.nutritionItem}>
@@ -747,28 +747,28 @@ const CreatePostScreen: React.FC = () => {
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.calories, 0).toFixed(0)}
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.calories')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="weight-lifter" size={20} color="#3B82F6" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.protein, 0).toFixed(1)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.protein')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="water" size={20} color="#F59E0B" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.fat, 0).toFixed(1)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.fat')}</Text>
                     </View>
                     <View style={styles.nutritionItem}>
                       <Icon name="grain" size={20} color="#10B981" />
                       <Text style={[styles.nutritionValue, textStyles.body]}>
                         {ingredients.reduce((sum, ing) => sum + ing.carbs, 0).toFixed(1)}g
                       </Text>
-                      <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                      <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.carbs')}</Text>
                     </View>
                   </View>
                 </View>
@@ -867,13 +867,13 @@ const CreatePostScreen: React.FC = () => {
               </Card>
               
               <Card style={styles.section}>
-                <Text style={[styles.sectionTitle, textStyles.subtitle]}>Ingredients</Text>
+                <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('forum.ingredients')}</Text>
                 
                 {/* Ingredient Addition Form */}
                 <View style={styles.ingredientInputRow}>
                   <View style={styles.ingredientNameInputContainer}>
                     <TextInput
-                      placeholder="Search for ingredients..."
+                      placeholder={t('forum.create.searchIngredientsPlaceholder')}
                       value={foodSearchTerm}
                       onChangeText={setFoodSearchTerm}
                       containerStyle={styles.ingredientNameInput}
@@ -892,7 +892,7 @@ const CreatePostScreen: React.FC = () => {
                   </View>
                   
                   <Button
-                    title="Add"
+                    title={t('common.add')}
                     variant="primary"
                     onPress={addIngredient}
                     style={styles.addIngredientButton}
@@ -907,11 +907,11 @@ const CreatePostScreen: React.FC = () => {
                     {loadingFoods ? (
                       <View style={styles.foodSearchLoading}>
                         <ActivityIndicator size="small" color={theme.primary} />
-                        <Text style={[styles.foodSearchLoadingText, textStyles.caption]}>Loading foods...</Text>
+                        <Text style={[styles.foodSearchLoadingText, textStyles.caption]}>{t('common.loadingFoods')}</Text>
                       </View>
                     ) : foodOptions.length === 0 ? (
                       <Text style={[styles.noFoodsText, textStyles.caption]}>
-                        No foods found. Try a different search term.
+                        {t('food.noFoodsFoundTryDifferentSearch')}
                       </Text>
                     ) : (
                       <ScrollView style={styles.foodSearchList} nestedScrollEnabled>
@@ -951,23 +951,23 @@ const CreatePostScreen: React.FC = () => {
                 {/* Total Nutritional Information */}
                 {ingredients.length > 0 && (
                   <View style={[styles.nutritionSummary, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
-                    <Text style={[styles.nutritionSummaryTitle, textStyles.subtitle]}>Total Nutrition</Text>
+                    <Text style={[styles.nutritionSummaryTitle, textStyles.subtitle]}>{t('forum.create.totalNutrition')}</Text>
                     <View style={styles.nutritionGrid}>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.calories, 0).toFixed(1)}</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Calories</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.calories')}</Text>
                       </View>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.protein, 0).toFixed(1)}g</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Protein</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.protein')}</Text>
                       </View>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.fat, 0).toFixed(1)}g</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Fat</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.fat')}</Text>
                       </View>
                       <View style={styles.nutritionItem}>
                         <Text style={[styles.nutritionValue, textStyles.body]}>{ingredients.reduce((sum, ing) => sum + ing.carbs, 0).toFixed(1)}g</Text>
-                        <Text style={[styles.nutritionLabel, textStyles.caption]}>Carbs</Text>
+                        <Text style={[styles.nutritionLabel, textStyles.caption]}>{t('food.carbs')}</Text>
                       </View>
                     </View>
                   </View>
@@ -975,7 +975,7 @@ const CreatePostScreen: React.FC = () => {
                 
                 {/* Ingredients List */}
                 <View style={styles.ingredientsListContainer}>
-                  <Text style={[styles.ingredientsListTitle, textStyles.subtitle]}>Selected Ingredients:</Text>
+                  <Text style={[styles.ingredientsListTitle, textStyles.subtitle]}>{t('forum.create.selectedIngredients')}</Text>
                   {ingredients.map((ingredient) => (
                     <View key={ingredient.food_id} style={[styles.ingredientItem, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
                       <View style={styles.ingredientInfo}>
@@ -1027,12 +1027,12 @@ const CreatePostScreen: React.FC = () => {
             <Card style={styles.section}>
               <View style={styles.comingSoonContainer}>
                 <Icon name="calendar-clock" size={48} color={theme.textSecondary} />
-                <Text style={[styles.comingSoonTitle, textStyles.heading4]}>Coming Soon!</Text>
+                <Text style={[styles.comingSoonTitle, textStyles.heading4]}>{t('common.comingSoon')}</Text>
                 <Text style={[styles.comingSoonText, textStyles.body]}>
-                  Meal plan creation is not yet available. Check back later for this feature!
+                  {t('forum.create.mealPlanComingSoon')}
                 </Text>
                 <Button
-                  title="Go Back"
+                  title={t('common.goBack')}
                   onPress={() => setPostType('nutrition')}
                   variant="primary"
                   style={styles.comingSoonButton}
