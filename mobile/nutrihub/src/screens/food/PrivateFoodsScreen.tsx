@@ -2,6 +2,7 @@ import React, { useCallback, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
@@ -9,11 +10,14 @@ import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { getPrivateFoodsAsFoodItems } from '../../services/api/privateFood.service';
 import { FoodItem } from '../../types/types';
+import { ProfileStackParamList } from '../../navigation/types';
+
+type PrivateFoodsScreenNavigationProp = NativeStackNavigationProp<ProfileStackParamList, 'PrivateFoods'>;
 
 const PrivateFoodsScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
   const { t } = useLanguage();
-  const navigation = useNavigation();
+  const navigation = useNavigation<PrivateFoodsScreenNavigationProp>();
   const [foods, setFoods] = useState<FoodItem[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -36,8 +40,18 @@ const PrivateFoodsScreen: React.FC = () => {
     }, [])
   );
 
+  const handleItemPress = useCallback((item: FoodItem) => {
+    navigation.navigate('PrivateFoodDetail', { foodId: item.id });
+  }, [navigation]);
+
   const renderItem = ({ item }: { item: FoodItem }) => (
-    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+    <TouchableOpacity
+      style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}
+      onPress={() => handleItemPress(item)}
+      activeOpacity={0.7}
+      accessibilityRole="button"
+      accessibilityLabel={`View details for ${item.title}`}
+    >
       <View style={styles.cardLeft}>
         <View style={[styles.iconCircle, { backgroundColor: `${theme.success}15` }]}>
           <Icon name="lock" size={22} color={theme.success} />
@@ -51,7 +65,8 @@ const PrivateFoodsScreen: React.FC = () => {
           </Text>
         </View>
       </View>
-    </View>
+      <Icon name="chevron-right" size={20} color={theme.textSecondary} />
+    </TouchableOpacity>
   );
 
   const renderEmpty = () => (
