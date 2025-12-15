@@ -130,14 +130,17 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         max_digits=10,
         decimal_places=2,
         read_only=True,
-        allow_null=False,
+        allow_null=True,
         help_text="Original serving size of the food (for display calculations)"
     )
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
-    food_id = serializers.PrimaryKeyRelatedField(
+    food_id = serializers.SerializerMethodField(read_only=True)
+    food_id_write = serializers.PrimaryKeyRelatedField(
         source='food',
         queryset=FoodEntry.objects.none(),  # Will be set in __init__
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True
     )
     water_grams = serializers.SerializerMethodField(read_only=True)
 
@@ -150,18 +153,22 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         user = request.user if request and request.user.is_authenticated else None
 
         # Set queryset to only accessible foods for this user
-        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
+        self.fields['food_id_write'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         from .models import FoodLogEntry
         model = FoodLogEntry
         fields = [
-            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
+            'id', 'food_id', 'food_id_write', 'food_name', 'food_serving_size', 'image_url',
             'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
             'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at'
         ]
-        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
+        read_only_fields = ['id', 'food_id', 'food_serving_size', 'image_url', 'calories',
                            'protein', 'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at']
+    
+    def get_food_id(self, obj):
+        """Return the food ID if available."""
+        return obj.food_id if obj.food_id else None
     
     def get_food_name(self, obj):
         """Return the name of the linked FoodEntry if available."""
@@ -189,14 +196,17 @@ class PlannedFoodEntrySerializer(serializers.ModelSerializer):
         max_digits=10,
         decimal_places=2,
         read_only=True,
-        allow_null=False,
+        allow_null=True,
         help_text="Original serving size of the food (for display calculations)"
     )
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
-    food_id = serializers.PrimaryKeyRelatedField(
+    food_id = serializers.SerializerMethodField(read_only=True)
+    food_id_write = serializers.PrimaryKeyRelatedField(
         source='food',
         queryset=FoodEntry.objects.none(),  # Will be set in __init__
-        write_only=True
+        write_only=True,
+        required=False,
+        allow_null=True
     )
 
     def __init__(self, *args, **kwargs):
@@ -208,18 +218,22 @@ class PlannedFoodEntrySerializer(serializers.ModelSerializer):
         user = request.user if request and request.user.is_authenticated else None
 
         # Set queryset to only accessible foods for this user
-        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
+        self.fields['food_id_write'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         from .models import PlannedFoodEntry
         model = PlannedFoodEntry
         fields = [
-            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
+            'id', 'food_id', 'food_id_write', 'food_name', 'food_serving_size', 'image_url',
             'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
             'carbohydrates', 'fat', 'micronutrients', 'planned_at'
         ]
-        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
+        read_only_fields = ['id', 'food_id', 'food_serving_size', 'image_url', 'calories',
                            'protein', 'carbohydrates', 'fat', 'micronutrients', 'planned_at']
+
+    def get_food_id(self, obj):
+        """Return the food ID if available."""
+        return obj.food_id if obj.food_id else None
 
     def validate_serving_size(self, value):
         """Validate serving size is positive."""
@@ -390,4 +404,133 @@ class DailyNutritionLogListSerializer(serializers.ModelSerializer):
             'total_calories', 'total_protein', 'total_carbohydrates', 'total_fat',
             'micronutrients_summary'
         ]
+
+
+class SavedMealPlanEntrySerializer(serializers.ModelSerializer):
+    """Serializer for individual entries within a saved meal plan."""
+    food_name = serializers.CharField(source='food.name', read_only=True)
+    food_serving_size = serializers.DecimalField(
+        source='food.servingSize',
+        max_digits=10,
+        decimal_places=2,
+        read_only=True,
+        allow_null=False,
+        help_text="Original serving size of the food (for display calculations)"
+    )
+    image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
+    food_id = serializers.PrimaryKeyRelatedField(
+        source='food',
+        queryset=FoodEntry.objects.none(),  # Will be set in __init__
+        write_only=True
+    )
+
+    def __init__(self, *args, **kwargs):
+        """Initialize and set accessible foods queryset based on user context"""
+        super().__init__(*args, **kwargs)
+
+        # Get user from context
+        request = self.context.get('request')
+        user = request.user if request and request.user.is_authenticated else None
+
+        # Set queryset to only accessible foods for this user
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
+
+    class Meta:
+        from .models import SavedMealPlanEntry
+        model = SavedMealPlanEntry
+        fields = [
+            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
+            'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
+            'carbohydrates', 'fat', 'micronutrients', 'created_at'
+        ]
+        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
+                           'protein', 'carbohydrates', 'fat', 'micronutrients', 'created_at']
+
+    def validate_serving_size(self, value):
+        """Validate serving size is positive."""
+        if value <= 0:
+            raise serializers.ValidationError("Serving size must be greater than 0.")
+        return value
+
+
+class SavedMealPlanSerializer(serializers.ModelSerializer):
+    """Serializer for saved meal plans with nested entries."""
+    entries = SavedMealPlanEntrySerializer(many=True, read_only=True)
+    
+    class Meta:
+        from .models import SavedMealPlan
+        model = SavedMealPlan
+        fields = [
+            'id', 'name', 'description', 'total_calories', 'total_protein',
+            'total_carbohydrates', 'total_fat', 'micronutrients_summary',
+            'entries', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'total_calories', 'total_protein', 'total_carbohydrates',
+            'total_fat', 'micronutrients_summary', 'created_at', 'updated_at'
+        ]
+
+
+class SavedMealPlanCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating/updating saved meal plans with entries."""
+    entries = SavedMealPlanEntrySerializer(many=True, required=False)
+    
+    class Meta:
+        from .models import SavedMealPlan
+        model = SavedMealPlan
+        fields = ['id', 'name', 'description', 'entries']
+        read_only_fields = ['id']
+    
+    def create(self, validated_data):
+        from .models import SavedMealPlan, SavedMealPlanEntry
+        
+        entries_data = validated_data.pop('entries', [])
+        meal_plan = SavedMealPlan.objects.create(**validated_data)
+        
+        # Create entries
+        for entry_data in entries_data:
+            SavedMealPlanEntry.objects.create(meal_plan=meal_plan, **entry_data)
+        
+        return meal_plan
+    
+    def update(self, instance, validated_data):
+        from .models import SavedMealPlanEntry
+        
+        entries_data = validated_data.pop('entries', None)
+        
+        # Update basic fields
+        instance.name = validated_data.get('name', instance.name)
+        instance.description = validated_data.get('description', instance.description)
+        instance.save()
+        
+        # If entries are provided, replace all existing entries
+        if entries_data is not None:
+            # Delete existing entries
+            instance.entries.all().delete()
+            
+            # Create new entries
+            for entry_data in entries_data:
+                SavedMealPlanEntry.objects.create(meal_plan=instance, **entry_data)
+        
+        return instance
+
+
+class SavedMealPlanListSerializer(serializers.ModelSerializer):
+    """Simplified serializer for list views (summary without entries)."""
+    entry_count = serializers.SerializerMethodField()
+    
+    class Meta:
+        from .models import SavedMealPlan
+        model = SavedMealPlan
+        fields = [
+            'id', 'name', 'description', 'total_calories', 'total_protein',
+            'total_carbohydrates', 'total_fat', 'entry_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'total_calories', 'total_protein', 'total_carbohydrates',
+            'total_fat', 'entry_count', 'created_at', 'updated_at'
+        ]
+    
+    def get_entry_count(self, obj):
+        return obj.entries.count()
 

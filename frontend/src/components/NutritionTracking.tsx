@@ -9,6 +9,7 @@ import {
   ChartLine,
   CaretLeft,
   CaretRight,
+  CaretDown,
   Plus,
   ForkKnife,
   Coffee,
@@ -27,9 +28,10 @@ import { DailyNutritionLog, NutritionTargets, FoodLogEntry, PlannedFoodEntry } f
 interface NutritionTrackingProps {
   onDateChange?: (date: Date) => void;
   onDataChange?: () => void; // Callback to notify parent when data changes (add/edit/delete)
+  refreshTrigger?: number; // Increment this to trigger a data refresh from parent
 }
 
-const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
+const NutritionTracking = ({ onDateChange, onDataChange, refreshTrigger }: NutritionTrackingProps = {}) => {
   // Helper function to normalize date to midnight local time (avoids timezone issues)
   const normalizeToMidnight = (date: Date): Date => {
     const normalized = new Date(date);
@@ -55,6 +57,20 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [metricsMissing, setMetricsMissing] = useState(false);
+  // Default all meal sections to collapsed
+  const [collapsedMealSections, setCollapsedMealSections] = useState<{ [key: string]: boolean }>({
+    breakfast: true,
+    lunch: true,
+    dinner: true,
+    snack: true
+  });
+
+  const toggleMealSection = (mealType: string) => {
+    setCollapsedMealSections(prev => ({
+      ...prev,
+      [mealType]: !prev[mealType]
+    }));
+  };
 
   useEffect(() => {
     fetchData();
@@ -64,6 +80,14 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedDate, viewMode]);
+
+  // Refresh data when parent triggers a refresh (e.g., after logging a meal plan)
+  useEffect(() => {
+    if (refreshTrigger !== undefined && refreshTrigger > 0) {
+      fetchData();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshTrigger]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -468,15 +492,21 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     }
 
     // Convert serving_size (multiplier) back to display value
-    // If unit is "g", convert multiplier back to grams: multiplier * food_serving_size
-    // If unit is "serving", use multiplier directly
-    let displaySize = entry.serving_size;
+    // The multiplier is based on per-100g values
+    // If unit is "g", convert multiplier back to grams: multiplier * 100
+    // If unit is "serving", convert multiplier back to servings: (multiplier * 100) / food_serving_size
     const foodServingSize = entry.food_serving_size || 100; // Fallback to 100g if missing
+    let displaySize: number;
 
     if (entry.serving_unit === 'g') {
-      displaySize = entry.serving_size * foodServingSize;
+      // multiplier * 100 gives grams
+      displaySize = Number(entry.serving_size) * 100;
+    } else {
+      // For servings: multiplier = (numServings * foodServingSize) / 100
+      // So numServings = (multiplier * 100) / foodServingSize
+      displaySize = (Number(entry.serving_size) * 100) / foodServingSize;
     }
-    setServingSize(displaySize);
+    setServingSize(parseFloat(displaySize.toFixed(2)));
     setServingUnit(entry.serving_unit);
     setSelectedMeal(entry.meal_type as 'breakfast' | 'lunch' | 'dinner' | 'snack');
     setShowServingDialog(true);
@@ -708,14 +738,18 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     const totals = calculateMealTotals(entries);
     const mealColor = getMealColor(mealType);
     const plannedEntries = getPlannedEntriesForMeal(mealType);
-    const hasAnyEntries = entries.length > 0 || plannedEntries.length > 0;
+    // Only use logged entries for totals display (not planned)
+    const isCollapsed = collapsedMealSections[mealType];
 
     return (
       <div className="nh-card" key={mealType}>
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => toggleMealSection(mealType)}
+            className="flex items-center gap-3 flex-1 text-left cursor-pointer"
+          >
             <div
-              className="w-12 h-12 rounded-xl flex items-center justify-center"
+              className="w-10 h-10 rounded-xl flex items-center justify-center"
               style={{
                 backgroundColor: `${mealColor}20`,
                 color: mealColor
@@ -723,129 +757,176 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             >
               {getMealIcon(mealType)}
             </div>
-            <div>
-              <h3 className="font-semibold text-lg capitalize">{mealType}</h3>
-              <p className="text-xs nh-text opacity-70">
-                {Math.round(totals.calories)} kcal • {entries.length} items
-                {plannedEntries.length > 0 && (
-                  <span style={{ color: '#8b5cf6' }}> • {plannedEntries.length} planned</span>
-                )}
-              </p>
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <h3 className="font-semibold capitalize">{mealType}</h3>
+                <span className="text-xs opacity-50">
+                  ({entries.length} items{plannedEntries.length > 0 && <span style={{ color: '#8b5cf6' }}> + {plannedEntries.length} planned</span>})
+                </span>
+              </div>
+              {/* Always show nutrition totals (logged only, not planned) */}
+              <div className="flex items-center gap-3 text-xs mt-0.5">
+                <span className="text-orange-500 font-medium">{Math.round(totals.calories)} kcal</span>
+                <span className="opacity-60">P: {totals.protein.toFixed(0)}g</span>
+                <span className="opacity-60">C: {totals.carbs.toFixed(0)}g</span>
+                <span className="opacity-60">F: {totals.fat.toFixed(0)}g</span>
+              </div>
             </div>
-          </div>
+            {isCollapsed ? (
+              <CaretRight size={18} className="opacity-50" />
+            ) : (
+              <CaretDown size={18} className="opacity-50" />
+            )}
+          </button>
+
+          {/* Small food icons when collapsed */}
+          {isCollapsed && (entries.length > 0 || plannedEntries.length > 0) && (
+            <div className="flex items-center gap-1 ml-2">
+              {[...entries.slice(0, 4), ...plannedEntries.slice(0, Math.max(0, 4 - entries.length))].map((entry, idx) => (
+                <div key={idx} className="relative">
+                  {entry.image_url ? (
+                    <img 
+                      src={entry.image_url} 
+                      alt="" 
+                      className="w-8 h-8 rounded-md object-cover"
+                      style={{ 
+                        border: 'id' in entry && plannedEntries.some(p => p.id === (entry as any).id) ? '2px solid #8b5cf6' : '2px solid transparent'
+                      }}
+                    />
+                  ) : (
+                    <div 
+                      className="w-8 h-8 rounded-md flex items-center justify-center"
+                      style={{ 
+                        backgroundColor: 'var(--forum-search-border)',
+                        border: 'id' in entry && plannedEntries.some(p => p.id === (entry as any).id) ? '2px solid #8b5cf6' : '2px solid transparent'
+                      }}
+                    >
+                      <Hamburger size={14} className="opacity-50" />
+                    </div>
+                  )}
+                </div>
+              ))}
+              {(entries.length + plannedEntries.length) > 4 && (
+                <span className="text-xs opacity-50 ml-1">+{entries.length + plannedEntries.length - 4}</span>
+              )}
+            </div>
+          )}
 
           <button
             onClick={() => handleAddFood(mealType)}
-            className="nh-button nh-button-primary flex items-center gap-2 whitespace-nowrap"
+            className="nh-button nh-button-primary flex items-center gap-2 whitespace-nowrap ml-2"
             style={{ padding: '0.5rem 1rem', display: 'flex' }}
           >
             <Plus size={18} weight="bold" />
-            <span>Add Food</span>
           </button>
         </div>
 
-        {/* Food Entries */}
-        {entries.length > 0 ? (
-          <div className="space-y-2">
-            {entries.map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center gap-3 p-3 rounded-lg hover:shadow-sm transition-all"
-                style={{ backgroundColor: 'var(--dietary-option-bg)' }}
-              >
-                {/* Food Image */}
-                {entry.image_url ? (
-                  <img
-                    src={entry.image_url}
-                    alt={entry.food_name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                  />
-                ) : (
+        {/* Food Entries - only show when not collapsed */}
+        {!isCollapsed && (
+          <>
+            {entries.length > 0 ? (
+              <div className="space-y-2 mt-4">
+                {entries.map((entry) => (
                   <div
-                    className="w-16 h-16 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: 'var(--forum-search-border)' }}
+                    key={entry.id}
+                    className="flex items-center gap-3 p-3 rounded-lg hover:shadow-sm transition-all"
+                    style={{ backgroundColor: 'var(--dietary-option-bg)' }}
                   >
-                    <Hamburger size={28} weight="fill" className="opacity-50" />
+                    {/* Food Image */}
+                    {entry.image_url ? (
+                      <img
+                        src={entry.image_url}
+                        alt={entry.food_name}
+                        className="w-16 h-16 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div
+                        className="w-16 h-16 rounded-lg flex items-center justify-center"
+                        style={{ backgroundColor: 'var(--forum-search-border)' }}
+                      >
+                        <Hamburger size={28} weight="fill" className="opacity-50" />
+                      </div>
+                    )}
+
+                    {/* Food Info */}
+                    <div className="flex-1">
+                      <h4 className="font-medium">{entry.food_name}</h4>
+                      <p className="text-xs nh-text opacity-70">
+                        {(() => {
+                          // Convert serving_size (multiplier) back to display value
+                          const multiplier = Number(entry.serving_size);
+                          const foodServingSize = entry.food_serving_size || 100;
+
+                          if (entry.serving_unit === 'g') {
+                            // Multiply multiplier by 100 to get grams (since all nutrients are per 100g)
+                            const grams = multiplier * 100;
+                            return `${Math.round(grams)}g`;
+                          } else {
+                            // For "serving" unit, calculate back to number of servings
+                            // multiplier = (numServings * foodServingSize) / 100
+                            // numServings = (multiplier * 100) / foodServingSize
+                            const numServings = (multiplier * 100) / foodServingSize;
+                            return `${numServings.toFixed(2)} ${entry.serving_unit}${Math.abs(numServings - 1) < 0.01 ? '' : 's'}`;
+                          }
+                        })()}
+                      </p>
+                    </div>
+
+                    {/* Nutrition Info */}
+                    <div className="text-right">
+                      <p className="font-semibold text-primary">{Math.round(Number(entry.calories))} kcal</p>
+                      <p className="text-xs nh-text opacity-70">
+                        P: {Number(entry.protein).toFixed(2)}g • C: {Number(entry.carbohydrates).toFixed(2)}g • F: {Number(entry.fat).toFixed(2)}g
+                      </p>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-1">
+                      <button
+                        type="button"
+                        className="p-2 rounded transition-colors"
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        title="Edit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleEditEntry(entry);
+                        }}
+                      >
+                        <PencilSimple size={18} />
+                      </button>
+                      <button
+                        type="button"
+                        className="p-2 rounded transition-colors text-red-600"
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                        title="Delete"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleDeleteEntry(entry.id);
+                        }}
+                      >
+                        <Trash size={18} />
+                      </button>
+                    </div>
                   </div>
-                )}
-
-                {/* Food Info */}
-                <div className="flex-1">
-                  <h4 className="font-medium">{entry.food_name}</h4>
-                  <p className="text-xs nh-text opacity-70">
-                    {(() => {
-                      // Convert serving_size (multiplier) back to display value
-                      const multiplier = Number(entry.serving_size);
-                      const foodServingSize = entry.food_serving_size || 100;
-
-                      if (entry.serving_unit === 'g') {
-                        // Multiply multiplier by 100 to get grams (since all nutrients are per 100g)
-                        const grams = multiplier * 100;
-                        return `${Math.round(grams)}g`;
-                      } else {
-                        // For "serving" unit, calculate back to number of servings
-                        // multiplier = (numServings * foodServingSize) / 100
-                        // numServings = (multiplier * 100) / foodServingSize
-                        const numServings = (multiplier * 100) / foodServingSize;
-                        return `${numServings.toFixed(2)} ${entry.serving_unit}${Math.abs(numServings - 1) < 0.01 ? '' : 's'}`;
-                      }
-                    })()}
-                  </p>
-                </div>
-
-                {/* Nutrition Info */}
-                <div className="text-right">
-                  <p className="font-semibold text-primary">{Math.round(Number(entry.calories))} kcal</p>
-                  <p className="text-xs nh-text opacity-70">
-                    P: {Number(entry.protein).toFixed(2)}g • C: {Number(entry.carbohydrates).toFixed(2)}g • F: {Number(entry.fat).toFixed(2)}g
-                  </p>
-                </div>
-
-                {/* Actions */}
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    className="p-2 rounded transition-colors"
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'var(--dietary-option-hover-bg)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Edit"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleEditEntry(entry);
-                    }}
-                  >
-                    <PencilSimple size={18} />
-                  </button>
-                  <button
-                    type="button"
-                    className="p-2 rounded transition-colors text-red-600"
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Delete"
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleDeleteEntry(entry.id);
-                    }}
-                  >
-                    <Trash size={18} />
-                  </button>
-                </div>
+                ))
+                }
+              </div >
+            ) : plannedEntries.length === 0 ? (
+              <div className="text-center py-8 nh-text opacity-50">
+                <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
+                <p className="text-sm">No foods logged for {mealType}</p>
               </div>
-            ))
-            }
-          </div >
-        ) : plannedEntries.length === 0 ? (
-          <div className="text-center py-8 nh-text opacity-50">
-            <Hamburger size={48} className="mx-auto mb-2 opacity-30" />
-            <p className="text-sm">No foods logged for {mealType}</p>
-          </div>
-        ) : null}
+            ) : null}
+          </>
+        )}
 
         {/* Planned Entries - shown after regular entries, sorted by planned_at */}
-        {plannedEntries.length > 0 && (
-          <div className={`space-y-2 ${entries.length > 0 ? 'mt-3' : ''}`}>
+        {!isCollapsed && plannedEntries.length > 0 && (
+          <div className={`space-y-2 ${entries.length > 0 ? 'mt-3' : 'mt-4'}`}>
             {[...plannedEntries]
               .sort((a, b) => new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime())
               .map((entry) => (
@@ -939,32 +1020,6 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             ))}
           </div>
         )}
-
-        {/* Meal Totals */}
-        {
-          hasAnyEntries && (
-            <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
-              <div className="grid grid-cols-4 gap-4 text-center text-sm">
-                <div>
-                  <p className="nh-text opacity-70">Calories</p>
-                  <p className="font-bold">{Math.round(Number(totals.calories))}</p>
-                </div>
-                <div>
-                  <p className="nh-text opacity-70">Protein</p>
-                  <p className="font-bold">{Number(totals.protein).toFixed(2)}g</p>
-                </div>
-                <div>
-                  <p className="nh-text opacity-70">Carbs</p>
-                  <p className="font-bold">{Number(totals.carbs).toFixed(2)}g</p>
-                </div>
-                <div>
-                  <p className="nh-text opacity-70">Fat</p>
-                  <p className="font-bold">{Number(totals.fat).toFixed(2)}g</p>
-                </div>
-              </div>
-            </div>
-          )
-        }
       </div >
     );
   };
