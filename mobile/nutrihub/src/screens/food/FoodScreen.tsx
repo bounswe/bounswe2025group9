@@ -209,8 +209,15 @@ const FoodScreen: React.FC = () => {
       isFetchingRef.current = true;
 
       if (loadMore) {
+        // Don't try to load more if there's no existing data (e.g., search returned no results)
+        if (foodData.length === 0) {
+          console.log('Cannot load more: no existing data');
+          isFetchingRef.current = false;
+          return;
+        }
         if (!pagination.hasMore || pagination.loading) {
           console.log('No more items or already loading, skipping fetch');
+          isFetchingRef.current = false;
           return;
         }
         setPagination(prev => ({ ...prev, loading: true }));
@@ -280,11 +287,14 @@ const FoodScreen: React.FC = () => {
           const nextPage = pageToFetch + 1;
           console.log(`Setting next page to ${nextPage}`);
 
+          // If we received no new items, there are no more pages to load
+          const hasMorePages = response.hasMore && newItems.length > 0;
+
           // Update pagination state
           setPagination(prev => ({
             ...prev,
             page: nextPage,
-            hasMore: response.hasMore,
+            hasMore: hasMorePages,
             total: response.total,
             loading: false
           }));
@@ -301,14 +311,19 @@ const FoodScreen: React.FC = () => {
         setPrivateFoodData(privates);
 
         // Replace all data for initial load or refresh (public + private)
-        setFoodData([...responseData, ...privates]);
+        const allFoodData = [...responseData, ...privates];
+        setFoodData(allFoodData);
+
+        // If no results were returned, there are no more pages to load
+        // This prevents trying to fetch page 2 when search returns no results
+        const hasMorePages = response.hasMore && responseData.length > 0;
 
         // Update pagination state for first load
         const nextPage = 2; // Since we just loaded page 1
         setPagination(prev => ({
           ...prev,
           page: nextPage,
-          hasMore: response.hasMore,
+          hasMore: hasMorePages,
           // Include private items in the displayed total so the counter is accurate
           total: (response.total ?? 0) + privates.length,
           loading: false
@@ -316,6 +331,8 @@ const FoodScreen: React.FC = () => {
 
         // Update the ref
         currentPageRef.current = nextPage;
+        
+        console.log(`Initial load complete: ${allFoodData.length} items, hasMore=${hasMorePages}`);
       }
     } catch (err: any) {
       console.error('Error in fetchFoodData:', err);
@@ -326,7 +343,7 @@ const FoodScreen: React.FC = () => {
       isFetchingRef.current = false;
     }
   // Only include stable dependencies to prevent infinite loops
-  }, [filters.category, filters.name, sortOption, pagination.limit, pagination.hasMore, pagination.loading]);
+  }, [filters.category, filters.name, sortOption, pagination.limit, pagination.hasMore, pagination.loading, foodData.length]);
   
   // Load initial data
   useEffect(() => {
@@ -371,6 +388,12 @@ const FoodScreen: React.FC = () => {
   
   // Handle load more when reaching end of list
   const handleLoadMore = useCallback(() => {
+    // Don't try to load more if there's no data yet (e.g., search returned no results)
+    if (foodData.length === 0) {
+      console.log('Skipping load more: no data loaded yet');
+      return;
+    }
+
     if (!pagination.hasMore || isLoading || pagination.loading || isFetchingRef.current) {
       console.log('Skipping load more:', {
         hasMore: pagination.hasMore,
@@ -383,7 +406,7 @@ const FoodScreen: React.FC = () => {
 
     console.log('Loading more items from page:', currentPageRef.current);
     fetchFoodData(true);
-  }, [fetchFoodData, pagination.hasMore, isLoading, pagination.loading]);
+  }, [fetchFoodData, pagination.hasMore, isLoading, pagination.loading, foodData.length]);
 
   // Toggle layout mode
   const toggleLayoutMode = () => {
