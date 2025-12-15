@@ -309,7 +309,8 @@ const FoodScreen: React.FC = () => {
           ...prev,
           page: nextPage,
           hasMore: response.hasMore,
-          total: response.total,
+          // Include private items in the displayed total so the counter is accurate
+          total: (response.total ?? 0) + privates.length,
           loading: false
         }));
 
