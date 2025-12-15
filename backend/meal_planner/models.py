@@ -203,48 +203,39 @@ class FoodLogEntry(models.Model):
         verbose_name_plural = "Food Log Entries"
     
     def __str__(self):
-        return f"{self.food.name} ({self.serving_size} {self.serving_unit}) - {self.meal_type}"
+        food_name = self.food.name if self.food else "Unknown"
+        return f"{food_name} ({self.serving_size} {self.serving_unit}) - {self.meal_type}"
     
     def save(self, *args, **kwargs):
         """Calculate nutrition values before saving."""
-        # Calculate nutrition based on food and serving size
-        multiplier = float(self.serving_size)
-        self.calories = float(self.food.caloriesPerServing) * multiplier
-        self.protein = float(self.food.proteinContent) * multiplier
-        self.carbohydrates = float(self.food.carbohydrateContent) * multiplier
-        self.fat = float(self.food.fatContent) * multiplier
         food_source = self.food
-        # Calculate micronutrients
-        if self.food.micronutrient_values.exists():
-            self.micronutrients = {
-                mv.micronutrient.name: mv.value * multiplier
-                for mv in self.food.micronutrient_values.select_related("micronutrient")
-            }
         
-        if food_source:
-            # Calculate nutrition based on serving size and round to 2 decimal places
-            serving_size_float = float(self.serving_size)
-            
-            # Round to 2 decimal places using Decimal for precision
-            self.calories = Decimal(str(food_source.caloriesPerServing * serving_size_float)).quantize(
-                Decimal('0.01'), rounding=ROUND_HALF_UP
-            )
-            self.protein = Decimal(str(food_source.proteinContent * serving_size_float)).quantize(
-                Decimal('0.01'), rounding=ROUND_HALF_UP
-            )
-            self.fat = Decimal(str(food_source.fatContent * serving_size_float)).quantize(
-                Decimal('0.01'), rounding=ROUND_HALF_UP
-            )
-            self.carbohydrates = Decimal(str(food_source.carbohydrateContent * serving_size_float)).quantize(
-                Decimal('0.01'), rounding=ROUND_HALF_UP
-            )
-            
-            # Handle micronutrients if they exist
-            if hasattr(food_source, 'micronutrients') and food_source.micronutrients:
-                self.micronutrients = {
-                    nutrient: value * float(self.serving_size)
-                    for nutrient, value in food_source.micronutrients.items()
-                }
+        if not food_source:
+            raise ValueError("Cannot save FoodLogEntry without a valid food reference.")
+        
+        # Calculate nutrition based on serving size and round to 2 decimal places
+        serving_size_float = float(self.serving_size)
+        
+        # Round to 2 decimal places using Decimal for precision
+        self.calories = Decimal(str(food_source.caloriesPerServing * serving_size_float)).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        self.protein = Decimal(str(food_source.proteinContent * serving_size_float)).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        self.fat = Decimal(str(food_source.fatContent * serving_size_float)).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        self.carbohydrates = Decimal(str(food_source.carbohydrateContent * serving_size_float)).quantize(
+            Decimal('0.01'), rounding=ROUND_HALF_UP
+        )
+        
+        # Handle micronutrients via the related manager
+        if food_source.micronutrient_values.exists():
+            self.micronutrients = {
+                mv.micronutrient.name: mv.value * serving_size_float
+                for mv in food_source.micronutrient_values.select_related("micronutrient")
+            }
         
         # Now run validation (after nutrition fields are set)
         self.full_clean()  # Run validation
