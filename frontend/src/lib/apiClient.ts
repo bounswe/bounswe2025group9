@@ -1472,6 +1472,23 @@ export const apiClient = {
         body: JSON.stringify({ approved }),
       }, true),
 
+    editFoodProposal: (proposalId: number, data: {
+      name?: string;
+      category?: string;
+      servingSize?: number;
+      caloriesPerServing?: number;
+      proteinContent?: number;
+      fatContent?: number;
+      carbohydrateContent?: number;
+      dietaryOptions?: string[];
+      imageUrl?: string;
+      micronutrients?: Record<string, number>;
+    }) =>
+      fetchJson<any>(`/foods/moderation/food-proposals/${proposalId}/edit/`, {
+        method: "PATCH",
+        body: JSON.stringify(data),
+      }, true),
+
     // Price moderation
     getPriceThresholds: (params?: { currency?: string }) => {
       let url = "/foods/price-thresholds/";
