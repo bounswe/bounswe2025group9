@@ -106,7 +106,7 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   );
 
   const getStatusIcon = () => {
-    // Only show icons when over target (user finds other icons distracting)
+    // Only show icons when over target
     if (!isOverTarget) return null; // No icon when under target
 
     // Over target - show simple warning
