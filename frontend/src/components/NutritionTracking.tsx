@@ -23,6 +23,7 @@ import { Dialog } from '@headlessui/react';
 import FoodSelector from './FoodSelector';
 import { apiClient, Food } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets, FoodLogEntry, PlannedFoodEntry } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NutritionTrackingProps {
   onDateChange?: (date: Date) => void;
@@ -30,6 +31,7 @@ interface NutritionTrackingProps {
 }
 
 const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
+  const { t } = useLanguage();
   // Helper function to normalize date to midnight local time (avoids timezone issues)
   const normalizeToMidnight = (date: Date): Date => {
     const normalized = new Date(date);
@@ -208,7 +210,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       } else {
         // In daily view, fetch the daily log for selectedDate
         const dateStr = formatDateString(selectedDate);
-        
+
         // Fetch daily log and full targets in parallel for efficiency
         const [log, fullTargets] = await Promise.all([
           apiClient.getDailyLog(dateStr),
@@ -304,7 +306,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       if (err.status === 404 && err.data?.detail === "No nutrition targets or metrics found. Please set your metrics first.") {
         setMetricsMissing(true);
       } else {
-        setError('Failed to load nutrition data');
+        setError(t('nutrition.failedToLoadData'));
       }
     } finally {
       setLoading(false);
@@ -337,7 +339,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     // Validate serving size
     const numServingSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
     if (!numServingSize || numServingSize <= 0) {
-      alert('Please enter a valid serving size');
+      alert(t('nutrition.pleaseEnterValidServing'));
       return;
     }
 
@@ -356,7 +358,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
     // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
     if (multiplier > 9999.999999) {
-      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      alert(t('nutrition.servingSizeTooLarge'));
       return;
     }
 
@@ -387,7 +389,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         err?.data?.error ||
         err?.data?.detail ||
         err?.message ||
-        'Failed to add food entry';
+        t('nutrition.failedToAddFood');
       alert(errorMessage);
     } finally {
       setLoading(false);
@@ -849,94 +851,94 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
             {[...plannedEntries]
               .sort((a, b) => new Date(a.planned_at).getTime() - new Date(b.planned_at).getTime())
               .map((entry) => (
-              <div
-                key={entry.id}
-                className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed transition-all"
-                style={{ 
-                  backgroundColor: 'rgba(139, 92, 246, 0.08)',
-                  borderColor: '#8b5cf6'
-                }}
-              >
-                {/* Food Image */}
-                {entry.image_url ? (
-                  <img
-                    src={entry.image_url}
-                    alt={entry.food_name}
-                    className="w-16 h-16 rounded-lg object-cover"
-                    style={{ filter: 'grayscale(20%)' }}
-                  />
-                ) : (
-                  <div
-                    className="w-16 h-16 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: 'var(--forum-search-border)' }}
-                  >
-                    <Hamburger size={28} weight="fill" className="opacity-50" />
-                  </div>
-                )}
-
-                {/* Food Info */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h4 className="font-medium" style={{ color: '#7c3aed' }}>{entry.food_name}</h4>
-                    <span 
-                      className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
-                      style={{ 
-                        backgroundColor: 'rgba(139, 92, 246, 0.2)',
-                        color: '#7c3aed'
-                      }}
+                <div
+                  key={entry.id}
+                  className="flex items-center gap-3 p-3 rounded-lg border-2 border-dashed transition-all"
+                  style={{
+                    backgroundColor: 'rgba(139, 92, 246, 0.08)',
+                    borderColor: '#8b5cf6'
+                  }}
+                >
+                  {/* Food Image */}
+                  {entry.image_url ? (
+                    <img
+                      src={entry.image_url}
+                      alt={entry.food_name}
+                      className="w-16 h-16 rounded-lg object-cover"
+                      style={{ filter: 'grayscale(20%)' }}
+                    />
+                  ) : (
+                    <div
+                      className="w-16 h-16 rounded-lg flex items-center justify-center"
+                      style={{ backgroundColor: 'var(--forum-search-border)' }}
                     >
-                      <Clock size={12} weight="fill" />
-                      Planned
-                    </span>
+                      <Hamburger size={28} weight="fill" className="opacity-50" />
+                    </div>
+                  )}
+
+                  {/* Food Info */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-medium" style={{ color: '#7c3aed' }}>{entry.food_name}</h4>
+                      <span
+                        className="flex items-center gap-1 text-xs px-2 py-0.5 rounded-full"
+                        style={{
+                          backgroundColor: 'rgba(139, 92, 246, 0.2)',
+                          color: '#7c3aed'
+                        }}
+                      >
+                        <Clock size={12} weight="fill" />
+                        Planned
+                      </span>
+                    </div>
+                    <p className="text-xs nh-text opacity-70">
+                      {(() => {
+                        const servingSizeNum = Number(entry.serving_size);
+                        const foodServingSize = Number(entry.food_serving_size) || 100;
+                        if (entry.serving_unit === 'g') {
+                          const grams = servingSizeNum * foodServingSize;
+                          return `${Math.round(grams)}g`;
+                        }
+                        return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
+                      })()}
+                    </p>
                   </div>
-                  <p className="text-xs nh-text opacity-70">
-                    {(() => {
-                      const servingSizeNum = Number(entry.serving_size);
-                      const foodServingSize = Number(entry.food_serving_size) || 100;
-                      if (entry.serving_unit === 'g') {
-                        const grams = servingSizeNum * foodServingSize;
-                        return `${Math.round(grams)}g`;
-                      }
-                      return `${servingSizeNum.toFixed(2)} ${entry.serving_unit}${servingSizeNum === 1 ? '' : 's'}`;
-                    })()}
-                  </p>
-                </div>
 
-                {/* Nutrition Info */}
-                <div className="text-right">
-                  <p className="font-semibold" style={{ color: '#7c3aed' }}>{Math.round(Number(entry.calories))} kcal</p>
-                  <p className="text-xs nh-text opacity-70">
-                    P: {Number(entry.protein).toFixed(1)}g • C: {Number(entry.carbohydrates).toFixed(1)}g • F: {Number(entry.fat).toFixed(1)}g
-                  </p>
-                </div>
+                  {/* Nutrition Info */}
+                  <div className="text-right">
+                    <p className="font-semibold" style={{ color: '#7c3aed' }}>{Math.round(Number(entry.calories))} kcal</p>
+                    <p className="text-xs nh-text opacity-70">
+                      P: {Number(entry.protein).toFixed(1)}g • C: {Number(entry.carbohydrates).toFixed(1)}g • F: {Number(entry.fat).toFixed(1)}g
+                    </p>
+                  </div>
 
-                {/* Actions */}
-                <div className="flex gap-1">
-                  <button
-                    type="button"
-                    onClick={() => handleConfirmPlannedEntry(entry.id)}
-                    className="p-2 rounded transition-colors"
-                    style={{ 
-                      backgroundColor: 'var(--color-success)',
-                      color: 'white'
-                    }}
-                    title="Log this food"
-                  >
-                    <Check size={18} weight="bold" />
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleDeletePlannedEntry(entry.id)}
-                    className="p-2 rounded transition-colors text-red-600"
-                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
-                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-                    title="Remove planned food"
-                  >
-                    <Trash size={18} />
-                  </button>
+                  {/* Actions */}
+                  <div className="flex gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleConfirmPlannedEntry(entry.id)}
+                      className="p-2 rounded transition-colors"
+                      style={{
+                        backgroundColor: 'var(--color-success)',
+                        color: 'white'
+                      }}
+                      title="Log this food"
+                    >
+                      <Check size={18} weight="bold" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeletePlannedEntry(entry.id)}
+                      className="p-2 rounded transition-colors text-red-600"
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.1)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      title="Remove planned food"
+                    >
+                      <Trash size={18} />
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
           </div>
         )}
 
@@ -1002,7 +1004,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               ></div>
             </div>
           </div>
-          
+
           {/* Date selector skeleton */}
           <div className="flex items-center justify-between mt-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
             <div
@@ -1041,7 +1043,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
               <div className="w-full rounded-full h-2 mb-2" style={{ backgroundColor: 'var(--forum-search-border)' }}>
                 <div
                   className="h-2 rounded-full"
-                  style={{ 
+                  style={{
                     width: '60%',
                     backgroundColor: 'var(--color-bg-tertiary)'
                   }}

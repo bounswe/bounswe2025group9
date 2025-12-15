@@ -1,11 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ForkKnife, Check, X, Eye } from '@phosphor-icons/react';
 import { apiClient, PriceUnit } from '../../../lib/apiClient';
-
-const PRICE_UNIT_LABELS: Record<PriceUnit, string> = {
-  per_100g: 'Per 100g',
-  per_unit: 'Per Unit',
-};
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface FoodProposal {
   id: number;
@@ -34,10 +30,16 @@ interface FoodProposal {
 }
 
 const FoodProposals = () => {
+  const { t } = useLanguage();
   const [proposals, setProposals] = useState<FoodProposal[]>([]);
   const [filter, setFilter] = useState<'pending' | 'approved' | 'rejected' | 'all'>('pending');
   const [loading, setLoading] = useState(true);
   const [selectedProposal, setSelectedProposal] = useState<FoodProposal | null>(null);
+
+  const PRICE_UNIT_LABELS: Record<PriceUnit, string> = {
+    per_100g: t('food.per100g'),
+    per_unit: t('admin.perUnit'),
+  };
 
   useEffect(() => {
     fetchProposals();
@@ -75,7 +77,7 @@ const FoodProposals = () => {
       setSelectedProposal(null);
     } catch (error) {
       console.error('Failed to update proposal:', error);
-      alert('Failed to update proposal. Please try again.');
+      alert(t('admin.failedToUpdateProposal'));
     }
   };
 
@@ -105,7 +107,7 @@ const FoodProposals = () => {
                 : 'var(--forum-default-text)'
             }}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {status === 'pending' ? t('admin.pending') : status === 'approved' ? t('admin.approved') : status === 'rejected' ? t('admin.rejected') : t('admin.all')}
           </button>
         ))}
       </div>
@@ -115,7 +117,7 @@ const FoodProposals = () => {
         {proposals.length === 0 ? (
           <div className="col-span-2 text-center py-12 text-gray-500 dark:text-gray-400">
             <ForkKnife size={48} className="mx-auto mb-4 opacity-50" />
-            <p>No food proposals found</p>
+            <p>{t('admin.noFoodProposalsFound')}</p>
           </div>
         ) : (
           proposals.map((proposal) => (
@@ -136,10 +138,10 @@ const FoodProposals = () => {
                     {proposal.name}
                   </h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {proposal.category} • {proposal.servingSize}g serving
+                    {proposal.category} • {proposal.servingSize}g {t('food.serving')}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-500 mt-1">
-                    Proposed by: {proposal.proposedBy.username}
+                    {t('admin.proposedBy')}: {proposal.proposedBy.username}
                   </p>
                 </div>
                 <div className="text-right">
@@ -147,7 +149,7 @@ const FoodProposals = () => {
                     {proposal.nutritionScore.toFixed(1)}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400">
-                    Score
+                    {t('admin.score')}
                   </div>
                 </div>
               </div>
@@ -155,19 +157,19 @@ const FoodProposals = () => {
               {/* Nutritional Info */}
               <div className="mt-4 grid grid-cols-3 gap-2 text-center">
                 <div className="bg-gray-50 dark:bg-gray-700 rounded p-2">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Calories</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('food.calories')}</div>
                   <div className="font-semibold text-gray-900 dark:text-white">
                     {proposal.caloriesPerServing}
                   </div>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded p-2">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Protein</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('food.protein')}</div>
                   <div className="font-semibold text-gray-900 dark:text-white">
                     {proposal.proteinContent}g
                   </div>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700 rounded p-2">
-                  <div className="text-xs text-gray-500 dark:text-gray-400">Carbs</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">{t('food.carbs')}</div>
                   <div className="font-semibold text-gray-900 dark:text-white">
                     {proposal.carbohydrateContent}g
                   </div>
@@ -208,7 +210,7 @@ const FoodProposals = () => {
                   </div>
                 ) : (
                   <div className="px-3 py-2 rounded-md bg-yellow-50 dark:bg-yellow-900/30 text-yellow-800 dark:text-yellow-100 text-xs">
-                    No pricing information submitted with this proposal.
+                    {t('admin.noPricingInformation')}
                   </div>
                 )}
               </div>
@@ -220,7 +222,7 @@ const FoodProposals = () => {
                   className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                 >
                   <Eye size={16} />
-                  Details
+                  {t('admin.details')}
                 </button>
                 {proposal.isApproved === null && (
                   <>
@@ -229,21 +231,21 @@ const FoodProposals = () => {
                       className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
                     >
                       <Check size={16} weight="bold" />
-                      Approve
+                      {t('admin.approve')}
                     </button>
                     <button
                       onClick={() => handleApprove(proposal.id, false)}
                       className="flex-1 flex items-center justify-center gap-1 px-3 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
                     >
                       <X size={16} weight="bold" />
-                      Reject
+                      {t('admin.reject')}
                     </button>
                   </>
                 )}
               </div>
 
               <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Submitted: {new Date(proposal.createdAt).toLocaleString()}
+                {t('admin.submitted')}: {new Date(proposal.createdAt).toLocaleString()}
               </div>
             </div>
           ))
@@ -275,7 +277,7 @@ const FoodProposals = () => {
               {/* Image */}
               {selectedProposal.imageUrl && (
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Image</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.image')}</h4>
                   <img
                     src={selectedProposal.imageUrl}
                     alt={selectedProposal.name}
@@ -286,29 +288,29 @@ const FoodProposals = () => {
 
               {/* Basic Info */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Basic Information</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('food.basicInformation')}</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Category:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.category')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.category}</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Serving Size:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.servingSize')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.servingSize}g</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Nutrition Score:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.nutritionScore')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.nutritionScore.toFixed(1)}</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Proposed By:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('admin.proposedBy')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.proposedBy.username}</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Status:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('admin.status')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">
-                      {selectedProposal.isApproved === null ? 'Pending' : selectedProposal.isApproved ? 'Approved' : 'Rejected'}
-                      {selectedProposal.is_private && ' (Private)'}
+                      {selectedProposal.isApproved === null ? t('admin.pending') : selectedProposal.isApproved ? t('admin.approved') : t('admin.rejected')}
+                      {selectedProposal.is_private && ` (${t('admin.private')})`}
                     </span>
                   </div>
                 </div>
@@ -316,22 +318,22 @@ const FoodProposals = () => {
 
               {/* Macronutrients */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Macronutrients (per serving)</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('food.macronutrientsPerServing')}</h4>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Calories:</span>
-                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.caloriesPerServing} kcal</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.calories')}:</span>
+                    <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.caloriesPerServing} {t('food.kcal')}</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Protein:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.protein')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.proteinContent}g</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Fat:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.fat')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.fatContent}g</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Carbohydrates:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.carbohydrates')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.carbohydrateContent}g</span>
                   </div>
                 </div>
@@ -340,7 +342,7 @@ const FoodProposals = () => {
               {/* Micronutrients */}
               {selectedProposal.micronutrients && Object.keys(selectedProposal.micronutrients).length > 0 && (
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Micronutrients (per serving)</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('food.micronutrientsPerServing')}</h4>
                   <div className="grid grid-cols-2 gap-3">
                     {Object.entries(selectedProposal.micronutrients).map(([nutrient, value]) => (
                       <div key={nutrient} className="bg-gray-50 dark:bg-gray-700 rounded p-2">
@@ -355,11 +357,11 @@ const FoodProposals = () => {
               {/* Allergens & Dietary Options */}
               {(selectedProposal.allergens?.length || selectedProposal.dietaryOptions?.length) && (
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Allergens & Dietary Information</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.allergensDietaryInfo')}</h4>
                   <div className="space-y-2">
                     {selectedProposal.dietaryOptions && selectedProposal.dietaryOptions.length > 0 && (
                       <div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Dietary Options:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.dietaryTags')}:</span>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {selectedProposal.dietaryOptions.map((option) => (
                             <span
@@ -374,7 +376,7 @@ const FoodProposals = () => {
                     )}
                     {selectedProposal.allergens && selectedProposal.allergens.length > 0 && (
                       <div>
-                        <span className="text-sm text-gray-600 dark:text-gray-400">Allergens:</span>
+                        <span className="text-sm text-gray-600 dark:text-gray-400">{t('profile.allergens')}:</span>
                         <div className="flex flex-wrap gap-2 mt-1">
                           {selectedProposal.allergens.map((allergen) => (
                             <span
@@ -393,31 +395,31 @@ const FoodProposals = () => {
 
               {/* Pricing */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Pricing Details</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.pricingDetails')}</h4>
                 {selectedProposal.base_price ? (
                   <div className="p-3 rounded-md border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-sm">
                     <div>
-                      <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
+                      <span className="text-gray-600 dark:text-gray-400">{t('admin.basePrice')}:</span>
                       <span className="ml-2 font-semibold text-gray-900 dark:text-white">
                         {selectedProposal.base_price} {selectedProposal.currency || 'TRY'}
                       </span>
                     </div>
                     <div className="mt-1 text-gray-600 dark:text-gray-400">
-                      Unit: {PRICE_UNIT_LABELS[(selectedProposal.price_unit as PriceUnit) || 'per_100g']}
+                      {t('admin.unit')}: {PRICE_UNIT_LABELS[(selectedProposal.price_unit as PriceUnit) || 'per_100g']}
                     </div>
                   </div>
                 ) : (
                   <div className="p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-100 text-sm">
-                    This proposal does not include pricing data.
+                    {t('admin.noPricingData')}
                   </div>
                 )}
               </div>
 
               {/* Timestamps */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Timeline</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.timeline')}</h4>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Submitted: {new Date(selectedProposal.createdAt).toLocaleString()}
+                  {t('admin.submittedOn', { date: new Date(selectedProposal.createdAt).toLocaleString() })}
                 </div>
               </div>
 
@@ -429,14 +431,14 @@ const FoodProposals = () => {
                     className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <Check size={20} weight="bold" />
-                    Approve
+                    {t('admin.approve')}
                   </button>
                   <button
                     onClick={() => handleApprove(selectedProposal.id, false)}
                     className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     <X size={20} weight="bold" />
-                    Reject
+                    {t('admin.reject')}
                   </button>
                 </div>
               )}

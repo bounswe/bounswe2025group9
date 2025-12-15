@@ -30,17 +30,21 @@ describe('MainLayout Component', () => {
     )
     
     // Check if all components are rendered
-    expect(screen.getByTestId('navbar-mock')).toBeInTheDocument()
-    expect(screen.getByTestId('outlet-mock')).toBeInTheDocument()
-    expect(screen.getByTestId('footer-mock')).toBeInTheDocument()
+    const navbar = screen.getAllByTestId('navbar-mock')[0]
+    const outlet = screen.getAllByTestId('outlet-mock')[0]
+    const footer = screen.getAllByTestId('footer-mock')[0]
+
+    expect(navbar).toBeInTheDocument()
+    expect(outlet).toBeInTheDocument()
+    expect(footer).toBeInTheDocument()
     
     // Check the structure - main should be between navbar and footer
-    const container = screen.getByTestId('navbar-mock').parentElement
+    const container = navbar.parentElement
     const children = Array.from(container?.childNodes || [])
-    
-    expect(children[0]).toBe(screen.getByTestId('navbar-mock'))
-    expect(children[1].contains(screen.getByTestId('outlet-mock'))).toBeTruthy()
-    expect(children[2]).toBe(screen.getByTestId('footer-mock'))
+
+    expect(children[0]).toBe(navbar)
+    expect(children[1].contains(outlet)).toBeTruthy()
+    expect(children[2]).toBe(footer)
   })
   
   it('has correct CSS classes for layout', () => {
@@ -51,11 +55,11 @@ describe('MainLayout Component', () => {
     )
     
     // Check if container has flex column layout
-    const container = screen.getByTestId('navbar-mock').parentElement
+    const container = screen.getAllByTestId('navbar-mock')[0].parentElement
     expect(container).toHaveClass('flex', 'flex-col', 'min-h-screen')
     
     // Check if main has flex-grow
-    const main = screen.getByTestId('outlet-mock').parentElement
+    const main = screen.getAllByTestId('outlet-mock')[0].parentElement
     expect(main).toHaveClass('flex-grow')
   })
 }) 

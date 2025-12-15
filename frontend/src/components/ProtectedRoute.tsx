@@ -1,5 +1,6 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useLanguage } from '../context/LanguageContext';
 
 // protected route component props
 interface ProtectedRouteProps {
@@ -16,6 +17,7 @@ const ProtectedRoute = ({
 }: ProtectedRouteProps) => {
   // get auth context
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { t } = useLanguage();
   
   // if loading, show a simple loading indicator
   if (isLoading) {
@@ -52,16 +54,16 @@ const ProtectedRoute = ({
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Access Denied
+            {t('common.accessDenied')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            You don't have permission to access this page. Staff or administrator privileges are required.
+            {t('common.accessDeniedMessage')}
           </p>
           <button
             onClick={() => window.history.back()}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Go Back
+            {t('common.goBack')}
           </button>
         </div>
       </div>
@@ -89,16 +91,16 @@ const ProtectedRoute = ({
             </svg>
           </div>
           <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-            Administrator Access Required
+            {t('common.administratorAccessRequired')}
           </h2>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            This page is restricted to administrators only.
+            {t('common.administratorOnlyMessage')}
           </p>
           <button
             onClick={() => window.history.back()}
             className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
           >
-            Go Back
+            {t('common.goBack')}
           </button>
         </div>
       </div>

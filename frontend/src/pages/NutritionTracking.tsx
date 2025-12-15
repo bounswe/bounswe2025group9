@@ -3,8 +3,10 @@ import { CaretDown, CaretRight, Lightbulb, Info } from '@phosphor-icons/react'
 import NutritionTracking from '../components/NutritionTracking'
 import { apiClient } from '../lib/apiClient'
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition'
+import { useLanguage } from '../context/LanguageContext'
 
 const NutritionTrackingPage = () => {
+  const { t } = useLanguage()
   const [nutritionData, setNutritionData] = useState<{
     todayLog: DailyNutritionLog | null;
     targets: NutritionTargets | null;
@@ -99,14 +101,14 @@ const NutritionTrackingPage = () => {
               <div className="nh-card">
                 <h3 className="nh-subtitle mb-3 text-sm flex items-center gap-2">
                   <Lightbulb size={18} weight="fill" className="text-primary" />
-                  Tracking Tips
+                  {t('nutrition.trackingTips')}
                 </h3>
                 <ul className="nh-text text-xs space-y-2">
-                  <li>• Log meals as you eat them</li>
-                  <li>• Be consistent with serving sizes</li>
-                  <li>• Review weekly trends</li>
-                  <li>• Update your metrics regularly</li>
-                  <li>• Track snacks and beverages too</li>
+                  <li>• {t('nutrition.tipLogMeals')}</li>
+                  <li>• {t('nutrition.tipConsistentServing')}</li>
+                  <li>• {t('nutrition.tipReviewWeekly')}</li>
+                  <li>• {t('nutrition.tipUpdateMetrics')}</li>
+                  <li>• {t('nutrition.tipTrackSnacks')}</li>
                 </ul>
               </div>
             </div>
@@ -126,18 +128,18 @@ const NutritionTrackingPage = () => {
               <div className="nh-card rounded-lg shadow-md">
                 {nutritionData.targets ? (
                   <>
-                <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
+                    <h3 className="nh-subtitle mb-3 text-sm">{t('nutrition.dailyTargets')}</h3>
                     <div className="space-y-2">
                       {/* Hydration inside Daily Targets (matches macro rows) */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium">Hydration</span>
+                            <span className="text-xs font-medium">{t('nutrition.hydration')}</span>
                             <button
                               className="p-1 rounded text-[var(--color-text-secondary)]"
                               onClick={() => setShowHydrationInfo(true)}
                               style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                              title="How hydration target is calculated"
+                              title={t('nutrition.hydrationTooltip')}
                             >
                               <Info size={12} />
                             </button>
@@ -160,7 +162,7 @@ const NutritionTrackingPage = () => {
                       {/* Calories */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Calories</span>
+                          <span className="text-xs font-medium">{t('food.calories')}</span>
                           <span className="text-xs font-bold text-orange-600">
                             {nutritionData.todayLog?.total_calories || 0} / {nutritionData.targets?.calories || 0}
                           </span>
@@ -201,7 +203,7 @@ const NutritionTrackingPage = () => {
                       {/* Protein */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Protein</span>
+                          <span className="text-xs font-medium">{t('food.protein')}</span>
                           <span className="text-xs font-bold text-blue-600">
                             {nutritionData.todayLog?.total_protein || 0}g / {nutritionData.targets?.protein || 0}g
                           </span>
@@ -242,7 +244,7 @@ const NutritionTrackingPage = () => {
                       {/* Carbs */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Carbs</span>
+                          <span className="text-xs font-medium">{t('food.carbs')}</span>
                           <span className="text-xs font-bold text-green-600">
                             {nutritionData.todayLog?.total_carbohydrates || 0}g / {nutritionData.targets?.carbohydrates || 0}g
                           </span>
@@ -283,7 +285,7 @@ const NutritionTrackingPage = () => {
                       {/* Fat */}
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-xs font-medium">Fat</span>
+                          <span className="text-xs font-medium">{t('food.fat')}</span>
                           <span className="text-xs font-bold text-yellow-600">
                             {nutritionData.todayLog?.total_fat || 0}g / {nutritionData.targets?.fat || 0}g
                           </span>
@@ -388,7 +390,7 @@ const NutritionTrackingPage = () => {
                                       e.currentTarget.style.backgroundColor = 'transparent';
                                     }}
                                   >
-                                    <span className="text-xs font-semibold">Vitamins</span>
+                                    <span className="text-xs font-semibold">{t('nutrition.vitamins')}</span>
                                     {showVitamins ? <CaretDown size={14} /> : <CaretRight size={14} />}
                                   </button>
                                   {showVitamins && (
@@ -458,7 +460,7 @@ const NutritionTrackingPage = () => {
                                       e.currentTarget.style.backgroundColor = 'transparent';
                                     }}
                                   >
-                                    <span className="text-xs font-semibold">Minerals</span>
+                                    <span className="text-xs font-semibold">{t('nutrition.minerals')}</span>
                                     {showMinerals ? <CaretDown size={14} /> : <CaretRight size={14} />}
                                   </button>
                                   {showMinerals && (
@@ -523,9 +525,9 @@ const NutritionTrackingPage = () => {
                   </>
                 ) : (
                   <>
-                    <h3 className="nh-subtitle mb-3 text-sm">Setup Required</h3>
+                    <h3 className="nh-subtitle mb-3 text-sm">{t('nutrition.setupRequired')}</h3>
                     <p className="nh-text text-xs mb-3">
-                      Set your body metrics in your profile to see your daily nutrition targets.
+                      {t('nutrition.setupRequiredDesc')}
                     </p>
                   </>
                 )}
@@ -545,19 +547,19 @@ const NutritionTrackingPage = () => {
           >
             ✕
           </button>
-          <h3 className="nh-subtitle mb-2">Hydration target</h3>
+          <h3 className="nh-subtitle mb-2">{t('nutrition.hydrationTarget')}</h3>
           <p className="nh-text text-sm mb-2">
-            Your daily water target comes from Nutrition Targets (Adequate Intake defaults: ~3700 g for males, ~2700 g for females).
+            {t('nutrition.hydrationInfo1')}
           </p>
           <p className="nh-text text-sm mb-2">
-            Meeting or exceeding the target keeps your nutrition score stable. Being under target can reduce the score by up to -2.00.
+            {t('nutrition.hydrationInfo2')}
           </p>
           <p className="nh-text text-sm">
-            Log water by adding foods that include “Water (g)” (e.g., plain water). To adjust your target, edit Nutrition Targets.
+            {t('nutrition.hydrationInfo3')}
           </p>
           <div className="mt-4 flex justify-end">
             <button className="nh-button nh-button-primary px-4 py-2 text-sm" onClick={() => setShowHydrationInfo(false)}>
-              Got it
+              {t('nutrition.gotIt')}
             </button>
           </div>
         </div>

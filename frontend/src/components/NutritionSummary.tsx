@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChartLineUp, Flame, TrendUp, Cookie, Drop } from '@phosphor-icons/react';
 import { apiClient } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NutritionSummaryProps {
   compact?: boolean;
@@ -10,6 +11,7 @@ interface NutritionSummaryProps {
 }
 
 const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionSummaryProps) => {
+  const { t } = useLanguage();
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [loading, setLoading] = useState(true);
@@ -78,33 +80,33 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
       return (
         <div className="nh-card flex flex-col items-center justify-center p-6 text-center">
           <ChartLineUp size={32} className="text-primary mb-2" weight="fill" />
-          <p className="text-sm font-medium mb-3">Setup Nutrition</p>
+          <p className="text-sm font-medium mb-3">{t('nutrition.setupNutrition')}</p>
           {onNavigateToNutrition ? (
             <button 
               onClick={onNavigateToNutrition}
               className="text-xs text-primary hover:underline"
             >
-              Set Metrics →
+              {t('nutrition.setMetrics')} →
             </button>
           ) : (
-            <Link to="/profile?tab=nutrition" className="text-xs text-primary hover:underline">Set Metrics →</Link>
+            <Link to="/profile?tab=nutrition" className="text-xs text-primary hover:underline">{t('nutrition.setMetrics')} →</Link>
           )}
         </div>
       );
     }
     return (
       <div className="nh-card text-center p-8">
-        <h3 className="nh-subtitle mb-4">Nutrition Summary</h3>
-        <p className="nh-text mb-4 text-sm">Set up your metrics to see your daily nutrition summary.</p>
+        <h3 className="nh-subtitle mb-4">{t('nutrition.nutritionSummary')}</h3>
+        <p className="nh-text mb-4 text-sm">{t('nutrition.setupMetricsToSeeSummary')}</p>
         {onNavigateToNutrition ? (
           <button 
             onClick={onNavigateToNutrition}
             className="nh-button nh-button-primary text-sm"
           >
-            Set Up Metrics
+            {t('nutrition.setUpMetrics')}
           </button>
         ) : (
-          <Link to="/profile?tab=nutrition" className="nh-button nh-button-primary text-sm">Set Up Metrics</Link>
+          <Link to="/profile?tab=nutrition" className="nh-button nh-button-primary text-sm">{t('nutrition.setUpMetrics')}</Link>
         )}
       </div>
     );
@@ -123,7 +125,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
     const cardContent = (
       <div className="nh-card hover:shadow-lg transition-shadow cursor-pointer">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold">Today's Nutrition</h3>
+          <h3 className="text-lg font-semibold">{t('nutrition.todaysNutritionSummary')}</h3>
           <ChartLineUp size={24} weight="fill" className="text-primary" />
         </div>
 
@@ -132,7 +134,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Flame size={18} weight="fill" className="text-orange-500" />
-              <span className="text-sm font-medium">Calories</span>
+              <span className="text-sm font-medium">{t('food.calories')}</span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-primary">{todayLog.total_calories}</span>
@@ -157,7 +159,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <TrendUp size={18} weight="fill" className="text-blue-500" />
-              <span className="text-sm font-medium">Protein</span>
+              <span className="text-sm font-medium">{t('food.protein')}</span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-primary">{todayLog.total_protein}g</span>
@@ -180,7 +182,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Cookie size={18} weight="fill" className="text-green-500" />
-              <span className="text-sm font-medium">Carbs</span>
+              <span className="text-sm font-medium">{t('food.carbohydrates')}</span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-primary">{todayLog.total_carbohydrates}g</span>
@@ -203,7 +205,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <Drop size={18} weight="fill" className="text-yellow-500" />
-              <span className="text-sm font-medium">Fat</span>
+              <span className="text-sm font-medium">{t('food.fat')}</span>
             </div>
             <div className="flex items-baseline gap-2">
               <span className="text-xl font-bold text-primary">{todayLog.total_fat}g</span>
@@ -224,7 +226,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
         </div>
 
         <div className="mt-4 text-xs text-center nh-text opacity-70">
-          Click to view details →
+          {t('nutrition.viewDetails')} →
         </div>
       </div>
     );
@@ -247,7 +249,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
   // Full version (not compact)
   return (
     <div className="nh-card">
-      <h3 className="nh-subtitle mb-6">Today's Nutrition Summary</h3>
+      <h3 className="nh-subtitle mb-6">{t('nutrition.todaysNutritionSummary')}</h3>
 
       {/* Macronutrients Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -256,7 +258,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Flame size={24} weight="fill" className="text-orange-500" />
-              <span className="font-semibold">Calories</span>
+              <span className="font-semibold">{t('food.calories')}</span>
             </div>
             <span className="text-sm font-medium" style={{
               color: caloriesPercent > 100 ? 'var(--color-error)' : 'var(--color-success)'
@@ -266,7 +268,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
           </div>
           <div className="flex items-baseline gap-2">
             <span className="text-3xl font-bold text-primary">{todayLog.total_calories}</span>
-            <span className="text-lg nh-text opacity-70">/ {targets.calories} kcal</span>
+            <span className="text-lg nh-text opacity-70">/ {targets.calories} {t('food.kcal')}</span>
           </div>
           <div 
             className="w-full rounded-full h-3"
@@ -296,7 +298,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
                   style={{ color: 'var(--color-primary)' }}
                 >P</span>
               </div>
-              <span className="font-semibold">Protein</span>
+              <span className="font-semibold">{t('food.protein')}</span>
             </div>
             <span className="text-sm font-medium" style={{
               color: proteinPercent >= 90 ? 'var(--color-success)' : 'var(--color-warning)'
@@ -334,7 +336,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
                   style={{ color: 'var(--color-success)' }}
                 >C</span>
               </div>
-              <span className="font-semibold">Carbohydrates</span>
+              <span className="font-semibold">{t('food.carbohydrates')}</span>
             </div>
             <span className="text-sm font-medium" style={{
               color: carbsPercent >= 90 ? 'var(--color-success)' : 'var(--color-warning)'
@@ -372,7 +374,7 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
                   style={{ color: 'var(--color-warning)' }}
                 >F</span>
               </div>
-              <span className="font-semibold">Fat</span>
+              <span className="font-semibold">{t('food.fat')}</span>
             </div>
             <span className="text-sm font-medium" style={{
               color: fatPercent >= 90 ? 'var(--color-success)' : 'var(--color-warning)'
@@ -402,9 +404,12 @@ const NutritionSummary = ({ compact = false, onNavigateToNutrition }: NutritionS
       <div className="pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
         <div className="flex items-center justify-between">
           <span className="text-sm nh-text opacity-70">
-            {todayLog.entries?.length || 0} items logged across {new Set(todayLog.entries?.map(e => e.meal_type) || []).size} meals
+            {t('nutrition.mealsLoggedSummary', {
+              itemCount: todayLog.entries?.length || 0,
+              mealCount: new Set(todayLog.entries?.map(e => e.meal_type) || []).size
+            })}
           </span>
-          <span className="text-sm font-medium text-primary">View Details →</span>
+          <span className="text-sm font-medium text-primary">{t('nutrition.viewDetails')} →</span>
         </div>
       </div>
     </div>

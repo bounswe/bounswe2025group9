@@ -2,10 +2,12 @@ import { UserPlus, Eye, EyeSlash, Check, X } from '@phosphor-icons/react'
 import { useState } from 'react'
 import { apiClient } from '../../lib/apiClient'
 import { useNavigate, Link } from 'react-router-dom'
+import { useLanguage } from '../../context/LanguageContext'
 
 // signup page component (placeholder)
 const SignUp = () => {
     const navigate = useNavigate()
+    const { t } = useLanguage()
     const [formData, setFormData] = useState({
         email: '',
         username: '',
@@ -77,45 +79,45 @@ const SignUp = () => {
 
         // Email validation
         if (!formData.email) {
-            newErrors.email = 'Email is required'
+            newErrors.email = t('auth.emailRequired')
             isValid = false
         } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-            newErrors.email = 'Email is invalid'
+            newErrors.email = t('auth.emailInvalid')
             isValid = false
         }
 
         // Username validation
         if (!formData.username) {
-            newErrors.username = 'Username is required'
+            newErrors.username = t('auth.usernameRequired')
             isValid = false
         } else if (formData.username.length < 3) {
-            newErrors.username = 'Username must be at least 3 characters'
+            newErrors.username = t('auth.usernameMinLength')
             isValid = false
         }
 
         // Password validation
         if (!formData.password) {
-            newErrors.password = 'Password is required'
+            newErrors.password = t('auth.passwordRequired')
             isValid = false
         } else if (!allCriteriaMet) {
-            newErrors.password = 'Password does not meet all requirements'
+            newErrors.password = t('auth.passwordNotMeetReq')
             isValid = false
         }
 
         // Confirm password validation
         if (formData.password !== formData.confirmPassword) {
-            newErrors.confirmPassword = 'Passwords do not match'
+            newErrors.confirmPassword = t('auth.passwordsNotMatch')
             isValid = false
         }
 
         // Name validation
         if (!formData.name) {
-            newErrors.name = 'First name is required'
+            newErrors.name = t('auth.firstNameRequired')
             isValid = false
         }
 
         if (!formData.surname) {
-            newErrors.surname = 'Last name is required'
+            newErrors.surname = t('auth.lastNameRequired')
             isValid = false
         }
 
@@ -188,7 +190,7 @@ const SignUp = () => {
                     }
                     
                     // If we couldn't extract a specific message but have error data
-                    setSignupError('Signup failed. Please check your information and try again.');
+                    setSignupError(t('auth.signupError'));
                     return;
                 }
                 
@@ -249,16 +251,16 @@ const SignUp = () => {
                             if (errorMessage) {
                                 setSignupError(`${firstErrorField.charAt(0).toUpperCase() + firstErrorField.slice(1)}: ${errorMessage}`);
                             } else {
-                                setSignupError('Signup failed. Please check your information and try again.');
+                                setSignupError(t('auth.signupError'));
                             }
                         } else {
-                            setSignupError('Signup failed. Please check your information and try again.');
+                            setSignupError(t('auth.signupError'));
                         }
                     } else {
-                        setSignupError('Signup failed. Please check your information and try again.');
+                        setSignupError(t('auth.signupError'));
                     }
                 } else {
-                    setSignupError('Network error. Please try again later.');
+                    setSignupError(t('auth.networkError'));
                 }
             }
         }
@@ -280,7 +282,7 @@ const SignUp = () => {
                     <div className="text-center mb-4">
                         <div className="inline-flex items-center justify-center">
                             <UserPlus size={28} weight="bold" className="text-primary mr-2 mb-3" aria-hidden="true" />
-                            <h2 className="nh-title">Sign Up</h2>
+                            <h2 className="nh-title">{t('auth.signup')}</h2>
                         </div>
                     </div>
                     
@@ -288,7 +290,7 @@ const SignUp = () => {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <label htmlFor="name" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                    First Name
+                                    {t('auth.firstName')}
                                 </label>
                                 <input
                                     type="text"
@@ -299,7 +301,7 @@ const SignUp = () => {
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                         errors.name ? 'border-red-500' : 'border-gray-500'
                                     }`}
-                                    placeholder="Enter your first name"
+                                    placeholder={t('auth.enterFirstName')}
                                 />
                                 {errors.name && (
                                     <p className="nh-error-message">
@@ -311,7 +313,7 @@ const SignUp = () => {
 
                             <div>
                                 <label htmlFor="surname" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                    Last Name
+                                    {t('auth.lastName')}
                                 </label>
                                 <input
                                     type="text"
@@ -322,7 +324,7 @@ const SignUp = () => {
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                         errors.surname ? 'border-red-500' : 'border-gray-500'
                                     }`}
-                                    placeholder="Enter your last name"
+                                    placeholder={t('auth.enterLastName')}
                                 />
                                 {errors.surname && (
                                     <p className="nh-error-message">
@@ -335,7 +337,7 @@ const SignUp = () => {
 
                         <div>
                             <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Email
+                                {t('auth.email')}
                             </label>
                             <input
                                 type="email"
@@ -346,7 +348,7 @@ const SignUp = () => {
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                     errors.email ? 'border-red-500' : 'border-gray-500'
                                 }`}
-                                placeholder="Enter your email"
+                                placeholder={t('auth.enterEmail')}
                             />
                             {errors.email && (
                                 <p className="nh-error-message">
@@ -358,7 +360,7 @@ const SignUp = () => {
 
                         <div>
                             <label htmlFor="username" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Username
+                                {t('auth.username')}
                             </label>
                             <input
                                 type="text"
@@ -369,7 +371,7 @@ const SignUp = () => {
                                 className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                     errors.username ? 'border-red-500' : 'border-gray-500'
                                 }`}
-                                placeholder="Choose a username"
+                                placeholder={t('auth.chooseUsername')}
                             />
                             {errors.username && (
                                 <p className="nh-error-message">
@@ -381,7 +383,7 @@ const SignUp = () => {
 
                         <div>
                             <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Password
+                                {t('auth.password')}
                             </label>
                             <div className="relative">
                                 <input
@@ -395,7 +397,7 @@ const SignUp = () => {
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                         errors.password ? 'border-red-500' : 'border-gray-500'
                                     }`}
-                                    placeholder="Create a password"
+                                    placeholder={t('auth.createPassword')}
                                 />
                                 <button
                                     type="button"
@@ -424,30 +426,30 @@ const SignUp = () => {
                                     borderColor: 'var(--color-gray-700)',
                                     borderStyle: 'solid'
                                 }}>
-                                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>Password must have:</p>
+                                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>{t('auth.passwordMustHave')}</p>
                                     <ul className="space-y-1">
                                         <li className="flex items-center text-sm">
                                             {criteriaIcon(passwordCriteria.minLength)}
                                             <span className={`ml-2 ${passwordCriteria.minLength ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
-                                                At least 8 characters
+                                                {t('auth.atLeast8Chars')}
                                             </span>
                                         </li>
                                         <li className="flex items-center text-sm">
                                             {criteriaIcon(passwordCriteria.hasUppercase)}
                                             <span className={`ml-2 ${passwordCriteria.hasUppercase ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
-                                                At least one uppercase letter
+                                                {t('auth.atLeastOneUppercase')}
                                             </span>
                                         </li>
                                         <li className="flex items-center text-sm">
                                             {criteriaIcon(passwordCriteria.hasLowercase)}
                                             <span className={`ml-2 ${passwordCriteria.hasLowercase ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
-                                                At least one lowercase letter
+                                                {t('auth.atLeastOneLowercase')}
                                             </span>
                                         </li>
                                         <li className="flex items-center text-sm">
                                             {criteriaIcon(passwordCriteria.hasNumber)}
                                             <span className={`ml-2 ${passwordCriteria.hasNumber ? 'opacity-80' : 'opacity-100'}`} style={{ color: 'var(--color-light)' }}>
-                                                At least one number
+                                                {t('auth.atLeastOneNumber')}
                                             </span>
                                         </li>
                                     </ul>
@@ -457,7 +459,7 @@ const SignUp = () => {
 
                         <div>
                             <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1" style={{ color: 'var(--color-light)' }}>
-                                Confirm Password
+                                {t('auth.confirmPassword')}
                             </label>
                             <div className="relative">
                                 <input
@@ -469,7 +471,7 @@ const SignUp = () => {
                                     className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-primary placeholder:text-gray-400 ${
                                         errors.confirmPassword ? 'border-red-500' : 'border-gray-500'
                                     }`}
-                                    placeholder="Confirm your password"
+                                    placeholder={t('auth.confirmYourPassword')}
                                 />
                                 <button
                                     type="button"
@@ -487,7 +489,7 @@ const SignUp = () => {
                                 <div className="flex items-center mt-1">
                                     {criteriaIcon(passwordCriteria.passwordsMatch)}
                                     <span className="ml-2 text-sm" style={{ color: passwordCriteria.passwordsMatch ? 'var(--color-success)' : 'var(--color-error)' }}>
-                                        {passwordCriteria.passwordsMatch ? 'Passwords match' : 'Passwords do not match'}
+                                        {passwordCriteria.passwordsMatch ? t('auth.passwordsMatch') : t('auth.passwordsDoNotMatch')}
                                     </span>
                                 </div>
                             )}
@@ -504,7 +506,7 @@ const SignUp = () => {
                             className="nh-button nh-button-primary w-full"
                             style={{ display: 'inline-block' }}
                         >
-                            Create Account
+                            {t('auth.createAccount')}
                         </button>
                     </form>
 
@@ -533,17 +535,17 @@ const SignUp = () => {
                         <div className="mt-4 p-3 bg-green-100 dark:bg-green-900/30 text-success rounded-md text-center">
                             <p className="font-medium flex items-center justify-center">
                                 <Check size={18} weight="bold" className="mr-1" />
-                                Signup successful!
+                                {t('auth.signupSuccess')}
                             </p>
-                            <p className="text-sm mt-1">Redirecting to login page...</p>
+                            <p className="text-sm mt-1">{t('auth.redirectingToLogin')}</p>
                         </div>
                     )}
 
                     <div className="mt-4 text-center">
                         <p className="text-sm text-gray-600 dark:text-gray-400">
-                            Already have an account?{' '}
+                            {t('auth.hasAccount')}{' '}
                             <Link to="/login" className="text-primary hover:text-primary-dark dark:text-primary-light dark:hover:text-primary">
-                                Sign in
+                                {t('auth.signIn')}
                             </Link>
                         </p>
                     </div>

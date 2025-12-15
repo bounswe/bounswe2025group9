@@ -5,9 +5,10 @@ import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 import NutritionScore from '../../components/NutritionScore';
 import { MicronutrientFilter, MicronutrientFilterItem, buildMicronutrientQuery } from '../../components/MicronutrientFilter';
+import { useLanguage } from '../../context/LanguageContext';
 import { MacronutrientFilter, MacronutrientFilterItem, buildMacronutrientQuery } from '../../components/MacronutrientFilter';
 
-export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
+export const FoodItem = ({ item, onClick, t }: { item: Food, onClick: () => void, t: (key: string, options?: Record<string, unknown>) => string }) => {
   return (
     <div
       key={item.id}
@@ -34,9 +35,9 @@ export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void })
       </div>
 
       <div className="mt-2">
-        <p className="nh-text">Category: {item.category}</p>
+        <p className="nh-text">{t('food.category')}: {item.category}</p>
         <div className="mt-2">
-          <p className="nh-text mb-2">Nutrition Score:</p>
+          <p className="nh-text mb-2">{t('food.nutritionScore')}:</p>
           <NutritionScore 
             score={item.nutritionScore} 
             size="sm"
@@ -52,24 +53,27 @@ export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void })
           />
         </div>
         <div className="mt-2 space-y-1">
-          <p className="nh-text font-medium">Per 100g:</p>
-          <p className="nh-text text-sm ml-2">Calories: {item.caloriesPerServing} kcal</p>
+          <p className="nh-text font-medium">{t('food.perServing', { size: item.servingSize })}:</p>
+          <p className="nh-text text-sm ml-2">{t('food.calories')}: {item.caloriesPerServing} kcal</p>
+          <p className="nh-text font-medium mt-2">{t('food.per100g')}:</p>
+          <p className="nh-text text-sm ml-2">{t('food.calories')}: {((item.caloriesPerServing / item.servingSize) * 100).toFixed(1)} kcal</p>
         </div>
-        <p className="nh-text mt-2">Dietary Tags: {item.dietaryOptions.join(', ')}</p>
+        <p className="nh-text mt-2">{t('food.dietaryTags')}: {item.dietaryOptions.join(', ')}</p>
       </div>
     </div>
   );
 }
 
-const SORT_OPTIONS = [
-    { key: 'nutritionscore', label: 'By Nutrition Score' },
-    { key: 'carbohydratecontent', label: 'By Carb Content' },
-    { key: 'proteincontent', label: 'By Protein Content' },
-    { key: 'fatcontent', label: 'By Fat Content' },
-    { key: '', label: 'Remove Sort' }
+const SORT_OPTIONS_KEYS = [
+    { key: 'nutritionscore', labelKey: 'food.byNutritionScore' },
+    { key: 'carbohydratecontent', labelKey: 'food.byCarbContent' },
+    { key: 'proteincontent', labelKey: 'food.byProteinContent' },
+    { key: 'fatcontent', labelKey: 'food.byFatContent' },
+    { key: '', labelKey: 'food.removeSort' }
 ];
 
 const Foods = () => {
+    const { t } = useLanguage();
     const [foods, setFoods] = useState<Food[]>([])
     const [fetchSuccess, setFetchSuccess] = useState(false)
     const [loading, setLoading] = useState(true)
@@ -252,14 +256,14 @@ const Foods = () => {
                         <div className="sticky top-20">
                             <h3 className="nh-subtitle mb-4 flex items-center gap-2">
                                 <Funnel size={20} weight="fill" className="text-primary" />
-                                Sort Options
+                                {t('food.sortOptions')}
                             </h3>
                             
                             {/* Current sort indicator */}
                             {sortBy && (
                                 <div className="mb-4 px-4 py-2 bg-primary bg-opacity-10 rounded-lg">
                                     <p className="text-sm font-medium">
-                                        Sorting: {SORT_OPTIONS.find(opt => opt.key === sortBy)?.label || 'Custom'}
+                                        {t('food.sortBy')}: {t(SORT_OPTIONS_KEYS.find(opt => opt.key === sortBy)?.labelKey || 'food.byNutritionScore')}
                                         <span className="ml-1 font-bold">{sortOrder === 'desc' ? '↓' : '↑'}</span>
                                     </p>
                                 </div>
@@ -267,7 +271,7 @@ const Foods = () => {
                             
                             <div className="flex flex-col gap-3">
                                 {/* Sort buttons */}
-                                {SORT_OPTIONS.map(option => (
+                                {SORT_OPTIONS_KEYS.map(option => (
                                     <button
                                         key={option.key}
                                         type="button"
@@ -283,7 +287,7 @@ const Foods = () => {
                                         onClick={() => handleSortChange(option.key)}
                                     >
                                         <span className="flex-grow text-center">
-                                            {option.label}
+                                            {t(option.labelKey)}
                                             {option.key !== '' && sortBy === option.key && (
                                                 <span className="ml-1 font-bold text-lg">{sortOrder === 'desc' ? '↓' : '↑'}</span>
                                             )}
@@ -324,8 +328,8 @@ const Foods = () => {
                                         value={searchTerm}
                                         onChange={(e) => setSearchTerm(e.target.value)}
                                         className="w-full p-2 pl-10 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
-                                        placeholder="Search for a food..."
-                                        aria-label="Search foods"
+                                        placeholder={t('food.searchPlaceholder')}
+                                        aria-label={t('common.search')}
                                     />
                                     {searchTerm && (
                                         <button
@@ -341,7 +345,7 @@ const Foods = () => {
                                     type="submit"
                                     className="px-5 py-3 nh-button nh-button-primary rounded-lg flex items-center"
                                 >
-                                    Search
+                                    {t('common.search')}
                                 </button>
                             </form>
                         </div>
@@ -399,9 +403,10 @@ const Foods = () => {
                                                 key={food.id} 
                                                 item={food} 
                                                 onClick={() => setSelectedFood(food)}
+                                                t={t}
                                             />
                                         ))) : 
-                                        <p className="text-center nh-text col-span-full">No foods found. Try adjusting your search.</p>
+                                        <p className="text-center nh-text col-span-full">{t('food.noFoodsFound')}</p>
                                     }
                                 </div>
                                 
@@ -592,7 +597,7 @@ const Foods = () => {
                                 )}
                             </>
                         ) : (
-                            <p className="col-span-full text-center nh-text">Error fetching foods. Please try again later.</p>
+                            <p className="col-span-full text-center nh-text">{t('food.errorFetching')}</p>
                         )}
                     </div>
                     
@@ -604,22 +609,22 @@ const Foods = () => {
                                     <svg className="h-5 w-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Add Food
+                                    {t('food.addFood')}
                                 </div>
                             </Link>
 
                             <Link to="/foods/compare" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium" style={{ display: 'flex' }}>
                                 <Scales size={20} weight="bold" />
-                                Compare Foods
+                                {t('food.compareFood')}
                             </Link>
 
                             <div className="nh-card rounded-lg shadow-md">
-                                <h3 className="nh-subtitle mb-3 text-sm">Food Facts</h3>
+                                <h3 className="nh-subtitle mb-3 text-sm">{t('food.foodFacts')}</h3>
                                 <ul className="nh-text text-xs space-y-2">
-                                    <li>• Nutrition score indicates overall health value</li>
-                                    <li>• Categories help you find similar foods</li>
-                                    <li>• Dietary tags show diet compatibility</li>
-                                    <li>• Click on a food to see full details</li>
+                                    <li>• {t('food.factNutritionScore')}</li>
+                                    <li>• {t('food.factCategories')}</li>
+                                    <li>• {t('food.factDietaryTags')}</li>
+                                    <li>• {t('food.factClickDetails')}</li>
                                 </ul>
                             </div>
                         </div>

@@ -4,6 +4,7 @@ import { PlusCircle, CaretLeft, CaretRight, Tag, X, Funnel, MagnifyingGlass, For
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { apiClient, ForumPost, Food, RecipeIngredient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import ForumPostCard from '../../components/ForumPostCard'
 import FoodSelector from '../../components/FoodSelector'
 // import cross-tab notification system
@@ -170,6 +171,7 @@ const Forum = () => {
     const location = useLocation();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { t } = useLanguage();
     const username = user?.username || 'anonymous';
     // Server-side pagination - store only current page posts
     const [posts, setPosts] = useState<ForumPost[]>([]); // store current page posts
@@ -1011,7 +1013,7 @@ const Forum = () => {
                         <div className="sticky top-20">
                             <h3 className="nh-subtitle mb-4 flex items-center gap-2">
                                 <Funnel size={20} weight="fill" className="text-primary" />
-                                Filter Posts
+                                {t('forum.filterPosts')}
                             </h3>
                             <div className="flex flex-col gap-3">
                                 {/* Filter buttons */}
@@ -1028,7 +1030,7 @@ const Forum = () => {
                                     }}
                                 >
                                     <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Dietary Tips</span>
+                                    <span className="flex-grow text-center">{t('forum.dietaryTips')}</span>
                                 </button>
                                 
                                 <button 
@@ -1044,7 +1046,7 @@ const Forum = () => {
                                     }}
                                 >
                                     <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Recipes</span>
+                                    <span className="flex-grow text-center">{t('forum.recipes')}</span>
                                 </button>
                                 
                                 <button 
@@ -1060,14 +1062,14 @@ const Forum = () => {
                                     }}
                                 >
                                     <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Meal Plans</span>
+                                    <span className="flex-grow text-center">{t('forum.mealPlans')}</span>
                                 </button>
                                 
                                 {/* Recipe Sub-tags - Only show when Recipe is selected */}
                                 {activeFilter === TAG_IDS["Recipe"] && (
                                     <>
                                         <div className="border-t border-gray-300 dark:border-gray-600 my-2"></div>
-                                        <p className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">Recipe Filters:</p>
+                                        <p className="text-xs text-gray-500 dark:text-gray-400 px-2 mb-1">{t('forum.recipeFilters')}</p>
                                         
                                         <button 
                                             onClick={() => toggleSubTagFilter(TAG_IDS["Vegan"], "Vegan")}
@@ -1082,7 +1084,7 @@ const Forum = () => {
                                             }}
                                         >
                                             <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                            <span className="flex-grow text-center">Vegan</span>
+                                            <span className="flex-grow text-center">{t('forum.vegan')}</span>
                                         </button>
                                         
                                         <button 
@@ -1098,7 +1100,7 @@ const Forum = () => {
                                             }}
                                         >
                                             <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                            <span className="flex-grow text-center">Halal</span>
+                                            <span className="flex-grow text-center">{t('forum.halal')}</span>
                                         </button>
                                         
                                         <button 
@@ -1114,7 +1116,7 @@ const Forum = () => {
                                             }}
                                         >
                                             <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                            <span className="flex-grow text-center">High-Protein</span>
+                                            <span className="flex-grow text-center">{t('forum.highProtein')}</span>
                                         </button>
                                     </>
                                 )}
@@ -1127,7 +1129,7 @@ const Forum = () => {
                                     }}
                                 >
                                     <ForkKnife size={18} weight="fill" className="flex-shrink-0" />
-                                    <span className="flex-grow text-center">Filter by Food Items</span>
+                                    <span className="flex-grow text-center">{t('forum.filterByFoodItems')}</span>
                                 </button>
                             </div>
                         </div>
@@ -1147,8 +1149,8 @@ const Forum = () => {
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="w-full p-2 pl-10 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
-                                        placeholder="Search posts by title..."
-                                        aria-label="Search posts"
+                                        placeholder={t('forum.searchPlaceholder')}
+                                        aria-label={t('common.search')}
                                     />
                                     {searchQuery && (
                                         <button
@@ -1164,7 +1166,7 @@ const Forum = () => {
                                     type="submit"
                                     className="px-5 py-3 nh-button nh-button-primary rounded-lg flex items-center"
                                 >
-                                    Search
+                                    {t('common.search')}
                                 </button>
                             </form>
                         </div>
@@ -1175,15 +1177,15 @@ const Forum = () => {
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm nh-text">
                                         {searchResultsCount > 0 
-                                            ? `Found ${searchResultsCount} results for "${searchQuery}"${filterSummaryText}` 
-                                            : `No results found for "${searchQuery}"`}
+                                            ? t('forum.foundResults', { count: searchResultsCount, query: searchQuery }) + filterSummaryText
+                                            : t('forum.noResultsFor', { query: searchQuery })}
                                     </p>
                                     <button
                                         onClick={clearSearch}
                                         className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
                                     >
                                         <X size={16} weight="bold" />
-                                        Clear search
+                                        {t('forum.clearSearch')}
                                     </button>
                                 </div>
                             </div>
@@ -1191,7 +1193,7 @@ const Forum = () => {
                         
                         {selectedFoods.length > 0 && foodFilterLoading && (
                             <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
-                                <p className="text-sm nh-text">Loading recipes to match your selected foods...</p>
+                                <p className="text-sm nh-text">{t('forum.loadingRecipes')}</p>
                             </div>
                         )}
                         
@@ -1200,11 +1202,11 @@ const Forum = () => {
                             <div className="mb-6 p-3 rounded-lg border nh-forum-filter-container">
                                 <div className="flex items-start justify-between gap-3">
                                     <div className="flex-1">
-                                        <p className="text-sm nh-text font-medium mb-2">Filtered by:</p>
+                                        <p className="text-sm nh-text font-medium mb-2">{t('forum.filteredBy')}</p>
                                         <div className="flex flex-wrap gap-2">
                                             {filterLabel && (
                                                 <span className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-semibold">
-                                                    Tag: {filterLabel}
+                                                    {t('forum.tagFilter')}: {filterLabel}
                                                 </span>
                                             )}
                                             {selectedSubTagLabels.map(label => (
@@ -1212,7 +1214,7 @@ const Forum = () => {
                                                     key={label}
                                                     className="flex items-center gap-1 px-3 py-1 rounded-full bg-gray-200 dark:bg-gray-700 text-xs font-semibold"
                                                 >
-                                                    Recipe: {label}
+                                                    {t('forum.recipeFilter')}: {label}
                                                 </span>
                                             ))}
                                             {selectedFoods.map(food => (
@@ -1220,7 +1222,7 @@ const Forum = () => {
                                                     key={food.id}
                                                     className="flex items-center gap-1 px-3 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/50 text-emerald-900 dark:text-emerald-100 text-xs font-semibold"
                                                 >
-                                                    Food: {food.name}
+                                                    {t('forum.foodFilter')}: {food.name}
                                                     <button
                                                         onClick={() => removeFoodFilter(food.id)}
                                                         className="rounded-full hover:bg-emerald-200/80 dark:hover:bg-emerald-800/80 p-0.5 transition-colors"
@@ -1237,7 +1239,7 @@ const Forum = () => {
                                         className="text-sm text-primary hover:text-primary-light flex items-center gap-1"
                                     >
                                         <X size={16} weight="bold" />
-                                        Clear filter
+                                        {t('forum.clearFilter')}
                                     </button>
                                 </div>
                             </div>
@@ -1314,8 +1316,8 @@ const Forum = () => {
                             <div className="text-center my-12">
                                 <p className="text-lg">
                                     {activeFilter !== null || selectedSubTags.length > 0 || selectedFoods.length > 0
-                                        ? 'No posts found with the selected filters. Try different combinations or create a new post.'
-                                        : 'No posts found. Be the first to create a post!'
+                                        ? t('forum.noPostsFiltered')
+                                        : t('forum.beFirstPost')
                                    }
                                 </p>
                             </div>
@@ -1526,17 +1528,17 @@ const Forum = () => {
                             <Link to="/forum/create" className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium">
                                 <div className="flex items-center justify-center w-full">
                                     <PlusCircle size={22} weight="fill" className="mr-2" />
-                                    New Post
+                                    {t('forum.newPost')}
                                 </div>
                             </Link>
 
                             <div className="nh-card rounded-lg shadow-md">
-                                <h3 className="nh-subtitle mb-3 text-sm">Forum Rules</h3>
+                                <h3 className="nh-subtitle mb-3 text-sm">{t('forum.forumRules')}</h3>
                                 <ul className="nh-text text-xs space-y-2">
-                                    <li>• Be respectful to others</li>
-                                    <li>• Share verified nutrition info</li>
-                                    <li>• Use appropriate tags</li>
-                                    <li>• Ask questions clearly</li>
+                                    <li>• {t('forum.ruleRespect')}</li>
+                                    <li>• {t('forum.ruleVerified')}</li>
+                                    <li>• {t('forum.ruleTags')}</li>
+                                    <li>• {t('forum.ruleQuestions')}</li>
                                 </ul>
                             </div>
                         </div>

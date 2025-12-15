@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { apiClient } from '../lib/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 import { NutrientFilter, NutrientFilterItem, buildNutrientQuery } from './NutrientFilter';
 
-export interface MicronutrientFilterItem extends NutrientFilterItem {}
+export interface MicronutrientFilterItem extends NutrientFilterItem { }
 
 interface MicronutrientFilterProps {
   filters: MicronutrientFilterItem[];
@@ -15,6 +16,7 @@ interface AvailableMicronutrient {
 }
 
 export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterProps) => {
+  const { t } = useLanguage();
   const [availableMicronutrients, setAvailableMicronutrients] = useState<AvailableMicronutrient[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -35,13 +37,13 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
 
   return (
     <NutrientFilter
-      title="Micronutrient Filters"
-      description="Filter foods by their micronutrient content. Start typing to see suggestions."
+      title={t('food.micronutrientFilters')}
+      description={t('food.micronutrientFilterDescription')}
       availableNutrients={availableMicronutrients}
       loading={loading}
       filters={filters}
       onChange={onChange}
-      placeholder="Nutrient name (e.g., iron, vitamin c)"
+      placeholder={t('food.nutrientNamePlaceholder')}
     />
   );
 };

@@ -3,20 +3,22 @@ import { Food } from '../../lib/apiClient';
 import FoodSelector from '../../components/FoodSelector';
 import { X } from '@phosphor-icons/react';
 import NutritionCompare from '../../components/NutritionCompare';
+import { useLanguage } from '../../context/LanguageContext';
 
 const FoodCompare: React.FC = () => {
     const [selectedFoods, setSelectedFoods] = useState<Food[]>([]);
     const [searchOpen, setSearchOpen] = useState(false);
+    const { t } = useLanguage();
 
     const handleFoodSelect = (food: Food) => {
         // prevent duplicates
         if (selectedFoods.find(f => f.id === food.id)) {
-            alert("This food is already selected for comparison.");
+            alert(t('food.foodAlreadySelected'));
             return;
         }
         // limit to 3 foods
         if (selectedFoods.length >= 3) {
-            alert("You can compare up to 3 foods only.");
+            alert(t('food.canCompareUpToThree'));
             return;
         }
         setSelectedFoods([...selectedFoods, food]);
@@ -30,7 +32,7 @@ const FoodCompare: React.FC = () => {
     const handleAddFood = () => {
         // prevent opening selector if already at limit
         if (selectedFoods.length >= 3) {
-            alert("You can compare up to 3 foods only.");
+            alert(t('food.canCompareUpToThree'));
             return;
         }
         console.log("Add food clicked");
@@ -46,7 +48,7 @@ const FoodCompare: React.FC = () => {
                         <div className="sticky top-20">
                             <div className="nh-card p-4">
                                 <div className="flex items-center justify-between mb-3">
-                                    <h3 className="nh-subtitle flex items-center gap-2">Select Foods to Compare</h3>
+                                    <h3 className="nh-subtitle flex items-center gap-2">{t('food.selectFoodsToCompare')}</h3>
                                     <span className="text-xs nh-text bg-primary bg-opacity-10 text-primary px-2 py-1 rounded-full font-medium">
                                         {selectedFoods.length}/3
                                     </span>
@@ -69,7 +71,7 @@ const FoodCompare: React.FC = () => {
                                                     <button
                                                         onClick={() => handleRemoveFood(food.id)}
                                                         className="flex items-center justify-center w-8 h-8 rounded hover:bg-red-100 transition-colors"
-                                                        title="Remove food"
+                                                        title={t('food.removeFood')}
                                                     >
                                                         <X size={16} weight="bold" style={{ color: 'var(--color-primary)' }} />
                                                     </button>
@@ -77,7 +79,7 @@ const FoodCompare: React.FC = () => {
                                             ))}
                                         </div>
                                     ) : (
-                                        <p className="text-center nh-text text-gray-500">No foods selected yet.</p>
+                                        <p className="text-center nh-text text-gray-500">{t('food.noFoodsSelectedYet')}</p>
                                     )}
                                 </div>
 
@@ -90,15 +92,15 @@ const FoodCompare: React.FC = () => {
                                     <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    Add Foods
+                                    {t('food.addFoods')}
                                 </button>
 
                                 {selectedFoods.length < 2 && selectedFoods.length > 0 && (
-                                    <p className="text-center nh-text text-sm text-gray-500 mt-2">Select one more food to enable comparison</p>
+                                    <p className="text-center nh-text text-sm text-gray-500 mt-2">{t('food.selectOneMoreFood')}</p>
                                 )}
 
                                 {selectedFoods.length >= 3 && (
-                                    <p className="text-center nh-text text-sm text-gray-500 mt-2">Maximum of 3 foods can be compared.</p>
+                                    <p className="text-center nh-text text-sm text-gray-500 mt-2">{t('food.maximumThreeFoods')}</p>
                                 )}
                             </div>
                         </div>
@@ -108,12 +110,12 @@ const FoodCompare: React.FC = () => {
                     <div className="w-full md:w-3/5">
                         {selectedFoods.length > 0 ? (
                             <div className="nh-card p-6">
-                                <h2 className="nh-subtitle mb-6">Comparison Results</h2>
+                                <h2 className="nh-subtitle mb-6">{t('food.comparisonResults')}</h2>
                                 <NutritionCompare foods={selectedFoods} />
                             </div>
                         ) : (
                             <div className="nh-card p-12 text-center">
-                                <p className="nh-text text-gray-500 text-lg">Select at least two foods to start comparing</p>
+                                <p className="nh-text text-gray-500 text-lg">{t('food.selectAtLeastTwoFoods')}</p>
                             </div>
                         )}
                     </div>
@@ -122,13 +124,13 @@ const FoodCompare: React.FC = () => {
                     <div className="w-full md:w-1/5">
                         <div className="sticky top-20 flex flex-col gap-4">
                             <div className="nh-card rounded-lg shadow-md">
-                                <h3 className="nh-subtitle mb-3 text-sm">Comparison Tips</h3>
+                                <h3 className="nh-subtitle mb-3 text-sm">{t('food.comparisonTips')}</h3>
                                 <ul className="nh-text text-xs space-y-2">
-                                    <li>• Compare up to 3 foods side by side</li>
-                                    <li>• Check nutrition scores for health value</li>
-                                    <li>• Compare macronutrients (protein, carbs, fats)</li>
-                                    <li>• View calorie content per serving</li>
-                                    <li>• Check dietary compatibility</li>
+                                    <li>• {t('food.compareUpToThreeFoods')}</li>
+                                    <li>• {t('food.checkNutritionScores')}</li>
+                                    <li>• {t('food.compareMacronutrients')}</li>
+                                    <li>• {t('food.viewCalorieContent')}</li>
+                                    <li>• {t('food.checkDietaryCompatibility')}</li>
                                 </ul>
                             </div>
                         </div>

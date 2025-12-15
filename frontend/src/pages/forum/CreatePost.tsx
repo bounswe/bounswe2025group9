@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { ArrowLeft, WarningCircle, Plus, X } from '@phosphor-icons/react'
 import { apiClient, ForumTag, CreateForumPostRequest, Food, CreateRecipeRequest, RecipeIngredient } from '../../lib/apiClient'
 import { useAuth } from '../../context/AuthContext'
+import { useLanguage } from '../../context/LanguageContext'
 import { Tag } from '@phosphor-icons/react'
 import { CUSTOM_UNITS, DEFAULT_CUSTOM_UNIT, UNIT_TO_GRAMS_CONVERSION } from './constants'
 
@@ -84,6 +85,7 @@ const TAG_IDS = {
 const CreatePost = () => {
     const navigate = useNavigate();
     const { isAuthenticated, getAccessToken, user } = useAuth();
+    const { t } = useLanguage();
     const [title, setTitle] = useState('');
     const [content, setContent] = useState('');
     const [, setTags] = useState<ForumTag[]>([]);
@@ -225,18 +227,18 @@ const CreatePost = () => {
     // Add ingredient to the recipe
     const addIngredient = () => {
         if (!selectedFoodId) {
-            setValidationError('Please select a food item');
+            setValidationError(t('forum.selectFoodItem'));
             return;
         }
 
         if (selectedFoodCustomAmount <= 0) {
-            setValidationError('Please enter a valid amount');
+            setValidationError(t('forum.enterValidAmount'));
             return;
         }
 
         const selectedFood = foodOptions.find(food => food.id === selectedFoodId);
         if (!selectedFood) {
-            setValidationError('Selected food not found');
+            setValidationError(t('forum.selectedFoodNotFound'));
             return;
         }
 
@@ -294,25 +296,25 @@ const CreatePost = () => {
 
         if (!isAuthenticated || !getAccessToken()) {
             console.error('User is not authenticated. Cannot submit post.');
-            alert('You must be logged in to create a post. Please log in and try again.');
+            alert(t('forum.mustLogin'));
             navigate('/login');
             return;
         }
 
         if (title.trim() === '' || content.trim() === '') {
-            setValidationError('Please fill in all required fields');
+            setValidationError(t('forum.fillAllFields'));
             return;
         }
 
         // Validate recipe fields if recipe is selected
         if (selectedTagId === 2) {
             if (recipeInstructions.trim() === '') {
-                setValidationError('Please provide cooking instructions for the recipe');
+                setValidationError(t('forum.provideInstructions'));
                 return;
             }
 
             if (ingredients.length === 0) {
-                setValidationError('Please add at least one ingredient to the recipe');
+                setValidationError(t('forum.addAtLeastOneIngredient'));
                 return;
             }
         }
@@ -373,7 +375,7 @@ const CreatePost = () => {
             }
 
             // Show success message
-            setSuccessMessage('Post created successfully! Redirecting to forum...');
+            setSuccessMessage(t('forum.postCreatedSuccess'));
 
             // Force refresh forum posts by navigating with a state parameter
             setTimeout(() => {
@@ -381,7 +383,7 @@ const CreatePost = () => {
             }, 2000);
         } catch (error) {
             console.error('Error creating post:', error);
-            setValidationError('Failed to create post. Please try again.');
+            setValidationError(t('forum.failedToCreatePost'));
         } finally {
             setSubmitting(false);
         }
@@ -393,14 +395,14 @@ const CreatePost = () => {
             <div className="py-12">
                 <div className="nh-container">
                     <div className="nh-card mb-8">
-                        <h1 className="nh-title mb-6">Authentication Required</h1>
-                        <p className="mb-4">You need to be logged in to create a post.</p>
+                        <h1 className="nh-title mb-6">{t('forum.authRequired')}</h1>
+                        <p className="mb-4">{t('forum.needToLogin')}</p>
                         <div className="flex gap-4">
                             <Link to="/login" className="nh-button nh-button-primary">
-                                Log In
+                                {t('auth.login')}
                             </Link>
                             <Link to="/forum" className="nh-button nh-button-outline">
-                                Back to Forum
+                                {t('forum.backToForum')}
                             </Link>
                         </div>
                     </div>
@@ -431,7 +433,7 @@ const CreatePost = () => {
                                     <ArrowLeft size={20} weight="bold" />
                                 </button>
                                 <div className="flex justify-center items-center">
-                                    <h1 className="nh-title-custom">Create New Post</h1>
+                                    <h1 className="nh-title-custom">{t('forum.createNewPost')}</h1>
 
                                 </div>
 
@@ -440,7 +442,7 @@ const CreatePost = () => {
 
                             {user && (
                                 <p className="mb-4 text-sm">
-                                    Posting as: <span className="font-semibold">{user.username}</span>
+                                    {t('forum.postingAs')} <span className="font-semibold">{user.username}</span>
                                 </p>
                             )}
 
@@ -470,7 +472,7 @@ const CreatePost = () => {
                                 {/* Post Title */}
                                 <div className="mb-6">
                                     <label className="block mb-2 nh-subtitle text-base">
-                                        Title
+                                        {t('forum.title')}
                                     </label>
                                     <input
                                         type="text"
@@ -478,18 +480,18 @@ const CreatePost = () => {
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         required
-                                        placeholder="Enter post title"
+                                        placeholder={t('forum.enterPostTitle')}
                                     />
                                 </div>
 
                                 {/* Post Type Selection - required radio button style selection */}
                                 <div className="mb-6">
                                     <label className="block mb-2 nh-subtitle text-base">
-                                        Post Type
+                                        {t('forum.postType')}
 
                                     </label>
                                     {loading ? (
-                                        <p>Loading post types...</p>
+                                        <p>{t('forum.loadingPostTypes')}</p>
                                     ) : (
                                         <div className="flex flex-row items-start space-x-2">
                                             {Object.entries(POST_TYPES).map(([id, name]) => {
@@ -522,7 +524,9 @@ const CreatePost = () => {
                                                         }}
                                                     >
                                                         <Tag size={18} weight="fill" className="flex-shrink-0" />
-                                                        <span className="flex-grow text-left">{name}</span>
+                                                        <span className="flex-grow text-left">
+                                                            {name === 'Dietary tip' ? t('forum.dietaryTips') : name === 'Recipe' ? t('forum.recipes') : name}
+                                                        </span>
                                                         {/* Ensure text aligns left if buttons are different widths */}
                                                     </button>
                                                 );
@@ -533,7 +537,7 @@ const CreatePost = () => {
 
                                 {/* Post content */}
                                 <div className="mb-6">
-                                    <label className="block mb-2 nh-subtitle text-base">Content</label>
+                                    <label className="block mb-2 nh-subtitle text-base">{t('forum.content')}</label>
                                     <textarea
                                         className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
                                         rows={8}
@@ -541,8 +545,8 @@ const CreatePost = () => {
                                         onChange={(e) => setContent(e.target.value)}
                                         required
                                         placeholder={selectedTagId === 2
-                                            ? "Describe your recipe here... Include any tips, serving suggestions, or nutritional benefits."
-                                            : "Share your thoughts here..."}
+                                            ? t('forum.describeRecipe')
+                                            : t('forum.shareThoughts')}
                                     ></textarea>
                                 </div>
 
@@ -550,7 +554,7 @@ const CreatePost = () => {
                                 {selectedTagId === 2 && (
                                     <div className="mb-6">
                                         <label className="block mb-2 nh-subtitle text-base">
-                                            Dietary Tags <span className="text-sm font-normal text-gray-500">(optional)</span>
+                                            {t('food.dietaryTags')} <span className="text-sm font-normal text-gray-500">({t('common.optional')})</span>
                                         </label>
                                         <div className="flex flex-wrap gap-2">
                                             <button
@@ -567,7 +571,7 @@ const CreatePost = () => {
                                                 }}
                                             >
                                                 <Tag size={16} weight="fill" className="flex-shrink-0" />
-                                                <span>Vegan</span>
+                                                <span>{t('forum.vegan')}</span>
                                             </button>
 
                                             <button
@@ -584,7 +588,7 @@ const CreatePost = () => {
                                                 }}
                                             >
                                                 <Tag size={16} weight="fill" className="flex-shrink-0" />
-                                                <span>Halal</span>
+                                                <span>{t('forum.halal')}</span>
                                             </button>
 
                                             <button
@@ -601,7 +605,7 @@ const CreatePost = () => {
                                                 }}
                                             >
                                                 <Tag size={16} weight="fill" className="flex-shrink-0" />
-                                                <span>High-Protein</span>
+                                                <span>{t('forum.highProtein')}</span>
                                             </button>
                                         </div>
                                     </div>
@@ -611,12 +615,12 @@ const CreatePost = () => {
                                 {selectedTagId === 2 && (
                                     <div className="mb-6">
                                         <div className="border rounded-md p-4 bg-[var(--color-bg-tertiary)] border-[var(--forum-search-border)]">
-                                            <h3 className="nh-subtitle text-base mb-4">Recipe Details</h3>
+                                            <h3 className="nh-subtitle text-base mb-4">{t('forum.recipeDetails')}</h3>
 
                                             {/* Recipe Instructions */}
                                             <div className="mb-4">
                                                 <label className="block mb-2 font-medium">
-                                                    Cooking Instructions <span className="text-red-500">*</span>
+                                                    {t('forum.cookingInstructions')} <span className="text-red-500">*</span>
                                                 </label>
                                                 <textarea
                                                     className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
@@ -630,7 +634,7 @@ const CreatePost = () => {
                                             {/* Ingredients Selection */}
                                             <div className="mb-4">
                                                 <label className="block mb-2 font-medium">
-                                                    Ingredients <span className="text-red-500">*</span>
+                                                    {t('forum.ingredients')} <span className="text-red-500">*</span>
                                                 </label>
 
                                                 {/* Food search */}
@@ -640,7 +644,7 @@ const CreatePost = () => {
                                                             <input
                                                                 type="text"
                                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                placeholder="Search for ingredients..."
+                                                                placeholder={t('forum.searchIngredients')}
                                                                 value={foodSearchTerm}
                                                                 onChange={(e) => setFoodSearchTerm(e.target.value)}
                                                             />
@@ -649,7 +653,7 @@ const CreatePost = () => {
                                                             <input
                                                                 type="number"
                                                                 className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                                                                placeholder="Quantity"
+                                                                placeholder={t('forum.quantity')}
                                                                 value={selectedFoodCustomAmount}
                                                                 onChange={(e) => setSelectedFoodCustomAmount(parseFloat(e.target.value))}
                                                                 min={0.01}
@@ -714,10 +718,10 @@ const CreatePost = () => {
                                                             className="nh-button-square nh-button-primary"
                                                             onClick={addIngredient}
                                                             disabled={!selectedFoodId}
-                                                            aria-label="Add ingredient"
+                                                            aria-label={t('forum.add')}
                                                         >
                                                             <Plus size={20} weight="bold" className="mr-1" />
-
+                                                            {t('forum.add')}
                                                         </button>
                                                     </div>
 
@@ -725,9 +729,9 @@ const CreatePost = () => {
                                                     {foodSearchTerm.length >= 2 && (
                                                         <div className="mb-4 border border-[var(--forum-search-border)] rounded-md overflow-hidden max-h-60 overflow-y-auto">
                                                             {loadingFoods ? (
-                                                                <div className="p-4 text-center">Loading foods...</div>
+                                                                <div className="p-4 text-center">{t('forum.loadingFoods')}</div>
                                                             ) : foodOptions.length === 0 ? (
-                                                                <div className="p-4 text-center">No foods found. Try a different search term.</div>
+                                                                <div className="p-4 text-center">{t('forum.noFoodsFoundDifferent')}</div>
                                                             ) : (
                                                                 <div className="divide-y divide-[var(--forum-search-border)]">
                                                                     {foodOptions.map(food => (
@@ -762,9 +766,9 @@ const CreatePost = () => {
 
                                                 {/* Ingredient List */}
                                                 <div className="mb-2">
-                                                    <h4 className="font-medium mb-2">Selected Ingredients:</h4>
+                                                    <h4 className="font-medium mb-2">{t('forum.selectedIngredients')}</h4>
                                                     {ingredients.length === 0 ? (
-                                                        <p className="text-gray-500 italic">No ingredients added yet.</p>
+                                                        <p className="text-gray-500 italic">{t('forum.noIngredientsAdded')}</p>
                                                     ) : (
                                                         <ul className="space-y-2">
                                                             {ingredients.map((ingredient, index) => (

@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { GearSix, X } from '@phosphor-icons/react'
 import { TEXT_SIZE_OPTIONS, useTextSize } from '../context/TextSizeContext'
+import { useLanguage } from '../context/LanguageContext'
 
 const TextSizeSettings = () => {
+  const { t } = useLanguage()
   const { textSize, setTextSize } = useTextSize()
   const [isOpen, setIsOpen] = useState(false)
   const previouslyFocusedElement = useRef<HTMLElement | null>(null)
@@ -57,8 +59,8 @@ const TextSizeSettings = () => {
         aria-haspopup="dialog"
         aria-expanded={isOpen}
         aria-controls="text-size-settings-panel"
-        aria-label="Open text size settings"
-        title="Text size settings"
+        aria-label={t('common.openTextSizeSettings')}
+        title={t('common.textSizeSettings')}
       >
         <GearSix size={20} weight="bold" />
       </button>
@@ -86,7 +88,7 @@ const TextSizeSettings = () => {
                   className="text-lg font-semibold"
                   style={{ color: 'var(--color-light)' }}
                 >
-                  Choose text size
+                  {t('common.chooseTextSize')}
                 </h2>
               </div>
               <button
@@ -105,7 +107,7 @@ const TextSizeSettings = () => {
                   e.currentTarget.style.backgroundColor = 'transparent'
                   e.currentTarget.style.color = 'var(--color-gray-400)'
                 }}
-                aria-label="Close text size settings"
+                aria-label={t('common.closeTextSizeSettings')}
               >
                 <X size={18} weight="bold" />
               </button>

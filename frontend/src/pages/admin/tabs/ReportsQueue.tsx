@@ -7,6 +7,7 @@ import {
   Clock,
   Eye
 } from '@phosphor-icons/react';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface Report {
   id: number;
@@ -29,6 +30,7 @@ interface Report {
 }
 
 const ReportsQueue = () => {
+  const { t } = useLanguage();
   const [reports, setReports] = useState<Report[]>([]);
   const [selectedReport, setSelectedReport] = useState<Report | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>('all');
@@ -50,13 +52,13 @@ const ReportsQueue = () => {
         {
           id: 1,
           reportType: 'post',
-          reason: 'Spam',
-          description: 'This post contains promotional content unrelated to nutrition',
+          reason: t('admin.reasonSpam'),
+          description: t('admin.reasonSpamDescription'),
           reportedBy: { id: 10, username: 'user123' },
           reportedItem: { 
             id: 45, 
-            title: 'Best supplements for weight loss!',
-            content: 'Lorem ipsum...'
+            title: t('admin.reportSpamTitle'),
+            content: t('admin.reportSampleContent')
           },
           status: 'pending',
           createdAt: '2025-11-09T10:30:00Z',
@@ -65,13 +67,13 @@ const ReportsQueue = () => {
         {
           id: 2,
           reportType: 'post',
-          reason: 'Misinformation',
-          description: 'Contains false health claims',
+          reason: t('admin.reasonMisinformation'),
+          description: t('admin.reasonMisinformationDescription'),
           reportedBy: { id: 11, username: 'healthwatcher' },
           reportedItem: { 
             id: 46, 
-            title: 'Cure diabetes with this one weird trick',
-            content: 'Lorem ipsum...'
+            title: t('admin.reportMisinformationTitle'),
+            content: t('admin.reportSampleContent')
           },
           status: 'acknowledged',
           createdAt: '2025-11-09T09:15:00Z',
@@ -99,6 +101,11 @@ const ReportsQueue = () => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    if (status === 'all') return t('admin.all');
+    return t(`admin.${status}`);
+  };
+
   const getStatusBadge = (status: string) => {
     const badges = {
       pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', icon: Clock },
@@ -113,7 +120,7 @@ const ReportsQueue = () => {
     return (
       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
         <Icon size={14} />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {getStatusLabel(status)}
       </span>
     );
   };
@@ -145,7 +152,7 @@ const ReportsQueue = () => {
                   : 'var(--forum-default-text)'
               }}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {getStatusLabel(status)}
             </button>
           ))}
         </div>
@@ -156,7 +163,7 @@ const ReportsQueue = () => {
         {reports.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <Flag size={48} className="mx-auto mb-4 opacity-50" />
-            <p>No reports found</p>
+            <p>{t('admin.noReportsFound')}</p>
           </div>
         ) : (
           reports.map((report) => (
@@ -173,8 +180,8 @@ const ReportsQueue = () => {
                       {report.reportedItem.title || report.reportedItem.username}
                     </h3>
                     <p className="text-sm text-gray-600 dark:text-gray-400">
-                      Reported by: {report.reportedBy.username}
-                      {report.automated && <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">(Automated)</span>}
+                      {t('admin.reportedBy')}: {report.reportedBy.username}
+                      {report.automated && <span className="ml-2 text-xs text-purple-600 dark:text-purple-400">({t('admin.automated')})</span>}
                     </p>
                   </div>
                 </div>
@@ -183,12 +190,12 @@ const ReportsQueue = () => {
 
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">Reason:</span>
+                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400">{t('admin.reason')}:</span>
                   <span className="text-sm text-gray-700 dark:text-gray-300">{report.reason}</span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{report.description}</p>
                 <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Reported on: {new Date(report.createdAt).toLocaleString()}
+                  {t('admin.reportedOn')}: {new Date(report.createdAt).toLocaleString()}
                 </div>
               </div>
 
@@ -200,28 +207,28 @@ const ReportsQueue = () => {
                       className="flex items-center gap-1 px-3 py-1.5 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
                     >
                       <CheckCircle size={16} />
-                      Approve/Dismiss
+                      {t('admin.approveDismiss')}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(report.id, 'warn'); }}
                       className="flex items-center gap-1 px-3 py-1.5 bg-yellow-600 text-white rounded-lg text-sm hover:bg-yellow-700 transition-colors"
                     >
                       <Warning size={16} />
-                      Warn User
+                      {t('admin.warnUser')}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(report.id, 'remove'); }}
                       className="flex items-center gap-1 px-3 py-1.5 bg-orange-600 text-white rounded-lg text-sm hover:bg-orange-700 transition-colors"
                     >
                       <XCircle size={16} />
-                      Remove Content
+                      {t('admin.removeContent')}
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); handleAction(report.id, 'ban'); }}
                       className="flex items-center gap-1 px-3 py-1.5 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
                     >
                       <XCircle size={16} weight="fill" />
-                      Ban User
+                      {t('admin.banUser')}
                     </button>
                   </div>
                 </div>

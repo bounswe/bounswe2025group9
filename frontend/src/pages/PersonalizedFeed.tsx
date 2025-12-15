@@ -6,6 +6,7 @@ import { useAuth } from '../context/AuthContext';
 import ForumPostCard from '../components/ForumPostCard';
 import { subscribeLikeChanges } from '../lib/likeNotifications';
 import DailyTargets from '../components/DailyTargets';
+import { useLanguage } from '../context/LanguageContext';
 
 const LIKED_POSTS_STORAGE_KEY = 'nutriHub_likedPosts';
 const FEED_NEEDS_REFRESH_KEY = 'nutriHub_feedNeedsRefresh';
@@ -13,6 +14,7 @@ const FEED_NEEDS_REFRESH_KEY = 'nutriHub_feedNeedsRefresh';
 const PersonalizedFeed = () => {
     const { user } = useAuth();
     const location = useLocation();
+    const { t } = useLanguage();
     const username = user?.username || 'anonymous';
     const [posts, setPosts] = useState<ForumPost[]>([]);
     const [loading, setLoading] = useState(true);
@@ -313,7 +315,7 @@ const PersonalizedFeed = () => {
             return (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
                     <Heart size={12} weight="fill" />
-                    <span>You liked this</span>
+                    <span>{t('profile.youLikedThis')}</span>
                 </div>
             );
         }
@@ -323,7 +325,7 @@ const PersonalizedFeed = () => {
             return (
                 <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-blue-500/20 text-blue-400 border border-blue-500/30">
                     <UserCircle size={12} weight="fill" />
-                    <span>From followed user</span>
+                    <span>{t('profile.fromFollowedUser')}</span>
                 </div>
             );
         }
@@ -333,7 +335,7 @@ const PersonalizedFeed = () => {
         return (
             <div className="flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium bg-pink-500/20 text-pink-400 border border-pink-500/30">
                 <Heart size={12} weight="fill" />
-                <span>You liked this</span>
+                <span>{t('profile.youLikedThis')}</span>
             </div>
         );
     };
@@ -342,12 +344,12 @@ const PersonalizedFeed = () => {
         return (
             <div className="w-full py-16">
                 <div className="nh-container text-center">
-                    <h1 className="nh-title-lg mb-4">Welcome to NutriHub</h1>
+                    <h1 className="nh-title-lg mb-4">{t('profile.welcomeToNutriHub')}</h1>
                     <p className="nh-text text-xl mb-8">
-                        Please log in to see your personalized feed
+                        {t('profile.pleaseLogInToSeeFeed')}
                     </p>
                     <Link to="/login" className="nh-button nh-button-primary">
-                        Log In
+                        {t('nav.login')}
                     </Link>
                 </div>
             </div>
@@ -364,19 +366,19 @@ const PersonalizedFeed = () => {
                             <div className="nh-card p-4">
                                 <div className="flex items-center gap-2 mb-3">
                                     <Sparkle size={20} weight="fill" className="text-primary" />
-                                    <h3 className="nh-subtitle text-sm">Your Feed</h3>
+                                    <h3 className="nh-subtitle text-sm">{t('profile.yourFeed')}</h3>
                                 </div>
                                 <p className="nh-text text-xs mb-3">
-                                    Posts from users you follow and posts you've liked, all in one place.
+                                    {t('profile.feedDescription')}
                                 </p>
                                 <div className="space-y-2 text-xs">
                                     <div className="flex items-center gap-2">
                                         <UserCircle size={14} className="text-blue-400" />
-                                        <span className="nh-text">Followed users</span>
+                                        <span className="nh-text">{t('profile.followedUsers')}</span>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <Heart size={14} className="text-pink-400" />
-                                        <span className="nh-text">Liked posts</span>
+                                        <span className="nh-text">{t('profile.likedPostsLabel')}</span>
                                     </div>
                                 </div>
                             </div>
@@ -388,7 +390,7 @@ const PersonalizedFeed = () => {
                         <div className="flex flex-col gap-4 mb-6">
                             {/* Filter toggle */}
                             <div className="flex items-center gap-3">
-                                <span className="nh-text text-sm">Show:</span>
+                                <span className="nh-text text-sm">{t('profile.show')}</span>
                                 <button
                                     onClick={() => setShowFollowingOnly(false)}
                                     className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
@@ -397,7 +399,7 @@ const PersonalizedFeed = () => {
                                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                     }`}
                                 >
-                                    All Posts
+                                    {t('profile.allPosts')}
                                 </button>
                                 <button
                                     onClick={() => setShowFollowingOnly(true)}
@@ -407,7 +409,7 @@ const PersonalizedFeed = () => {
                                             : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
                                     }`}
                                 >
-                                    Following Only
+                                    {t('profile.followingOnly')}
                                 </button>
                             </div>
                         </div>
@@ -496,12 +498,12 @@ const PersonalizedFeed = () => {
                         ) : filteredPosts.length === 0 ? (
                             <div className="nh-card p-12 text-center">
                                 <Sparkle size={48} className="mx-auto mb-4 text-gray-400" />
-                                <h3 className="nh-subtitle mb-2">Your feed is empty</h3>
+                                <h3 className="nh-subtitle mb-2">{t('profile.yourFeedIsEmpty')}</h3>
                                 <p className="nh-text mb-6">
-                                    Follow users and like posts to see them here!
+                                    {t('profile.followUsersAndLikePosts')}
                                 </p>
                                 <Link to="/forum" className="nh-button nh-button-primary">
-                                    Explore Forum
+                                    {t('profile.exploreForum')}
                                 </Link>
                             </div>
                         ) : (
@@ -612,7 +614,7 @@ const PersonalizedFeed = () => {
 
                                 {!hasMore && filteredPosts.length > 0 && (
                                     <div className="py-8 text-center">
-                                        <p className="nh-text text-gray-500">You've reached the end of your feed</p>
+                                        <p className="nh-text text-gray-500">{t('profile.youveReachedEndOfFeed')}</p>
                                     </div>
                                 )}
                             </>
@@ -629,7 +631,7 @@ const PersonalizedFeed = () => {
                                 style={{ display: 'flex' }}
                             >
                                 <Scales size={20} weight="bold" />
-                                Compare Foods
+                                {t('food.compareFood')}
                             </Link>
                         </div>
                     </div>

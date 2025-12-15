@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ShieldCheck, X, Check, Eye, Download } from '@phosphor-icons/react';
 import { apiClient } from '../../../lib/apiClient';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface UserTag {
   id: number;
@@ -18,6 +19,7 @@ interface UserTag {
 }
 
 const CertificateVerification = () => {
+  const { t } = useLanguage();
   const [userTags, setUserTags] = useState<UserTag[]>([]);
   const [filter, setFilter] = useState<'all' | 'pending' | 'verified'>('pending');
   const [loading, setLoading] = useState(true);
@@ -58,7 +60,7 @@ const CertificateVerification = () => {
       fetchUserTags();
     } catch (error) {
       console.error('Failed to verify user tag:', error);
-      alert('Failed to verify user tag. Please try again.');
+      alert(t('admin.failedToVerifyCertificate'));
     }
   };
 
@@ -88,7 +90,7 @@ const CertificateVerification = () => {
                 : 'var(--forum-default-text)'
             }}
           >
-            {status.charAt(0).toUpperCase() + status.slice(1)}
+            {status === 'all' ? t('admin.all') : status === 'pending' ? t('admin.pending') : t('admin.verified')}
           </button>
         ))}
       </div>
@@ -98,7 +100,7 @@ const CertificateVerification = () => {
         {userTags.length === 0 ? (
           <div className="text-center py-12 text-gray-500 dark:text-gray-400">
             <ShieldCheck size={48} className="mx-auto mb-4 opacity-50" />
-            <p>No certificates to review</p>
+            <p>{t('admin.noCertificatesToReview')}</p>
           </div>
         ) : (
           userTags.map((userTag) => (
@@ -125,11 +127,11 @@ const CertificateVerification = () => {
                   {userTag.verified ? (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
                       <Check size={14} weight="bold" />
-                      Verified
+                      {t('admin.verified')}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-                      Pending
+                      {t('admin.pending')}
                     </span>
                   )}
                 </div>
@@ -143,7 +145,7 @@ const CertificateVerification = () => {
                       className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
                       <Eye size={16} />
-                      View Certificate
+                      {t('admin.viewCertificate')}
                     </button>
                     <a
                       href={userTag.certificate}
@@ -151,7 +153,7 @@ const CertificateVerification = () => {
                       className="flex items-center gap-1 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg text-sm hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
                     >
                       <Download size={16} />
-                      Download
+                      {t('admin.download')}
                     </a>
                   </div>
 
@@ -162,14 +164,14 @@ const CertificateVerification = () => {
                         className="flex items-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg text-sm hover:bg-green-700 transition-colors"
                       >
                         <Check size={16} weight="bold" />
-                        Approve Certificate
+                        {t('admin.approveCertificate')}
                       </button>
                       <button
                         onClick={() => handleVerify(userTag.id, false)}
                         className="flex items-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg text-sm hover:bg-red-700 transition-colors"
                       >
                         <X size={16} weight="bold" />
-                        Reject
+                        {t('admin.reject')}
                       </button>
                     </div>
                   )}
@@ -192,7 +194,7 @@ const CertificateVerification = () => {
           >
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Certificate Preview
+                {t('admin.certificatePreview')}
               </h3>
               <button
                 onClick={() => setSelectedCertificate(null)}
@@ -205,7 +207,7 @@ const CertificateVerification = () => {
               <iframe
                 src={selectedCertificate}
                 className="w-full h-[600px]"
-                title="Certificate Preview"
+                title={t('admin.certificatePreview')}
               />
             </div>
           </div>
