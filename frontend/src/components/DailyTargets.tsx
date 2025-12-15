@@ -3,8 +3,10 @@ import { CaretDown, CaretRight } from '@phosphor-icons/react';
 import { Link } from 'react-router-dom';
 import { apiClient } from '../lib/apiClient';
 import { DailyNutritionLog, NutritionTargets } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 
 const DailyTargets = () => {
+  const { t } = useLanguage();
   const [todayLog, setTodayLog] = useState<DailyNutritionLog | null>(null);
   const [targets, setTargets] = useState<NutritionTargets | null>(null);
   const [loading, setLoading] = useState(true);
@@ -66,7 +68,7 @@ const DailyTargets = () => {
   if (metricsMissing || !todayLog || !targets) {
     return (
       <Link to="/nutrition" className="nh-card rounded-lg shadow-md text-center p-4 block cursor-pointer hover:shadow-lg transition-shadow">
-        <p className="text-xs nh-text opacity-70">Setup nutrition tracking to see daily targets</p>
+        <p className="text-xs nh-text opacity-70">{t('profile.setupNutritionTrackingToSeeTargets')}</p>
       </Link>
     );
   }
@@ -90,12 +92,12 @@ const DailyTargets = () => {
 
   return (
     <Link to="/nutrition" className="nh-card rounded-lg shadow-md block cursor-pointer hover:shadow-lg transition-shadow">
-      <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
+      <h3 className="nh-subtitle mb-3 text-sm">{t('nutrition.dailyTarget')}</h3>
       <div className="space-y-2">
         {/* Calories */}
         <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium">Calories</span>
+            <span className="text-xs font-medium">{t('profile.calories')}</span>
             <span className="text-xs font-bold text-orange-600">
               {Math.round(todayLog.total_calories || 0)} / {targets.calories || 0}
             </span>
@@ -116,7 +118,7 @@ const DailyTargets = () => {
         {/* Protein */}
         <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium">Protein</span>
+            <span className="text-xs font-medium">{t('profile.protein')}</span>
             <span className="text-xs font-bold text-blue-600">
               {Math.round(todayLog.total_protein || 0)}g / {targets.protein || 0}g
             </span>
@@ -137,7 +139,7 @@ const DailyTargets = () => {
         {/* Carbs */}
         <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium">Carbs</span>
+            <span className="text-xs font-medium">{t('profile.carbs')}</span>
             <span className="text-xs font-bold text-green-600">
               {Math.round(todayLog.total_carbohydrates || 0)}g / {targets.carbohydrates || 0}g
             </span>
@@ -158,7 +160,7 @@ const DailyTargets = () => {
         {/* Fat */}
         <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium">Fat</span>
+            <span className="text-xs font-medium">{t('profile.fat')}</span>
             <span className="text-xs font-bold text-yellow-600">
               {Math.round(todayLog.total_fat || 0)}g / {targets.fat || 0}g
             </span>
@@ -256,7 +258,7 @@ const DailyTargets = () => {
                         e.currentTarget.style.backgroundColor = 'transparent';
                       }}
                     >
-                      <span className="text-xs font-semibold">Vitamins</span>
+                      <span className="text-xs font-semibold">{t('profile.vitamins')}</span>
                       {showVitamins ? <CaretDown size={14} /> : <CaretRight size={14} />}
                     </button>
                     {showVitamins && (
@@ -321,7 +323,7 @@ const DailyTargets = () => {
                         e.currentTarget.style.backgroundColor = 'transparent';
                       }}
                     >
-                      <span className="text-xs font-semibold">Minerals</span>
+                      <span className="text-xs font-semibold">{t('profile.minerals')}</span>
                       {showMinerals ? <CaretDown size={14} /> : <CaretRight size={14} />}
                     </button>
                     {showMinerals && (

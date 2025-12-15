@@ -1,6 +1,7 @@
 import { Dialog } from '@headlessui/react';
 import { X, Trash, FloppyDisk, Warning } from '@phosphor-icons/react';
 import { WhatIfEntry, calculateWhatIfTotals } from '../types/whatif';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WhatIfExitDialogProps {
   open: boolean;
@@ -19,6 +20,7 @@ const WhatIfExitDialog = ({
   onSaveAsMealPlan,
   isSaving = false,
 }: WhatIfExitDialogProps) => {
+  const { t } = useLanguage();
   const totals = calculateWhatIfTotals(entries);
   const plannedCount = entries.filter(e => e.isPlanned).length;
 
@@ -34,7 +36,7 @@ const WhatIfExitDialog = ({
           <div className="flex items-center justify-between mb-4">
             <Dialog.Title className="nh-subtitle flex items-center gap-2">
               <Warning size={24} weight="fill" className="text-amber-500" />
-              Exit What If Mode?
+              {t('profile.exitWhatIfMode')}
             </Dialog.Title>
             <button
               onClick={onClose}
@@ -46,38 +48,41 @@ const WhatIfExitDialog = ({
           </div>
 
           <div className="mb-6">
-            <p className="nh-text mb-4">
-              You have <strong className="text-primary">{plannedCount} planned item{plannedCount !== 1 ? 's' : ''}</strong> in What If mode.
-            </p>
+            <p className="nh-text mb-4" dangerouslySetInnerHTML={{
+              __html: t('profile.youHavePlannedItems', { 
+                count: plannedCount, 
+                plural: plannedCount !== 1 ? 's' : '' 
+              })
+            }} />
             
             {/* Summary of planned items */}
             <div 
               className="p-4 rounded-lg mb-4"
               style={{ backgroundColor: 'var(--dietary-option-bg)' }}
             >
-              <p className="text-sm font-medium mb-2">Planned nutrition:</p>
+              <p className="text-sm font-medium mb-2">{t('profile.plannedNutrition')}</p>
               <div className="grid grid-cols-2 gap-2 text-sm">
                 <div>
-                  <span className="nh-text opacity-70">Calories:</span>
+                  <span className="nh-text opacity-70">{t('profile.calories')}:</span>
                   <span className="ml-2 font-semibold text-orange-500">{Math.round(totals.calories)}</span>
                 </div>
                 <div>
-                  <span className="nh-text opacity-70">Protein:</span>
+                  <span className="nh-text opacity-70">{t('profile.protein')}:</span>
                   <span className="ml-2 font-semibold text-blue-500">{totals.protein.toFixed(1)}g</span>
                 </div>
                 <div>
-                  <span className="nh-text opacity-70">Carbs:</span>
+                  <span className="nh-text opacity-70">{t('profile.carbs')}:</span>
                   <span className="ml-2 font-semibold text-green-500">{totals.carbs.toFixed(1)}g</span>
                 </div>
                 <div>
-                  <span className="nh-text opacity-70">Fat:</span>
+                  <span className="nh-text opacity-70">{t('profile.fat')}:</span>
                   <span className="ml-2 font-semibold text-yellow-500">{totals.fat.toFixed(1)}g</span>
                 </div>
               </div>
             </div>
 
             <p className="text-sm nh-text opacity-70">
-              What would you like to do with these planned items?
+              {t('profile.whatWouldYouLikeToDo')}
             </p>
           </div>
 
@@ -88,7 +93,7 @@ const WhatIfExitDialog = ({
               className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 disabled:opacity-50"
             >
               <FloppyDisk size={20} weight="fill" />
-              {isSaving ? 'Saving...' : 'Save as Meal Plan'}
+              {isSaving ? t('nutrition.saving') : t('profile.saveAsMealPlan')}
             </button>
             
             <button
@@ -100,7 +105,7 @@ const WhatIfExitDialog = ({
               }}
             >
               <Trash size={20} weight="fill" />
-              Ignore & Discard
+              {t('profile.ignoreAndDiscard')}
             </button>
           </div>
         </Dialog.Panel>

@@ -3,6 +3,7 @@ import { PencilSimple, Trash } from '@phosphor-icons/react';
 import FoodDetail from './FoodDetail';
 import { Food, apiClient } from '../../lib/apiClient';
 import { useNavigate } from 'react-router-dom';
+import { useLanguage } from '../../context/LanguageContext';
 
 interface PrivateFoodDetailProps {
   food: Food | null;
@@ -17,13 +18,14 @@ const PrivateFoodDetail: React.FC<PrivateFoodDetailProps> = ({
   onClose,
   onChanged,
 }) => {
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   if (!food) return null;
 
   const handleDelete = async () => {
-    if (!confirm(`Delete "${food.name}"? This action cannot be undone.`)) return;
+    if (!confirm(t('profile.deleteFoodConfirm', { name: food.name }))) return;
 
     setLoading(true);
 
@@ -37,12 +39,12 @@ const PrivateFoodDetail: React.FC<PrivateFoodDetailProps> = ({
       if (status === 409) {
         alert(
           message ||
-            "This food cannot be deleted because it is currently in use."
+            t('profile.foodCannotBeDeleted')
         );
         return;
       }
 
-      alert("Failed to delete food. Please try again later.");
+      alert(t('profile.failedToDeleteFood'));
     } 
     finally {
       onChanged?.();
@@ -65,7 +67,7 @@ const PrivateFoodDetail: React.FC<PrivateFoodDetailProps> = ({
             }
             disabled={loading}
             className="p-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white"
-            title="Edit food"
+            title={t('profile.editFoodTooltip')}
           >
             <PencilSimple size={18} weight="bold" />
           </button>
@@ -74,7 +76,7 @@ const PrivateFoodDetail: React.FC<PrivateFoodDetailProps> = ({
             onClick={handleDelete}
             disabled={loading}
             className="p-2 rounded-full bg-red-500 hover:bg-red-600 text-white"
-            title="Delete food"
+            title={t('profile.deleteFoodTooltip')}
           >
             <Trash size={18} weight="bold" />
           </button>

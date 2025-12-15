@@ -1,4 +1,5 @@
 import { Funnel, CalendarBlank, ForkKnife } from '@phosphor-icons/react'
+import { useLanguage } from '../context/LanguageContext'
 
 interface MealPlannerSidebarProps {
   dietaryPreference: string
@@ -19,6 +20,7 @@ const MealPlannerSidebar = ({
   onLogToNutrition,
   isLogging = false
 }: MealPlannerSidebarProps) => {
+  const { t } = useLanguage();
   // Helper to get tag styles based on dietary preference
   const getTagStyle = (preference: string) => {
     switch (preference) {
@@ -63,7 +65,7 @@ const MealPlannerSidebar = ({
       <div className="nh-card">
         <h3 className="nh-subtitle mb-4 flex items-center gap-2">
           <Funnel size={20} weight="fill" className="text-primary" />
-          Dietary Preferences
+          {t('profile.dietaryPreferences')}
         </h3>
         <div className="flex flex-col gap-3">
           <button
@@ -79,7 +81,7 @@ const MealPlannerSidebar = ({
             }}
           >
             <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
-            <span className="flex-grow text-center">High-Protein</span>
+            <span className="flex-grow text-center">{t('profile.highProtein')}</span>
           </button>
 
           <button
@@ -95,7 +97,7 @@ const MealPlannerSidebar = ({
             }}
           >
             <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
-            <span className="flex-grow text-center">Halal</span>
+            <span className="flex-grow text-center">{t('profile.halal')}</span>
           </button>
 
           <button
@@ -111,17 +113,17 @@ const MealPlannerSidebar = ({
             }}
           >
             <CalendarBlank size={18} weight="fill" className="flex-shrink-0" />
-            <span className="flex-grow text-center">Vegan</span>
+            <span className="flex-grow text-center">{t('profile.vegan')}</span>
           </button>
         </div>
       </div>
 
       {/* Plan Settings */}
       <div className="nh-card">
-        <h3 className="nh-subtitle mb-4 text-sm">Plan Settings</h3>
+        <h3 className="nh-subtitle mb-4 text-sm">{t('profile.planSettings')}</h3>
         <div className="flex flex-col space-y-3">
           <div className="flex flex-col space-y-2">
-            <label className="text-xs font-medium nh-text">Plan Duration</label>
+            <label className="text-xs font-medium nh-text">{t('profile.planDuration')}</label>
             <select 
               value={planDuration}
               onChange={(e) => setPlanDuration(e.target.value as 'weekly' | 'daily')}
@@ -131,8 +133,8 @@ const MealPlannerSidebar = ({
                 borderColor: 'var(--dietary-option-border)'
               }}
             >
-              <option value="weekly">Weekly</option>
-              <option value="daily">Daily</option>
+              <option value="weekly">{t('nutrition.weekly')}</option>
+              <option value="daily">{t('nutrition.daily')}</option>
             </select>
           </div>
         </div>
@@ -143,7 +145,7 @@ const MealPlannerSidebar = ({
         onClick={onSave}
         className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium"
       >
-        Save Meal Plan
+        {t('profile.saveMealPlan')}
       </button>
 
       {/* Log Meal Plan Button */}
@@ -154,7 +156,7 @@ const MealPlannerSidebar = ({
           className="nh-button nh-button-primary flex items-center justify-center gap-2 py-3 rounded-lg shadow-md hover:shadow-lg transition-all text-base font-medium disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <ForkKnife size={20} weight="fill" />
-          {isLogging ? 'Logging...' : 'Log Meal Plan'}
+          {isLogging ? t('profile.logging') : t('profile.logMealPlan')}
         </button>
       )}
     </div>

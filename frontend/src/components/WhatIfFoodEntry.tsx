@@ -1,5 +1,6 @@
 import { Hamburger, Trash, Check, Clock } from '@phosphor-icons/react';
 import { WhatIfEntry } from '../types/whatif';
+import { useLanguage } from '../context/LanguageContext';
 
 interface WhatIfFoodEntryProps {
   entry: WhatIfEntry;
@@ -8,6 +9,7 @@ interface WhatIfFoodEntryProps {
 }
 
 const WhatIfFoodEntry = ({ entry, onConfirm, onDelete }: WhatIfFoodEntryProps) => {
+  const { t } = useLanguage();
   const isPlanned = entry.isPlanned;
 
   return (
@@ -67,7 +69,7 @@ const WhatIfFoodEntry = ({ entry, onConfirm, onDelete }: WhatIfFoodEntryProps) =
               }}
             >
               <Clock size={12} weight="fill" />
-              Planned
+              {t('profile.planned')}
             </span>
           )}
         </div>
