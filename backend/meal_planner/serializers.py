@@ -134,13 +134,11 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         help_text="Original serving size of the food (for display calculations)"
     )
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
-    food_id = serializers.SerializerMethodField(read_only=True)
-    food_id_write = serializers.PrimaryKeyRelatedField(
+    food_id = serializers.PrimaryKeyRelatedField(
         source='food',
         queryset=FoodEntry.objects.none(),  # Will be set in __init__
-        write_only=True,
-        required=False,
-        allow_null=True
+        required=True,
+        allow_null=False
     )
     water_grams = serializers.SerializerMethodField(read_only=True)
 
@@ -153,26 +151,18 @@ class FoodLogEntrySerializer(serializers.ModelSerializer):
         user = request.user if request and request.user.is_authenticated else None
 
         # Set queryset to only accessible foods for this user
-        self.fields['food_id_write'].queryset = FoodAccessService.get_accessible_foods(user=user)
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         from .models import FoodLogEntry
         model = FoodLogEntry
         fields = [
-            'id', 'food_id', 'food_id_write', 'food_name', 'food_serving_size', 'image_url',
+            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
             'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
             'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at'
         ]
-        read_only_fields = ['id', 'food_id', 'food_serving_size', 'image_url', 'calories',
+        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
                            'protein', 'carbohydrates', 'fat', 'micronutrients', 'water_grams', 'logged_at']
-    
-    def get_food_id(self, obj):
-        """Return the food ID if available."""
-        return obj.food_id if obj.food_id else None
-    
-    def get_food_name(self, obj):
-        """Return the name of the linked FoodEntry if available."""
-        return obj.food.name if obj.food else None
 
     def get_water_grams(self, obj):
         """Return water contribution for this entry (g), to support hydration UI/what-if scenarios."""
@@ -200,13 +190,11 @@ class PlannedFoodEntrySerializer(serializers.ModelSerializer):
         help_text="Original serving size of the food (for display calculations)"
     )
     image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
-    food_id = serializers.SerializerMethodField(read_only=True)
-    food_id_write = serializers.PrimaryKeyRelatedField(
+    food_id = serializers.PrimaryKeyRelatedField(
         source='food',
         queryset=FoodEntry.objects.none(),  # Will be set in __init__
-        write_only=True,
-        required=False,
-        allow_null=True
+        required=True,
+        allow_null=False
     )
 
     def __init__(self, *args, **kwargs):
@@ -218,22 +206,18 @@ class PlannedFoodEntrySerializer(serializers.ModelSerializer):
         user = request.user if request and request.user.is_authenticated else None
 
         # Set queryset to only accessible foods for this user
-        self.fields['food_id_write'].queryset = FoodAccessService.get_accessible_foods(user=user)
+        self.fields['food_id'].queryset = FoodAccessService.get_accessible_foods(user=user)
 
     class Meta:
         from .models import PlannedFoodEntry
         model = PlannedFoodEntry
         fields = [
-            'id', 'food_id', 'food_id_write', 'food_name', 'food_serving_size', 'image_url',
+            'id', 'food_id', 'food_name', 'food_serving_size', 'image_url',
             'serving_size', 'serving_unit', 'meal_type', 'calories', 'protein',
             'carbohydrates', 'fat', 'micronutrients', 'planned_at'
         ]
-        read_only_fields = ['id', 'food_id', 'food_serving_size', 'image_url', 'calories',
+        read_only_fields = ['id', 'food_serving_size', 'image_url', 'calories',
                            'protein', 'carbohydrates', 'fat', 'micronutrients', 'planned_at']
-
-    def get_food_id(self, obj):
-        """Return the food ID if available."""
-        return obj.food_id if obj.food_id else None
 
     def validate_serving_size(self, value):
         """Validate serving size is positive."""
