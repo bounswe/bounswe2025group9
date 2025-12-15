@@ -517,6 +517,9 @@ class SavedMealPlanCreateSerializer(serializers.ModelSerializer):
 
 class SavedMealPlanEntryPreviewSerializer(serializers.ModelSerializer):
     """Simplified serializer for entry previews (just food name and image)."""
+    food_name = serializers.CharField(source='food.name', read_only=True)
+    image_url = serializers.CharField(source='food.imageUrl', read_only=True, allow_blank=True)
+    
     class Meta:
         from .models import SavedMealPlanEntry
         model = SavedMealPlanEntry
