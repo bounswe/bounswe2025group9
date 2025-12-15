@@ -69,8 +69,18 @@ export interface FoodProposalData {
   micronutrients?: Record<string, number>;
 }
 
+export interface FoodProposalStatus {
+  id: number;
+  name: string;
+  category: string;
+  servingSize: number;
+  isApproved: boolean | null;
+  imageUrl?: string;
+  createdAt: string;
+}
+
 // Transform API food item to app FoodItem format
-const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
+export const transformFoodItem = (apiFood: ApiFoodItem): FoodItem => {
   // Map category to icon name based on category
   const getCategoryIcon = (category: string): string => {
     switch (category) {
@@ -297,7 +307,7 @@ export const getFoodCatalog = async (
  * @param name Food name
  * @returns Nutrition score (0-10)
  */
-const calculateNutritionScore = (
+export const calculateNutritionScore = (
   protein: number,
   carbs: number,
   fat: number,
@@ -419,4 +429,12 @@ export const submitFoodProposal = async (
       status: 500,
     };
   }
+};
+
+/**
+ * Fetch current user's food proposals (pending/approved/rejected)
+ */
+export const getFoodProposals = async (): Promise<FoodProposalStatus[]> => {
+  const response = await apiClient.get<FoodProposalStatus[]>('/foods/get-proposal-status/');
+  return response.data || [];
 };

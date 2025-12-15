@@ -15,6 +15,7 @@ import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import * as WebBrowser from 'expo-web-browser';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { ForumStackParamList } from '../../navigation/types';
 import { ForumTopic, User, ProfessionTag } from '../../types/types';
@@ -30,6 +31,7 @@ type UserProfileNavigationProp = NativeStackNavigationProp<ForumStackParamList, 
 
 const UserProfileScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<UserProfileNavigationProp>();
   const route = useRoute<UserProfileRouteProp>();
 
@@ -277,10 +279,10 @@ const UserProfileScreen: React.FC = () => {
     let iconName: React.ComponentProps<typeof Icon>['name'] = 'post-outline';
 
     if (viewMode === 'liked') {
-      message = 'No liked posts yet.';
+      message = t('profile.noLikedPosts');
       iconName = 'heart-outline';
     } else {
-      message = canShowPosts ? 'No posts from this user yet.' : 'This user keeps their posts private.';
+      message = canShowPosts ? t('profile.noPostsFromUser') : t('profile.postsPrivate');
     }
 
     return (
@@ -298,12 +300,12 @@ const UserProfileScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Profile</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('profile.profile')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading profile...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('profile.loadingProfile')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -316,7 +318,7 @@ const UserProfileScreen: React.FC = () => {
           <TouchableOpacity onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Profile</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('profile.profile')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.errorContainer}>
@@ -326,7 +328,7 @@ const UserProfileScreen: React.FC = () => {
             style={[styles.retryButton, { backgroundColor: theme.primary }]}
             onPress={fetchUserData}
           >
-            <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>Retry</Text>
+            <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -340,7 +342,7 @@ const UserProfileScreen: React.FC = () => {
         <TouchableOpacity onPress={handleBack} style={styles.backButton} accessibilityRole="button" accessibilityLabel="Go back">
           <Icon name="arrow-left" size={24} color={theme.text} />
         </TouchableOpacity>
-        <Text style={[styles.headerTitle, textStyles.heading3]}>Profile</Text>
+        <Text style={[styles.headerTitle, textStyles.heading3]}>{t('profile.profile')}</Text>
         {!isOwner && (
           <TouchableOpacity onPress={handleReportUser} style={styles.reportButton}>
             <Icon name="flag" size={20} color={theme.error} />
@@ -470,7 +472,7 @@ const UserProfileScreen: React.FC = () => {
                     {userProfile?.badges?.length || 0}
                   </Text>
                   <Text style={[styles.statLabel, textStyles.caption, { color: theme.textSecondary }]}>
-                    Badges
+                    {t('profile.badges')}
                   </Text>
                 </View>
                 <View style={styles.statItem}>
@@ -478,7 +480,7 @@ const UserProfileScreen: React.FC = () => {
                     {userProfile?.recipes?.length || 0}
                   </Text>
                   <Text style={[styles.statLabel, textStyles.caption, { color: theme.textSecondary }]}>
-                    Recipes
+                    {t('profile.recipes')}
                   </Text>
                 </View>
               </View>
@@ -487,7 +489,7 @@ const UserProfileScreen: React.FC = () => {
             {canShowProfessionTags && professionTags.length > 0 && (
               <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
-                  Profession Tags
+                  {t('profile.professionTags')}
                 </Text>
                 <View style={styles.professionTagsRow}>
                   {professionTags.map((tag) => (
@@ -511,12 +513,12 @@ const UserProfileScreen: React.FC = () => {
                       {tag.verified ? (
                         <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
                           <Icon name="check-circle" size={12} color="#fff" style={styles.tagIcon} />
-                          <Text style={[textStyles.small, { color: '#fff' }]}>Verified</Text>
+                          <Text style={[textStyles.small, { color: '#fff' }]}>{t('profile.verified')}</Text>
                         </View>
                       ) : (
                         <View style={[styles.unverifiedBadge, { backgroundColor: theme.warning }]}>
                           <Icon name="clock-outline" size={12} color="#fff" style={styles.tagIcon} />
-                          <Text style={[textStyles.small, { color: '#fff' }]}>Unverified</Text>
+                          <Text style={[textStyles.small, { color: '#fff' }]}>{t('profile.unverified')}</Text>
                         </View>
                       )}
                       {tag.certificate && (
@@ -531,7 +533,7 @@ const UserProfileScreen: React.FC = () => {
             {!canShowProfessionTags && !isOwner && professionTags.length > 0 && (
               <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                  This user keeps their profession tags private.
+                  {t('profile.professionTagsPrivate')}
                 </Text>
               </View>
             )}
@@ -539,7 +541,7 @@ const UserProfileScreen: React.FC = () => {
             {canShowBadges && userProfile?.badges && userProfile.badges.length > 0 && (
               <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
-                  Badges
+                  {t('profile.badges')}
                 </Text>
                 <View style={styles.badgesRow}>
                   {userProfile.badges.map((badge, index) => (
@@ -555,7 +557,7 @@ const UserProfileScreen: React.FC = () => {
             {!canShowBadges && !isOwner && userProfile?.badges && userProfile.badges.length > 0 && (
               <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                  This user keeps their badges private.
+                  {t('profile.badgesPrivate')}
                 </Text>
               </View>
             )}
@@ -585,7 +587,7 @@ const UserProfileScreen: React.FC = () => {
             {!canShowRecipes && !isOwner && userProfile?.recipes && userProfile.recipes.length > 0 && (
               <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                  This user keeps their recipes private.
+                  {t('profile.recipesPrivate')}
                 </Text>
               </View>
             )}
@@ -593,7 +595,7 @@ const UserProfileScreen: React.FC = () => {
             {(canShowLocation && userProfile?.location) || userProfile?.website ? (
               <View style={[styles.sectionCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle, { color: theme.text }]}>
-                  Contact
+                  {t('profile.contactInfo')}
                 </Text>
                 <View style={styles.contactInfo}>
                   {canShowLocation && userProfile?.location && (

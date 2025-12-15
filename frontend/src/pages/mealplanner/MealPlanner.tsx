@@ -295,6 +295,9 @@ const MealPlanner = ({
 
         try {
             const newPlan = await apiClient.createMealPlan(mealPlanData);
+            if (!newPlan || typeof newPlan.id !== 'number') {
+                throw new Error('Meal plan response is missing an identifier.');
+            }
             console.log('Meal plan created:', newPlan);
             setSavedMealPlanId(newPlan.id);
             await apiClient.setCurrentMealPlan(newPlan.id);
@@ -374,6 +377,9 @@ const MealPlanner = ({
                 };
                 
                 const newPlan = await apiClient.createMealPlan(mealPlanData);
+                if (!newPlan || typeof newPlan.id !== 'number') {
+                    throw new Error('Meal plan response is missing an identifier.');
+                }
                 setSavedMealPlanId(newPlan.id);
                 await apiClient.setCurrentMealPlan(newPlan.id);
                 // Now log it

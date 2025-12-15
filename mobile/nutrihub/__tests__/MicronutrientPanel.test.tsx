@@ -32,6 +32,23 @@ jest.mock('../src/context/ThemeContext', () => ({
   }),
 }));
 
+// Mock LanguageContext (i18n)
+jest.mock('../src/context/LanguageContext', () => ({
+  useLanguage: () => ({
+    t: (key: string) => {
+      const dict: Record<string, string> = {
+        'nutrition.micronutrients': 'Micronutrients',
+        'nutrition.vitamins': 'Vitamins',
+        'nutrition.minerals': 'Minerals',
+        'nutrition.micronutrientsWarning': 'Some micronutrients have maximum safe limits.',
+        'common.met': 'met',
+        'common.importantNote': 'Important Note',
+      };
+      return dict[key] ?? key;
+    },
+  }),
+}));
+
 // Mock MaterialCommunityIcons
 jest.mock('@expo/vector-icons', () => ({
   MaterialCommunityIcons: 'MockIcon',

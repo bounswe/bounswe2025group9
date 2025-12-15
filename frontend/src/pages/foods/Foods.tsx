@@ -87,6 +87,20 @@ const Foods = () => {
     const [sortBy, setSortBy] = useState<string>('');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
     const [micronutrientFilters, setMicronutrientFilters] = useState<MicronutrientFilterItem[]>([]);
+    const [pageSize, setPageSize] = useState<number | null>(null);
+
+    const updatePageSize = (resultsLength: number, hasNext: boolean) => {
+        if (resultsLength <= 0) {
+            return;
+        }
+
+        setPageSize(prev => {
+            if (!prev || hasNext) {
+                return resultsLength;
+            }
+            return prev;
+        });
+    };
 
     const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder, microFilters = micronutrientFilters) => {
         setLoading(true);
@@ -106,6 +120,7 @@ const Foods = () => {
                 setCount(response.count || 0);
                 setNext(response.next || null);
                 setPrevious(response.previous || null);
+                updatePageSize(response.results.length, Boolean(response.next));
                 setFetchSuccess(true);
                 setWarning(null);
                 console.log("Fetched foods:", response);
@@ -115,11 +130,16 @@ const Foods = () => {
                 setCount(response.count || 0);
                 setNext(response.next || null);
                 setPrevious(response.previous || null);
+                updatePageSize(response.results.length, Boolean(response.next));
                 setFetchSuccess(true);
                 setWarning(response.warning || "Some categories are not available.");
             }
             else if (response.status == 204){ // No content, searched terms are not found
                 setFoods([]);
+                setCount(0);
+                setNext(null);
+                setPrevious(null);
+                setPageSize(null);
                 setFetchSuccess(true);
                 setWarning(response.warning || `No foods found for "${searchTerm}".`);
             }
@@ -131,11 +151,6 @@ const Foods = () => {
             setLoading(false);
         }
     }
-
-    // Initial load on component mount
-    useEffect(() => {
-        fetchFoods(1, '');
-    }, []);
 
     // Refetch when shouldFetch flag is set (for pagination and search)
     useEffect(() => {
@@ -161,8 +176,8 @@ const Foods = () => {
         fetchFoods(1, searchTerm);
     }, [micronutrientFilters]);
 
-    const pageSize = foods.length
-    const totalPages = count && pageSize ? Math.ceil(count / pageSize) : 1;
+    const effectivePageSize = pageSize || (foods.length > 0 ? foods.length : 1)
+    const totalPages = count ? Math.max(1, Math.ceil(count / effectivePageSize)) : 1;
 
 
     const handleSearch = (e: React.FormEvent) => {

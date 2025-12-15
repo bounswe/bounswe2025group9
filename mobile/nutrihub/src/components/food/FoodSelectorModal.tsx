@@ -19,6 +19,7 @@ import {
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import TextInput from '../common/TextInput';
 import { FoodItem } from '../../types/types';
@@ -41,9 +42,11 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     onClose,
     onSelect,
     onCreatePrivateFood,
-    title = 'Select Food',
+    title,
 }) => {
     const { theme, textStyles } = useTheme();
+    const { t } = useLanguage();
+    const modalTitle = title ?? t('food.selectFood');
 
     // State
     const [activeTab, setActiveTab] = useState<TabType>('catalog');
@@ -195,7 +198,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                         {item.name}
                     </Text>
                     <View style={[styles.privateBadge, { backgroundColor: `${theme.success}20` }]}>
-                        <Text style={[textStyles.small, { color: theme.success, fontWeight: '600' }]}>Private</Text>
+                        <Text style={[textStyles.small, { color: theme.success, fontWeight: '600' }]}>{t('food.privateFoods')}</Text>
                     </View>
                 </View>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
@@ -219,7 +222,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     style={{ opacity: 0.3 }}
                 />
                 <Text style={[textStyles.body, { color: theme.textSecondary, marginTop: SPACING.md, textAlign: 'center' }]}>
-                    No foods found. Try a different search.
+                    {t('food.noFoodsFoundTryDifferentSearch')}
                 </Text>
             </View>
         );
@@ -258,10 +261,10 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                 </View>
                 <View style={styles.foodInfo}>
                     <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
-                        Create Private Food
+                        {t('food.createPrivateFood')}
                     </Text>
                     <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                        Add custom food with your own values
+                        {t('food.createPrivateFoodDesc')}
                     </Text>
                 </View>
             </TouchableOpacity>
@@ -279,7 +282,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                 <View style={[styles.container, { backgroundColor: theme.background }]}>
                     {/* Header */}
                     <View style={[styles.header, { borderBottomColor: theme.border }]}>
-                        <Text style={[textStyles.heading3, { color: theme.text }]}>{title}</Text>
+                        <Text style={[textStyles.heading3, { color: theme.text }]}>{modalTitle}</Text>
                         <TouchableOpacity onPress={onClose} style={styles.closeButton}>
                             <Icon name="close" size={24} color={theme.text} />
                         </TouchableOpacity>
@@ -288,7 +291,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     {/* Search */}
                     <View style={styles.searchContainer}>
                         <TextInput
-                            placeholder="Search foods..."
+                            placeholder={t('food.searchPlaceholder')}
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
@@ -318,7 +321,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                                     }
                                 ]}
                             >
-                                Food Catalog
+                                {t('food.catalog')}
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity
@@ -343,7 +346,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                                     }
                                 ]}
                             >
-                                Private ({privateFoods.length})
+                                {t('food.privateFoods')} ({privateFoods.length})
                             </Text>
                         </TouchableOpacity>
                     </View>

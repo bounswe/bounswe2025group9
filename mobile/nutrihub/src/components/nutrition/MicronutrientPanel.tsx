@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Modal } from 'react-native';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { MicroNutrient } from '../../types/nutrition';
 
@@ -11,6 +12,7 @@ interface MicronutrientPanelProps {
 
 const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const [isVitaminsExpanded, setIsVitaminsExpanded] = useState(true);
   const [isMineralsExpanded, setIsMineralsExpanded] = useState(true);
   const [selectedNutrient, setSelectedNutrient] = useState<MicroNutrient | null>(null);
@@ -201,7 +203,7 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
       <View style={styles.panelHeader}>
         <Icon name="pill" size={28} color={theme.primary} />
         <Text style={[textStyles.heading3, { color: theme.text, marginLeft: SPACING.sm }]}>
-          Micronutrients
+          {t('nutrition.micronutrients')}
         </Text>
       </View>
 
@@ -216,12 +218,12 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <View style={[styles.iconContainer, { backgroundColor: theme.surface, borderColor: '#ec489950', borderWidth: 1 }]}>
               <Icon name="pill" size={20} color="#ec4899" />
             </View>
-            <Text style={[textStyles.heading4, { color: theme.text }]}>Vitamins</Text>
+            <Text style={[textStyles.heading4, { color: theme.text }]}>{t('nutrition.vitamins')}</Text>
           </View>
 
           <View style={styles.sectionHeaderRight}>
             <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-              {vitamins.filter(v => (v.current / v.target) * 100 >= 100).length} / {vitamins.length} met
+              {vitamins.filter(v => (v.current / v.target) * 100 >= 100).length} / {vitamins.length} {t('common.met')}
             </Text>
             <Icon
               name={isVitaminsExpanded ? 'chevron-up' : 'chevron-down'}
@@ -249,12 +251,12 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
             <View style={[styles.iconContainer, { backgroundColor: theme.surface, borderColor: '#6366f150', borderWidth: 1 }]}>
               <Icon name="diamond-stone" size={20} color="#6366f1" />
             </View>
-            <Text style={[textStyles.heading4, { color: theme.text }]}>Minerals</Text>
+            <Text style={[textStyles.heading4, { color: theme.text }]}>{t('nutrition.minerals')}</Text>
           </View>
 
           <View style={styles.sectionHeaderRight}>
             <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-              {minerals.filter(m => (m.current / m.target) * 100 >= 100).length} / {minerals.length} met
+              {minerals.filter(m => (m.current / m.target) * 100 >= 100).length} / {minerals.length} {t('common.met')}
             </Text>
             <Icon
               name={isMineralsExpanded ? 'chevron-up' : 'chevron-down'}
@@ -278,11 +280,10 @@ const MicronutrientPanel: React.FC<MicronutrientPanelProps> = ({ micronutrients 
         </View>
         <View style={styles.warningContent}>
           <Text style={[textStyles.caption, { color: theme.text, fontWeight: '700', marginBottom: 2 }]}>
-            Important Note
+            {t('common.importantNote')}
           </Text>
           <Text style={[textStyles.caption, { color: theme.textSecondary, lineHeight: 18 }]}>
-            Some micronutrients have maximum safe limits. Exceeding these limits may be harmful to your health.
-            Consult with a healthcare professional if you consistently exceed maximum thresholds.
+            {t('nutrition.micronutrientsWarning')}
           </Text>
         </View>
       </View>
