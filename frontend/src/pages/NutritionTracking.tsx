@@ -187,16 +187,30 @@ const NutritionTrackingPage = () => {
                 <div>
                   <button
                     onClick={() => setSavedMealPlansExpanded(!savedMealPlansExpanded)}
-                    className="w-full flex items-center justify-between py-1 transition-colors"
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all hover:scale-[1.02]"
+                    style={{ 
+                      backgroundColor: savedMealPlansExpanded ? 'var(--color-primary)' : 'var(--dietary-option-bg)',
+                      color: savedMealPlansExpanded ? 'white' : 'inherit'
+                    }}
                   >
-                    <span className="text-xs font-medium opacity-70 flex items-center gap-1.5">
-                      {savedMealPlansExpanded ? (
-                        <CaretDown size={12} />
-                      ) : (
-                        <CaretRight size={12} />
-                      )}
-                      {savedMealPlans.length} saved
+                    <span className="text-sm font-semibold flex items-center gap-2">
+                      <FloppyDiskBack size={16} weight="fill" style={{ opacity: savedMealPlansExpanded ? 1 : 0.7 }} />
+                      Saved Plans
+                      <span 
+                        className="px-2 py-0.5 rounded-full text-xs font-bold"
+                        style={{ 
+                          backgroundColor: savedMealPlansExpanded ? 'rgba(255,255,255,0.2)' : 'var(--color-primary)',
+                          color: savedMealPlansExpanded ? 'white' : 'white'
+                        }}
+                      >
+                        {savedMealPlans.length}
+                      </span>
                     </span>
+                    {savedMealPlansExpanded ? (
+                      <CaretDown size={16} weight="bold" />
+                    ) : (
+                      <CaretRight size={16} weight="bold" />
+                    )}
                   </button>
 
                   {savedMealPlansExpanded && (

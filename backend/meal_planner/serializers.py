@@ -515,20 +515,30 @@ class SavedMealPlanCreateSerializer(serializers.ModelSerializer):
         return instance
 
 
+class SavedMealPlanEntryPreviewSerializer(serializers.ModelSerializer):
+    """Simplified serializer for entry previews (just food name and image)."""
+    class Meta:
+        from .models import SavedMealPlanEntry
+        model = SavedMealPlanEntry
+        fields = ['id', 'food_name', 'image_url', 'meal_type']
+        read_only_fields = ['id', 'food_name', 'image_url', 'meal_type']
+
+
 class SavedMealPlanListSerializer(serializers.ModelSerializer):
-    """Simplified serializer for list views (summary without entries)."""
+    """Simplified serializer for list views (summary with entry previews)."""
     entry_count = serializers.SerializerMethodField()
+    entries = SavedMealPlanEntryPreviewSerializer(many=True, read_only=True)
     
     class Meta:
         from .models import SavedMealPlan
         model = SavedMealPlan
         fields = [
             'id', 'name', 'description', 'total_calories', 'total_protein',
-            'total_carbohydrates', 'total_fat', 'entry_count', 'created_at', 'updated_at'
+            'total_carbohydrates', 'total_fat', 'entry_count', 'entries', 'created_at', 'updated_at'
         ]
         read_only_fields = [
             'id', 'total_calories', 'total_protein', 'total_carbohydrates',
-            'total_fat', 'entry_count', 'created_at', 'updated_at'
+            'total_fat', 'entry_count', 'entries', 'created_at', 'updated_at'
         ]
     
     def get_entry_count(self, obj):
