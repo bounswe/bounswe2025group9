@@ -223,6 +223,13 @@ export type ProfileStackParamList = {
    * Private foods screen
    */
   PrivateFoods: undefined;
+
+  /**
+   * Private food detail screen
+   */
+  PrivateFoodDetail: {
+    foodId: number;
+  };
 };
 
 /**
