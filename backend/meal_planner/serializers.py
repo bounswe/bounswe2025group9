@@ -30,7 +30,8 @@ class MealPlanCreateSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = MealPlan
-        fields = ['name', 'meals']
+        fields = ['id', 'name', 'meals']
+        read_only_fields = ['id']
     
     def create(self, validated_data):
         meals_data = validated_data.pop('meals', [])
