@@ -124,12 +124,19 @@ const FoodProposals = () => {
               className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 hover:border-primary transition-colors"
             >
               <div className="flex items-start gap-4">
-                {proposal.imageUrl && (
+                {proposal.imageUrl ? (
                   <img
                     src={proposal.imageUrl}
                     alt={proposal.name}
                     className="w-20 h-20 object-cover rounded-lg"
                   />
+                ) : (
+                  <div className="w-20 h-20 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <div className="text-center">
+                      <ForkKnife size={24} className="mx-auto text-gray-400" />
+                      <span className="text-xs text-gray-400">Generating...</span>
+                    </div>
+                  </div>
                 )}
                 <div className="flex-1">
                   <h3 className="font-semibold text-[var(--color-text-primary)]">
@@ -273,16 +280,28 @@ const FoodProposals = () => {
             </div>
             <div className="space-y-4">
               {/* Image */}
-              {selectedProposal.imageUrl && (
-                <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Image</h4>
+              <div>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Image</h4>
+                {selectedProposal.imageUrl ? (
                   <img
                     src={selectedProposal.imageUrl}
                     alt={selectedProposal.name}
-                    className="w-full max-h-64 object-cover rounded-lg text-gray-900 dark:text-white"
+                    className="w-full max-h-64 object-contain rounded-lg bg-gray-100 dark:bg-gray-700"
                   />
-                </div>
-              )}
+                ) : (
+                  <div className="w-full h-48 rounded-lg bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
+                    <div className="text-center">
+                      <ForkKnife size={48} className="mx-auto text-gray-400 mb-2" />
+                      <span className="text-sm text-gray-500 dark:text-gray-400">
+                        AI image is being generated...
+                      </span>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Refresh the page in a few seconds
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
 
               {/* Basic Info */}
               <div>

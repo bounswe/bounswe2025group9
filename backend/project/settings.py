@@ -218,6 +218,20 @@ DEEPL_API_KEY = os.environ.get(
     "DEEPL_API_KEY", "7225230f-59a5-42eb-b576-7fb2d5cf2db1:fx"
 )
 
+# ===========================================
+# AI Image Generation Configuration (Fal AI)
+# ===========================================
+# Used to auto-generate food images for proposals when users don't provide one
+FAL_KEY = os.environ.get("FAL_KEY", "")
+
+# ===========================================
+# Cloudinary Configuration
+# ===========================================
+# Used to store AI-generated food images
+CLOUDINARY_CLOUD_NAME = os.environ.get("CLOUDINARY_CLOUD_NAME", "")
+CLOUDINARY_API_KEY = os.environ.get("CLOUDINARY_API_KEY", "")
+CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", "")
+
 # drf-spectacular settings for OpenAPI/Swagger documentation
 SPECTACULAR_SETTINGS = {
     "TITLE": "NutriHub API",

@@ -33,6 +33,12 @@ services:
       DJANGO_SECRET_KEY: "${DJANGO_SECRET_KEY:-super-secret-key}"
       FATSECRET_CONSUMER_KEY:  "${FATSECRET_CONSUMER_KEY}"
       FATSECRET_CONSUMER_SECRET: "${FATSECRET_CONSUMER_SECRET}"
+      # AI Image Generation (Fal AI)
+      FAL_KEY: "${FAL_KEY}"
+      # Cloudinary (Image Storage)
+      CLOUDINARY_CLOUD_NAME: "${CLOUDINARY_CLOUD_NAME}"
+      CLOUDINARY_API_KEY: "${CLOUDINARY_API_KEY}"
+      CLOUDINARY_API_SECRET: "${CLOUDINARY_API_SECRET}"
     volumes:
       - static_volume:/project/staticfiles
       - media_volume:/project/media

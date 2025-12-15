@@ -128,6 +128,7 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
     nutritionScore = serializers.FloatField(
         source="food_entry.nutritionScore", read_only=True
     )
+    imageUrl = serializers.SerializerMethodField()
 
     proposedBy = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(read_only=True)
@@ -147,12 +148,19 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "carbohydrateContent",
             "dietaryOptions",
             "nutritionScore",
+            "imageUrl",
 
             # proposal fields
             "isApproved",
             "proposedBy",
             "createdAt",
         ]
+
+    def get_imageUrl(self, obj):
+        """Return the food entry's image URL, or empty string if not set."""
+        if obj.food_entry and obj.food_entry.imageUrl:
+            return obj.food_entry.imageUrl
+        return ""
 
     def get_proposedBy(self, obj):
         return {
