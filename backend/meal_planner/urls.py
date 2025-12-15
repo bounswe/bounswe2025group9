@@ -9,12 +9,15 @@ from .views import (
     DailyNutritionLogView,
     DailyNutritionHistoryView,
     FoodLogEntryViewSet,
+    PlannedFoodEntryViewSet,
+    convert_planned_to_log,
     NutritionStatisticsView,
 )
 
-# Router for FoodLogEntryViewSet
+# Router for FoodLogEntryViewSet and PlannedFoodEntryViewSet
 router = DefaultRouter()
 router.register(r'daily-log/entries', FoodLogEntryViewSet, basename='food-log-entry')
+router.register(r'daily-log/planned', PlannedFoodEntryViewSet, basename='planned-food-entry')
 
 urlpatterns = [
     # Meal plan endpoints
@@ -28,7 +31,10 @@ urlpatterns = [
     path('daily-log/history/', DailyNutritionHistoryView.as_view(), name='daily-nutrition-history'),
     path('nutrition-statistics/', NutritionStatisticsView.as_view(), name='nutrition-statistics'),
     
-    # Include router URLs for food log entries
+    # Convert planned entry to log entry
+    path('daily-log/planned/<int:pk>/convert/', convert_planned_to_log, name='convert-planned-to-log'),
+    
+    # Include router URLs for food log entries and planned entries
     path('', include(router.urls)),
 ]
 

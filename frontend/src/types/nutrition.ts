@@ -35,6 +35,23 @@ export interface FoodLogEntry {
   logged_at: string;
 }
 
+export interface PlannedFoodEntry {
+  id: number;
+  food_id?: number | null;
+  food_name: string;
+  food_serving_size: number; // Original serving size of the food (e.g., 100g)
+  image_url: string; // Image URL from the food
+  serving_size: number;
+  serving_unit: string;
+  meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack';
+  calories: number;
+  protein: number;
+  carbohydrates: number;
+  fat: number;
+  micronutrients?: { [key: string]: number };
+  planned_at: string;
+}
+
 export interface DailyNutritionLog {
   date: string; // ISO date string (YYYY-MM-DD)
   total_calories: number;
@@ -43,6 +60,7 @@ export interface DailyNutritionLog {
   total_fat: number;
   micronutrients_summary: { [key: string]: number };
   entries?: FoodLogEntry[]; // Optional because history endpoint doesn't return entries
+  planned_entries?: PlannedFoodEntry[]; // Planned food entries (not yet consumed)
   targets?: {
     calories: number;
     protein: number;
