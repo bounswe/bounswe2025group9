@@ -443,6 +443,7 @@
     "hydrationInfo1": "Your daily water target comes from Nutrition Targets (Adequate Intake defaults: ~3700 g for males, ~2700 g for females).",
     "hydrationInfo2": "Meeting or exceeding the target keeps your nutrition score stable. Being under target can reduce the score by up to -2.00.",
     "hydrationInfo3": "Log water by adding foods that include “Water (g)” (e.g., plain water). To adjust your target, edit Nutrition Targets.",
+    "failedToLoadData": "Failed to load nutrition data",
     "gotIt": "Got it"
   },
   "profile": {

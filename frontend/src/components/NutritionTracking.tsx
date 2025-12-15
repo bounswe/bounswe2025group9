@@ -31,8 +31,7 @@ interface NutritionTrackingProps {
 }
 
 const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProps = {}) => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { t, currentLanguage } = useLanguage();
+  const { t } = useLanguage();
   // Helper function to normalize date to midnight local time (avoids timezone issues)
   const normalizeToMidnight = (date: Date): Date => {
     const normalized = new Date(date);
@@ -307,7 +306,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
       if (err.status === 404 && err.data?.detail === "No nutrition targets or metrics found. Please set your metrics first.") {
         setMetricsMissing(true);
       } else {
-        setError('Failed to load nutrition data');
+        setError(t('nutrition.failedToLoadData'));
       }
     } finally {
       setLoading(false);
@@ -340,7 +339,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
     // Validate serving size
     const numServingSize = typeof servingSize === 'string' ? Number(servingSize) : servingSize;
     if (!numServingSize || numServingSize <= 0) {
-      alert('Please enter a valid serving size');
+      alert(t('nutrition.pleaseEnterValidServing'));
       return;
     }
 
@@ -359,7 +358,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
 
     // Validate multiplier doesn't exceed backend max_digits=10, decimal_places=6 (max: 9999.999999)
     if (multiplier > 9999.999999) {
-      alert(`Serving size is too large. The maximum allowed multiplier is 9999.999999. Please reduce the amount.`);
+      alert(t('nutrition.servingSizeTooLarge'));
       return;
     }
 
@@ -390,7 +389,7 @@ const NutritionTracking = ({ onDateChange, onDataChange }: NutritionTrackingProp
         err?.data?.error ||
         err?.data?.detail ||
         err?.message ||
-        'Failed to add food entry';
+        t('nutrition.failedToAddFood');
       alert(errorMessage);
     } finally {
       setLoading(false);

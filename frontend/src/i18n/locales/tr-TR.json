@@ -440,7 +440,8 @@
     "hydrationTarget": "Hidrasyon hedefi",
     "hydrationInfo1": "Günlük su hedefin Beslenme Hedeflerinden gelir (Önerilen alım varsayılanı: erkekler için ~3700 g, kadınlar için ~2700 g).",
     "hydrationInfo2": "Hedefi karşılamak puanı sabit tutar. Hedefin altında kalmak puanı -2.00'a kadar düşürebilir.",
-    "hydrationInfo3": "“Water (g)” içeren besinler ekleyerek su kaydı yap. Hedefi değiştirmek için Beslenme Hedeflerini düzenle.",
+    "hydrationInfo3": "'Water (g)' içeren besinler ekleyerek su kaydı yap. Hedefi değiştirmek için Beslenme Hedeflerini düzenle.",
+    "failedToLoadData": "Beslenme verileri yüklenemedi",
     "gotIt": "Anladım"
   },
   "profile": {
