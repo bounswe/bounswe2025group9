@@ -9,6 +9,7 @@ import {
   Modal,
   Alert,
   RefreshControl,
+  Image,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -35,22 +36,68 @@ const extractUnit = (key: string): string => {
   return match ? match[1] : '';
 };
 
+// Frontend-aligned allowed list (from radarChart.tsx)
+const ALLOWED_NUTRIENTS = new Set([
+  'vitamin a', 'vitamin b6', 'vitamin b12', 'vitamin c', 'vitamin d', 'vitamin e', 'vitamin k', 'folate',
+  'calcium', 'iron', 'magnesium', 'phosphorus', 'potassium', 'selenium', 'sodium', 'zinc'
+]);
+
 const extractName = (key: string): string => {
-  // Extract name without unit and without parenthetical clarifications
-  // Examples:
-  // "Vitamin K (phylloquinone) (µg)" -> "Vitamin K"
-  // "Vitamin A, RAE (µg)" -> "Vitamin A, RAE"
-  // "Vitamin D (D2 + D3) (µg)" -> "Vitamin D"
-  // "Vitamin E (alpha-tocopherol) (mg)" -> "Vitamin E"
+  // Common mineral abbreviations mapping
+  const mineralMap: Record<string, string> = {
+    'ca': 'Calcium',
+    'calcium': 'Calcium',
+    'mg': 'Magnesium', // Note: could be milligram unit, but as a key it's likely Magnesium
+    'magnesium': 'Magnesium',
+    'k': 'Potassium',
+    'potassium': 'Potassium',
+    'na': 'Sodium',
+    'sodium': 'Sodium',
+    'zn': 'Zinc',
+    'zinc': 'Zinc',
+    'fe': 'Iron',
+    'iron': 'Iron',
+    'p': 'Phosphorus',
+    'phosphorus': 'Phosphorus',
+    'cu': 'Copper',
+    'copper': 'Copper',
+    'mn': 'Manganese',
+    'manganese': 'Manganese',
+    'se': 'Selenium',
+    'selenium': 'Selenium',
+    'cl': 'Chloride',
+    'i': 'Iodine',
+    'cr': 'Chromium',
+    'mo': 'Molybdenum'
+  };
 
-  // First, remove the unit (last parentheses)
-  let name = key.replace(/\s*\([^)]+\)$/, '').trim();
+  // Clean the key
+  let cleanKey = key;
 
-  // Then, remove any remaining parenthetical clarifications
-  // This handles cases like "Vitamin K (phylloquinone)" -> "Vitamin K"
-  name = name.replace(/\s*\([^)]+\)/g, '').trim();
+  if (key.includes('_')) {
+    cleanKey = cleanKey.replace(/_m?c?g$/i, '').replace(/_/g, ' ');
+  } else {
+    // Handle parenthetical format
+    cleanKey = cleanKey.replace(/\s*\([^)]+\)$/, '').trim();
+    cleanKey = cleanKey.replace(/\s*\([^)]+\)/g, '').trim();
 
-  return name;
+    // Also handle comma suffixes like "Vitamin A, RAE" -> "Vitamin A"
+    // But be careful not to break names that naturally have commas if any (none in this list)
+    if (cleanKey.includes(',')) {
+      cleanKey = cleanKey.split(',')[0].trim();
+    }
+  }
+
+  // Check valid abbreviations match (case-insensitive)
+  const lowerKey = cleanKey.toLowerCase().trim();
+  if (mineralMap[lowerKey]) {
+    return mineralMap[lowerKey];
+  }
+
+  // Fallback: capitalize properly if it wasn't mapped
+  return cleanKey.split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .join(' ');
 };
 
 const isVitamin = (name: string): boolean => {
@@ -783,32 +830,71 @@ const NutritionTrackingScreen: React.FC = () => {
   };
 
   const getMicronutrientsList = useCallback((): MicroNutrient[] => {
-    if (!dailyLog?.micronutrients_summary || !targets?.micronutrients) return [];
+    if (!dailyLog?.micronutrients_summary && !targets?.micronutrients) return [];
 
-    // Get all micronutrients from targets (like frontend does)
-    return Object.entries(targets.micronutrients)
-      .map(([key, targetValue]) => {
-        const currentValue = dailyLog.micronutrients_summary[key] || 0;
-        const name = extractName(key);
-        const unit = extractUnit(key) || '';
+    const nutrientMap = new Map<string, MicroNutrient>();
 
-        // Categorize based on name (matching frontend logic)
-        let category: 'vitamin' | 'mineral' = 'vitamin'; // Default
-        if (isMineral(name)) {
-          category = 'mineral';
-        } else if (isVitamin(name)) {
-          category = 'vitamin';
-        }
+    const processNutrient = (key: string, currentValue: number, targetValue: number = 0, maximum?: number) => {
+      const name = extractName(key);
+      const normalizedName = name.toLowerCase();
 
-        return {
+      // Heuristic Filter: Use standard frontend logic (isVitamin/isMineral)
+      if (!isVitamin(name) && !isMineral(name)) {
+        return;
+      }
+
+      let category: 'vitamin' | 'mineral' = 'vitamin';
+      if (isMineral(name)) {
+        category = 'mineral';
+      } else {
+        category = 'vitamin';
+      }
+
+      const existing = nutrientMap.get(normalizedName);
+      if (existing) {
+        existing.current = currentValue || existing.current;
+        if (targetValue > 0) existing.target = targetValue;
+        if (maximum) existing.maximum = maximum;
+      } else {
+        nutrientMap.set(normalizedName, {
           name,
           current: currentValue,
-          target: targetValue || 0,
-          unit,
+          target: targetValue,
+          maximum,
+          unit: extractUnit(key) || '',
           category,
-        };
-      })
-      .filter(nutrient => nutrient.target > 0); // Only show nutrients with targets set
+        });
+      }
+    };
+
+    if (targets?.micronutrients) {
+      for (const [key, rawTarget] of Object.entries(targets.micronutrients)) {
+        let tVal = 0;
+        let maxVal: number | undefined = undefined;
+
+        if (typeof rawTarget === 'number') {
+          tVal = rawTarget;
+        } else if (rawTarget && typeof rawTarget === 'object') {
+          // Backend can return { target: X, maximum: Y }
+          tVal = (rawTarget as any).target || 0;
+          maxVal = (rawTarget as any).maximum;
+        }
+
+        const value = dailyLog?.micronutrients_summary?.[key] || 0;
+        processNutrient(key, value, tVal, maxVal);
+      }
+    }
+
+    if (dailyLog?.micronutrients_summary) {
+      for (const [key, currentValue] of Object.entries(dailyLog.micronutrients_summary)) {
+        // If processing via log first, we don't have target yet, it will be merged if exists
+        processNutrient(key, currentValue as number, 0);
+      }
+    }
+
+    return Array.from(nutrientMap.values())
+      .filter(nutrient => nutrient.target > 0 || nutrient.current > 0)
+      .sort((a, b) => a.name.localeCompare(b.name));
   }, [dailyLog, targets]);
 
   const renderWeeklySummary = () => {
@@ -944,8 +1030,27 @@ const NutritionTrackingScreen: React.FC = () => {
     return (
       <View
         key={mealType}
-        style={[styles.mealCard, { backgroundColor: theme.surface, borderColor: theme.border }]}
+        style={[
+          styles.mealCard,
+          {
+            backgroundColor: theme.surface,
+            borderColor: `${mealColor}20`,
+            shadowColor: mealColor,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 4,
+          }
+        ]}
       >
+        {/* Gradient Header Accent */}
+        <View
+          style={[
+            styles.mealHeaderAccent,
+            { backgroundColor: `${mealColor}15` }
+          ]}
+        />
+
         {/* Meal Header */}
         <View style={styles.mealHeader}>
           <View style={styles.mealHeaderLeft}>
@@ -953,36 +1058,42 @@ const NutritionTrackingScreen: React.FC = () => {
               style={[
                 styles.mealIconContainer,
                 {
-                  backgroundColor: theme.surface,
-                  borderColor: `${mealColor}50`,
-                  borderWidth: 1
+                  backgroundColor: `${mealColor}15`,
+                  borderColor: `${mealColor}30`,
+                  borderWidth: 2
                 }
               ]}
             >
-              <Icon name={getMealIcon(mealType)} size={24} color={mealColor} />
+              <Icon name={getMealIcon(mealType)} size={28} color={mealColor} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[textStyles.heading4, { color: theme.text, textTransform: 'capitalize', fontWeight: '700' }]}>
+              <Text style={[textStyles.heading4, { color: theme.text, textTransform: 'capitalize', fontWeight: '800', fontSize: 18 }]}>
                 {t(`nutrition.${mealType}`)}
               </Text>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, marginTop: SPACING.xs / 2 }]}>
-                {formatNumber(totals.calories)} {t('metrics.kcal')} • {entries.length} {entries.length === 1 ? t('common.item') : t('common.items')}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: SPACING.xs / 2 }}>
+                <Text style={[textStyles.caption, { color: mealColor, fontWeight: '700', fontSize: 13 }]}>
+                  {formatNumber(totals.calories)} {t('metrics.kcal')}
+                </Text>
+                <Text style={{ color: theme.textSecondary, marginHorizontal: 6 }}>•</Text>
+                <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
+                  {entries.length} {entries.length === 1 ? t('common.item') : t('common.items')}
+                </Text>
+              </View>
             </View>
           </View>
 
           <TouchableOpacity
-            style={[styles.addButton, { backgroundColor: theme.primary }]}
+            style={[
+              styles.addButtonSmall,
+              { backgroundColor: mealColor }
+            ]}
             onPress={() => {
               setSelectedMeal(mealType);
               setShowAddFood(true);
             }}
             activeOpacity={0.8}
           >
-            <View style={styles.addButtonContent}>
-              <Icon name="plus-circle" size={20} color="#fff" />
-              <Text style={[textStyles.body, { color: '#fff', marginLeft: 6, fontWeight: '600', fontSize: 14 }]}>{t('food.addFood')}</Text>
-            </View>
+            <Icon name="plus" size={22} color="#fff" />
           </TouchableOpacity>
         </View>
 
@@ -992,12 +1103,32 @@ const NutritionTrackingScreen: React.FC = () => {
             {entries.map((entry) => (
               <View
                 key={entry.id}
-                style={[styles.entryItem, { backgroundColor: theme.background, borderWidth: 1, borderColor: theme.border }]}
+                style={[
+                  styles.entryItem,
+                  {
+                    backgroundColor: theme.background,
+                    borderWidth: 1,
+                    borderColor: theme.border,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                    elevation: 2,
+                  }
+                ]}
               >
-                {/* Food Image Placeholder */}
-                <View style={[styles.foodImagePlaceholder, { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.border }]}>
-                  <Icon name="food" size={24} color={theme.textSecondary} />
-                </View>
+                {/* Food Image */}
+                {entry.image_url ? (
+                  <Image
+                    source={{ uri: entry.image_url }}
+                    style={styles.foodImage}
+                    resizeMode="cover"
+                  />
+                ) : (
+                  <View style={[styles.foodImagePlaceholder, { backgroundColor: `${mealColor}10`, borderWidth: 0 }]}>
+                    <Icon name="food" size={26} color={`${mealColor}80`} />
+                  </View>
+                )}
 
                 {/* Food Details Container */}
                 <View style={styles.foodDetailsContainer}>
@@ -1053,28 +1184,28 @@ const NutritionTrackingScreen: React.FC = () => {
 
         {/* Meal Totals */}
         {entries.length > 0 && (
-          <View style={[styles.mealTotals, { borderTopColor: theme.border }]}>
-            <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary }]}>{t('food.calories')}</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '600' }]}>
+          <View style={styles.mealTotalsRow}>
+            <View style={[styles.totalPill, { backgroundColor: `${theme.primary}10` }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontSize: 10 }]}>{t('food.calories')}</Text>
+              <Text style={{ color: theme.primary, fontWeight: '700', fontSize: 14 }}>
                 {formatNumber(totals.calories)}
               </Text>
             </View>
-            <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>{t('food.protein')}</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
+            <View style={[styles.totalPill, { backgroundColor: '#3b82f610' }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontSize: 10 }]}>P</Text>
+              <Text style={{ color: '#3b82f6', fontWeight: '700', fontSize: 14 }}>
                 {formatNumber(totals.protein)}g
               </Text>
             </View>
-            <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>{t('food.carbs')}</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
+            <View style={[styles.totalPill, { backgroundColor: '#f9731610' }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontSize: 10 }]}>C</Text>
+              <Text style={{ color: '#f97316', fontWeight: '700', fontSize: 14 }}>
                 {formatNumber(totals.carbs)}g
               </Text>
             </View>
-            <View style={styles.totalItem}>
-              <Text style={[textStyles.caption, { color: theme.textSecondary, fontWeight: '500' }]}>{t('food.fat')}</Text>
-              <Text style={[textStyles.body, { color: theme.primary, fontWeight: '700', fontSize: 15 }]}>
+            <View style={[styles.totalPill, { backgroundColor: '#ec489910' }]}>
+              <Text style={[textStyles.caption, { color: theme.textSecondary, fontSize: 10 }]}>F</Text>
+              <Text style={{ color: '#ec4899', fontWeight: '700', fontSize: 14 }}>
                 {formatNumber(totals.fat)}g
               </Text>
             </View>
@@ -1745,9 +1876,20 @@ const styles = StyleSheet.create({
   },
   mealCard: {
     padding: SPACING.lg,
-    borderRadius: BORDER_RADIUS.lg,
+    paddingTop: SPACING.lg + 4,
+    borderRadius: BORDER_RADIUS.xl,
     borderWidth: 1,
-    marginBottom: SPACING.md,
+    marginBottom: SPACING.lg,
+    overflow: 'hidden',
+  },
+  mealHeaderAccent: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 4,
+    borderTopLeftRadius: BORDER_RADIUS.xl,
+    borderTopRightRadius: BORDER_RADIUS.xl,
   },
   mealHeader: {
     flexDirection: 'row',
@@ -1802,6 +1944,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+  foodImage: {
+    width: 60,
+    height: 60,
+    borderRadius: BORDER_RADIUS.lg,
+    flexShrink: 0,
+  },
   foodDetailsContainer: {
     flex: 1,
     marginLeft: SPACING.sm,
@@ -1846,6 +1994,26 @@ const styles = StyleSheet.create({
     marginTop: SPACING.md,
     borderTopWidth: 0,
     borderRadius: BORDER_RADIUS.md,
+  },
+  mealTotalsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: SPACING.md,
+    gap: SPACING.sm,
+  },
+  totalPill: {
+    flex: 1,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.xs,
+    borderRadius: BORDER_RADIUS.md,
+    alignItems: 'center',
+  },
+  addButtonSmall: {
+    width: 40,
+    height: 40,
+    borderRadius: BORDER_RADIUS.round,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   totalItem: {
     alignItems: 'center',
