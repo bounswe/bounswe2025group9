@@ -1,12 +1,14 @@
 import { useState } from 'react';
 import { Pill, Warning, CheckCircle, CaretDown, CaretUp } from '@phosphor-icons/react';
 import { MicroNutrient } from '../types/nutrition';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MicronutrientPanelProps {
   micronutrients: MicroNutrient[];
 }
 
 const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
+  const { t } = useLanguage();
   const [expandedCategory, setExpandedCategory] = useState<'vitamin' | 'mineral' | null>('vitamin');
   const [showAllVitamins, setShowAllVitamins] = useState(false);
   const [showAllMinerals, setShowAllMinerals] = useState(false);
@@ -20,24 +22,24 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
   const getNutrientStatus = (nutrient: MicroNutrient) => {
     // If no target is set, just show the current value without status
     if (!nutrient.target || nutrient.target === 0) {
-      return { status: 'no-target', color: 'var(--color-text)', label: 'No target set' };
+      return { status: 'no-target', color: 'var(--color-text)', label: t('profile.noTargetSet') };
     }
     
     const percentage = (nutrient.current / nutrient.target) * 100;
     
     if (nutrient.maximum && nutrient.current > nutrient.maximum) {
-      return { status: 'danger', color: 'var(--color-error)', label: 'Over Maximum' };
+      return { status: 'danger', color: 'var(--color-error)', label: t('profile.overMaximum') };
     }
     if (percentage >= 100) {
-      return { status: 'complete', color: 'var(--color-success)', label: 'Met' };
+      return { status: 'complete', color: 'var(--color-success)', label: t('profile.met') };
     }
     if (percentage >= 75) {
-      return { status: 'good', color: '#22c55e', label: 'Good' };
+      return { status: 'good', color: '#22c55e', label: t('profile.good') };
     }
     if (percentage >= 50) {
-      return { status: 'fair', color: 'var(--color-warning)', label: 'Fair' };
+      return { status: 'fair', color: 'var(--color-warning)', label: t('profile.fair') };
     }
-    return { status: 'low', color: 'var(--color-error)', label: 'Low' };
+    return { status: 'low', color: 'var(--color-error)', label: t('profile.low') };
   };
 
   const renderNutrientRow = (nutrient: MicroNutrient) => {
@@ -81,12 +83,12 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
           )}
           {!hasTarget && (
             <span className="text-xs nh-text opacity-50">
-              (no target set)
+              {t('profile.noTargetSetParen')}
             </span>
           )}
           {nutrient.maximum && (
             <span className="text-xs nh-text opacity-50">
-              (max: {nutrient.maximum}{nutrient.unit})
+              {t('profile.max', { maximum: nutrient.maximum, unit: nutrient.unit })}
             </span>
           )}
         </div>
@@ -114,7 +116,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
         {/* Warning message if over maximum */}
         {isOverMax && (
           <p className="text-xs mt-2" style={{ color: 'var(--color-error)' }}>
-            ⚠️ Exceeds safe maximum threshold
+            {t('profile.exceedsSafeMaximum')}
           </p>
         )}
       </div>
@@ -125,7 +127,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
     <div className="nh-card">
       <div className="flex items-center gap-2 mb-6">
         <Pill size={28} weight="fill" className="text-primary" />
-        <h3 className="nh-subtitle">Micronutrients</h3>
+        <h3 className="nh-subtitle">{t('profile.micronutrients')}</h3>
       </div>
 
       {/* Vitamins Section */}
@@ -134,10 +136,10 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
           onClick={() => setExpandedCategory(expandedCategory === 'vitamin' ? null : 'vitamin')}
           className="w-full flex items-center justify-between p-3 rounded-lg transition-colors nutrient-row-hover"
         >
-          <h4 className="font-semibold text-lg">Vitamins</h4>
+          <h4 className="font-semibold text-lg">{t('profile.vitamins')}</h4>
           <div className="flex items-center gap-2">
             <span className="text-sm nh-text opacity-70">
-              {vitamins.filter(v => v.target && v.target > 0 && (v.current / v.target) * 100 >= 100).length} / {vitamins.filter(v => v.target && v.target > 0).length} met
+              {vitamins.filter(v => v.target && v.target > 0 && (v.current / v.target) * 100 >= 100).length} / {vitamins.filter(v => v.target && v.target > 0).length} {t('profile.met')}
             </span>
             {expandedCategory === 'vitamin' ? (
               <CaretUp size={20} weight="bold" />
@@ -156,7 +158,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
                 onClick={() => setShowAllVitamins(!showAllVitamins)}
                 className="w-full py-2 text-sm text-primary font-medium hover:underline"
               >
-                {showAllVitamins ? 'Show Less' : `Show ${vitamins.length - 5} More`}
+                {showAllVitamins ? t('profile.showLess') : t('profile.showMore', { count: vitamins.length - 5 })}
               </button>
             )}
           </div>
@@ -169,10 +171,10 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
           onClick={() => setExpandedCategory(expandedCategory === 'mineral' ? null : 'mineral')}
           className="w-full flex items-center justify-between p-3 rounded-lg transition-colors nutrient-row-hover"
         >
-          <h4 className="font-semibold text-lg">Minerals</h4>
+          <h4 className="font-semibold text-lg">{t('profile.minerals')}</h4>
           <div className="flex items-center gap-2">
             <span className="text-sm nh-text opacity-70">
-              {minerals.filter(m => m.target && m.target > 0 && (m.current / m.target) * 100 >= 100).length} / {minerals.filter(m => m.target && m.target > 0).length} met
+              {minerals.filter(m => m.target && m.target > 0 && (m.current / m.target) * 100 >= 100).length} / {minerals.filter(m => m.target && m.target > 0).length} {t('profile.met')}
             </span>
             {expandedCategory === 'mineral' ? (
               <CaretUp size={20} weight="bold" />
@@ -191,7 +193,7 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
                 onClick={() => setShowAllMinerals(!showAllMinerals)}
                 className="w-full py-2 text-sm text-primary font-medium hover:underline"
               >
-                {showAllMinerals ? 'Show Less' : `Show ${minerals.length - 5} More`}
+                {showAllMinerals ? t('profile.showLess') : t('profile.showMore', { count: minerals.length - 5 })}
               </button>
             )}
           </div>
@@ -206,8 +208,8 @@ const MicronutrientPanel = ({ micronutrients }: MicronutrientPanelProps) => {
         <div className="flex items-start gap-2">
           <Warning size={20} weight="fill" style={{ color: 'var(--color-warning)' }} />
           <div className="text-xs nh-text">
-            <p className="font-medium mb-1">Important Note:</p>
-            <p>Some micronutrients have maximum safe limits. Exceeding these limits may be harmful to your health. Consult with a healthcare professional if you consistently exceed maximum thresholds.</p>
+            <p className="font-medium mb-1">{t('profile.importantNote')}</p>
+            <p>{t('profile.micronutrientWarning')}</p>
           </div>
         </div>
       </div>

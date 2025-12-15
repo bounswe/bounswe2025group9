@@ -5,6 +5,7 @@ import { User, Certificate, ArrowLeft, UserPlus, UserMinus, CaretLeft, CaretRigh
 import { apiClient, ForumPost, UserResponse } from '../lib/apiClient'
 import { notifyLikeChange } from '../lib/likeNotifications'
 import { useAuth } from '../context/AuthContext'
+import { useLanguage } from '../context/LanguageContext'
 
 interface ProfessionTag {
   id?: number
@@ -17,6 +18,7 @@ const UserProfile = () => {
   const { username } = useParams<{ username: string }>()
   const navigate = useNavigate()
   const { user: currentUser } = useAuth()
+  const { t } = useLanguage()
 
   const [userProfile, setUserProfile] = useState<UserResponse | null>(null)
   const [activeTab, setActiveTab] = useState<'posts' | 'tags'>('posts')
@@ -123,7 +125,7 @@ const UserProfile = () => {
       }
     } catch (err: any) {
       console.error('Error loading user profile:', err)
-      setError('Failed to load user profile. User may not exist.')
+      setError(t('profile.failedToLoadUserProfile'))
     } finally {
       setIsLoading(false)
     }
@@ -186,11 +188,11 @@ const UserProfile = () => {
       // Update followers count and show success message
       if (newFollowingState) {
         setFollowersCount(prev => prev + 1)
-        setFollowSuccess(`You are now following @${username}`)
+        setFollowSuccess(t('profile.youAreNowFollowing', { username }))
         console.log('[UserProfile] Now following', username)
       } else {
         setFollowersCount(prev => Math.max(0, prev - 1))
-        setFollowSuccess(`You unfollowed @${username}`)
+        setFollowSuccess(t('profile.youUnfollowed', { username }))
         console.log('[UserProfile] Unfollowed', username)
       }
       
@@ -203,7 +205,7 @@ const UserProfile = () => {
       }, 3000)
     } catch (err) {
       console.error('[UserProfile] Error toggling follow:', err)
-      alert('Failed to update follow status. Please try again.')
+      alert(t('profile.failedToUpdateFollowStatus'))
     } finally {
       setFollowLoading(false)
     }
@@ -366,7 +368,7 @@ const UserProfile = () => {
             <div className="w-full md:w-3/5">
               <div className="nh-card text-center rounded-lg shadow-md">
                 <div className="nh-text mb-4 px-4 pt-4" style={{ color: 'var(--color-error)' }}>
-                  {error || 'User not found'}
+                  {error || t('profile.userNotFound')}
                 </div>
                 <div className="pb-4 px-4">
                   <button
@@ -374,7 +376,7 @@ const UserProfile = () => {
                     className="nh-button nh-button-primary flex items-center gap-2 mx-auto"
                   >
                     <ArrowLeft size={20} weight="bold" />
-                    Go back
+                    {t('profile.goBack')}
                   </button>
                 </div>
               </div>
@@ -459,17 +461,17 @@ const UserProfile = () => {
                       {followLoading ? (
                         <>
                           <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent"></div>
-                          <span>{isFollowing ? 'Unfollowing...' : 'Following...'}</span>
+                          <span>{isFollowing ? t('profile.unfollowing') : t('profile.followingAction')}</span>
                         </>
                       ) : isFollowing ? (
                         <>
                           <UserMinus size={18} weight="fill" />
-                          <span>Following</span>
+                          <span>{t('profile.following')}</span>
                         </>
                       ) : (
                         <>
                           <UserPlus size={18} weight="fill" />
-                          <span>Follow</span>
+                          <span>{t('profile.follow')}</span>
                         </>
                       )}
                     </button>
@@ -491,19 +493,19 @@ const UserProfile = () => {
               <div className="grid grid-cols-4 gap-4 mb-6 px-4 pt-4 border-t border-[var(--forum-search-border)]">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">{followersCount}</div>
-                  <div className="nh-text text-sm">Followers</div>
+                  <div className="nh-text text-sm">{t('profile.followers')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">{followingCount}</div>
-                  <div className="nh-text text-sm">Following</div>
+                  <div className="nh-text text-sm">{t('profile.following')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">{totalPostsCount}</div>
-                  <div className="nh-text text-sm">Posts</div>
+                  <div className="nh-text text-sm">{t('profile.posts')}</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-primary">{professionTags.length}</div>
-                  <div className="nh-text text-sm">Tags</div>
+                  <div className="nh-text text-sm">{t('profile.tags')}</div>
                 </div>
               </div>
 
@@ -525,7 +527,7 @@ const UserProfile = () => {
                   }}
                 >
                   <User size={18} weight="fill" />
-                  <span>Posts</span>
+                  <span>{t('profile.posts')}</span>
                 </button>
                 <button
                   onClick={() => setActiveTab('tags')}
@@ -540,7 +542,7 @@ const UserProfile = () => {
                   }}
                 >
                   <Certificate size={18} weight="fill" />
-                  <span>Tags</span>
+                  <span>{t('profile.tags')}</span>
                 </button>
               </div>
             </div>
@@ -548,7 +550,7 @@ const UserProfile = () => {
             {/* Content Section */}
             {activeTab === 'posts' && (
               <div>
-                <h2 className="nh-subtitle mb-4">Posts by @{userProfile.username}</h2>
+                <h2 className="nh-subtitle mb-4">{t('profile.postsBy', { username: userProfile.username })}</h2>
                 {loadingPosts ? (
                   <div className="space-y-4">
                     {[...Array(postsPerPage)].map((_, index) => (
@@ -590,7 +592,7 @@ const UserProfile = () => {
                   </div>
                 ) : userPosts.length === 0 ? (
                   <div className="nh-card text-center py-12 rounded-lg shadow-md">
-                    <p className="nh-text">No posts yet</p>
+                    <p className="nh-text">{t('profile.noPostsYet')}</p>
                   </div>
                 ) : (
                   <>
@@ -713,10 +715,10 @@ const UserProfile = () => {
 
             {activeTab === 'tags' && (
               <div>
-                <h2 className="nh-subtitle mb-4">Profession Tags</h2>
+                <h2 className="nh-subtitle mb-4">{t('profile.professionTags')}</h2>
                 {professionTags.length === 0 ? (
                   <div className="nh-card text-center py-12 rounded-lg shadow-md">
-                    <p className="nh-text">No profession tags</p>
+                    <p className="nh-text">{t('profile.noProfessionTags')}</p>
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -736,7 +738,7 @@ const UserProfile = () => {
                             backgroundColor: 'var(--color-success)',
                             color: 'white'
                           }}>
-                            Verified
+                            {t('profile.verified')}
                           </span>
                         )}
                       </div>

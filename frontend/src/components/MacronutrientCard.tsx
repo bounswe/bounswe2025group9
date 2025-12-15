@@ -1,4 +1,5 @@
 import { CheckCircle, Warning, TrendUp } from '@phosphor-icons/react';
+import { useLanguage } from '../context/LanguageContext';
 
 interface MacronutrientCardProps {
   name: string;
@@ -10,6 +11,7 @@ interface MacronutrientCardProps {
 }
 
 const MacronutrientCard = ({ name, current, target, unit, color, icon }: MacronutrientCardProps) => {
+  const { t } = useLanguage();
   const percentage = Math.round((current / target) * 100);
   const isOverTarget = percentage > 100;
   const isNearTarget = percentage >= 90 && percentage <= 100;
@@ -32,7 +34,7 @@ const MacronutrientCard = ({ name, current, target, unit, color, icon }: Macronu
           )}
           <div>
             <h3 className="font-semibold text-lg">{name}</h3>
-            <p className="text-xs nh-text opacity-70">Daily Target: {target}{unit}</p>
+            <p className="text-xs nh-text opacity-70">{t('profile.dailyTarget')}: {target}{unit}</p>
           </div>
         </div>
         
@@ -84,12 +86,12 @@ const MacronutrientCard = ({ name, current, target, unit, color, icon }: Macronu
         {isOverTarget ? (
           <p className="nh-text opacity-70">
             <span style={{ color: 'var(--color-error)' }} className="font-medium">
-              {Math.round(current - target)}{unit} over target
+              {t('profile.overTarget', { amount: Math.round(current - target), unit })}
             </span>
           </p>
         ) : (
           <p className="nh-text opacity-70">
-            <span className="font-medium">{remaining}{unit} remaining</span> to reach goal
+            <span className="font-medium">{t('profile.remainingToReachGoal', { amount: remaining, unit })}</span>
           </p>
         )}
         
@@ -98,7 +100,7 @@ const MacronutrientCard = ({ name, current, target, unit, color, icon }: Macronu
             backgroundColor: 'var(--color-success)',
             color: 'white'
           }}>
-            On Track
+            {t('profile.onTrack')}
           </span>
         )}
       </div>
@@ -108,15 +110,15 @@ const MacronutrientCard = ({ name, current, target, unit, color, icon }: Macronu
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
             <div>
-              <p className="nh-text opacity-70">Breakfast</p>
+              <p className="nh-text opacity-70">{t('profile.breakfast')}</p>
               <p className="font-semibold text-primary">500 kcal</p>
             </div>
             <div>
-              <p className="nh-text opacity-70">Lunch</p>
+              <p className="nh-text opacity-70">{t('profile.lunch')}</p>
               <p className="font-semibold text-primary">610 kcal</p>
             </div>
             <div>
-              <p className="nh-text opacity-70">Dinner</p>
+              <p className="nh-text opacity-70">{t('profile.dinner')}</p>
               <p className="font-semibold text-primary">690 kcal</p>
             </div>
           </div>

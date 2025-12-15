@@ -3,6 +3,7 @@ import { apiClient, Food } from '../lib/apiClient';
 import { MagnifyingGlass, X, Hamburger } from '@phosphor-icons/react';
 import { Dialog } from '@headlessui/react';
 import NutritionScore from './NutritionScore';
+import { useLanguage } from '../context/LanguageContext';
 
 const FOOD_FUZZY_SIMILARITY_THRESHOLD = 65;
 
@@ -128,6 +129,7 @@ interface FoodSelectorProps {
 }
 
 const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
+    const { t } = useLanguage();
     const [searchTerm, setSearchTerm] = useState('');
     const [searchResults, setSearchResults] = useState<Food[]>([]);
     const [loading, setLoading] = useState(false);
@@ -159,11 +161,11 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                     setWarning(response.warning || null);
                 } else if (response.status === 204) {
                     setSearchResults([]);
-                    setWarning(response.warning || `No foods found for "${searchTerm}".`);
+                    setWarning(response.warning || t('profile.noFoodsFoundFor', { searchTerm }));
                 }
             } catch (err) {
                 console.error('Error searching foods:', err);
-                setWarning('Error searching for foods.');
+                setWarning(t('profile.errorSearchingFoods'));
                 setSearchResults([]);
             } finally {
                 setLoading(false);
@@ -195,7 +197,7 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                 >
                     <div className="flex justify-between items-center mb-4">
                         <Dialog.Title className="nh-subtitle">
-                            Select Food Item
+                            {t('profile.selectFoodItem')}
                         </Dialog.Title>
                         <button 
                             onClick={onClose}
@@ -224,8 +226,8 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full p-2 pl-10 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
-                                placeholder="Search foods..."
-                                aria-label="Search foods"
+                                placeholder={t('profile.searchFoods')}
+                                aria-label={t('profile.searchFoods')}
                             />
                         </div>
                     </div>
@@ -233,7 +235,7 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                     <div className="max-h-96 overflow-y-auto">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {loading && (
-                                <div className="col-span-full p-6 text-center nh-text">Searching...</div>
+                                <div className="col-span-full p-6 text-center nh-text">{t('profile.searching')}</div>
                             )}
 
                             {!loading && searchResults.map((food) => {
@@ -268,22 +270,22 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                                         </div>
 
                                         <div className="mt-2">
-                                            <p className="nh-text text-sm">Category: {food.category}</p>
+                                            <p className="nh-text text-sm">{t('profile.category')}: {food.category}</p>
                                             <div className="mt-2">
-                                              <p className="nh-text text-sm mb-1">Nutrition Score:</p>
+                                              <p className="nh-text text-sm mb-1">{t('profile.nutritionScore')}:</p>
                                               <NutritionScore score={food.nutritionScore} size="sm" />
                                             </div>
                                             <div className="mt-2 space-y-1">
                                                 <p className="nh-text text-sm">
-                                                    Per {food.servingSize}g: {food.caloriesPerServing} kcal
+                                                    {t('profile.perServingG', { servingSize: food.servingSize, calories: food.caloriesPerServing })}
                                                 </p>
                                                 <p className="nh-text text-sm">
-                                                    Per 100g: {((food.caloriesPerServing / food.servingSize) * 100).toFixed(1)} kcal
+                                                    {t('profile.per100g', { calories: ((food.caloriesPerServing / food.servingSize) * 100).toFixed(1) })}
                                                 </p>
                                             </div>
                                             {food.dietaryOptions && food.dietaryOptions.length > 0 && (
                                                 <p className="nh-text text-sm mt-2">
-                                                    Dietary Tags: {food.dietaryOptions.join(', ')}
+                                                    {t('profile.dietaryTags')}: {food.dietaryOptions.join(', ')}
                                                 </p>
                                             )}
                                         </div>
@@ -293,7 +295,7 @@ const FoodSelector = ({ open, onClose, onSelect }: FoodSelectorProps) => {
                         </div>
                         {!loading && searchResults.length === 0 && searchTerm.trim().length > 0 && (
                             <div className="text-center py-12">
-                                <p className="nh-text">No foods found matching your search.</p>
+                                <p className="nh-text">{t('profile.noFoodsFoundMatching')}</p>
                             </div>
                         )}
                         {!loading && warning && (
