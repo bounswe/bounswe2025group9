@@ -897,18 +897,19 @@ const styles = StyleSheet.create({
   headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: SPACING.md,
   },
   headerTitle: {
     flex: 1,
   },
   headerButtons: {
-    flexDirection: 'row',
-    gap: SPACING.sm,
+    flexDirection: 'column',
+    gap: SPACING.xs,
+    alignItems: 'flex-end',
   },
   compareButton: {
-    marginRight: SPACING.xs,
+    marginRight: 0,
   },
   searchContainer: {
     flexDirection: 'row',
