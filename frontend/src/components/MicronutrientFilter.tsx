@@ -105,11 +105,11 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
 
   return (
     <div className="w-full">
-      <h3 className="nh-subtitle mb-3">Micronutrient Filters</h3>
+      <h3 className="nh-subtitle mb-3">{t('food.micronutrientFilters')}</h3>
 
       {!loading && availableMicronutrients.length > 0 && (
         <p className="nh-text text-sm mb-3" style={{ color: 'var(--forum-default-text)' }}>
-          Filter foods by their micronutrient content. Start typing to see suggestions.
+          {t('food.micronutrientFilterDescription')}
         </p>
       )}
 
@@ -170,7 +170,7 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
         <div className="flex gap-2 w-full">
           <input
             type="number"
-            placeholder="Min"
+            placeholder={t('food.min')}
             value={newFilterMin}
             onChange={(e) => setNewFilterMin(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -179,7 +179,7 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
           />
           <input
             type="number"
-            placeholder="Max"
+            placeholder={t('food.max')}
             value={newFilterMax}
             onChange={(e) => setNewFilterMax(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -194,28 +194,28 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
           className="w-full nh-button flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus size={20} weight="bold" />
-          {loading ? 'Loading...' : 'Add Filter'}
+          {loading ? t('common.loading') : t('food.addFilter')}
         </button>
       </div>
 
 	  {/* Current filters */}
 	  {filters.length > 0 && (
 		  <div className="space-y-2">
-		  <p className="nh-text font-medium">Active Filters:</p>
+      <p className="nh-text font-medium">{t('food.activeFilters')}:</p>
 		  {filters.map((filter, index) => {
 			  const micronutrient = availableMicronutrients.find(
 				  m => m.name.toLowerCase() === filter.name.toLowerCase()
 			  );
-			  const unit = micronutrient ? ` ${micronutrient.unit}` : '';
+        const unit = micronutrient ? ` ${micronutrient.unit}` : '';
 
-			  const valueText =
-				  filter.min !== undefined && filter.max !== undefined
-					  ? `${filter.min} - ${filter.max}${unit}`
-					  : filter.min !== undefined
-						  ? `≥ ${filter.min}${unit}`
-						  : filter.max !== undefined
-							  ? `≤ ${filter.max}${unit}`
-							  : `Any amount`;
+        const valueText =
+          filter.min !== undefined && filter.max !== undefined
+            ? t('food.rangeValue', { min: filter.min, max: filter.max, unit })
+            : filter.min !== undefined
+              ? t('food.minValue', { value: filter.min, unit })
+              : filter.max !== undefined
+                ? t('food.maxValue', { value: filter.max, unit })
+                : t('food.anyAmount');
 
 							  return (
 								  <div
@@ -254,7 +254,7 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
 	  )}
       {filters.length === 0 && (
         <p className="nh-text text-sm italic opacity-60">
-          No active micronutrient filters
+          {t('food.noActiveMicronutrientFilters')}
         </p>
       )}
     </div>

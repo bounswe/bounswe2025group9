@@ -277,7 +277,7 @@ const FoodProposals = () => {
               {/* Image */}
               {selectedProposal.imageUrl && (
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Image</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.image')}</h4>
                   <img
                     src={selectedProposal.imageUrl}
                     alt={selectedProposal.name}
@@ -333,7 +333,7 @@ const FoodProposals = () => {
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.fatContent}g</span>
                   </div>
                   <div>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Carbohydrates:</span>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">{t('food.carbohydrates')}:</span>
                     <span className="ml-2 font-medium text-gray-900 dark:text-white">{selectedProposal.carbohydrateContent}g</span>
                   </div>
                 </div>
@@ -342,7 +342,7 @@ const FoodProposals = () => {
               {/* Micronutrients */}
               {selectedProposal.micronutrients && Object.keys(selectedProposal.micronutrients).length > 0 && (
                 <div>
-                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">Micronutrients (per serving)</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('food.micronutrientsPerServing')}</h4>
                   <div className="grid grid-cols-2 gap-3">
                     {Object.entries(selectedProposal.micronutrients).map(([nutrient, value]) => (
                       <div key={nutrient} className="bg-gray-50 dark:bg-gray-700 rounded p-2">
@@ -395,31 +395,31 @@ const FoodProposals = () => {
 
               {/* Pricing */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Pricing Details</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.pricingDetails')}</h4>
                 {selectedProposal.base_price ? (
                   <div className="p-3 rounded-md border border-blue-100 dark:border-blue-800 bg-blue-50 dark:bg-blue-900/20 text-sm">
                     <div>
-                      <span className="text-gray-600 dark:text-gray-400">Base Price:</span>
+                      <span className="text-gray-600 dark:text-gray-400">{t('admin.basePrice')}:</span>
                       <span className="ml-2 font-semibold text-gray-900 dark:text-white">
                         {selectedProposal.base_price} {selectedProposal.currency || 'TRY'}
                       </span>
                     </div>
                     <div className="mt-1 text-gray-600 dark:text-gray-400">
-                      Unit: {PRICE_UNIT_LABELS[(selectedProposal.price_unit as PriceUnit) || 'per_100g']}
+                      {t('admin.unit')}: {PRICE_UNIT_LABELS[(selectedProposal.price_unit as PriceUnit) || 'per_100g']}
                     </div>
                   </div>
                 ) : (
                   <div className="p-3 rounded-md bg-yellow-50 dark:bg-yellow-900/20 text-yellow-800 dark:text-yellow-100 text-sm">
-                    This proposal does not include pricing data.
+                    {t('admin.noPricingData')}
                   </div>
                 )}
               </div>
 
               {/* Timestamps */}
               <div>
-                <h4 className="font-medium text-gray-900 dark:text-white mb-2">Timeline</h4>
+                <h4 className="font-medium text-gray-900 dark:text-white mb-2">{t('admin.timeline')}</h4>
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  Submitted: {new Date(selectedProposal.createdAt).toLocaleString()}
+                  {t('admin.submittedOn', { date: new Date(selectedProposal.createdAt).toLocaleString() })}
                 </div>
               </div>
 
@@ -431,14 +431,14 @@ const FoodProposals = () => {
                     className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
                   >
                     <Check size={20} weight="bold" />
-                    Approve
+                    {t('admin.approve')}
                   </button>
                   <button
                     onClick={() => handleApprove(selectedProposal.id, false)}
                     className="flex-1 flex items-center justify-center gap-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
                   >
                     <X size={20} weight="bold" />
-                    Reject
+                    {t('admin.reject')}
                   </button>
                 </div>
               )}

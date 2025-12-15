@@ -52,13 +52,13 @@ const ReportsQueue = () => {
         {
           id: 1,
           reportType: 'post',
-          reason: 'Spam',
-          description: 'This post contains promotional content unrelated to nutrition',
+          reason: t('admin.reasonSpam'),
+          description: t('admin.reasonSpamDescription'),
           reportedBy: { id: 10, username: 'user123' },
           reportedItem: { 
             id: 45, 
-            title: 'Best supplements for weight loss!',
-            content: 'Lorem ipsum...'
+            title: t('admin.reportSpamTitle'),
+            content: t('admin.reportSampleContent')
           },
           status: 'pending',
           createdAt: '2025-11-09T10:30:00Z',
@@ -67,13 +67,13 @@ const ReportsQueue = () => {
         {
           id: 2,
           reportType: 'post',
-          reason: 'Misinformation',
-          description: 'Contains false health claims',
+          reason: t('admin.reasonMisinformation'),
+          description: t('admin.reasonMisinformationDescription'),
           reportedBy: { id: 11, username: 'healthwatcher' },
           reportedItem: { 
             id: 46, 
-            title: 'Cure diabetes with this one weird trick',
-            content: 'Lorem ipsum...'
+            title: t('admin.reportMisinformationTitle'),
+            content: t('admin.reportSampleContent')
           },
           status: 'acknowledged',
           createdAt: '2025-11-09T09:15:00Z',
@@ -101,6 +101,11 @@ const ReportsQueue = () => {
     }
   };
 
+  const getStatusLabel = (status: string) => {
+    if (status === 'all') return t('admin.all');
+    return t(`admin.${status}`);
+  };
+
   const getStatusBadge = (status: string) => {
     const badges = {
       pending: { color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200', icon: Clock },
@@ -115,7 +120,7 @@ const ReportsQueue = () => {
     return (
       <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium ${badge.color}`}>
         <Icon size={14} />
-        {status.charAt(0).toUpperCase() + status.slice(1)}
+        {getStatusLabel(status)}
       </span>
     );
   };
@@ -147,7 +152,7 @@ const ReportsQueue = () => {
                   : 'var(--forum-default-text)'
               }}
             >
-              {status.charAt(0).toUpperCase() + status.slice(1)}
+              {getStatusLabel(status)}
             </button>
           ))}
         </div>

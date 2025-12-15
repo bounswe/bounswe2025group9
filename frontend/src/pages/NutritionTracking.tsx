@@ -110,12 +110,12 @@ const NutritionTrackingPage = () => {
                       <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
                         <div className="flex items-center justify-between mb-1">
                           <div className="flex items-center gap-2">
-                            <span className="text-xs font-medium">Hydration</span>
+                            <span className="text-xs font-medium">{t('nutrition.hydration')}</span>
                             <button
                               className="p-1 rounded text-[var(--color-text-secondary)]"
                               onClick={() => setShowHydrationInfo(true)}
                               style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
-                              title="How hydration target is calculated"
+                              title={t('nutrition.hydrationTooltip')}
                             >
                               <Info size={12} />
                             </button>
@@ -431,19 +431,19 @@ const NutritionTrackingPage = () => {
           >
             ✕
           </button>
-          <h3 className="nh-subtitle mb-2">Hydration target</h3>
+          <h3 className="nh-subtitle mb-2">{t('nutrition.hydrationTarget')}</h3>
           <p className="nh-text text-sm mb-2">
-            Your daily water target comes from Nutrition Targets (Adequate Intake defaults: ~3700 g for males, ~2700 g for females).
+            {t('nutrition.hydrationInfo1')}
           </p>
           <p className="nh-text text-sm mb-2">
-            Meeting or exceeding the target keeps your nutrition score stable. Being under target can reduce the score by up to -2.00.
+            {t('nutrition.hydrationInfo2')}
           </p>
           <p className="nh-text text-sm">
-            Log water by adding foods that include “Water (g)” (e.g., plain water). To adjust your target, edit Nutrition Targets.
+            {t('nutrition.hydrationInfo3')}
           </p>
           <div className="mt-4 flex justify-end">
             <button className="nh-button nh-button-primary px-4 py-2 text-sm" onClick={() => setShowHydrationInfo(false)}>
-              Got it
+              {t('nutrition.gotIt')}
             </button>
           </div>
         </div>

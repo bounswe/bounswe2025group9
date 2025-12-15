@@ -1632,16 +1632,16 @@ const Profile = () => {
             {/* Report User Tab */}
             {activeTab === 'report' && (
               <div className="space-y-6">
-                <h2 className="nh-subtitle">Report User</h2>
+                <h2 className="nh-subtitle">{t('profile.reportUser')}</h2>
 
                 <div className="nh-card space-y-6">
                   <div>
-                    <label className="block text-sm font-medium mb-2">User ID or Username</label>
+                    <label className="block text-sm font-medium mb-2">{t('profile.userIdOrUsername')}</label>
                     <input
                       type="text"
                       value={reportUserId}
                       onChange={(e) => setReportUserId(e.target.value)}
-                      placeholder="Enter user ID or username to report"
+                      placeholder={t('profile.enterUserIdOrUsername')}
                       className="w-full px-4 py-2 rounded-lg border input-white-bg"
                       style={{
                         borderColor: 'var(--color-bg-tertiary)'
@@ -1669,11 +1669,11 @@ const Profile = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Description</label>
+                    <label className="block text-sm font-medium mb-2">{t('profile.description')}</label>
                     <textarea
                       value={reportDescription}
                       onChange={(e) => setReportDescription(e.target.value)}
-                      placeholder="Provide details about why you're reporting this user..."
+                      placeholder={t('profile.provideReportDetails')}
                       rows={6}
                       className="w-full px-4 py-2 rounded-lg border input-white-bg"
                       style={{
@@ -1687,19 +1687,19 @@ const Profile = () => {
                     className="nh-button nh-button-primary"
                     disabled={isLoading}
                   >
-                    {isLoading ? 'Submitting...' : 'Submit Report'}
+                    {isLoading ? t('profile.submitting') : t('profile.submitReport')}
                   </button>
                 </div>
 
                 <div className="bg-yellow-50 dark:bg-yellow-900 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
                   <h4 className="font-semibold text-yellow-800 dark:text-yellow-200 mb-2">
-                    Report Guidelines
+                    {t('profile.reportGuidelines')}
                   </h4>
                   <ul className="text-sm text-yellow-700 dark:text-yellow-300 space-y-1">
-                    <li>• Only report users who violate community guidelines</li>
-                    <li>• Provide clear and accurate information</li>
-                    <li>• False reports may result in actions against your account</li>
-                    <li>• Reports are reviewed by moderators within 48 hours</li>
+                    <li>• {t('profile.onlyReportViolations')}</li>
+                    <li>• {t('profile.provideClearInfo')}</li>
+                    <li>• {t('profile.falseReportsWarning')}</li>
+                    <li>• {t('profile.reportsReviewed48Hours')}</li>
                   </ul>
                 </div>
               </div>

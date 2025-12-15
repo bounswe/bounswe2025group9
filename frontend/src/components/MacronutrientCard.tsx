@@ -106,20 +106,20 @@ const MacronutrientCard = ({ name, current, target, unit, color, icon }: Macronu
       </div>
 
       {/* Additional Info for Calories */}
-      {name === 'Calories' && (
+      {(name === t('food.calories') || name === 'Calories') && (
         <div className="mt-4 pt-4 border-t" style={{ borderColor: 'var(--forum-search-border)' }}>
           <div className="grid grid-cols-3 gap-2 text-center text-xs">
             <div>
               <p className="nh-text opacity-70">{t('profile.breakfast')}</p>
-              <p className="font-semibold text-primary">500 kcal</p>
+                <p className="font-semibold text-primary">500 {t('food.kcal')}</p>
             </div>
             <div>
               <p className="nh-text opacity-70">{t('profile.lunch')}</p>
-              <p className="font-semibold text-primary">610 kcal</p>
+                <p className="font-semibold text-primary">610 {t('food.kcal')}</p>
             </div>
             <div>
               <p className="nh-text opacity-70">{t('profile.dinner')}</p>
-              <p className="font-semibold text-primary">690 kcal</p>
+                <p className="font-semibold text-primary">690 {t('food.kcal')}</p>
             </div>
           </div>
         </div>

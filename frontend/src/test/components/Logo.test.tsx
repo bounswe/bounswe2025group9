@@ -7,7 +7,7 @@ describe('Logo Component', () => {
     render(<Logo />)
     
     // Check if logo image is rendered with correct attributes
-    const logoImage = screen.getByAltText('NutriHub Logo')
+    const logoImage = screen.getAllByAltText('NutriHub Logo')[0]
     expect(logoImage).toBeInTheDocument()
     expect(logoImage).toHaveAttribute('src', '/assets/logo.png')
     expect(logoImage).toHaveClass('w-12', 'h-12')
@@ -22,7 +22,7 @@ describe('Logo Component', () => {
     render(<Logo className={testClass} />)
     
     // Check if the container has the additional class
-    const container = screen.getByAltText('NutriHub Logo').parentElement
+    const container = screen.getAllByAltText('NutriHub Logo')[0].parentElement
     expect(container).toHaveClass(testClass)
     expect(container).toHaveClass('flex', 'items-center', 'justify-center')
   })
