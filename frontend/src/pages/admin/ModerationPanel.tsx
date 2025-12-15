@@ -9,6 +9,7 @@ import {
   Funnel,
   Coins,
 } from '@phosphor-icons/react';
+import { useLanguage } from '../../context/LanguageContext';
 import UserManagement from './tabs/UserManagement';
 import ContentModeration from './tabs/ContentModeration';
 import ReportsQueue from './tabs/ReportsQueue';
@@ -18,50 +19,51 @@ import ModerationStats from './tabs/ModerationStats';
 import PriceModeration from './tabs/PriceModeration';
 
 const ModerationPanel = () => {
+  const { t } = useLanguage();
   const [selectedIndex, setSelectedIndex] = useState(0);
 
   const tabs = [
     {
-      name: 'Reports Queue',
+      name: t('admin.reportsQueue'),
       icon: Flag,
       component: ReportsQueue,
-      description: 'Review flagged content and user reports'
+      description: t('admin.reportsQueueDesc')
     },
     {
-      name: 'Content Moderation',
+      name: t('admin.contentModeration'),
       icon: Article,
       component: ContentModeration,
-      description: 'Manage posts, comments, and community content'
+      description: t('admin.contentModerationDesc')
     },
     {
-      name: 'User Management',
+      name: t('admin.userManagement'),
       icon: Users,
       component: UserManagement,
-      description: 'Manage users, roles, and permissions'
+      description: t('admin.userManagementDesc')
     },
     {
-      name: 'Certificate Verification',
+      name: t('admin.certificateVerification'),
       icon: ShieldCheck,
       component: CertificateVerification,
-      description: 'Verify profession tags and certificates'
+      description: t('admin.certificateVerificationDesc')
     },
     {
-      name: 'Food Proposals',
+      name: t('admin.foodProposals'),
       icon: ForkKnife,
       component: FoodProposals,
-      description: 'Review and approve food item submissions'
+      description: t('admin.foodProposalsDesc')
     },
     {
-      name: 'Price Controls',
+      name: t('admin.priceControls'),
       icon: Coins,
       component: PriceModeration,
-      description: 'Manage food prices, thresholds, and reports'
+      description: t('admin.priceControlsDesc')
     },
     {
-      name: 'Statistics',
+      name: t('admin.statistics'),
       icon: ChartBar,
       component: ModerationStats,
-      description: 'View moderation metrics and insights'
+      description: t('admin.statisticsDesc')
     }
   ];
 
@@ -72,9 +74,9 @@ const ModerationPanel = () => {
       <div className="nh-container">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="nh-title">Moderation Panel</h1>
+          <h1 className="nh-title">{t('admin.moderationPanel')}</h1>
           <p className="nh-text mt-2">
-            Manage content, users, and community standards
+            {t('admin.moderationPanelDesc')}
           </p>
         </div>
 
@@ -84,7 +86,7 @@ const ModerationPanel = () => {
             <div className="sticky top-20">
               <h3 className="nh-subtitle mb-4 flex items-center gap-2">
                 <Funnel size={20} weight="fill" className="text-primary" />
-                Sections
+                {t('admin.sections')}
               </h3>
               <div className="flex flex-col gap-3">
                 {tabs.map((tab, index) => {

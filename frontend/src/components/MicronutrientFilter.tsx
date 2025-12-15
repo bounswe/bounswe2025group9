@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, X } from '@phosphor-icons/react';
 import { apiClient } from '../lib/apiClient';
+import { useLanguage } from '../context/LanguageContext';
 
 export interface MicronutrientFilterItem {
   name: string;
@@ -19,6 +20,7 @@ interface AvailableMicronutrient {
 }
 
 export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterProps) => {
+  const { t } = useLanguage();
   const [newFilterName, setNewFilterName] = useState('');
   const [newFilterMin, setNewFilterMin] = useState('');
   const [newFilterMax, setNewFilterMax] = useState('');
@@ -116,7 +118,7 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
         <div className="relative" ref={suggestionsRef}>
           <input
             type="text"
-            placeholder={loading ? "Loading nutrients..." : "Nutrient name (e.g., iron, vitamin c)"}
+            placeholder={loading ? t('food.loadingNutrients') : t('food.nutrientNamePlaceholder')}
             value={newFilterName}
             onChange={(e) => setNewFilterName(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -232,7 +234,7 @@ export const MicronutrientFilter = ({ filters, onChange }: MicronutrientFilterPr
 								  <button
 								  onClick={() => removeFilter(index)}
 								  className="p-1 rounded transition-colors flex-shrink-0 ml-2"
-								  aria-label="Remove filter"
+								  aria-label={t('common.removeFilter')}
 								  style={{
 									  color: 'var(--color-error, #ef4444)'
 								  }}

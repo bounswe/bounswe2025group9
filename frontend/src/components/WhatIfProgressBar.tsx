@@ -1,3 +1,5 @@
+import { useLanguage } from '../context/LanguageContext';
+
 interface WhatIfProgressBarProps {
   label: string;
   current: number;
@@ -17,6 +19,7 @@ const WhatIfProgressBar = ({
   color,
   plannedColor = 'var(--whatif-progress, #8b5cf6)',
 }: WhatIfProgressBarProps) => {
+  const { t } = useLanguage();
   const total = current + planned;
   const currentPercent = Math.min((current / target) * 100, 100);
   const plannedPercent = Math.min((planned / target) * 100, 100 - currentPercent);
@@ -92,7 +95,7 @@ const WhatIfProgressBar = ({
       {/* Over target warning */}
       {isOverTarget && (
         <p className="text-xs mt-1 text-amber-500">
-          {Math.round(total - target)}{unit} over target
+          {Math.round(total - target)}{unit} {t('nutrition.over')} {t('nutrition.target')}
         </p>
       )}
     </div>

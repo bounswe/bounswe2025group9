@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { ChartBar, TrendUp, TrendDown, Users, Article, Flag, ForkKnife } from '@phosphor-icons/react';
 import { apiClient } from '../../../lib/apiClient';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface Stats {
   totalUsers: number;
@@ -24,6 +25,7 @@ interface Trend {
 }
 
 const ModerationStats = () => {
+  const { t } = useLanguage();
   const [stats, setStats] = useState<Stats | null>(null);
   const [loading, setLoading] = useState(true);
   const [timeRange, setTimeRange] = useState<'week' | 'month' | 'all'>('week');
@@ -102,7 +104,7 @@ const ModerationStats = () => {
   if (!stats) {
     return (
       <div className="text-center py-12 text-gray-500 dark:text-gray-400">
-        Failed to load statistics
+        {t('admin.failedToLoadStatistics')}
       </div>
     );
   }
@@ -125,7 +127,7 @@ const ModerationStats = () => {
                 : 'var(--forum-default-text)'
             }}
           >
-            {range === 'week' ? 'This Week' : range === 'month' ? 'This Month' : 'All Time'}
+            {range === 'week' ? t('admin.thisWeek') : range === 'month' ? t('admin.thisMonth') : t('admin.allTime')}
           </button>
         ))}
       </div>
@@ -133,30 +135,30 @@ const ModerationStats = () => {
       {/* Overview Stats */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Platform Overview
+          {t('admin.platformOverview')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <StatCard
-            title="Total Users"
+            title={t('admin.totalUsers')}
             value={stats.totalUsers}
             icon={Users}
             color="bg-blue-500"
             trend={getTrend(stats.totalUsers, stats.totalUsers - stats.newUsersThisWeek)}
           />
           <StatCard
-            title="Active Users"
+            title={t('admin.activeUsers')}
             value={stats.activeUsers}
             icon={Users}
             color="bg-green-500"
           />
           <StatCard
-            title="New Users This Week"
+            title={t('admin.newUsersThisWeek')}
             value={stats.newUsersThisWeek}
             icon={Users}
             color="bg-purple-500"
           />
           <StatCard
-            title="Total Posts"
+            title={t('admin.totalPosts')}
             value={stats.totalPosts}
             icon={Article}
             color="bg-indigo-500"
@@ -167,23 +169,23 @@ const ModerationStats = () => {
       {/* Moderation Queue */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Moderation Queue
+          {t('admin.moderationQueue')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <StatCard
-            title="Pending Reports"
+            title={t('admin.pendingReports')}
             value={stats.pendingReports}
             icon={Flag}
             color="bg-red-500"
           />
           <StatCard
-            title="Resolved Reports"
+            title={t('admin.resolvedReports')}
             value={stats.resolvedReports}
             icon={Flag}
             color="bg-green-500"
           />
           <StatCard
-            title="Actions This Week"
+            title={t('admin.actionsThisWeek')}
             value={stats.moderationActionsThisWeek}
             icon={ChartBar}
             color="bg-orange-500"
@@ -194,29 +196,29 @@ const ModerationStats = () => {
       {/* Content Reviews */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Content Reviews
+          {t('admin.contentReviews')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <ForkKnife size={20} />
-              Food Proposals
+              {t('admin.foodProposals')}
             </h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Pending</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('admin.pending')}</span>
                 <span className="font-semibold text-yellow-600 dark:text-yellow-400">
                   {stats.pendingFoodProposals}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Approved</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('admin.approved')}</span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
                   {stats.approvedFoodProposals}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">Total</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{t('admin.total')}</span>
                 <span className="font-bold text-gray-900 dark:text-white">
                   {stats.pendingFoodProposals + stats.approvedFoodProposals}
                 </span>
@@ -227,23 +229,23 @@ const ModerationStats = () => {
           <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
             <h4 className="font-medium text-gray-900 dark:text-white mb-4 flex items-center gap-2">
               <Users size={20} />
-              Certificate Verification
+              {t('admin.certificateVerification')}
             </h4>
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Pending</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('admin.pending')}</span>
                 <span className="font-semibold text-yellow-600 dark:text-yellow-400">
                   {stats.pendingCertificates}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Verified</span>
+                <span className="text-sm text-gray-600 dark:text-gray-400">{t('admin.verified')}</span>
                 <span className="font-semibold text-green-600 dark:text-green-400">
                   {stats.verifiedCertificates}
                 </span>
               </div>
               <div className="flex justify-between items-center pt-3 border-t border-gray-200 dark:border-gray-700">
-                <span className="text-sm font-medium text-gray-900 dark:text-white">Total</span>
+                <span className="text-sm font-medium text-gray-900 dark:text-white">{t('admin.total')}</span>
                 <span className="font-bold text-gray-900 dark:text-white">
                   {stats.pendingCertificates + stats.verifiedCertificates}
                 </span>
@@ -256,23 +258,23 @@ const ModerationStats = () => {
       {/* Activity Summary */}
       <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Platform Activity
+          {t('admin.platformActivity')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Total Comments</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('admin.totalComments')}</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {stats.totalComments.toLocaleString()}
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Posts per User</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('admin.postsPerUser')}</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {(stats.totalPosts / stats.totalUsers).toFixed(1)}
             </div>
           </div>
           <div>
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">Engagement Rate</div>
+            <div className="text-sm text-gray-600 dark:text-gray-400 mb-1">{t('admin.engagementRate')}</div>
             <div className="text-2xl font-bold text-gray-900 dark:text-white">
               {((stats.activeUsers / stats.totalUsers) * 100).toFixed(1)}%
             </div>

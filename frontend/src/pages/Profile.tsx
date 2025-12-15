@@ -57,8 +57,8 @@ interface ReportOption {
 }
 
 const REPORT_OPTIONS: ReportOption[] = [
-  { value: 'invalid_certificate', label: 'Invalid certificate' },
-  { value: 'misleading_info', label: 'Misleading information' }
+  { value: 'invalid_certificate', label: 'profile.invalidCertificate' },
+  { value: 'misleading_info', label: 'profile.misleadingInformation' }
 ]
 
 const Profile = () => {
@@ -1650,7 +1650,7 @@ const Profile = () => {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2">Report Reason</label>
+                    <label className="block text-sm font-medium mb-2">{t('profile.reportReason')}</label>
                     <select
                       value={reportReason}
                       onChange={(e) => setReportReason(e.target.value)}
@@ -1659,10 +1659,10 @@ const Profile = () => {
                         borderColor: 'var(--color-bg-tertiary)'
                       }}
                     >
-                      <option value="">Select a reason</option>
+                      <option value="">{t('profile.selectReason')}</option>
                       {REPORT_OPTIONS.map(option => (
                         <option key={option.value} value={option.value}>
-                          {option.label}
+                          {t(option.label)}
                         </option>
                       ))}
                     </select>

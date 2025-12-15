@@ -114,7 +114,7 @@ const WhatIfFoodEntry = ({ entry, onConfirm, onDelete }: WhatIfFoodEntryProps) =
               backgroundColor: 'var(--color-success)',
               color: 'white'
             }}
-            title="Confirm consumption"
+            title={t('nutrition.confirmConsumption')}
           >
             <Check size={18} weight="bold" />
           </button>

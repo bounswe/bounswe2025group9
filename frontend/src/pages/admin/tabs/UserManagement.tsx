@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Users, MagnifyingGlass, ShieldCheck, Warning, Prohibit } from '@phosphor-icons/react';
 import { apiClient } from '../../../lib/apiClient';
+import { useLanguage } from '../../../context/LanguageContext';
 
 interface User {
   id: number;
@@ -22,6 +23,7 @@ interface User {
 }
 
 const UserManagement = () => {
+  const { t } = useLanguage();
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterRole, setFilterRole] = useState<'all' | 'staff' | 'users'>('all');
@@ -57,7 +59,7 @@ const UserManagement = () => {
 
   const handleToggleActive = async (userId: number, active: boolean) => {
     try {
-      const reason = prompt(`Please provide a reason for ${active ? 'activating' : 'suspending'} this user:`);
+      const reason = prompt(t('admin.provideReasonForAction', { action: active ? t('admin.activating') : t('admin.suspending') }));
 
       if (reason === null) return; // User cancelled
 
@@ -68,12 +70,12 @@ const UserManagement = () => {
       fetchUsers();
     } catch (error) {
       console.error('Failed to update user status:', error);
-      alert('Failed to update user status. Please try again.');
+      alert(t('admin.failedToUpdateUserStatus'));
     }
   };
 
   const handleWarnUser = async (userId: number) => {
-    const reason = prompt('Enter warning reason:');
+    const reason = prompt(t('admin.enterWarningReason'));
     if (!reason) return;
 
     try {
@@ -119,7 +121,7 @@ const UserManagement = () => {
           />
           <input
             type="text"
-            placeholder="Search users..."
+            placeholder={t('admin.searchUsers')}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary"
@@ -140,7 +142,7 @@ const UserManagement = () => {
                   : 'var(--forum-default-text)'
               }}
             >
-              {role.charAt(0).toUpperCase() + role.slice(1)}
+              {role === 'all' ? t('admin.all') : role === 'staff' ? t('admin.staff') : t('admin.users')}
             </button>
           ))}
         </div>
@@ -152,22 +154,22 @@ const UserManagement = () => {
           <thead className="bg-gray-50 dark:bg-gray-800">
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                User
+                {t('admin.user')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Email
+                {t('admin.email')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Role
+                {t('admin.role')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Status
+                {t('admin.status')}
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Joined
+                {t('admin.joined')}
               </th>
               <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                Actions
+                {t('admin.actions')}
               </th>
             </tr>
           </thead>
@@ -176,7 +178,7 @@ const UserManagement = () => {
               <tr>
                 <td colSpan={6} className="px-6 py-12 text-center text-gray-500 dark:text-gray-400">
                   <Users size={48} className="mx-auto mb-4 opacity-50" />
-                  <p>No users found</p>
+                  <p>{t('admin.noUsersFound')}</p>
                 </td>
               </tr>
             ) : (
@@ -224,7 +226,7 @@ const UserManagement = () => {
                           : 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
                       }`}
                     >
-                      {user.isSuperuser ? 'Admin' : user.isStaff ? 'Staff' : 'User'}
+                      {user.isSuperuser ? t('admin.admin') : user.isStaff ? t('admin.staff') : t('admin.user')}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -235,11 +237,11 @@ const UserManagement = () => {
                           : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
                       }`}
                     >
-                      {user.isActive ? 'Active' : 'Suspended'}
+                      {user.isActive ? t('admin.active') : t('admin.suspended')}
                     </span>
                     {(user.warningCount || 0) > 0 && (
                       <div className="text-xs text-orange-600 dark:text-orange-400 mt-1">
-                        {user.warningCount} warning{user.warningCount !== 1 ? 's' : ''}
+                        {user.warningCount} {user.warningCount !== 1 ? t('admin.warnings') : t('admin.warning')}
                       </div>
                     )}
                   </td>
@@ -251,7 +253,7 @@ const UserManagement = () => {
                       <button
                         onClick={() => handleWarnUser(user.id)}
                         className="text-yellow-600 hover:text-yellow-900 dark:text-yellow-400 dark:hover:text-yellow-300"
-                        title="Warn user"
+                        title={t('admin.warnUser')}
                       >
                         <Warning size={20} />
                       </button>
@@ -262,7 +264,7 @@ const UserManagement = () => {
                             ? 'text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300'
                             : 'text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300'
                         }`}
-                        title={user.isActive ? 'Suspend user' : 'Activate user'}
+                        title={user.isActive ? t('admin.suspendUser') : t('admin.activateUser')}
                       >
                         <Prohibit size={20} />
                       </button>
