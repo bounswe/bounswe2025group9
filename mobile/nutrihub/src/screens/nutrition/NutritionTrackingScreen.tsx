@@ -1399,7 +1399,7 @@ const NutritionTrackingScreen: React.FC = () => {
                   </Text>
                   {selectedFood.macronutrients && (
                     <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                      {t('nutrition.perAmount', { grams: selectedFood.servingSize || 100 })}: {selectedFood.macronutrients.calories} {t('metrics.kcal')} • {t('nutrition.macroP')}: {selectedFood.macronutrients.protein}g • {t('nutrition.macroC')}: {selectedFood.macronutrients.carbohydrates}g • {t('nutrition.macroF')}: {selectedFood.macronutrients.fat}g
+                      {t('nutrition.perAmount', { grams: 100 })}: {selectedFood.macronutrients.calories} {t('metrics.kcal')} • {t('nutrition.macroP')}: {selectedFood.macronutrients.protein}g • {t('nutrition.macroC')}: {selectedFood.macronutrients.carbohydrates}g • {t('nutrition.macroF')}: {selectedFood.macronutrients.fat}g
                     </Text>
                   )}
                 </View>

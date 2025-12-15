@@ -175,7 +175,7 @@ const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     {item.title}
                 </Text>
                 <Text style={[textStyles.caption, { color: theme.textSecondary }]}>
-                    {item.macronutrients?.calories || 0} kcal • {item.servingSize || 100}g
+                    {item.macronutrients?.calories || 0} kcal per 100g
                 </Text>
             </View>
             <Icon name="chevron-right" size={20} color={theme.textSecondary} />
