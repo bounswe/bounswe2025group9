@@ -22,6 +22,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import ForumPost from '../../components/forum/ForumPost';
 import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
@@ -44,6 +45,7 @@ const PostDetailScreen: React.FC = () => {
   const navigation = useNavigation<PostDetailNavigationProp>();
   const route = useRoute<PostDetailRouteProp>();
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const { posts, updatePost } = usePosts();
   const { user: currentUser } = useAuth();
   
@@ -515,14 +517,14 @@ const PostDetailScreen: React.FC = () => {
           {/* Comments Section */}
           <View style={styles.commentsSection}>
             <Text style={[styles.commentsTitle, textStyles.heading4]}>
-              Comments ({comments.length})
+              {t('forum.comments')} ({comments.length})
             </Text>
             
             {comments.map(renderComment)}
             
             {comments.length === 0 && (
               <Text style={[styles.noCommentsText, textStyles.body]}>
-                No comments yet. Be the first to comment!
+                {t('forum.noComments')} {t('forum.beFirstComment')}
               </Text>
             )}
           </View>
@@ -531,7 +533,7 @@ const PostDetailScreen: React.FC = () => {
         {/* Comment Input */}
         <View style={[styles.commentInputContainer, { backgroundColor: theme.surface, borderTopColor: theme.border }]}>
           <TextInput
-            placeholder="Add a comment..."
+            placeholder={t('forum.addComment')}
             value={newComment}
             onChangeText={setNewComment}
             multiline
@@ -539,7 +541,7 @@ const PostDetailScreen: React.FC = () => {
             editable={!submittingComment}
           />
           <Button
-            title="Submit"
+            title={t('common.submit')}
             onPress={handleAddComment}
             variant="primary"
             size="small"

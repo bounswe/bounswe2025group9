@@ -21,6 +21,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Button from '../../components/common/Button';
 import TextInput from '../../components/common/TextInput';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
@@ -41,6 +42,7 @@ interface LoginFormData {
  */
 const LoginScreen: React.FC = () => {
   const { theme, textStyles, themeType } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<LoginScreenNavigationProp>();
   const { login, error: authError, clearError } = useAuth();
   
@@ -56,17 +58,17 @@ const LoginScreen: React.FC = () => {
     username: [
       { 
         validator: (value: string) => isNotEmpty(value), 
-        message: 'Username is required' 
+        message: t('auth.username') + ' is required' 
       },
       { 
         validator: (value: string) => isValidUsername(value), 
-        message: 'Username can only contain letters, numbers, underscores, and hyphens' 
+        message: t('auth.username') + ' can only contain letters, numbers, underscores, and hyphens' 
       },
     ],
     password: [
       { 
         validator: (value: string) => isNotEmpty(value), 
-        message: 'Password is required' 
+        message: t('auth.password') + ' is required' 
       },
     ],
   };
@@ -137,7 +139,7 @@ const LoginScreen: React.FC = () => {
           <View style={[styles.cardContainer, { backgroundColor: theme.surface }]}>
             <View style={styles.cardHeader}>
               <Icon name="login" size={28} color={themeType === 'light' ? theme.text : "white"} style={styles.cardIcon} />
-              <Text style={[styles.cardTitle, textStyles.heading2]}>Login</Text>
+              <Text style={[styles.cardTitle, textStyles.heading2]}>{t('auth.login')}</Text>
             </View>
           
             {/* Authentication Error Message */}
@@ -161,7 +163,7 @@ const LoginScreen: React.FC = () => {
             <View style={styles.formContainer}>
               {/* Username Input */}
               <TextInput
-                label="Username"
+                label={t('auth.username')}
                 value={values.username}
                 onChangeText={handleChange('username')}
                 onBlur={handleBlur('username')}
@@ -174,7 +176,7 @@ const LoginScreen: React.FC = () => {
               
               {/* Password Input */}
               <TextInput
-                label="Password"
+                label={t('auth.password')}
                 value={values.password}
                 onChangeText={handleChange('password')}
                 onBlur={handleBlur('password')}
@@ -188,7 +190,7 @@ const LoginScreen: React.FC = () => {
               
               {/* Login Button */}
               <Button
-                title={isSubmitting ? "Signing in..." : "Sign In"}
+                title={isSubmitting ? t('common.loading') : t('auth.signIn')}
                 onPress={handleSubmit}
                 loading={isSubmitting}
                 disabled={isSubmitting}
@@ -202,13 +204,13 @@ const LoginScreen: React.FC = () => {
             
             {/* Sign Up Link */}
             <View style={styles.signUpContainer}>
-              <Text style={[styles.signUpText, textStyles.body]}>Don't have an account? </Text>
+              <Text style={[styles.signUpText, textStyles.body]}>{t('auth.noAccount')} </Text>
               <TouchableOpacity 
                 onPress={handleSignUp}
                 testID="signup-button"
                 disabled={isSubmitting}
               >
-                <Text style={[styles.signUpLink, { color: theme.primary }]}>Sign Up</Text>
+                <Text style={[styles.signUpLink, { color: theme.primary }]}>{t('auth.signUp')}</Text>
               </TouchableOpacity>
             </View>
           </View>

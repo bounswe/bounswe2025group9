@@ -23,6 +23,7 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { SPACING, BORDER_RADIUS } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import TextInput from '../../components/common/TextInput';
 import Button from '../../components/common/Button';
 import Card from '../../components/common/Card';
@@ -48,6 +49,7 @@ interface Ingredient {
 const CreatePostScreen: React.FC = () => {
   const navigation = useNavigation<CreatePostNavigationProp>();
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   
   // Post type selection
   const [postType, setPostType] = useState<PostType>('nutrition');
@@ -566,12 +568,12 @@ const CreatePostScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Create New Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.createPost')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -589,7 +591,7 @@ const CreatePostScreen: React.FC = () => {
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
             <Icon name="arrow-left" size={24} color={theme.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, textStyles.heading3]}>Create New Post</Text>
+          <Text style={[styles.headerTitle, textStyles.heading3]}>{t('forum.createPost')}</Text>
           <View style={styles.headerSpacer} />
         </View>
         
@@ -610,7 +612,7 @@ const CreatePostScreen: React.FC = () => {
           
           {/* Post Type Selection */}
           <Card style={styles.section}>
-            <Text style={[styles.sectionTitle, textStyles.subtitle]}>Post Type</Text>
+            <Text style={[styles.sectionTitle, textStyles.subtitle]}>{t('forum.postType')}</Text>
             <View style={styles.postTypeContainer}>
               <TouchableOpacity
                 style={[
@@ -775,7 +777,7 @@ const CreatePostScreen: React.FC = () => {
               {/* Dietary Tags - only show for Recipe */}
               <Card style={styles.section}>
                 <Text style={[styles.sectionTitle, textStyles.subtitle]}>
-                  Dietary Tags <Text style={[styles.optionalLabel, textStyles.caption]}>(optional)</Text>
+                  {t('forum.dietaryTags')} <Text style={[styles.optionalLabel, textStyles.caption]}>({t('common.optional')})</Text>
                 </Text>
                 <View style={styles.dietaryTagsContainer}>
                   <TouchableOpacity

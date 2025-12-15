@@ -22,6 +22,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { PALETTE, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import FoodItemComponent from '../../components/food/FoodItem';
 import FoodDetailModal from '../../components/food/FoodDetailModal';
@@ -70,6 +71,7 @@ const SuccessNotification: React.FC<{
  */
 const FoodScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<FoodScreenNavigationProp>();
 
   // Layout mode state
@@ -550,7 +552,7 @@ const FoodScreen: React.FC = () => {
         {pagination.loading ? (
           <>
             <ActivityIndicator size="small" color={theme.primary} />
-            <Text style={[styles.footerText, textStyles.caption]}>Loading more items...</Text>
+            <Text style={[styles.footerText, textStyles.caption]}>{t('common.loadingMore')}</Text>
           </>
         ) : pagination.hasMore ? (
           <Text style={[styles.footerText, textStyles.caption]}>
@@ -558,7 +560,7 @@ const FoodScreen: React.FC = () => {
           </Text>
         ) : (
           <Text style={[styles.footerText, textStyles.caption]}>
-            {foodData.length > 0 ? 'End of list' : 'No items found'}
+            {foodData.length > 0 ? t('common.endOfList') : t('common.noItemsFound')}
           </Text>
         )}
       </View>
@@ -583,10 +585,10 @@ const FoodScreen: React.FC = () => {
       {/* Header  @claude this is the component */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
-          <Text style={[styles.headerTitle, textStyles.heading2]}>Foods Catalog</Text>
+          <Text style={[styles.headerTitle, textStyles.heading2]}>{t('food.catalog')}</Text>
           <View style={styles.headerButtons}>
             <Button
-              title="Compare"
+              title={t('food.compareFood')}
               variant="primary"
               size="small"
               iconName="chart-line"
@@ -594,7 +596,7 @@ const FoodScreen: React.FC = () => {
               style={styles.compareButton}
             />
             <Button
-              title="Propose Food"
+              title={t('food.proposeFood')}
               variant="primary"
               size="small"
               iconName="plus"
@@ -606,7 +608,7 @@ const FoodScreen: React.FC = () => {
         {/* Search and filter bar */}
         <View style={styles.searchContainer}>
           <TextInput
-            placeholder="Search foods..."
+            placeholder={t('food.searchPlaceholder')}
             onChangeText={setNameFilter}
             value={filters.name}
             iconName="magnify"
@@ -640,7 +642,7 @@ const FoodScreen: React.FC = () => {
         {/* Active filters display */}
         {hasActiveFilters && (
           <View style={styles.activeFiltersContainer}>
-            <Text style={[styles.activeFiltersLabel, textStyles.caption]}>Active filters:</Text>
+            <Text style={[styles.activeFiltersLabel, textStyles.caption]}>{t('food.activeFilters')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -687,7 +689,7 @@ const FoodScreen: React.FC = () => {
                   onPress={() => setPriceCategory(undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Price: {filters.priceCategory}
+                    {t('food.priceCategory')}: {filters.priceCategory}
                   </Text>
                   <Icon
                     name="close"
@@ -704,7 +706,7 @@ const FoodScreen: React.FC = () => {
                   onPress={() => setNutritionScoreRange(undefined, undefined)}
                 >
                   <Text style={[styles.activeFilterText, { color: theme.error }]}>
-                    Nutrition: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
+                    {t('food.nutritionScore')}: {filters.minNutritionScore || 0} - {filters.maxNutritionScore || 10}
                   </Text>
                   <Icon
                     name="close"
@@ -720,7 +722,7 @@ const FoodScreen: React.FC = () => {
 
         {/* Sort options */}
         <View style={styles.sortOptionsContainer}>
-          <Text style={[styles.sortByText, textStyles.body]}>Sort by:</Text>
+          <Text style={[styles.sortByText, textStyles.body]}>{t('food.sortBy')}:</Text>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -751,7 +753,7 @@ const FoodScreen: React.FC = () => {
                     },
                   ]}
                 >
-                  {key.replace(/_/g, ' ')}
+                  {t(`food.sortOptions.${key}`)}
                 </Text>
               </TouchableOpacity>
             ))}
@@ -763,15 +765,15 @@ const FoodScreen: React.FC = () => {
       {isLoading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading foods...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('food.loadingFoods')}</Text>
         </View>
       ) : error ? (
         <View style={styles.emptyContainer}>
           <Icon name="alert-circle" size={64} color={theme.error} />
-          <Text style={[styles.emptyTitle, textStyles.heading4]}>Error loading foods</Text>
+          <Text style={[styles.emptyTitle, textStyles.heading4]}>{t('food.errorLoadingFoods')}</Text>
           <Text style={[styles.emptyText, textStyles.body]}>{error}</Text>
           <Button
-            title="Retry"
+            title={t('common.retry')}
             onPress={() => fetchFoodData(false)}
             variant="primary"
             style={styles.emptyButton}
@@ -787,7 +789,7 @@ const FoodScreen: React.FC = () => {
               fetchFoodData();
             }}
           >
-            <Text style={styles.debugText}>Debug API Connection</Text>
+            <Text style={styles.debugText}>{t('common.debugApiConnection')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
@@ -829,14 +831,14 @@ const FoodScreen: React.FC = () => {
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Icon name="food-off" size={64} color={theme.textSecondary} />
-              <Text style={[styles.emptyTitle, textStyles.heading4]}>No foods found</Text>
+              <Text style={[styles.emptyTitle, textStyles.heading4]}>{t('food.noFoodsFound')}</Text>
               <Text style={[styles.emptyText, textStyles.body]}>
                 {hasActiveFilters
-                  ? 'Try adjusting your filters to see more results'
-                  : 'Start by adding some foods to the catalog'}
+                  ? t('food.tryAdjustingFilters')
+                  : t('food.startByAddingFoods')}
               </Text>
               <Button
-                title={hasActiveFilters ? "Reset Filters" : "Add Food"}
+                title={hasActiveFilters ? t('food.resetFilters') : t('food.addFood')}
                 onPress={hasActiveFilters ? resetFilters : () => setProposeFoodModalVisible(true)}
                 variant="primary"
                 style={styles.emptyButton}

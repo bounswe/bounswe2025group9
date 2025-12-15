@@ -38,6 +38,7 @@ import NutritionTrackingScreen from '../screens/nutrition/NutritionTrackingScree
 import { MainTabParamList, RootStackParamList, ForumStackParamList, ProfileStackParamList, FoodStackParamList } from './types';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList>;
@@ -52,6 +53,7 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
   const navigation = useNavigation<NavigationProp>();
   const { logout, user } = useAuth();
   const { theme, themeType, toggleTheme, textStyles } = useTheme();
+  const { t } = useLanguage();
 
   // Get display name from user's name and surname
   const getDisplayName = () => {
@@ -101,7 +103,7 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
             onPress={() => logout()}
           >
             <Icon name="logout" size={18} color={theme.headerBackground} />
-            <Text style={[styles.actionButtonText, { color: theme.headerBackground }]}>Log out</Text>
+            <Text style={[styles.actionButtonText, { color: theme.headerBackground }]}>{t('auth.logout')}</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -158,6 +160,7 @@ const RootStack = createNativeStackNavigator<MainTabParamList>();
 
 const TabNavigator = () => {
   const { theme } = useTheme();
+  const { t } = useLanguage();
   
   return (
     <Tab.Navigator
@@ -195,10 +198,10 @@ const TabNavigator = () => {
         },
       })}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
-      <Tab.Screen name="Food" component={FoodStackNavigator} />
-      <Tab.Screen name="Forum" component={ForumStackNavigator} />
-      <Tab.Screen name="MyProfile" component={ProfileStackNavigator} />
+      <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: t('navigation.home') }} />
+      <Tab.Screen name="Food" component={FoodStackNavigator} options={{ tabBarLabel: t('navigation.food') }} />
+      <Tab.Screen name="Forum" component={ForumStackNavigator} options={{ tabBarLabel: t('navigation.forum') }} />
+      <Tab.Screen name="MyProfile" component={ProfileStackNavigator} options={{ tabBarLabel: t('navigation.profile') }} />
     </Tab.Navigator>
   );
 };

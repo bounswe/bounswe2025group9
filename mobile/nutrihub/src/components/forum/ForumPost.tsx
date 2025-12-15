@@ -9,6 +9,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ViewStyle, TextStyle } from '
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { BORDER_RADIUS, SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import Card from '../common/Card';
 import Button from '../common/Button';
 import Avatar from '../common/Avatar';
@@ -103,6 +104,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
   likeButtonText,
 }) => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   
   // Format date to a human-readable string
   const formatDate = (date: Date): string => {
@@ -112,14 +114,16 @@ const ForumPost: React.FC<ForumPostProps> = ({
     const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
     const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
     
-    if (diffInMinutes < 60) {
-      return `${diffInMinutes} ${diffInMinutes === 1 ? 'minute' : 'minutes'} ago`;
+    if (diffInMinutes < 1) {
+      return t('time.justNow');
+    } else if (diffInMinutes < 60) {
+      return t('time.minutesAgo', { count: diffInMinutes });
     } else if (diffInHours < 24) {
-      return `${diffInHours} ${diffInHours === 1 ? 'hour' : 'hours'} ago`;
+      return t('time.hoursAgo', { count: diffInHours });
     } else if (diffInDays < 7) {
-      return `${diffInDays} ${diffInDays === 1 ? 'day' : 'days'} ago`;
+      return t('time.daysAgo', { count: diffInDays });
     } else {
-      return date.toLocaleDateString('en-US', {
+      return date.toLocaleDateString(undefined, {
         year: 'numeric',
         month: 'short',
         day: 'numeric',
@@ -250,7 +254,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
       {/* Ingredient matches */}
       {ingredientMatches && ingredientMatches.length > 0 && (
         <View style={styles.ingredientContainer}>
-          <Text style={[styles.ingredientLabel, { color: theme.primary }]}>INCLUDES:</Text>
+          <Text style={[styles.ingredientLabel, { color: theme.primary }]}>{t('forum.includes')}:</Text>
           <View style={styles.ingredientBadges}>
             {ingredientMatches.slice(0, 2).map((match, index) => (
               <View
@@ -268,7 +272,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
             ))}
             {ingredientMatches.length > 2 && (
               <Text style={[styles.ingredientMoreText, { color: theme.textSecondary }]}>
-                +{ingredientMatches.length - 2} more
+                +{ingredientMatches.length - 2} {t('common.more')}
               </Text>
             )}
           </View>
@@ -288,7 +292,7 @@ const ForumPost: React.FC<ForumPostProps> = ({
         {preview && post.content.length > 150 && (
           <TouchableOpacity onPress={handlePress}>
             <Text style={[styles.readMore, { color: theme.primary }]}>
-              Read more
+              {t('buttons.seeMore')}
             </Text>
           </TouchableOpacity>
         )}

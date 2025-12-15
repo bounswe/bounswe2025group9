@@ -20,6 +20,7 @@ import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { SPACING } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useLanguage } from '../../context/LanguageContext';
 import ForumPost from '../../components/forum/ForumPost';
 import { MaterialCommunityIcons as Icon } from '@expo/vector-icons';
 import { ForumTopic, FoodItem, RecipeIngredient } from '../../types/types';
@@ -121,6 +122,7 @@ type ForumScreenRouteProp = RouteProp<ForumStackParamList, 'ForumList'>;
  */
 const ForumScreen: React.FC = () => {
   const { theme, textStyles } = useTheme();
+  const { t } = useLanguage();
   const navigation = useNavigation<ForumScreenNavigationProp>();
   const route = useRoute<ForumScreenRouteProp>();
   const [loading, setLoading] = useState(true);
@@ -684,14 +686,14 @@ const ForumScreen: React.FC = () => {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
+          <Text style={[styles.headerTitle, textStyles.heading2]}>{t('forum.title')}</Text>
           <Text style={[styles.subtitle, textStyles.caption]}>
-            Join discussions about nutrition, recipes, and healthy eating.
+            {t('forum.subtitle')}
           </Text>
         </View>
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color={theme.primary} />
-          <Text style={[styles.loadingText, textStyles.body]}>Loading posts...</Text>
+          <Text style={[styles.loadingText, textStyles.body]}>{t('forum.loadingPosts')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -701,9 +703,9 @@ const ForumScreen: React.FC = () => {
     return (
       <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
+          <Text style={[styles.headerTitle, textStyles.heading2]}>{t('forum.title')}</Text>
           <Text style={[styles.subtitle, textStyles.caption]}>
-            Join discussions about nutrition, recipes, and healthy eating.
+            {t('forum.subtitle')}
           </Text>
         </View>
         <View style={styles.errorContainer}>
@@ -716,7 +718,7 @@ const ForumScreen: React.FC = () => {
               handleRefresh();
             }}
           >
-            <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>Retry</Text>
+            <Text style={[styles.retryButtonText, { color: '#FFFFFF' }]}>{t('common.retry')}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
@@ -726,16 +728,16 @@ const ForumScreen: React.FC = () => {
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
-        <Text style={[styles.headerTitle, textStyles.heading2]}>Community Forum</Text>
+        <Text style={[styles.headerTitle, textStyles.heading2]}>{t('forum.title')}</Text>
         <Text style={[styles.subtitle, textStyles.caption]}>
-          Connect with others, share recipes, and get nutrition advice from our community.
+          {t('forum.subtitle')}
         </Text>
       </View>
       
       {selectedFoods.length > 0 && foodFilterLoading && (
         <View style={[styles.searchStatus, { backgroundColor: theme.surfaceVariant, borderColor: theme.border }]}>
           <Text style={[styles.searchStatusText, textStyles.body]}>
-            Checking recipes for selected foods...
+            {t('forum.checkingRecipes')}
           </Text>
         </View>
       )}
@@ -753,7 +755,7 @@ const ForumScreen: React.FC = () => {
             style={[styles.searchInput, { color: theme.text }]}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            placeholder="Search posts by title..."
+            placeholder={t('forum.searchPosts')}
             placeholderTextColor={theme.textSecondary}
             onSubmitEditing={handleSearch}
             returnKeyType="search"
@@ -768,7 +770,7 @@ const ForumScreen: React.FC = () => {
           style={[styles.searchButton, { backgroundColor: theme.primary }]}
           onPress={handleSearch}
         >
-          <Text style={[styles.searchButtonText, { color: '#FFFFFF' }]}>Search</Text>
+          <Text style={[styles.searchButtonText, { color: '#FFFFFF' }]}>{t('common.search')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -797,7 +799,7 @@ const ForumScreen: React.FC = () => {
           </Text>
           <TouchableOpacity onPress={clearSearch} style={styles.clearSearchButton}>
             <Icon name="close" size={16} color={theme.primary} />
-            <Text style={[styles.clearSearchText, { color: theme.primary }]}>Clear search</Text>
+            <Text style={[styles.clearSearchText, { color: theme.primary }]}>{t('common.clear')}</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -806,7 +808,7 @@ const ForumScreen: React.FC = () => {
       <View style={styles.filtersContainer}>
         <View style={styles.filterHeader}>
           <Icon name="filter-variant" size={18} color={theme.text} />
-          <Text style={[styles.filterHeaderText, textStyles.body]}>Filter Posts</Text>
+          <Text style={[styles.filterHeaderText, textStyles.body]}>{t('forum.filterPosts')}</Text>
         </View>
         
         <View style={styles.filterOptions}>
@@ -837,7 +839,7 @@ const ForumScreen: React.FC = () => {
                 }
               ]}
             >
-              Dietary Tips
+              {t('forum.dietaryTips')}
             </Text>
           </TouchableOpacity>
           
@@ -868,7 +870,7 @@ const ForumScreen: React.FC = () => {
                 }
               ]}
             >
-              Recipes
+              {t('forum.recipes')}
             </Text>
           </TouchableOpacity>
           
@@ -899,7 +901,7 @@ const ForumScreen: React.FC = () => {
                 }
               ]}
             >
-              Meal Plans
+              {t('forum.mealPlans')}
             </Text>
           </TouchableOpacity>
         </View>
@@ -912,7 +914,7 @@ const ForumScreen: React.FC = () => {
           >
             <Icon name="silverware-fork-knife" size={18} color="#fff" />
             <Text style={[styles.foodFilterButtonText, { color: '#fff' }]}>
-              Filter by Food Items
+              {t('forum.filterByFoodItems')}
             </Text>
           </TouchableOpacity>
 
@@ -929,7 +931,7 @@ const ForumScreen: React.FC = () => {
                 </View>
               ))}
               <TouchableOpacity onPress={clearFoodFilters}>
-                <Text style={[styles.clearFoodsText, { color: theme.primary }]}>Clear foods</Text>
+                <Text style={[styles.clearFoodsText, { color: theme.primary }]}>{t('forum.clearFoods')}</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -947,13 +949,13 @@ const ForumScreen: React.FC = () => {
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
             <Icon name="forum-outline" size={64} color={theme.textSecondary} />
-            <Text style={[styles.emptyTitle, textStyles.heading4]}>No posts found</Text>
+            <Text style={[styles.emptyTitle, textStyles.heading4]}>{t('forum.noPostsFound')}</Text>
             <Text style={[styles.emptyText, textStyles.body]}>
               {isSearching
-                ? `No posts match your search for "${searchQuery}". Try different keywords or clear your search.`
+                ? t('forum.noPostsMatchSearch', { query: searchQuery })
                 : selectedTagIds.length > 0 || selectedFoods.length > 0
-                ? 'Try adjusting your filters or be the first to post in this category!'
-                : 'Be the first to start a discussion!'}
+                ? t('forum.tryAdjustingFiltersOrPostFirst')
+                : t('forum.beFirstToStartDiscussion')}
             </Text>
           </View>
         }
@@ -964,7 +966,7 @@ const ForumScreen: React.FC = () => {
         onPress={handleNewPost}
       >
         <Icon name="plus" size={20} color="#FFFFFF" />
-        <Text style={[styles.newPostText, { color: '#FFFFFF' }]}>New Post</Text>
+        <Text style={[styles.newPostText, { color: '#FFFFFF' }]}>{t('forum.newPost')}</Text>
       </TouchableOpacity>
 
       <FoodSelectorModal
