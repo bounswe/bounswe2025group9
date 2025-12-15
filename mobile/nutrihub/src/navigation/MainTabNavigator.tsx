@@ -65,9 +65,9 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
     <SafeAreaView edges={['top']} style={{ backgroundColor: theme.headerBackground }}>
       <View style={[styles.header, { backgroundColor: theme.headerBackground, borderBottomColor: theme.border }]}>
         <View style={styles.logoContainer}>
-          <Image 
-            source={require('../../assets/logo.png')} 
-            style={styles.logoImage} 
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logoImage}
             resizeMode="contain"
           />
           <View style={styles.logoTextContainer}>
@@ -79,24 +79,24 @@ const Header: React.FC<{ title?: string }> = ({ title }) => {
             </Text>
           </View>
         </View>
-        
+
         <View style={styles.rightContainer}>
           {/* Theme Toggle Button */}
-          <TouchableOpacity 
-            style={styles.iconButton} 
+          <TouchableOpacity
+            style={styles.iconButton}
             onPress={toggleTheme}
-            accessibilityRole="button" 
+            accessibilityRole="button"
             accessibilityLabel="Toggle theme"
           >
-            <Icon 
-              name={themeType === 'dark' ? 'weather-sunny' : 'weather-night'} 
-              size={22} 
-              color={theme.headerText} 
+            <Icon
+              name={themeType === 'dark' ? 'weather-sunny' : 'weather-night'}
+              size={22}
+              color={theme.headerText}
             />
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[styles.actionButton, { backgroundColor: PALETTE.NEUTRAL.WHITE }]} 
+
+          <TouchableOpacity
+            style={[styles.actionButton, { backgroundColor: PALETTE.NEUTRAL.WHITE }]}
             onPress={() => logout()}
           >
             <Icon name="logout" size={18} color={theme.headerBackground} />
@@ -156,13 +156,14 @@ const RootStack = createNativeStackNavigator<MainTabParamList>();
 
 const TabNavigator = () => {
   const { theme } = useTheme();
-  
+
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({ 
-        headerShown: false, 
+      screenOptions={({ route }) => ({
+        headerShown: false,
         tabBarActiveTintColor: theme.tabBarActiveColor,
         tabBarInactiveTintColor: theme.tabBarInactiveColor,
+        tabBarHideOnKeyboard: true,
         tabBarStyle: {
           backgroundColor: theme.tabBarBackground,
           borderTopColor: 'transparent',
@@ -187,9 +188,9 @@ const TabNavigator = () => {
           } else if (route.name === 'MyProfile') {
             iconName = focused ? 'account' : 'account-outline';
           } else {
-            iconName = 'help-circle'; 
+            iconName = 'help-circle';
           }
-          return <Icon name={iconName} size={focused? 26 : 24} color={color} />;
+          return <Icon name={iconName} size={focused ? 26 : 24} color={color} />;
         },
       })}
     >
@@ -222,8 +223,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: SPACING.md, 
-    paddingVertical: SPACING.sm, 
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
     borderBottomWidth: 1,
   },
   logoContainer: {
