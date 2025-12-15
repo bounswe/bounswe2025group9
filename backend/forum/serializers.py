@@ -21,6 +21,7 @@ class PostSerializer(serializers.ModelSerializer):
     )
     like_count = serializers.SerializerMethodField(read_only=True)
     has_recipe = serializers.SerializerMethodField(read_only=True)
+    comments_count = serializers.SerializerMethodField(read_only=True)
 
     class Meta:
         model = Post
@@ -32,6 +33,7 @@ class PostSerializer(serializers.ModelSerializer):
             "tags",
             "tag_ids",
             "like_count",
+            "comments_count",
             "has_recipe",
             "created_at",
             "updated_at",
@@ -41,10 +43,14 @@ class PostSerializer(serializers.ModelSerializer):
             "author",
             "tags",
             "like_count",
+            "comments_count",
             "has_recipe",
             "created_at",
             "updated_at",
         ]
+
+    def get_comments_count(self, obj):
+        return obj.comments.count()
 
     def get_like_count(self, obj):
         return obj.likes.count()

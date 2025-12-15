@@ -205,7 +205,7 @@ const ForumPostCard = ({ post, isLiked, onLikeToggle, ingredientMatches }: Forum
                         <div className="flex items-center justify-center">
                             <ChatDots size={16} weight="fill" className="flex-shrink-0" />
                         </div>
-                        Comments
+                        Comments : {post.comments_count || 0}
                     </Link>
                     <button 
                         onClick={(e) => {

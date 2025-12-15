@@ -134,6 +134,7 @@ export interface ForumPost {
   updated_at: string;
   tags: ForumTag[];
   likes: number;
+  comments_count?: number;
   liked: boolean;
   has_recipe?: boolean;
 }
