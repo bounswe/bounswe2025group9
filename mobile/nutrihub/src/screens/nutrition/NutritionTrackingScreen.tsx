@@ -345,47 +345,53 @@ const NutritionTrackingScreen: React.FC = () => {
 
       // Check if this is a private food (negative ID)
       if (isSelectedFoodPrivate || selectedFood.id < 0) {
-        // Private foods can't be sent to backend - save to AsyncStorage
+        // Private foods - sync to backend for cross-platform visibility
         const macros = selectedFood.macronutrients;
-        const dateStr = selectedDate.toISOString().split('T')[0];
 
-        const entryData = {
-          food_id: selectedFood.id,
-          food_name: `${selectedFood.title} (${t('food.privateFoods')})`,
-          serving_size: numServingSize,
-          serving_unit: servingUnit,
-          meal_type: selectedMeal,
-          calories: Math.round((macros?.calories || 0) * multiplier),
-          protein: Math.round((macros?.protein || 0) * multiplier * 10) / 10,
-          carbohydrates: Math.round((macros?.carbohydrates || 0) * multiplier * 10) / 10,
-          fat: Math.round((macros?.fat || 0) * multiplier * 10) / 10,
-          logged_at: new Date().toISOString(),
-          date: dateStr,
-        };
+        // Get the backend food ID for this private food
+        let backendFoodId: number;
 
-        // Save to AsyncStorage
-        const savedEntry = await privateFoodService.addPrivateFoodEntry(entryData);
-
-        // Update local state and UI
-        const newEntry = savedEntry as FoodLogEntry;
-        setPrivateFoodEntries(prev => [...prev, newEntry]);
-
-        // Also update dailyLog immediately for instant UI feedback
-        if (dailyLog) {
-          const updatedEntries = [...(dailyLog.entries || []), newEntry];
-          setDailyLog({
-            ...dailyLog,
-            entries: updatedEntries,
-            total_calories: parseFloat(String(dailyLog.total_calories || 0)) + newEntry.calories,
-            total_protein: parseFloat(String(dailyLog.total_protein || 0)) + newEntry.protein,
-            total_carbohydrates: parseFloat(String(dailyLog.total_carbohydrates || 0)) + newEntry.carbohydrates,
-            total_fat: parseFloat(String(dailyLog.total_fat || 0)) + newEntry.fat,
-          });
+        if (selectedPrivateFoodData && selectedPrivateFoodData.id) {
+          // Private food already exists in backend - use its ID
+          // The ID from getPrivateFoodsAsFoodItems is negated, so we need the original
+          backendFoodId = parseInt(String(selectedPrivateFoodData.id));
+        } else {
+          // Need to create the private food in backend first
+          try {
+            const newPrivateFood = await privateFoodService.addPrivateFood({
+              name: selectedFood.title,
+              category: selectedFood.category?.toString() || 'Other',
+              servingSize: selectedFood.servingSize || 100,
+              calories: macros?.calories || 0,
+              protein: macros?.protein || 0,
+              carbohydrates: macros?.carbohydrates || 0,
+              fat: macros?.fat || 0,
+              dietaryOptions: selectedFood.dietaryOptions?.map((d: any) => String(d)) || [],
+            });
+            backendFoodId = parseInt(String(newPrivateFood.id));
+          } catch (createError: any) {
+            console.error('Error creating private food in backend:', createError);
+            Alert.alert(t('common.error'), t('nutrition.failedToCreatePrivateFood') || 'Failed to create private food');
+            setLoading(false);
+            return;
+          }
         }
 
-        Alert.alert(t('nutrition.privateFoodAddedTitle'), t('nutrition.privateFoodAddedMessage'), [
-          { text: t('common.ok') },
+        // Now create the log entry using the backend food ID
+        await nutritionService.addFoodEntry({
+          date: dateStr,
+          food_id: backendFoodId,
+          serving_size: multiplier,
+          serving_unit: servingUnit,
+          meal_type: selectedMeal,
+        });
+
+        // Refresh both daily and weekly logs to keep them in sync
+        await Promise.all([
+          fetchDailyLog(),
+          fetchWeeklyLogs()
         ]);
+
       } else {
         // Regular food - send to backend
         await nutritionService.addFoodEntry({
