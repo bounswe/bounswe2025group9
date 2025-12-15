@@ -52,6 +52,14 @@ export interface DailyNutritionLog {
     carbohydrates: number;
     fat: number;
   };
+  hydration_actual?: number;
+  hydration_target?: number;
+  hydration_ratio?: number;
+  hydration_penalty?: number;
+  hydration_component?: number;
+  base_nutrition_score?: number | null;
+  hydration_adjusted_score?: number | null;
+  nutrition_score?: number | null;
   created_at?: string;
   updated_at?: string;
 }
@@ -62,7 +70,7 @@ export interface NutritionTargets {
   carbohydrates: number; // in grams
   fat: number; // in grams
   micronutrients: {
-    [key: string]: number;
+    [key: string]: number | { target: number; maximum?: number };
   };
   is_custom: boolean;
   bmr: number;

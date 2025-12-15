@@ -268,6 +268,19 @@ class NutritionTargets(models.Model):
             user_metrics.age,
             user_metrics.gender
         )
+
+        # Hydration target: weight-based (35 ml/kg) 
+        try:
+            weight_kg = float(user_metrics.weight)
+            weight_based = weight_kg * 35  # ml ~= grams
+        except Exception:
+            weight_based = 0.0
+
+        baseline = 3700 if user_metrics.gender == 'M' else 2700
+        hydration_target = weight_based if weight_based > 0 else baseline
+
+        # Store as simple number for consistency with frontend consumption
+        micronutrient_targets["Water (g)"] = round(hydration_target, 2)
         
         targets, created = cls.objects.update_or_create(
             user=user_metrics.user,

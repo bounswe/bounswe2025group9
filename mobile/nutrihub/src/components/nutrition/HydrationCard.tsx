@@ -99,13 +99,10 @@ const HydrationCard: React.FC<HydrationCardProps> = ({ current, target, penalty,
               </TouchableOpacity>
             </View>
             <Text style={[textStyles.body, { color: theme.text }]}>
-              Your daily water target comes from your profile&apos;s nutrition targets
-              (Adequate Intake: ~3700 g for males, ~2700 g for females). You can adjust it
-              in Nutrition Targets.
+              Your daily water target is weight-based: about 35 ml per kg of body weight. We also compare it to the Adequate Intake baseline (~3700 g for males, ~2700 g for females) and use whichever is higher. You can adjust it in Nutrition Targets.
             </Text>
             <Text style={[textStyles.body, { color: theme.text, marginTop: SPACING.sm }]}>
-              The nutrition score loses up to 2.00 points when you are below target.
-              Log water by adding foods with “Water (g)” (e.g., plain water) to improve your intake.
+              The nutrition score can lose up to 2.00 points when you are below target. Log water by adding foods with “Water (g)” (e.g., plain water) to improve your intake.
             </Text>
           </View>
         </View>

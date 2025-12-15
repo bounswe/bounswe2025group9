@@ -176,17 +176,24 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
     hydration_target = serializers.SerializerMethodField(read_only=True)
     hydration_ratio = serializers.SerializerMethodField(read_only=True)
     hydration_penalty = serializers.SerializerMethodField(read_only=True)
+    hydration_component = serializers.SerializerMethodField(read_only=True)
     base_nutrition_score = serializers.SerializerMethodField(read_only=True)
     hydration_adjusted_score = serializers.SerializerMethodField(read_only=True)
+    nutrition_score = serializers.SerializerMethodField(read_only=True)
+
+    # Hydration contributes up to this many points (20% of total score)
+    HYDRATION_WEIGHT = 2.0
 
     class Meta:
         from .models import DailyNutritionLog
         model = DailyNutritionLog
         fields = [
             'date', 'total_calories', 'total_protein', 'total_carbohydrates',
-            'total_fat', 'micronutrients_summary', 'entries', 'targets', 'adherence',
-            'hydration_actual', 'hydration_target', 'hydration_ratio', 'hydration_penalty',
-            'base_nutrition_score', 'hydration_adjusted_score',
+            'total_fat', 'micronutrients_summary', 'entries',
+            'targets', 'adherence',
+            'hydration_actual', 'hydration_target', 'hydration_ratio',
+            'hydration_penalty', 'hydration_component',
+            'base_nutrition_score', 'hydration_adjusted_score', 'nutrition_score',
             'created_at', 'updated_at'
         ]
         read_only_fields = [
@@ -229,7 +236,16 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
         target = 0.0
 
         try:
-            actual = float(obj.micronutrients_summary.get("Water (g)", 0) or 0)
+            summary = obj.micronutrients_summary or {}
+            # Accept both "Water (g)" and "Water" keys to cover data inconsistencies
+            actual_val = summary.get("Water (g)", summary.get("Water", 0))
+            # Fallback: try any key that lower-matches "water"
+            if actual_val in (None, 0) and isinstance(summary, dict):
+                for k, v in summary.items():
+                    if isinstance(k, str) and k.lower() == "water":
+                        actual_val = v
+                        break
+            actual = float(actual_val or 0)
         except (TypeError, ValueError):
             actual = 0.0
 
@@ -297,8 +313,17 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
         - Linear penalty up to -2.0 points when hydration is at 0%.
         """
         ratio = self.get_hydration_ratio(obj)
-        penalty = -2.0 * max(0.0, 1.0 - ratio)
+        penalty = -self.HYDRATION_WEIGHT * max(0.0, 1.0 - ratio)
         return round(penalty, 2)
+
+    def get_hydration_component(self, obj):
+        """
+        Positive hydration contribution (0 to HYDRATION_WEIGHT).
+        Useful for UI breakdowns.
+        """
+        ratio = self.get_hydration_ratio(obj)
+        component = self.HYDRATION_WEIGHT * max(0.0, min(1.0, ratio))
+        return round(component, 2)
 
     def get_hydration_adjusted_score(self, obj):
         """
@@ -312,6 +337,12 @@ class DailyNutritionLogSerializer(serializers.ModelSerializer):
         adjusted = base + self.get_hydration_penalty(obj)
         # Clamp to 0-10
         return round(max(0.0, min(10.0, adjusted)), 2)
+
+    def get_nutrition_score(self, obj):
+        """
+        Alias for the final score so frontend can rely on a single field.
+        """
+        return self.get_hydration_adjusted_score(obj)
 
 
 class DailyNutritionLogListSerializer(serializers.ModelSerializer):

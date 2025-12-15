@@ -55,7 +55,10 @@ const NutritionTrackingPage = () => {
     if (raw && typeof raw === 'object' && 'target' in raw) return raw.target as number;
     return 0;
   })();
-  const waterActual = nutritionData.todayLog?.micronutrients_summary?.['Water (g)'] ?? 0;
+  const waterActual =
+    nutritionData.todayLog?.micronutrients_summary?.['Water (g)'] ??
+    nutritionData.todayLog?.micronutrients_summary?.['Water'] ??
+    0;
   const waterRatio = waterTarget > 0 ? waterActual / waterTarget : 0;
   const waterBarColor =
     waterRatio === 0
@@ -63,6 +66,48 @@ const NutritionTrackingPage = () => {
       : waterRatio >= 1
         ? 'var(--color-success)'
         : 'var(--color-primary)';
+
+  const hydrationWeight = 2; // max hydration contribution in points
+  const baseScore = nutritionData.todayLog?.base_nutrition_score ?? null;
+  const hydrationPenalty = nutritionData.todayLog?.hydration_penalty ?? 0;
+  const hydrationContribution = Math.min(
+    hydrationWeight,
+    Math.max(
+      0,
+      nutritionData.todayLog?.hydration_component ??
+        (waterTarget > 0 ? Math.min(1, waterRatio) * hydrationWeight : 0)
+    )
+  );
+  const finalScore =
+    nutritionData.todayLog?.nutrition_score ??
+    nutritionData.todayLog?.hydration_adjusted_score ??
+    (baseScore !== null
+      ? Math.max(0, Math.min(10, baseScore + hydrationPenalty))
+      : null);
+
+  // Calculate planned entries totals
+  const plannedTotals = {
+    calories: 0,
+    protein: 0,
+    carbohydrates: 0,
+    fat: 0
+  };
+  const plannedMicronutrients: { [key: string]: number } = {};
+  
+  if (nutritionData.todayLog?.planned_entries) {
+    nutritionData.todayLog.planned_entries.forEach(entry => {
+      plannedTotals.calories += Number(entry.calories) || 0;
+      plannedTotals.protein += Number(entry.protein) || 0;
+      plannedTotals.carbohydrates += Number(entry.carbohydrates) || 0;
+      plannedTotals.fat += Number(entry.fat) || 0;
+      // Sum micronutrients from planned entries
+      if (entry.micronutrients) {
+        Object.entries(entry.micronutrients).forEach(([key, value]) => {
+          plannedMicronutrients[key] = (plannedMicronutrients[key] || 0) + (Number(value) || 0);
+        });
+      }
+    });
+  }
 
   return (
     <div className="w-full py-12">
@@ -99,6 +144,87 @@ const NutritionTrackingPage = () => {
           {/* Right sidebar - Daily Targets */}
           <div className="w-full md:w-1/5">
             <div className="sticky top-20 flex flex-col gap-4">
+              {nutritionData.todayLog && (
+                <div className="nh-card rounded-lg shadow-md">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="nh-subtitle text-sm">Nutrition Score</h3>
+                    <button
+                      className="p-1 rounded text-[var(--color-text-secondary)]"
+                      style={{ backgroundColor: 'var(--color-bg-tertiary)' }}
+                      title="Food quality + hydration. Hydration can move the score by up to ±2.0 points."
+                    >
+                      <Info size={14} />
+                    </button>
+                  </div>
+
+                  <div className="flex items-end gap-2 mb-2">
+                    <span className="text-2xl font-bold">
+                      {finalScore !== null ? finalScore.toFixed(2) : '--'}
+                    </span>
+                    <span className="text-xs text-[var(--color-text-secondary)]">/ 10.00</span>
+                  </div>
+
+                  <div
+                    className="w-full rounded-full h-2 border border-[var(--color-border)] overflow-hidden bg-[var(--color-bg-secondary)]"
+                  >
+                    <div
+                      className="h-2 rounded-full transition-all"
+                      style={{
+                        width: `${Math.min(100, Math.max(0, (finalScore || 0) * 10))}%`,
+                        backgroundColor: 'var(--color-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div className="mt-3 space-y-1 text-xs text-[var(--color-text-secondary)]">
+                    <div className="flex items-center justify-between">
+                      <span>Food quality</span>
+                      <span>{baseScore !== null ? `${baseScore.toFixed(2)} pts` : '--'}</span>
+                    </div>
+                    <div
+                      className="flex items-center justify-between"
+                      title="Hydration can add up to 2.0 pts when you meet your target; shortfalls reduce the score linearly."
+                    >
+                      <span className="flex items-center gap-1">
+                        Hydration impact
+                        <Info size={12} />
+                      </span>
+                      <span
+                        className={hydrationPenalty < 0 ? 'text-[var(--color-error)]' : 'text-[var(--color-success)]'}
+                      >
+                        {hydrationPenalty > 0 ? '+' : ''}{hydrationPenalty.toFixed(2)} pts
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Hydration contribution</span>
+                      <span>{hydrationContribution.toFixed(2)} / {hydrationWeight.toFixed(2)} pts</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Hydration progress</span>
+                      <span>
+                        {waterTarget > 0 ? `${Math.min(100, Math.round(waterRatio * 100))}%` : '—'}
+                      </span>
+                    </div>
+                    <div
+                      className="w-full rounded-full h-1.5"
+                      style={{ backgroundColor: 'var(--color-bg-secondary)' }}
+                    >
+                      <div
+                        className="h-1.5 rounded-full transition-all"
+                        style={{
+                          width: `${Math.min(100, Math.max(0, waterRatio * 100))}%`,
+                          backgroundColor: waterBarColor
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+
+                  <p className="mt-3 text-[11px] text-[var(--color-text-tertiary)] leading-tight">
+                    Hydration adds up to 2.0 pts when you meet your target. Being under target subtracts points in proportion to the shortfall.
+                  </p>
+                </div>
+              )}
+
               <div className="nh-card rounded-lg shadow-md">
                 {nutritionData.targets ? (
                   <>
@@ -431,10 +557,10 @@ const NutritionTrackingPage = () => {
           </button>
           <h3 className="nh-subtitle mb-2">Hydration target</h3>
           <p className="nh-text text-sm mb-2">
-            Your daily water target comes from Nutrition Targets (Adequate Intake defaults: ~3700 g for males, ~2700 g for females).
+            Your daily water target is weight-based: about 35 ml per kg of body weight.
           </p>
           <p className="nh-text text-sm mb-2">
-            Meeting or exceeding the target keeps your nutrition score stable. Being under target can reduce the score by up to -2.00.
+            Meeting or exceeding the target keeps your nutrition score stable. Being under target can reduce the score by up to -2.00 points in proportion to the shortfall.
           </p>
           <p className="nh-text text-sm">
             Log water by adding foods that include “Water (g)” (e.g., plain water). To adjust your target, edit Nutrition Targets.

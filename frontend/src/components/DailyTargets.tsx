@@ -88,10 +88,49 @@ const DailyTargets = () => {
     100
   );
 
+  // Hydration (accept Water (g) or Water)
+  const waterTargetRaw = targets.micronutrients?.['Water (g)'] as number | { target: number; maximum?: number } | undefined;
+  const waterTarget =
+    typeof waterTargetRaw === 'number'
+      ? waterTargetRaw
+      : waterTargetRaw && typeof waterTargetRaw === 'object'
+        ? waterTargetRaw.target
+        : 0;
+  const waterActual =
+    todayLog.micronutrients_summary?.['Water (g)'] ??
+    todayLog.micronutrients_summary?.['Water'] ??
+    0;
+  const waterRatio = waterTarget > 0 ? Math.min(100, Math.max(0, (waterActual / waterTarget) * 100)) : 0;
+  const waterBarColor =
+    waterRatio === 0
+      ? 'var(--color-text-secondary)'
+      : waterRatio >= 100
+        ? 'var(--color-success)'
+        : 'var(--color-primary)';
+
   return (
     <Link to="/nutrition" className="nh-card rounded-lg shadow-md block cursor-pointer hover:shadow-lg transition-shadow">
       <h3 className="nh-subtitle mb-3 text-sm">Daily Targets</h3>
       <div className="space-y-2">
+        {/* Hydration */}
+        <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium">Hydration</span>
+            <span className="text-xs font-bold" style={{ color: waterBarColor }}>
+              {waterActual.toFixed(1)} / {waterTarget.toFixed(1)}
+            </span>
+          </div>
+          <div className="w-full rounded-full h-1.5" style={{ backgroundColor: 'var(--color-bg-secondary)' }}>
+            <div
+              className="h-1.5 rounded-full transition-all"
+              style={{
+                width: `${waterRatio}%`,
+                backgroundColor: waterBarColor
+              }}
+            ></div>
+          </div>
+        </div>
+
         {/* Calories */}
         <div className="p-2 rounded" style={{ backgroundColor: 'var(--dietary-option-bg)' }}>
           <div className="flex items-center justify-between mb-1">

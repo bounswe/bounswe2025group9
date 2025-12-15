@@ -645,6 +645,27 @@ const NutritionTrackingScreen: React.FC = () => {
     dinner: calculateMealTotals(dinnerEntries).calories,
   };
 
+  // Hydration helpers
+  const hydrationTargetRaw = targets?.micronutrients?.['Water (g)'] as
+    | number
+    | { target: number; maximum?: number }
+    | undefined;
+  const hydrationTarget =
+    typeof hydrationTargetRaw === 'number'
+      ? hydrationTargetRaw
+      : hydrationTargetRaw && typeof hydrationTargetRaw === 'object'
+        ? hydrationTargetRaw.target
+        : 0;
+  const hydrationActual =
+    dailyLog?.micronutrients_summary?.['Water (g)'] ??
+    dailyLog?.micronutrients_summary?.['Water'] ??
+    0;
+  const hydrationPenalty = dailyLog?.hydration_penalty ?? null;
+  const hydrationAdjustedScore =
+    dailyLog?.nutrition_score ??
+    dailyLog?.hydration_adjusted_score ??
+    null;
+
   const getWeeklyDayDetailedInfo = (log: DailyNutritionLog, percentage: number) => {
     if (!targets || !log) {
       return {
@@ -753,6 +774,12 @@ const NutritionTrackingScreen: React.FC = () => {
         const currentValue = dailyLog.micronutrients_summary[key] || 0;
         const name = extractName(key);
         const unit = extractUnit(key) || '';
+        const targetNumber =
+          typeof targetValue === 'number'
+            ? targetValue
+            : targetValue && typeof targetValue === 'object'
+              ? targetValue.target
+              : 0;
 
         // Categorize based on name (matching frontend logic)
         let category: 'vitamin' | 'mineral' = 'vitamin'; // Default
@@ -765,7 +792,7 @@ const NutritionTrackingScreen: React.FC = () => {
         return {
           name,
           current: currentValue,
-          target: targetValue || 0,
+          target: targetNumber,
           unit,
           category,
         };
@@ -1277,6 +1304,18 @@ const NutritionTrackingScreen: React.FC = () => {
                   {!metrics ? 'Please set up your metrics first.' : !targets ? 'Please set your nutrition targets.' : 'No data for this day.'}
                 </Text>
               </View>
+            )}
+
+            {/* Hydration (styled same as other macro cards) */}
+            {dailyLog && hydrationTarget > 0 && (
+              <MacronutrientCard
+                name="Hydration"
+                current={hydrationActual}
+                target={hydrationTarget}
+                unit="g"
+                color="#3b82f6"
+                icon="💧"
+              />
             )}
 
             {/* Meals Section */}

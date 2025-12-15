@@ -30,6 +30,8 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   const { theme, textStyles } = useTheme();
   const [showInfoModal, setShowInfoModal] = useState(false);
 
+  const isHydration = name.toLowerCase() === 'hydration';
+
   // Format numbers to 1 decimal place if needed
   const formatNumber = (num: number | string | undefined | null): string => {
     if (num === undefined || num === null) {
@@ -140,6 +142,14 @@ const MacronutrientCard: React.FC<MacronutrientCardProps> = ({
   };
 
   const getDetailedInfo = () => {
+    if (isHydration) {
+      return {
+        title: 'Hydration target & score',
+        message:
+          'Hydration target = max(35 ml per kg body weight, AI baseline ~3700 g (M) / ~2700 g (F)). Meeting target removes the hydration penalty. Falling short can lower the nutrition score linearly, up to -2.00 points.'
+      };
+    }
+
     if (!isOverTarget) {
       if (isVeryLow) {
         return {
