@@ -70,14 +70,6 @@ const ModerationPanel = () => {
   return (
     <div className="nh-page-container">
       <div className="nh-container">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="nh-title">Moderation Panel</h1>
-          <p className="nh-text mt-2">
-            Manage content, users, and community standards
-          </p>
-        </div>
-
         <div className="flex flex-col md:flex-row gap-6">
           {/* Left sidebar - Tab buttons */}
           <div className="w-full md:w-1/5">

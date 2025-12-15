@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowLeft, WarningCircle } from '@phosphor-icons/react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, WarningCircle, CaretDown, CaretRight } from '@phosphor-icons/react';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { FoodProposal, apiClient } from '../../lib/apiClient';
 
 // Available dietary options
@@ -22,7 +22,26 @@ const ProposeNewFood: React.FC = () => {
   const foodId = id ? Number(id) : null;
   const isEditMode = Boolean(id);
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Check if we're in moderation edit mode (passed via location state)
+  const moderationData = location.state?.moderationData as {
+    proposalId: number;
+    name: string;
+    category: string;
+    servingSize: number;
+    caloriesPerServing: number;
+    proteinContent: number;
+    fatContent: number;
+    carbohydrateContent: number;
+    dietaryOptions?: string[];
+    imageUrl?: string;
+    micronutrients?: Record<string, { value: number; unit: string } | number>;
+  } | undefined;
+  const isModerationMode = Boolean(moderationData);
+  
   const [isPrivate, setIsPrivate] = useState(false);
+  const [micronutrientsExpanded, setMicronutrientsExpanded] = useState(false);
   const [foodName, setFoodName] = useState('');
   const [category, setCategory] = useState('');
   const [servingSize, setServingSize] = useState('');
@@ -66,6 +85,34 @@ const ProposeNewFood: React.FC = () => {
   const [success, setSuccess] = useState('');
   const [validationErrors, setValidationErrors] = useState<{[key: string]: string}>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Handle moderation mode data
+  useEffect(() => {
+    if (!moderationData) return;
+
+    setFoodName(moderationData.name);
+    setCategory(moderationData.category);
+    setServingSize(String(moderationData.servingSize));
+    setCalories(String(moderationData.caloriesPerServing));
+    setProtein(String(moderationData.proteinContent));
+    setCarbs(String(moderationData.carbohydrateContent));
+    setFat(String(moderationData.fatContent));
+    setImageUrl(moderationData.imageUrl || '');
+    setSelectedDietaryOptions(moderationData.dietaryOptions || []);
+
+    // Micronutrients
+    if (moderationData.micronutrients) {
+      const microState: { [key: string]: string } = {};
+      Object.entries(moderationData.micronutrients).forEach(([k, v]) => {
+        if (typeof v === 'object' && v !== null && 'value' in v) {
+          microState[k] = String(v.value);
+        } else if (typeof v === 'number') {
+          microState[k] = String(v);
+        }
+      });
+      setMicronutrients(prev => ({ ...prev, ...microState }));
+    }
+  }, [moderationData]);
 
   useEffect(() => {
     if (!isEditMode) return;
@@ -262,7 +309,22 @@ const ProposeNewFood: React.FC = () => {
         isPrivate,
       };
       
-      if (isEditMode) {
+      if (isModerationMode && moderationData) {
+        // Moderation edit mode - use the moderation API
+        await apiClient.moderation.editFoodProposal(moderationData.proposalId, {
+          name: foodName,
+          category: category,
+          servingSize: Number(servingSize),
+          caloriesPerServing: Number(calories),
+          proteinContent: Number(protein),
+          fatContent: Number(fat),
+          carbohydrateContent: Number(carbs),
+          dietaryOptions: selectedDietaryOptions,
+          imageUrl: imageUrl || undefined,
+          micronutrients: Object.keys(filteredMicronutrients).length > 0 ? filteredMicronutrients : undefined,
+        });
+        setSuccess('Food proposal updated successfully!');
+      } else if (isEditMode) {
         await apiClient.updatePrivateFood(foodId!, proposal);
         setSuccess('Food updated successfully!');
       } else {
@@ -273,8 +335,6 @@ const ProposeNewFood: React.FC = () => {
         await propose(proposal);
         setSuccess('Food proposal submitted successfully!');
       }
-
-      setSuccess('Food proposal submitted successfully!');
       
       // Clear form or redirect after success
       setTimeout(() => {
@@ -306,7 +366,7 @@ const ProposeNewFood: React.FC = () => {
                   <ArrowLeft size={20} weight="bold" /> 
                 </button>
                 <h1 className="nh-title-custom">
-                  {isEditMode ? 'Edit Food' : 'Propose New Food'}
+                  {isModerationMode ? 'Edit Food Proposal (Moderation)' : isEditMode ? 'Edit Food' : 'Propose New Food'}
                 </h1>
               </div>
 
@@ -471,80 +531,102 @@ const ProposeNewFood: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Visibility */}
-                <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Visibility</h2>
+                {/* Visibility - hide in moderation mode */}
+                {!isModerationMode && (
+                  <div className="mb-6">
+                    <h2 className="nh-subtitle mb-4">Visibility</h2>
 
-                  <label className="flex items-center gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      checked={isPrivate}
-                      onChange={(e) => setIsPrivate(e.target.checked)}
-                      className="h-4 w-4 accent-[var(--color-primary)] cursor-pointer"
-                    />
-                    <span className="font-medium">
-                      Save as private food (only visible to me)
+                    <label className="flex items-center gap-3 cursor-pointer select-none">
+                      <input
+                        type="checkbox"
+                        checked={isPrivate}
+                        onChange={(e) => setIsPrivate(e.target.checked)}
+                        className="h-4 w-4 accent-[var(--color-primary)] cursor-pointer"
+                      />
+                      <span className="font-medium">
+                        Save as private food (only visible to me)
+                      </span>
+                    </label>
+
+                    <p className="mt-1 text-sm text-gray-500">
+                      If unchecked, the food will be submitted for public review.
+                    </p>
+                  </div>
+                )}
+
+
+                {/* Micronutrients - Collapsible */}
+                <div className="mb-6">
+                  <button
+                    type="button"
+                    onClick={() => setMicronutrientsExpanded(!micronutrientsExpanded)}
+                    className="w-full flex items-center justify-between mb-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <h2 className="nh-subtitle">Micronutrients (per serving)</h2>
+                      {micronutrientsExpanded ? (
+                        <CaretDown size={20} weight="bold" />
+                      ) : (
+                        <CaretRight size={20} weight="bold" />
+                      )}
+                    </div>
+                    <span className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                      {Object.values(micronutrients).filter(v => v && v.trim() !== '').length} values set
                     </span>
-                  </label>
-
-                  <p className="mt-1 text-sm text-gray-500">
-                    If unchecked, the food will be submitted for public review.
-                  </p>
-                </div>
-
-
-                {/* Micronutrients */}
-                <div className="mb-6">
-                  <h2 className="nh-subtitle mb-4">Micronutrients (per serving)</h2>
+                  </button>
                   <p className="text-sm text-gray-500 mb-4">Optional: Add vitamin and mineral content if known</p>
                   
-                  <div className="mb-4">
-                    <h3 className="font-medium mb-3">Vitamins</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {Object.entries(micronutrients)
-                        .filter(([key]) => key.startsWith('Vitamin') || key.startsWith('Thiamin') || key.startsWith('Riboflavin') || key.startsWith('Niacin') || key.startsWith('Folate'))
-                        .map(([nutrient, value]) => (
-                          <div key={nutrient}>
-                            <label className="block mb-2 text-sm font-medium">
-                              {nutrient}
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                              value={value}
-                              onChange={(e) => handleMicronutrientChange(nutrient, e.target.value)}
-                              placeholder="0"
-                            />
-                          </div>
-                        ))}
-                    </div>
-                  </div>
+                  {micronutrientsExpanded && (
+                    <>
+                      <div className="mb-4">
+                        <h3 className="font-medium mb-3">Vitamins</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(micronutrients)
+                            .filter(([key]) => key.startsWith('Vitamin') || key.startsWith('Thiamin') || key.startsWith('Riboflavin') || key.startsWith('Niacin') || key.startsWith('Folate') || key.startsWith('Choline'))
+                            .map(([nutrient, value]) => (
+                              <div key={nutrient}>
+                                <label className="block mb-2 text-sm font-medium">
+                                  {nutrient}
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                  value={value}
+                                  onChange={(e) => handleMicronutrientChange(nutrient, e.target.value)}
+                                  placeholder="0"
+                                />
+                              </div>
+                            ))}
+                        </div>
+                      </div>
 
-                  <div className="mb-4">
-                    <h3 className="font-medium mb-3">Minerals</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {Object.entries(micronutrients)
-                        .filter(([key]) => !key.startsWith('Vitamin') && !key.startsWith('Thiamin') && !key.startsWith('Riboflavin') && !key.startsWith('Niacin') && !key.startsWith('Folate'))
-                        .map(([nutrient, value]) => (
-                          <div key={nutrient}>
-                            <label className="block mb-2 text-sm font-medium">
-                              {nutrient}
-                            </label>
-                            <input
-                              type="number"
-                              step="0.01"
-                              min="0"
-                              className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
-                              value={value}
-                              onChange={(e) => handleMicronutrientChange(nutrient, e.target.value)}
-                              placeholder="0"
-                            />
-                          </div>
-                        ))}
-                    </div>
-                  </div>
+                      <div className="mb-4">
+                        <h3 className="font-medium mb-3">Minerals</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          {Object.entries(micronutrients)
+                            .filter(([key]) => !key.startsWith('Vitamin') && !key.startsWith('Thiamin') && !key.startsWith('Riboflavin') && !key.startsWith('Niacin') && !key.startsWith('Folate') && !key.startsWith('Choline'))
+                            .map(([nutrient, value]) => (
+                              <div key={nutrient}>
+                                <label className="block mb-2 text-sm font-medium">
+                                  {nutrient}
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0"
+                                  className="w-full p-2 border rounded-md bg-[var(--forum-search-bg)] border-[var(--forum-search-border)] text-[var(--forum-search-text)] placeholder:text-[var(--forum-search-placeholder)] focus:ring-1 focus:ring-[var(--forum-search-focus-ring)] focus:border-[var(--forum-search-focus-border)]"
+                                  value={value}
+                                  onChange={(e) => handleMicronutrientChange(nutrient, e.target.value)}
+                                  placeholder="0"
+                                />
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Dietary Information */}
@@ -629,6 +711,8 @@ const ProposeNewFood: React.FC = () => {
                   >
                     {isSubmitting
                       ? 'Saving...'
+                      : isModerationMode
+                      ? 'Save Moderation Changes'
                       : isEditMode
                       ? 'Save Changes'
                       : 'Submit Proposal'}

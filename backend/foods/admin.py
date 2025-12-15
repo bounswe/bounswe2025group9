@@ -6,6 +6,8 @@ from rest_framework.decorators import action
 from .models import (
     FoodEntry,
     FoodProposal,
+    FoodEntryMicronutrient,
+    Micronutrient,
     PriceAudit,
     PriceCategoryThreshold,
     PriceReport,
@@ -129,6 +131,7 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
         source="food_entry.nutritionScore", read_only=True
     )
     imageUrl = serializers.SerializerMethodField()
+    micronutrients = serializers.SerializerMethodField()
 
     proposedBy = serializers.SerializerMethodField()
     createdAt = serializers.DateTimeField(read_only=True)
@@ -149,6 +152,7 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "dietaryOptions",
             "nutritionScore",
             "imageUrl",
+            "micronutrients",
 
             # proposal fields
             "isApproved",
@@ -167,6 +171,39 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
             "id": obj.proposedBy.id,
             "username": obj.proposedBy.username,
         }
+
+    def get_micronutrients(self, obj):
+        """Return the food entry's micronutrients as a dictionary."""
+        if not obj.food_entry:
+            return {}
+        return {
+            link.micronutrient.name: {
+                'value': round(link.value, 2),
+                'unit': link.micronutrient.unit
+            }
+            for link in obj.food_entry.micronutrient_values.all()
+        }
+
+
+class FoodProposalEditSerializer(serializers.Serializer):
+    """Serializer for editing food proposal's food entry by moderators."""
+    name = serializers.CharField(required=False)
+    category = serializers.CharField(required=False)
+    servingSize = serializers.FloatField(required=False)
+    caloriesPerServing = serializers.FloatField(required=False)
+    proteinContent = serializers.FloatField(required=False)
+    fatContent = serializers.FloatField(required=False)
+    carbohydrateContent = serializers.FloatField(required=False)
+    dietaryOptions = serializers.ListField(
+        child=serializers.CharField(),
+        required=False,
+    )
+    imageUrl = serializers.URLField(required=False, allow_blank=True)
+    micronutrients = serializers.DictField(
+        child=serializers.FloatField(),
+        required=False,
+        help_text="Dictionary mapping micronutrient names to values"
+    )
 
 
 
@@ -232,6 +269,67 @@ class FoodProposalModerationViewSet(viewsets.ReadOnlyModelViewSet):
             message = f"Food proposal '{proposal.food_entry.name}' rejected."
 
         return Response({"message": message}, status=status.HTTP_200_OK)
+
+    @action(detail=True, methods=["patch"])
+    def edit(self, request, pk=None):
+        """
+        Edit a food proposal's food entry.
+        PATCH /api/foods/moderation/food-proposals/{id}/edit/
+        Body: { name?, category?, servingSize?, caloriesPerServing?, proteinContent?, fatContent?, carbohydrateContent?, dietaryOptions?, imageUrl? }
+        """
+        proposal = self.get_object()
+        serializer = FoodProposalEditSerializer(data=request.data)
+
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        food_entry = proposal.food_entry
+        data = serializer.validated_data
+
+        # Update food entry fields
+        if "name" in data:
+            food_entry.name = data["name"]
+        if "category" in data:
+            food_entry.category = data["category"]
+        if "servingSize" in data:
+            food_entry.servingSize = data["servingSize"]
+        if "caloriesPerServing" in data:
+            food_entry.caloriesPerServing = data["caloriesPerServing"]
+        if "proteinContent" in data:
+            food_entry.proteinContent = data["proteinContent"]
+        if "fatContent" in data:
+            food_entry.fatContent = data["fatContent"]
+        if "carbohydrateContent" in data:
+            food_entry.carbohydrateContent = data["carbohydrateContent"]
+        if "dietaryOptions" in data:
+            food_entry.dietaryOptions = data["dietaryOptions"]
+        if "imageUrl" in data:
+            food_entry.imageUrl = data["imageUrl"]
+
+        # Update micronutrients
+        if "micronutrients" in data:
+            micronutrients_data = data["micronutrients"]
+            for nutrient_name, value in micronutrients_data.items():
+                # Get or create the micronutrient
+                micronutrient, _ = Micronutrient.objects.get_or_create(
+                    name=nutrient_name,
+                    defaults={"unit": "g"}  # Default unit, can be adjusted
+                )
+                # Update or create the link
+                FoodEntryMicronutrient.objects.update_or_create(
+                    food_entry=food_entry,
+                    micronutrient=micronutrient,
+                    defaults={"value": value}
+                )
+
+        food_entry.save()
+
+        # Refresh proposal from database
+        proposal.refresh_from_db()
+
+        # Return updated proposal
+        response_serializer = FoodProposalModerationSerializer(proposal)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
 
 
 @admin.register(PriceCategoryThreshold)
