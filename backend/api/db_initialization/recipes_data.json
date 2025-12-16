@@ -1,16 +1,16 @@
 [
   {
     "title": "Classic Spaghetti Bolognese",
-    "body": "A rich Italian meat sauce simmered with tomatoes and herbs, served over spaghetti.",
+    "body": "A rich Italian meat sauce simmered with tomatoes and herbs, served over pasta.",
     "author_username": "chef_maria",
     "tags": ["Recipe", "High-Protein"],
-    "instructions": "1. Finely chop onions and garlic. 2. Heat olive oil in a large pan and sauté onions until soft. 3. Add garlic and cook for 1 minute. 4. Add ground beef and cook until browned. 5. Add crushed tomatoes and simmer for 30-40 minutes. 6. Cook pasta according to package directions. 7. Serve sauce over pasta with parmesan.",
+    "instructions": "1. Finely chop onions and garlic. 2. Heat olive oil in a large pan and sauté onions until soft. 3. Add garlic and cook for 1 minute. 4. Add ground beef and cook until browned. 5. Add tomatoes and simmer for 30-40 minutes. 6. Cook pasta according to package directions. 7. Serve sauce over pasta.",
     "ingredients": [
-      {"foodName": "Pasta", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Penne", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
       {"foodName": "Onions", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
       {"foodName": "Garlic", "amount": 10.0, "customUnit": "g", "customAmount": 10.0},
       {"foodName": "Beef Steak", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
-      {"foodName": "Tomato", "amount": 400.0, "customUnit": "g", "customAmount": 400.0},
+      {"foodName": "Tomatoes", "amount": 400.0, "customUnit": "g", "customAmount": 400.0},
       {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
   },
@@ -30,29 +30,29 @@
   },
   {
     "title": "Vegan Buddha Bowl",
-    "body": "A nourishing bowl packed with quinoa, roasted vegetables, and chickpeas with a tahini dressing.",
+    "body": "A nourishing bowl packed with quinoa, roasted vegetables, and beans with a tahini dressing.",
     "author_username": "foodie_sarah",
     "tags": ["Recipe", "Vegan"],
-    "instructions": "1. Cook quinoa according to package directions. 2. Roast chickpeas with olive oil and spices at 200°C for 25 minutes. 3. Steam broccoli until tender-crisp. 4. Arrange all ingredients in a bowl. 5. Drizzle with tahini mixed with lemon juice.",
+    "instructions": "1. Cook quinoa according to package directions. 2. Roast garbanzo beans with olive oil and spices at 200°C for 25 minutes. 3. Steam broccoli until tender-crisp. 4. Arrange all ingredients in a bowl. 5. Drizzle with tahini mixed with lemon juice.",
     "ingredients": [
       {"foodName": "Quinoa (Cooked)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
-      {"foodName": "Chickpeas", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Garbanzo Beans", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
       {"foodName": "Broccoli", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
       {"foodName": "Avocado", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
-      {"foodName": "Tahini", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Tahini Sauce", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
       {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   }
 ,
   {
     "title": "Greek Salad",
-    "body": "A refreshing Mediterranean salad with crisp vegetables, olives, and feta cheese.",
+    "body": "A refreshing Mediterranean salad with crisp vegetables and feta cheese.",
     "author_username": "kitchen_ninja",
     "tags": ["Recipe", "Vegetarian"],
-    "instructions": "1. Cut tomatoes and cucumber into chunks. 2. Slice red onion thinly. 3. Combine vegetables in a large bowl. 4. Add crumbled feta cheese. 5. Drizzle with olive oil and lemon juice. 6. Season with salt and oregano.",
+    "instructions": "1. Cut tomatoes and cucumber into chunks. 2. Slice red onion thinly. 3. Combine vegetables in a large bowl. 4. Add crumbled cheese. 5. Drizzle with olive oil and lemon juice. 6. Season with salt and oregano.",
     "ingredients": [
-      {"foodName": "Tomato", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
-      {"foodName": "Cucumber", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Tomatoes", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Cucumber (with Peel)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
       {"foodName": "Onions", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
       {"foodName": "Olive Oil", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
@@ -166,7 +166,7 @@
     "ingredients": [
       {"foodName": "Shrimp", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
       {"foodName": "Broccoli", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
-      {"foodName": "Bell Pepper", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Bell Peppers", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
       {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0},
       {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
@@ -189,10 +189,10 @@
     "body": "A tropical smoothie bowl topped with fresh fruits and granola.",
     "author_username": "chef_maria",
     "tags": ["Recipe", "Vegetarian"],
-    "instructions": "1. Blend frozen mango with yogurt until smooth. 2. Pour into a bowl. 3. Top with sliced banana. 4. Add granola for crunch.",
+    "instructions": "1. Blend frozen mango with milk until smooth. 2. Pour into a bowl. 3. Top with sliced banana. 4. Add granola for crunch.",
     "ingredients": [
-      {"foodName": "Mango", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
-      {"foodName": "Yogurt", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Mangos", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Whole Milk", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
       {"foodName": "Bananas", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Classic Granola", "amount": 30.0, "customUnit": "g", "customAmount": 30.0}
     ]
@@ -204,7 +204,7 @@
     "tags": ["Recipe", "Vegetarian"],
     "instructions": "1. Slice tomatoes and mozzarella into rounds. 2. Arrange alternating slices on a plate. 3. Drizzle generously with olive oil. 4. Season with salt and pepper.",
     "ingredients": [
-      {"foodName": "Tomato", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Tomatoes", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
       {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
       {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
@@ -217,7 +217,7 @@
     "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Drain canned tuna. 2. Mix tuna with mayonnaise. 3. Add diced celery. 4. Season with salt and pepper. 5. Spread on whole wheat bread. 6. Add lettuce and serve.",
     "ingredients": [
-      {"foodName": "Tuna", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Tuna in Water (Canned)", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
       {"foodName": "Mayonnaise", "amount": 25.0, "customUnit": "g", "customAmount": 25.0},
       {"foodName": "Celery", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
       {"foodName": "Whole Wheat Bread", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
@@ -272,11 +272,11 @@
     "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Cut tops off peppers and remove seeds. 2. Cook rice according to package. 3. Brown ground beef with onions. 4. Mix beef with rice and tomatoes. 5. Stuff peppers with mixture. 6. Bake at 180°C for 35 minutes.",
     "ingredients": [
-      {"foodName": "Bell Pepper", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "Bell Peppers", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
       {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
       {"foodName": "Beef Steak", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
       {"foodName": "Onions", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
-      {"foodName": "Tomato", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
+      {"foodName": "Tomatoes", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
@@ -291,14 +291,14 @@
     ]
   },
   {
-    "title": "Mushroom Risotto",
-    "body": "Creamy Italian risotto with sautéed mushrooms and parmesan cheese.",
+    "title": "Zucchini Risotto",
+    "body": "Creamy Italian risotto with sautéed zucchini and parmesan cheese.",
     "author_username": "nutrition_nerd",
     "tags": ["Recipe", "Vegetarian"],
-    "instructions": "1. Sauté mushrooms in butter and set aside. 2. Sauté onions in olive oil. 3. Add rice and toast for 2 minutes. 4. Add broth gradually, stirring constantly. 5. Stir in mushrooms and parmesan. 6. Season and serve immediately.",
+    "instructions": "1. Sauté zucchini in butter and set aside. 2. Sauté onions in olive oil. 3. Add rice and toast for 2 minutes. 4. Add broth gradually, stirring constantly. 5. Stir in zucchini and parmesan. 6. Season and serve immediately.",
     "ingredients": [
       {"foodName": "White Rice", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
-      {"foodName": "Mushroom", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Zucchini", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
       {"foodName": "Onions", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
       {"foodName": "Parmesan Cheese (Shredded)", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
       {"foodName": "Butter", "amount": 25.0, "customUnit": "g", "customAmount": 25.0},
@@ -328,8 +328,8 @@
     "instructions": "1. Heat black beans with cumin and chili powder. 2. Warm tortillas. 3. Fill tortillas with beans. 4. Top with diced tomatoes and onions. 5. Add avocado slices. 6. Squeeze lime juice on top.",
     "ingredients": [
       {"foodName": "Black Beans (Canned)", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
-      {"foodName": "Tortilla", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
-      {"foodName": "Tomato", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Flour Tortilla", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Tomatoes", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
       {"foodName": "Onions", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
       {"foodName": "Avocado", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Lime", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
@@ -356,7 +356,7 @@
     "ingredients": [
       {"foodName": "Eggplant", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
       {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
-      {"foodName": "Tomato", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Tomatoes", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
       {"foodName": "Parmesan Cheese (Shredded)", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
       {"foodName": "Egg", "amount": 50.0, "customUnit": "g", "customAmount": 50.0}
     ]
@@ -382,11 +382,11 @@
     "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Mix ground turkey with egg. 2. Add minced garlic and onion. 3. Season with salt and pepper. 4. Form into meatballs. 5. Bake at 200°C for 20 minutes. 6. Serve with marinara sauce.",
     "ingredients": [
-      {"foodName": "Turkey", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "Turkey Breast Meat", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
       {"foodName": "Egg", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Onions", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0},
-      {"foodName": "Tomato", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
+      {"foodName": "Tomatoes", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
@@ -397,7 +397,7 @@
     "instructions": "1. Sauté onions and garlic. 2. Add curry paste and cook for 1 minute. 3. Add broccoli and bell peppers. 4. Simmer until vegetables are tender. 5. Serve over rice.",
     "ingredients": [
       {"foodName": "Broccoli", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
-      {"foodName": "Bell Pepper", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Bell Peppers", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
       {"foodName": "Onions", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
       {"foodName": "Garlic", "amount": 8.0, "customUnit": "g", "customAmount": 8.0},
       {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
@@ -413,7 +413,7 @@
       {"foodName": "Bison", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
       {"foodName": "Bagel", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
       {"foodName": "Lettuce", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
-      {"foodName": "Tomato", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Tomatoes", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Onions", "amount": 30.0, "customUnit": "g", "customAmount": 30.0}
     ]
   },
@@ -440,7 +440,7 @@
     "ingredients": [
       {"foodName": "Kale", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
       {"foodName": "Quinoa (Cooked)", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
-      {"foodName": "Cucumber", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Cucumber (with Peel)", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
       {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
       {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0},
       {"foodName": "Pumpkin Seeds", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
@@ -454,7 +454,7 @@
     "instructions": "1. Whisk eggs with salt and pepper. 2. Heat butter in a pan. 3. Pour in eggs and cook until set. 4. Add diced ham and cheese to one half. 5. Fold omelette over. 6. Serve immediately.",
     "ingredients": [
       {"foodName": "Egg", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
-      {"foodName": "Ham", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Sliced Ham  (Regular, Approx. 11% Fat)", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
       {"foodName": "Cheddar Cheese", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
       {"foodName": "Butter", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
     ]
@@ -487,26 +487,26 @@
   }
 ,
   {
-    "title": "Edamame Salad",
-    "body": "A refreshing Asian-inspired salad with edamame, cucumber, and sesame.",
+    "title": "Soybean Salad",
+    "body": "A refreshing Asian-inspired salad with soybeans, cucumber, and sesame.",
     "author_username": "quick_meals_joe",
     "tags": ["Recipe", "Vegan"],
-    "instructions": "1. Cook edamame and let cool. 2. Dice cucumber. 3. Combine edamame and cucumber. 4. Add sesame seeds. 5. Dress with olive oil. 6. Season with salt.",
+    "instructions": "1. Cook soybeans and let cool. 2. Dice cucumber. 3. Combine soybeans and cucumber. 4. Add sesame seeds. 5. Dress with olive oil. 6. Season with salt.",
     "ingredients": [
-      {"foodName": "Edamame", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
-      {"foodName": "Cucumber", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
-      {"foodName": "Sesame Seeds", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
+      {"foodName": "Soybeans (Mature Seeds, Steamed, Cooked)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Cucumber (with Peel)", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Toasted Sesame Seeds", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
     ]
   },
   {
-    "title": "Pork Chops with Apple",
+    "title": "Pork Chops with Apples",
     "body": "Juicy pork chops pan-fried and served with caramelized apples.",
     "author_username": "organic_olivia",
     "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Season pork chops with salt and pepper. 2. Sear in a hot pan for 4-5 minutes per side. 3. Remove and rest. 4. Slice apples and sauté in butter. 5. Serve pork with apples.",
     "ingredients": [
       {"foodName": "Pork Chops (Top Loin, Boneless)", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
-      {"foodName": "Apple", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Apples", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
       {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
       {"foodName": "Onions", "amount": 40.0, "customUnit": "g", "customAmount": 40.0}
     ]
