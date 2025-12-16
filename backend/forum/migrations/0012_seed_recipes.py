@@ -1,6 +1,7 @@
 # Generated migration for seeding recipe data
 
 import json
+import sys
 from pathlib import Path
 from django.db import migrations
 
@@ -9,7 +10,12 @@ def load_recipes(apps, schema_editor):
     """
     Load recipes from recipes_data.json into the database.
     Creates Posts, Recipes, RecipeIngredients, and associates Tags.
+    Skips during tests to avoid interfering with forum test assertions.
     """
+    # Skip during tests
+    if "test" in sys.argv or "pytest" in sys.modules:
+        return
+
     Post = apps.get_model("forum", "Post")
     Recipe = apps.get_model("forum", "Recipe")
     RecipeIngredient = apps.get_model("forum", "RecipeIngredient")
@@ -18,7 +24,12 @@ def load_recipes(apps, schema_editor):
     User = apps.get_model("accounts", "User")
 
     # Load JSON file
-    json_file = Path(__file__).parent.parent.parent / "api" / "db_initialization" / "recipes_data.json"
+    json_file = (
+        Path(__file__).parent.parent.parent
+        / "api"
+        / "db_initialization"
+        / "recipes_data.json"
+    )
     if not json_file.exists():
         print(f"⚠️  Recipe data file not found: {json_file}")
         return
@@ -46,16 +57,11 @@ def load_recipes(apps, schema_editor):
 
         # Get or create author
         user, _ = User.objects.get_or_create(
-            username=author_username,
-            defaults={"email": f"{author_username}@example.com"}
+            username=author_username, defaults={"email": f"{author_username}@example.com"}
         )
 
         # Create post
-        post = Post.objects.create(
-            title=title,
-            body=body,
-            author=user
-        )
+        post = Post.objects.create(title=title, body=body, author=user)
 
         # Add tags
         for tag_name in tag_names:
@@ -63,10 +69,7 @@ def load_recipes(apps, schema_editor):
             post.tags.add(tag)
 
         # Create recipe
-        recipe = Recipe.objects.create(
-            post=post,
-            instructions=instructions
-        )
+        recipe = Recipe.objects.create(post=post, instructions=instructions)
 
         # Create ingredients
         for ing_data in ingredients_data:
@@ -79,7 +82,7 @@ def load_recipes(apps, schema_editor):
             food = FoodEntry.objects.filter(name=food_name).first()
             if not food:
                 food = FoodEntry.objects.filter(name__icontains=food_name).first()
-            
+
             if not food:
                 continue
 
@@ -88,7 +91,7 @@ def load_recipes(apps, schema_editor):
                 food=food,
                 amount=amount,
                 customUnit=custom_unit,
-                customAmount=custom_amount
+                customAmount=custom_amount,
             )
 
         count += 1
@@ -99,11 +102,21 @@ def load_recipes(apps, schema_editor):
 def remove_recipes(apps, schema_editor):
     """
     Reverse migration: remove seeded recipes.
+    Skips during tests.
     """
+    # Skip during tests
+    if "test" in sys.argv or "pytest" in sys.modules:
+        return
+
     Post = apps.get_model("forum", "Post")
-    
+
     # Load JSON to get titles
-    json_file = Path(__file__).parent.parent.parent / "api" / "db_initialization" / "recipes_data.json"
+    json_file = (
+        Path(__file__).parent.parent.parent
+        / "api"
+        / "db_initialization"
+        / "recipes_data.json"
+    )
     if not json_file.exists():
         return
 
@@ -111,7 +124,7 @@ def remove_recipes(apps, schema_editor):
         recipes = json.load(f)
 
     titles = [r.get("title", "").strip() for r in recipes if r.get("title")]
-    
+
     # Delete posts (cascades to recipes and ingredients)
     deleted, _ = Post.objects.filter(title__in=titles).delete()
     print(f"✓ Removed {deleted} seeded recipe posts")
