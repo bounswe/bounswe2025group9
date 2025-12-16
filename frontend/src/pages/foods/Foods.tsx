@@ -4,8 +4,7 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import FoodDetail from './FoodDetail';
 import NutritionScore from '../../components/NutritionScore';
-import { MicronutrientFilter, MicronutrientFilterItem, buildMicronutrientQuery } from '../../components/MicronutrientFilter';
-import { MacronutrientFilter, MacronutrientFilterItem, buildMacronutrientQuery } from '../../components/MacronutrientFilter';
+import { CombinedNutrientFilter, CombinedNutrientFilterItem, buildCombinedNutrientQuery } from '../../components/CombinedNutrientFilter';
 
 export const FoodItem = ({ item, onClick }: { item: Food, onClick: () => void }) => {
   return (
@@ -65,8 +64,7 @@ const SORT_OPTIONS = [
     { key: 'nutritionscore', label: 'By Nutrition Score' },
     { key: 'carbohydratecontent', label: 'By Carb Content' },
     { key: 'proteincontent', label: 'By Protein Content' },
-    { key: 'fatcontent', label: 'By Fat Content' },
-    { key: '', label: 'Remove Sort' }
+    { key: 'fatcontent', label: 'By Fat Content' }
 ];
 
 const Foods = () => {
@@ -83,8 +81,7 @@ const Foods = () => {
     const [warning, setWarning] = useState<string | null>(null);
     const [sortBy, setSortBy] = useState<string>('');
     const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
-    const [micronutrientFilters, setMicronutrientFilters] = useState<MicronutrientFilterItem[]>([]);
-    const [macronutrientFilters, setMacronutrientFilters] = useState<MacronutrientFilterItem[]>([]);
+    const [nutrientFilters, setNutrientFilters] = useState<CombinedNutrientFilterItem[]>([]);
     const [pageSize, setPageSize] = useState<number | null>(null);
 
     const updatePageSize = (resultsLength: number, hasNext: boolean) => {
@@ -100,11 +97,16 @@ const Foods = () => {
         });
     };
 
-    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder, microFilters = micronutrientFilters, macroFilters = macronutrientFilters) => {
+    const fetchFoods = async (pageNum = 1, search = '', sortByParam = sortBy, sortOrderParam = sortOrder, filters = nutrientFilters) => {
         setLoading(true);
         try {
-            const micronutrientQuery = microFilters.length > 0 ? buildMicronutrientQuery(microFilters) : undefined;
-            const macronutrientQuery = macroFilters.length > 0 ? buildMacronutrientQuery(macroFilters) : undefined;
+            // Separate micro and macro filters (case-insensitive)
+            const macroNames = ['protein', 'carbohydrates', 'fat'];
+            const microFilters = filters.filter(f => !macroNames.includes(f.name.toLowerCase()));
+            const macroFilters = filters.filter(f => macroNames.includes(f.name.toLowerCase()));
+            
+            const micronutrientQuery = microFilters.length > 0 ? buildCombinedNutrientQuery(microFilters) : undefined;
+            const macronutrientQuery = macroFilters.length > 0 ? buildCombinedNutrientQuery(macroFilters) : undefined;
             const params: any = {
                 page: pageNum,
                 search,
@@ -155,7 +157,7 @@ const Foods = () => {
     // Refetch when shouldFetch flag is set (for pagination and search)
     useEffect(() => {
         if (shouldFetch) {
-            fetchFoods(page, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
+            fetchFoods(page, searchTerm, sortBy, sortOrder, nutrientFilters);
             setShouldFetch(false);
         }
     }, [shouldFetch]);
@@ -165,23 +167,16 @@ const Foods = () => {
         // Skip if this is initial render (sortBy will be empty string on mount)
         if (sortBy !== undefined && sortBy !== '') {
             console.log("Sort changed, fetching with:", { sortBy, sortOrder, page, searchTerm });
-            fetchFoods(page, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
+            fetchFoods(page, searchTerm, sortBy, sortOrder, nutrientFilters);
         }
     }, [sortBy, sortOrder]);
 
-    // Refetch when micronutrient filters change
+    // Refetch when nutrient filters change
     useEffect(() => {
         setPage(1);
         setLoading(true);
-        fetchFoods(1, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
-    }, [micronutrientFilters]);
-
-    // Refetch when macronutrient filters change
-    useEffect(() => {
-        setPage(1);
-        setLoading(true);
-        fetchFoods(1, searchTerm, sortBy, sortOrder, micronutrientFilters, macronutrientFilters);
-    }, [macronutrientFilters]);
+        fetchFoods(1, searchTerm, sortBy, sortOrder, nutrientFilters);
+    }, [nutrientFilters]);
 
     const effectivePageSize = pageSize || (foods.length > 0 ? foods.length : 1)
     const totalPages = count ? Math.max(1, Math.ceil(count / effectivePageSize)) : 1;
@@ -199,18 +194,20 @@ const Foods = () => {
         let newSortBy = sortBy;
         let newSortOrder = sortOrder;
         
-        if (key === '') {
-            newSortBy = '';
-            newSortOrder = 'desc';
-        } else {
-            if (sortBy === key) {
-                console.log("Toggling sort order from", sortOrder, "to", sortOrder === 'desc' ? 'asc' : 'desc');
-                newSortOrder = sortOrder === 'desc' ? 'asc' : 'desc';
+        if (sortBy === key) {
+            // Same option clicked - cycle through: desc -> asc -> remove
+            if (sortOrder === 'desc') {
+                // Second click: toggle to asc
+                newSortOrder = 'asc';
             } else {
-                console.log("Setting new sort by:", key);
-                newSortBy = key;
+                // Third click: remove sort
+                newSortBy = '';
                 newSortOrder = 'desc';
             }
+        } else {
+            // Different option clicked: set new sort (default desc)
+            newSortBy = key;
+            newSortOrder = 'desc';
         }
         
         // Update state
@@ -224,7 +221,7 @@ const Foods = () => {
 
         // Use empty search to show all foods with the new sort
         setSearchTerm('');
-        fetchFoods(1, '', newSortBy, newSortOrder, micronutrientFilters, macronutrientFilters);
+        fetchFoods(1, '', newSortBy, newSortOrder, nutrientFilters);
     };
 
     const clearSearch = () => {
@@ -252,68 +249,21 @@ const Foods = () => {
                         <div className="sticky top-20">
                             <h3 className="nh-subtitle mb-4 flex items-center gap-2">
                                 <Funnel size={20} weight="fill" className="text-primary" />
-                                Sort Options
+                                Filters
                             </h3>
-                            
-                            {/* Current sort indicator */}
-                            {sortBy && (
-                                <div className="mb-4 px-4 py-2 bg-primary bg-opacity-10 rounded-lg">
-                                    <p className="text-sm font-medium">
-                                        Sorting: {SORT_OPTIONS.find(opt => opt.key === sortBy)?.label || 'Custom'}
-                                        <span className="ml-1 font-bold">{sortOrder === 'desc' ? '↓' : '↑'}</span>
-                                    </p>
-                                </div>
-                            )}
-                            
-                            <div className="flex flex-col gap-3">
-                                {/* Sort buttons */}
-                                {SORT_OPTIONS.map(option => (
-                                    <button
-                                        key={option.key}
-                                        type="button"
-                                        className={`flex items-center gap-2 px-4 py-3 rounded-lg text-sm font-medium transition-all shadow-sm hover:shadow`}
-                                        style={{
-                                            backgroundColor: sortBy === option.key 
-                                                ? 'var(--forum-default-active-bg)' 
-                                                : 'var(--forum-default-bg)',
-                                            color: sortBy === option.key 
-                                                ? 'var(--forum-default-active-text)' 
-                                                : 'var(--forum-default-text)',
-                                        }}
-                                        onClick={() => handleSortChange(option.key)}
-                                    >
-                                        <span className="flex-grow text-center">
-                                            {option.label}
-                                            {option.key !== '' && sortBy === option.key && (
-                                                <span className="ml-1 font-bold text-lg">{sortOrder === 'desc' ? '↓' : '↑'}</span>
-                                            )}
-                                        </span>
-                                    </button>
-                                ))}
-                            </div>
 
-                            {/* Micronutrient Filters */}
-                            <div className="mt-8">
-                                <MicronutrientFilter
-                                    filters={micronutrientFilters}
-                                    onChange={setMicronutrientFilters}
-                                />
-                            </div>
-
-                            {/* Macronutrient Filters */}
-                            <div className="mt-8">
-                                <MacronutrientFilter
-                                    filters={macronutrientFilters}
-                                    onChange={setMacronutrientFilters}
-                                />
-                            </div>
+                            {/* Nutrient Filters */}
+                            <CombinedNutrientFilter
+                                filters={nutrientFilters}
+                                onChange={setNutrientFilters}
+                            />
                         </div>
                     </div>
 
                     {/* Middle column - Food items */}
                     <div className="w-full md:w-3/5">
                         {/* Search bar */}
-                        <div className="mb-6">
+                        <div className="mb-4">
                             <form onSubmit={handleSearch} className="flex gap-2">
                                 <div className="relative flex-grow">
                                     <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
@@ -344,6 +294,33 @@ const Foods = () => {
                                     Search
                                 </button>
                             </form>
+                        </div>
+
+                        {/* Sort options */}
+                        <div className="mb-6">
+                            <div className="flex flex-wrap gap-2 items-center">
+                                {SORT_OPTIONS.map(option => (
+                                    <button
+                                        key={option.key}
+                                        type="button"
+                                        className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all`}
+                                        style={{
+                                            backgroundColor: sortBy === option.key 
+                                                ? 'var(--forum-default-active-bg)' 
+                                                : 'var(--forum-default-bg)',
+                                            color: sortBy === option.key 
+                                                ? 'var(--forum-default-active-text)' 
+                                                : 'var(--forum-default-text)',
+                                        }}
+                                        onClick={() => handleSortChange(option.key)}
+                                    >
+                                        {option.label}
+                                        {sortBy === option.key && (
+                                            <span className="ml-1 font-bold">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
 
                         {warning && (

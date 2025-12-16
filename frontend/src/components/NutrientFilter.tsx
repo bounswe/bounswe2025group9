@@ -98,16 +98,16 @@ export const NutrientFilter = ({
 
   return (
     <div className="w-full">
-      <h3 className="nh-subtitle mb-3">{title}</h3>
+      <h3 className="nh-subtitle mb-4">{title}</h3>
 
-      {!loading && availableNutrients.length > 0 && (
-        <p className="nh-text text-sm mb-3" style={{ color: 'var(--forum-default-text)' }}>
+      {description && !loading && availableNutrients.length > 0 && (
+        <p className="nh-text text-sm mb-3 opacity-70" style={{ color: 'var(--forum-default-text)' }}>
           {description}
         </p>
       )}
 
       {/* Add new filter */}
-      <div className="space-y-2 mb-4">
+      <div className="space-y-3 mb-5">
         <div className="relative" ref={suggestionsRef}>
           <input
             type="text"
@@ -121,16 +121,21 @@ export const NutrientFilter = ({
               }
             }}
             disabled={loading}
-            className="w-full px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary nh-forum-search disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            style={{
+              backgroundColor: 'var(--color-bg-secondary)',
+              borderColor: 'var(--dietary-option-border)'
+            }}
           />
 
           {/* Suggestions dropdown */}
           {showSuggestions && filteredSuggestions.length > 0 && (
             <div
-              className="absolute z-10 w-full mt-1 rounded-lg shadow-lg max-h-48 overflow-y-auto"
+              className="absolute z-10 w-full mt-1 rounded-lg shadow-xl max-h-48 overflow-y-auto"
               style={{
                 backgroundColor: 'var(--color-bg-primary)',
-                border: '1px solid var(--color-border)'
+                border: '1px solid var(--dietary-option-border)',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
               }}
             >
               {filteredSuggestions.map((nutrient, index) => (
@@ -167,8 +172,12 @@ export const NutrientFilter = ({
             value={newFilterMin}
             onChange={(e) => setNewFilterMin(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="w-1/2 px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
-            style={{ minWidth: 0 }}
+            className="w-1/2 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary nh-forum-search transition-all"
+            style={{ 
+              minWidth: 0,
+              backgroundColor: 'var(--color-bg-secondary)',
+              borderColor: 'var(--dietary-option-border)'
+            }}
           />
           <input
             type="number"
@@ -176,25 +185,31 @@ export const NutrientFilter = ({
             value={newFilterMax}
             onChange={(e) => setNewFilterMax(e.target.value)}
             onKeyPress={handleKeyPress}
-            className="w-1/2 px-3 py-2 border rounded-lg focus:ring-primary focus:border-primary nh-forum-search"
-            style={{ minWidth: 0 }}
+            className="w-1/2 px-4 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-primary nh-forum-search transition-all"
+            style={{ 
+              minWidth: 0,
+              backgroundColor: 'var(--color-bg-secondary)',
+              borderColor: 'var(--dietary-option-border)'
+            }}
           />
         </div>
 
         <button
           onClick={addFilter}
           disabled={!newFilterName.trim() || loading}
-          className="w-full nh-button flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full nh-button nh-button-primary flex items-center justify-center gap-2 py-2.5 rounded-lg font-medium transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md"
         >
-          <Plus size={20} weight="bold" />
-          {loading ? 'Loading...' : 'Add Filter'}
+          <Plus size={18} weight="bold" />
+          {loading ? 'Loading...' : 'Add'}
         </button>
       </div>
 
       {/* Current filters */}
       {filters.length > 0 && (
-        <div className="space-y-2">
-          <p className="nh-text font-medium">Active Filters:</p>
+        <div className="space-y-2.5 mt-5">
+          <p className="nh-text font-semibold text-sm mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+            Active Filters
+          </p>
           {filters.map((filter, index) => {
             const nutrient = availableNutrients.find(
               n => n.name.toLowerCase() === filter.name.toLowerCase()
@@ -213,42 +228,38 @@ export const NutrientFilter = ({
             return (
               <div
                 key={index}
-                className="flex items-center justify-between p-2 rounded-lg"
+                className="flex items-center justify-between p-3 rounded-lg transition-all hover:shadow-sm"
                 style={{
-                  backgroundColor: 'var(--color-bg-secondary)',
-                  border: '1px solid var(--color-border)'
+                  backgroundColor: 'var(--dietary-option-bg)',
+                  border: '1px solid var(--dietary-option-border)'
                 }}
               >
                 <div className="flex-1 min-w-0">
-                  <p className="nh-text font-medium truncate">{filter.name}</p>
-                  <p className="nh-text text-sm opacity-70">{valueText}</p>
+                  <p className="nh-text font-medium truncate text-sm">{filter.name}</p>
+                  <p className="nh-text text-xs opacity-70 mt-0.5">{valueText}</p>
                 </div>
 
                 <button
                   onClick={() => removeFilter(index)}
-                  className="p-1 rounded transition-colors flex-shrink-0 ml-2"
+                  className="p-1.5 rounded-lg transition-colors flex-shrink-0 ml-2 hover:scale-110"
                   aria-label="Remove filter"
                   style={{
-                    color: 'var(--color-error, #ef4444)'
+                    color: 'var(--color-error, #ef4444)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)'
                   }}
                   onMouseEnter={(e) => {
-                    e.currentTarget.style.backgroundColor = 'var(--color-bg-tertiary)';
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.2)';
                   }}
                   onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'transparent';
+                    e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
                   }}
                 >
-                  <X size={20} weight="bold" />
+                  <X size={16} weight="bold" />
                 </button>
               </div>
             );
           })}
         </div>
-      )}
-      {filters.length === 0 && (
-        <p className="nh-text text-sm italic opacity-60">
-          No active filters
-        </p>
       )}
     </div>
   );

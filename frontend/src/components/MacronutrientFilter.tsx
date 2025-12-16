@@ -22,7 +22,7 @@ export const MacronutrientFilter = ({ filters, onChange }: MacronutrientFilterPr
   return (
     <NutrientFilter
       title="Macronutrient Filters"
-      description="Filter foods by their macronutrient content per 100g."
+      description=""
       availableNutrients={AVAILABLE_MACRONUTRIENTS}
       loading={false}
       filters={filters}

@@ -15,6 +15,8 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
   const [selectedNutrient, setSelectedNutrient] = useState<string | null>(null);
   const [customGrams, setCustomGrams] = useState<number>(0);
   const [selectedServingSize, setSelectedServingSize] = useState<number>(0); // Main serving size selector
+  const [servingUnit, setServingUnit] = useState<'g' | 'serving'>('g'); // Unit for serving size input
+  const [modalServingUnit, setModalServingUnit] = useState<'g' | 'serving'>('g'); // Unit for modal serving size input
   const [recommendations, setRecommendations] = useState<{
     calories: number;
     protein: number;
@@ -46,6 +48,8 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
   useEffect(() => {
     if (food) {
       setSelectedServingSize(food.servingSize);
+      setServingUnit('g');
+      setModalServingUnit('g');
     }
   }, [food]);
 
@@ -85,6 +89,7 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
     e.preventDefault();
     setSelectedNutrient(nutrient);
     setCustomGrams(selectedServingSize || food?.servingSize || 100); // Initialize with selected serving size
+    setModalServingUnit('g'); // Reset to grams when opening modal
     setShowRecommendations(true);
   };
 
@@ -216,7 +221,12 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
     
     // Use custom grams if provided, otherwise use serving size
     const servingGrams = grams !== undefined && grams > 0 ? grams : food.servingSize;
-    const multiplier = servingGrams / food.servingSize;
+    
+    // Macronutrients are per serving, micronutrients are per 100g
+    const isMacronutrient = ['calories', 'protein', 'fat', 'carbs'].includes(nutrient);
+    const multiplier = isMacronutrient 
+      ? servingGrams / food.servingSize  // Scale by serving size for macros
+      : servingGrams / 100;              // Scale by 100g for micros (already per 100g)
     
     switch (nutrient) {
       case 'calories':
@@ -570,15 +580,22 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
                     <div className="flex items-center gap-2">
                       <input
                         type="number"
-                        min="1"
-                        max="10000"
-                        value={selectedServingSize || ''}
+                        min="0.01"
+                        step="0.01"
+                        value={servingUnit === 'g' 
+                          ? (selectedServingSize || '') 
+                          : (food?.servingSize ? (selectedServingSize / food.servingSize || '') : '')}
                         onChange={(e) => {
                           const val = e.target.value;
                           if (val === '') {
                             setSelectedServingSize(0);
                           } else {
-                            setSelectedServingSize(Math.max(0, parseInt(val) || 0));
+                            const numVal = parseFloat(val) || 0;
+                            if (servingUnit === 'g') {
+                              setSelectedServingSize(Math.max(0, numVal));
+                            } else {
+                              setSelectedServingSize(Math.max(0, numVal * (food?.servingSize || 100)));
+                            }
                           }
                         }}
                         onBlur={() => {
@@ -586,40 +603,28 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
                             setSelectedServingSize(food?.servingSize || 100);
                           }
                         }}
-                        className="w-20 px-2 py-1 rounded border text-sm font-semibold"
+                        className="flex-1 px-3 py-2 rounded border text-sm font-semibold"
                         style={{
                           backgroundColor: 'var(--color-bg-primary)',
                           color: 'var(--color-text-primary)',
                           borderColor: 'var(--color-border)',
                         }}
                       />
-                      <span className="text-xs text-[var(--color-text-secondary)]">g</span>
-                      <div className="flex gap-1">
-                        <button
-                          onClick={() => setSelectedServingSize(food.servingSize)}
-                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                        >
-                          Default
-                        </button>
-                        <button
-                          onClick={() => setSelectedServingSize(100)}
-                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                        >
-                          100g
-                        </button>
-                        <button
-                          onClick={() => setSelectedServingSize(selectedServingSize * 2)}
-                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                        >
-                          ×2
-                        </button>
-                        <button
-                          onClick={() => setSelectedServingSize(Math.max(1, Math.floor(selectedServingSize / 2)))}
-                          className="px-2 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                        >
-                          ÷2
-                        </button>
-                      </div>
+                      <select
+                        value={servingUnit}
+                        onChange={(e) => {
+                          setServingUnit(e.target.value as 'g' | 'serving');
+                        }}
+                        className="px-3 py-2 rounded border text-sm"
+                        style={{
+                          backgroundColor: 'var(--color-bg-primary)',
+                          color: 'var(--color-text-primary)',
+                          borderColor: 'var(--color-border)',
+                        }}
+                      >
+                        <option value="g">g</option>
+                        <option value="serving">serving</option>
+                      </select>
                     </div>
                   </div>
                 </div>
@@ -746,7 +751,8 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
                   // Remove only the unit part (last parentheses) from the name
                   const nutrientName = nutrient.replace(/\s*\([^)]*\)\s*$/, '').trim();
                   // Calculate scaled amount based on selected serving size
-                  const scaledAmount = (amount * selectedServingSize / food.servingSize);
+                  // Micronutrients are already per 100g, so scale by selectedServingSize / 100
+                  const scaledAmount = (amount * selectedServingSize / 100);
                   const exceedsMax = wouldExceedMaximum(nutrient);
                   const exceedsTarget = wouldExceedTarget(nutrient);
 
@@ -898,26 +904,35 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
                   );
                 })()}
 
-                {/* Custom Gram Input */}
+                {/* Custom Serving Size Input */}
                 <div className="p-4 rounded-lg bg-[var(--color-bg-secondary)] border border-[var(--color-border)]">
                   <label className="text-sm text-[var(--color-text-secondary)] mb-2 block">
-                    Adjust Serving Size (grams)
+                    Adjust Serving Size
                   </label>
                   <div className="flex items-center gap-3">
                     <input
                       type="number"
-                      min="1"
-                      max="10000"
-                      value={customGrams || ''}
+                      min="0.01"
+                      step="0.01"
+                      value={modalServingUnit === 'g' 
+                        ? (customGrams || '') 
+                        : (food?.servingSize ? (customGrams / food.servingSize || '') : '')}
                       onChange={(e) => {
                         const val = e.target.value;
                         if (val === '') {
                           setCustomGrams(0);
                           setSelectedServingSize(0);
                         } else {
-                          const newValue = Math.max(0, parseInt(val) || 0);
-                          setCustomGrams(newValue);
-                          setSelectedServingSize(newValue);
+                          const numVal = parseFloat(val) || 0;
+                          if (modalServingUnit === 'g') {
+                            const newValue = Math.max(0, numVal);
+                            setCustomGrams(newValue);
+                            setSelectedServingSize(newValue);
+                          } else {
+                            const newValue = Math.max(0, numVal * (food?.servingSize || 100));
+                            setCustomGrams(newValue);
+                            setSelectedServingSize(newValue);
+                          }
                         }
                       }}
                       onBlur={() => {
@@ -934,48 +949,21 @@ const FoodDetail: React.FC<FoodDetailProps> = ({ food, open, onClose, actions })
                         borderColor: 'var(--color-border)',
                       }}
                     />
-                    <span className="text-sm text-[var(--color-text-secondary)]">grams</span>
-                  </div>
-                  <div className="flex gap-2 mt-2 flex-wrap">
-                    <button
-                      onClick={() => {
-                        const val = food?.servingSize || 100;
-                        setCustomGrams(val);
-                        setSelectedServingSize(val);
+                    <select
+                      value={modalServingUnit}
+                      onChange={(e) => {
+                        setModalServingUnit(e.target.value as 'g' | 'serving');
                       }}
-                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                    >
-                      Default ({food?.servingSize}g)
-                    </button>
-                    <button
-                      onClick={() => {
-                        setCustomGrams(100);
-                        setSelectedServingSize(100);
+                      className="px-3 py-2 rounded-lg border text-sm"
+                      style={{
+                        backgroundColor: 'var(--color-bg-primary)',
+                        color: 'var(--color-text-primary)',
+                        borderColor: 'var(--color-border)',
                       }}
-                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
                     >
-                      100g
-                    </button>
-                    <button
-                      onClick={() => {
-                        const val = customGrams * 2;
-                        setCustomGrams(val);
-                        setSelectedServingSize(val);
-                      }}
-                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                    >
-                      ×2
-                    </button>
-                    <button
-                      onClick={() => {
-                        const val = Math.max(1, Math.floor(customGrams / 2));
-                        setCustomGrams(val);
-                        setSelectedServingSize(val);
-                      }}
-                      className="px-3 py-1 text-xs rounded bg-[var(--color-bg-secondary)] text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-tertiary)] transition-colors"
-                    >
-                      ÷2
-                    </button>
+                      <option value="g">g</option>
+                      <option value="serving">serving</option>
+                    </select>
                   </div>
                 </div>
 
