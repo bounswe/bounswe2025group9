@@ -42,10 +42,11 @@ const normalizePrivateFood = (data: any): PrivateFood => {
             data.serving_size_in_grams ??
             100
         ),
-        calories: Number(data.calories_per_serving ?? data.calories ?? data.energy ?? 0),
-        protein: Number(data.protein_content ?? data.protein ?? 0),
-        carbohydrates: Number(data.carbohydrate_content ?? data.carbohydrates ?? 0),
-        fat: Number(data.fat_content ?? data.fat ?? 0),
+        // Handle both snake_case and camelCase field names from API
+        calories: Number(data.calories_per_serving ?? data.caloriesPerServing ?? data.calories ?? data.energy ?? 0),
+        protein: Number(data.protein_content ?? data.proteinContent ?? data.protein ?? 0),
+        carbohydrates: Number(data.carbohydrate_content ?? data.carbohydrateContent ?? data.carbohydrates ?? 0),
+        fat: Number(data.fat_content ?? data.fatContent ?? data.fat ?? 0),
         fiber: data.fiber !== undefined ? Number(data.fiber) : undefined,
         sugar: data.sugar !== undefined ? Number(data.sugar) : undefined,
         micronutrients: data.micronutrients ?? undefined,
