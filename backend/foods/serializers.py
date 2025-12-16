@@ -98,11 +98,27 @@ class FoodProposalSerializer(serializers.ModelSerializer):
         source="food_entry.nutritionScore", required=False
     )
     imageUrl = serializers.URLField(
-        source="food_entry.imageUrl", 
-        required=False, 
+        source="food_entry.imageUrl",
+        required=False,
         allow_blank=True,
         help_text="Optional image URL. If not provided, an AI-generated image will be created."
     )
+
+    micronutrients = serializers.SerializerMethodField()
+
+    def get_micronutrients(self, obj):
+        """
+        Return micronutrients in frontend format: {"Vitamin C (mg)": 28.1}
+        """
+        if not obj.food_entry:
+            return {}
+
+        result = {}
+        for link in obj.food_entry.micronutrient_values.all():
+            # Combine name and unit into key: "Vitamin C (mg)"
+            key = f"{link.micronutrient.name} ({link.micronutrient.unit})"
+            result[key] = round(link.value, 2)
+        return result
 
     class Meta:
         model = FoodProposal
@@ -119,6 +135,7 @@ class FoodProposalSerializer(serializers.ModelSerializer):
             "dietaryOptions",
             "nutritionScore",
             "imageUrl",
+            "micronutrients",
             "isApproved",
             "createdAt",
             "proposedBy",
@@ -142,6 +159,10 @@ class FoodProposalSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(
                 "food_entry_id is required when food entry fields are not provided."
             )
+
+        # Handle micronutrients input (SerializerMethodField is read-only, so we manually process it)
+        if "micronutrients" in data:
+            attrs["food_entry"]["micronutrients"] = data["micronutrients"]
 
         return attrs
 
@@ -169,6 +190,8 @@ class FoodProposalSerializer(serializers.ModelSerializer):
             logger.error(f"Error triggering background image generation for {food_name}: {e}")
 
     def create(self, validated_data):
+        from foods.models import Micronutrient, FoodEntryMicronutrient
+
         request = self.context["request"]
 
         food_entry = validated_data.get("food_entry")
@@ -183,19 +206,47 @@ class FoodProposalSerializer(serializers.ModelSerializer):
         # Flat fields path
         food_entry_data = validated_data.pop("food_entry")
 
+        # Extract micronutrients data before creating FoodEntry
+        micronutrients_data = food_entry_data.pop("micronutrients", {})
+
         food_entry_data['nutritionScore'] = calculate_nutrition_score(food_entry_data)
-        
+
         # Check if we need to generate an image (no imageUrl provided)
         needs_image_generation = not food_entry_data.get('imageUrl')
         food_name = food_entry_data.get('name', '')
-        
+
         # Create the FoodEntry first (without image if we need to generate one)
         food_entry = FoodEntry.objects.create(
             **food_entry_data,
             validated=False,
             createdBy=request.user,
         )
-        
+
+        # Create micronutrient relationships
+        # micronutrients_data format: {"Vitamin C (mg)": 28.1, "Iron, Fe (mg)": 2.7}
+        for micro_name_with_unit, value in micronutrients_data.items():
+            # Parse micronutrient name and unit from format "Name (unit)"
+            if "(" in micro_name_with_unit and ")" in micro_name_with_unit:
+                name_part = micro_name_with_unit.split("(")[0].strip()
+                unit_part = micro_name_with_unit.split("(")[1].split(")")[0].strip()
+            else:
+                name_part = micro_name_with_unit
+                unit_part = "g"
+
+            if value is not None:
+                # Get or create the Micronutrient
+                micronutrient, _ = Micronutrient.objects.get_or_create(
+                    name=name_part,
+                    defaults={'unit': unit_part}
+                )
+
+                # Create the relationship
+                FoodEntryMicronutrient.objects.create(
+                    food_entry=food_entry,
+                    micronutrient=micronutrient,
+                    value=float(value)
+                )
+
         # Create the proposal
         proposal = FoodProposal.objects.create(
             food_entry=food_entry,
@@ -206,7 +257,7 @@ class FoodProposalSerializer(serializers.ModelSerializer):
         # This allows the API to return immediately while image generates in background
         if needs_image_generation and food_name:
             self._trigger_background_image_generation(food_entry.id, food_name)
-        
+
         return proposal
 
 class FoodProposalStatusSerializer(serializers.ModelSerializer):

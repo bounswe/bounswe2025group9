@@ -173,16 +173,18 @@ class FoodProposalModerationSerializer(serializers.ModelSerializer):
         }
 
     def get_micronutrients(self, obj):
-        """Return the food entry's micronutrients as a dictionary."""
+        """
+        Return micronutrients in frontend format: {"Vitamin C (mg)": 28.1}
+        """
         if not obj.food_entry:
             return {}
-        return {
-            link.micronutrient.name: {
-                'value': round(link.value, 2),
-                'unit': link.micronutrient.unit
-            }
-            for link in obj.food_entry.micronutrient_values.all()
-        }
+
+        result = {}
+        for link in obj.food_entry.micronutrient_values.all():
+            # Combine name and unit into key: "Vitamin C (mg)"
+            key = f"{link.micronutrient.name} ({link.micronutrient.unit})"
+            result[key] = round(link.value, 2)
+        return result
 
 
 class FoodProposalEditSerializer(serializers.Serializer):
@@ -202,7 +204,7 @@ class FoodProposalEditSerializer(serializers.Serializer):
     micronutrients = serializers.DictField(
         child=serializers.FloatField(),
         required=False,
-        help_text="Dictionary mapping micronutrient names to values"
+        help_text="Micronutrients as a dict: {'Vitamin C (mg)': 28.1, 'Iron, Fe (mg)': 2.7}"
     )
 
 
@@ -307,13 +309,22 @@ class FoodProposalModerationViewSet(viewsets.ReadOnlyModelViewSet):
             food_entry.imageUrl = data["imageUrl"]
 
         # Update micronutrients
+        # micronutrients_data format: {"Vitamin C (mg)": 28.1, "Iron, Fe (mg)": 2.7}
         if "micronutrients" in data:
             micronutrients_data = data["micronutrients"]
-            for nutrient_name, value in micronutrients_data.items():
+            for micro_name_with_unit, value in micronutrients_data.items():
+                # Parse micronutrient name and unit from format "Name (unit)"
+                if "(" in micro_name_with_unit and ")" in micro_name_with_unit:
+                    name_part = micro_name_with_unit.split("(")[0].strip()
+                    unit_part = micro_name_with_unit.split("(")[1].split(")")[0].strip()
+                else:
+                    name_part = micro_name_with_unit
+                    unit_part = "g"
+
                 # Get or create the micronutrient
                 micronutrient, _ = Micronutrient.objects.get_or_create(
-                    name=nutrient_name,
-                    defaults={"unit": "g"}  # Default unit, can be adjusted
+                    name=name_part,
+                    defaults={"unit": unit_part}
                 )
                 # Update or create the link
                 FoodEntryMicronutrient.objects.update_or_create(
