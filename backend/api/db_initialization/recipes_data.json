@@ -1,1511 +1,528 @@
 [
   {
     "title": "Classic Spaghetti Bolognese",
-    "body": "A rich Italian meat sauce simmered with tomatoes and herbs, served over spaghetti. Perfect for family dinners.",
+    "body": "A rich Italian meat sauce simmered with tomatoes and herbs, served over spaghetti.",
     "author_username": "chef_maria",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Finely chop onions and garlic. 2. Heat olive oil in a large pan and sauté onions until soft. 3. Add garlic and cook for 1 minute. 4. Add ground beef and cook until browned. 5. Add crushed tomatoes and simmer for 30-40 minutes. 6. Cook pasta according to package directions. 7. Serve sauce over pasta with parmesan.",
     "ingredients": [
-      {
-        "foodName": "Pasta",
-        "amount": 400.0,
-        "customUnit": "grams",
-        "customAmount": 400.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 150.0,
-        "customUnit": "medium onion",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 12.0,
-        "customUnit": "cloves",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Beef Steak",
-        "amount": 500.0,
-        "customUnit": "grams",
-        "customAmount": 500.0
-      },
-      {
-        "foodName": "Tomato Juice",
-        "amount": 400.0,
-        "customUnit": "ml",
-        "customAmount": 400.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Pasta", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Onions", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Garlic", "amount": 10.0, "customUnit": "g", "customAmount": 10.0},
+      {"foodName": "Beef Steak", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "Tomato", "amount": 400.0, "customUnit": "g", "customAmount": 400.0},
+      {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
   },
   {
     "title": "Grilled Chicken Breast with Vegetables",
-    "body": "Juicy grilled chicken breast served with roasted seasonal vegetables. A healthy and satisfying meal.",
+    "body": "Juicy grilled chicken breast served with roasted seasonal vegetables.",
     "author_username": "healthy_mike",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Season chicken breasts with salt, pepper, and olive oil. 2. Grill chicken for 6-7 minutes per side until cooked through. 3. Cut broccoli and carrots into bite-sized pieces. 4. Roast vegetables with olive oil at 200°C for 25 minutes. 5. Serve chicken with roasted vegetables.",
     "ingredients": [
-      {
-        "foodName": "Chicken Breast",
-        "amount": 400.0,
-        "customUnit": "grams",
-        "customAmount": 400.0
-      },
-      {
-        "foodName": "Broccoli",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Carrots",
-        "amount": 150.0,
-        "customUnit": "medium carrots",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 6.0,
-        "customUnit": "cloves",
-        "customAmount": 2.0
-      }
+      {"foodName": "Chicken Breast", "amount": 250.0, "customUnit": "g", "customAmount": 250.0},
+      {"foodName": "Broccoli", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Carrots", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0},
+      {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0}
     ]
   },
   {
     "title": "Vegan Buddha Bowl",
     "body": "A nourishing bowl packed with quinoa, roasted vegetables, and chickpeas with a tahini dressing.",
     "author_username": "foodie_sarah",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
-    "instructions": "1. Cook quinoa according to package directions. 2. Roast chickpeas with olive oil and spices at 200°C for 25 minutes. 3. Roast sweet potato cubes for 30 minutes. 4. Steam broccoli until tender-crisp. 5. Arrange all ingredients in a bowl. 6. Drizzle with tahini mixed with lemon juice.",
+    "tags": ["Recipe", "Vegan"],
+    "instructions": "1. Cook quinoa according to package directions. 2. Roast chickpeas with olive oil and spices at 200°C for 25 minutes. 3. Steam broccoli until tender-crisp. 4. Arrange all ingredients in a bowl. 5. Drizzle with tahini mixed with lemon juice.",
     "ingredients": [
-      {
-        "foodName": "Quinoa (Cooked)",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Chickpeas",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Broccoli",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Avocado",
-        "amount": 75.0,
-        "customUnit": "half",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Tahini",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 30.0,
-        "customUnit": "tablespoons juice",
-        "customAmount": 2.0
-      }
+      {"foodName": "Quinoa (Cooked)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Chickpeas", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Broccoli", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Avocado", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Tahini", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
-  },
+  }
+,
   {
     "title": "Greek Salad",
     "body": "A refreshing Mediterranean salad with crisp vegetables, olives, and feta cheese.",
     "author_username": "kitchen_ninja",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Cut tomatoes and cucumber into chunks. 2. Slice red onion thinly. 3. Combine vegetables in a large bowl. 4. Add olives and crumbled feta cheese. 5. Drizzle with olive oil and lemon juice. 6. Season with salt and oregano.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Cut tomatoes and cucumber into chunks. 2. Slice red onion thinly. 3. Combine vegetables in a large bowl. 4. Add crumbled feta cheese. 5. Drizzle with olive oil and lemon juice. 6. Season with salt and oregano.",
     "ingredients": [
-      {
-        "foodName": "Tomato",
-        "amount": 300.0,
-        "customUnit": "medium tomatoes",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Cucumber",
-        "amount": 200.0,
-        "customUnit": "medium cucumber",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 50.0,
-        "customUnit": "small onion",
-        "customAmount": 0.5
-      },
-      {
-        "foodName": "Mozzarella Cheese (Whole Milk)",
-        "amount": 100.0,
-        "customUnit": "grams",
-        "customAmount": 100.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 45.0,
-        "customUnit": "tablespoons",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 15.0,
-        "customUnit": "tablespoon juice",
-        "customAmount": 1.0
-      }
+      {"foodName": "Tomato", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Cucumber", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Onions", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Olive Oil", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
+      {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Salmon with Lemon and Herbs",
-    "body": "Pan-seared salmon fillets with a bright lemon herb sauce. Elegant yet simple to prepare.",
+    "body": "Pan-seared salmon fillets with a bright lemon herb sauce.",
     "author_username": "veggie_lover",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Season salmon fillets with salt and pepper. 2. Heat olive oil in a pan over medium-high heat. 3. Sear salmon skin-side down for 4 minutes. 4. Flip and cook for 3 more minutes. 5. Add lemon juice and butter to the pan. 6. Spoon sauce over salmon and serve.",
     "ingredients": [
-      {
-        "foodName": "Salmon",
-        "amount": 400.0,
-        "customUnit": "fillets",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 60.0,
-        "customUnit": "medium lemon",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 15.0,
-        "customUnit": "tablespoon",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 6.0,
-        "customUnit": "cloves",
-        "customAmount": 2.0
-      }
+      {"foodName": "Salmon", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Lemon", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
+      {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Olive Oil", "amount": 10.0, "customUnit": "g", "customAmount": 10.0},
+      {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0}
     ]
   },
   {
     "title": "Vegetable Stir Fry with Tofu",
     "body": "A quick and healthy Asian-inspired stir fry with crispy tofu and colorful vegetables.",
     "author_username": "protein_pete",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
-    "instructions": "1. Press tofu and cut into cubes. 2. Fry tofu until golden and set aside. 3. Stir fry broccoli and carrots in sesame oil. 4. Add garlic and ginger. 5. Return tofu to the pan. 6. Add soy sauce and toss to combine. 7. Serve over rice.",
+    "tags": ["Recipe", "Vegan"],
+    "instructions": "1. Press tofu and cut into cubes. 2. Fry tofu until golden and set aside. 3. Stir fry broccoli and carrots. 4. Add garlic. 5. Return tofu to the pan. 6. Season with salt and serve over rice.",
     "ingredients": [
-      {
-        "foodName": "Organic Firm Tofu",
-        "amount": 300.0,
-        "customUnit": "block",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Broccoli",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Carrots",
-        "amount": 100.0,
-        "customUnit": "medium carrot",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 9.0,
-        "customUnit": "cloves",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "White Rice",
-        "amount": 200.0,
-        "customUnit": "cups cooked",
-        "customAmount": 2.0
-      }
+      {"foodName": "Organic Firm Tofu", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Broccoli", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Carrots", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Garlic", "amount": 8.0, "customUnit": "g", "customAmount": 8.0},
+      {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
     "title": "Banana Oatmeal Breakfast",
-    "body": "A hearty and nutritious breakfast bowl with oats, banana, and honey.",
+    "body": "A hearty and nutritious breakfast bowl with oats, banana, and almonds.",
     "author_username": "home_cook_anna",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Cook oats with milk according to package directions. 2. Slice banana. 3. Top oatmeal with banana slices. 4. Add a drizzle of honey. 5. Sprinkle with almonds for crunch.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Cook oats with milk according to package directions. 2. Slice banana. 3. Top oatmeal with banana slices. 4. Sprinkle with almonds for crunch.",
     "ingredients": [
-      {
-        "foodName": "Old Fashioned Oats",
-        "amount": 80.0,
-        "customUnit": "cups",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Whole Milk",
-        "amount": 240.0,
-        "customUnit": "cups",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Bananas",
-        "amount": 100.0,
-        "customUnit": "medium banana",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Almonds",
-        "amount": 20.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Old Fashioned Oats", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Whole Milk", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Bananas", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Almonds", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
-  },
+  }
+,
   {
     "title": "Beef Steak with Roasted Potatoes",
     "body": "Perfectly seared beef steak served with crispy roasted potatoes and garlic butter.",
     "author_username": "taste_explorer",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Season steak with salt and pepper. 2. Sear in a hot pan for 3-4 minutes per side. 3. Rest for 5 minutes. 4. Cut potatoes into wedges. 5. Toss with olive oil and roast at 200°C for 35 minutes. 6. Serve steak with potatoes and garlic butter.",
     "ingredients": [
-      {
-        "foodName": "Beef Steak",
-        "amount": 400.0,
-        "customUnit": "steaks",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Roasted Potato",
-        "amount": 400.0,
-        "customUnit": "medium potatoes",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 9.0,
-        "customUnit": "cloves",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Beef Steak", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Roasted Potato", "amount": 250.0, "customUnit": "g", "customAmount": 250.0},
+      {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Garlic", "amount": 8.0, "customUnit": "g", "customAmount": 8.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Spinach and Egg Breakfast",
     "body": "A protein-packed breakfast with sautéed spinach and perfectly cooked eggs.",
     "author_username": "nutrition_nerd",
-    "tags": [
-      "Recipe",
-      "Vegetarian",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "Vegetarian", "High-Protein"],
     "instructions": "1. Heat butter in a pan. 2. Add spinach and sauté until wilted. 3. Season with salt and pepper. 4. Push spinach to the side. 5. Crack eggs into the pan. 6. Cook eggs to your preference. 7. Serve together with toast.",
     "ingredients": [
-      {
-        "foodName": "Spinach",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Egg",
-        "amount": 150.0,
-        "customUnit": "large eggs",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 15.0,
-        "customUnit": "tablespoon",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Whole Wheat Bread",
-        "amount": 60.0,
-        "customUnit": "slices",
-        "customAmount": 2.0
-      }
+      {"foodName": "Spinach", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Egg", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Butter", "amount": 10.0, "customUnit": "g", "customAmount": 10.0},
+      {"foodName": "Whole Wheat Bread", "amount": 60.0, "customUnit": "g", "customAmount": 60.0}
     ]
   },
   {
     "title": "Lentil Soup",
     "body": "A hearty and warming lentil soup packed with vegetables and aromatic spices.",
     "author_username": "quick_meals_joe",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
+    "tags": ["Recipe", "Vegan"],
     "instructions": "1. Sauté onions and carrots in olive oil. 2. Add garlic and cook for 1 minute. 3. Add lentils and vegetable broth. 4. Simmer for 25-30 minutes until lentils are tender. 5. Season with salt, pepper, and cumin. 6. Serve with crusty bread.",
     "ingredients": [
-      {
-        "foodName": "Cooked Lentils",
-        "amount": 300.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Onions",
-        "amount": 100.0,
-        "customUnit": "medium onion",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Carrots",
-        "amount": 100.0,
-        "customUnit": "medium carrots",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 9.0,
-        "customUnit": "cloves",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Celery",
-        "amount": 50.0,
-        "customUnit": "stalks",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Cooked Lentils", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Onions", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Carrots", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Garlic", "amount": 8.0, "customUnit": "g", "customAmount": 8.0},
+      {"foodName": "Celery", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Avocado Toast with Egg",
     "body": "Creamy avocado spread on toasted bread topped with a perfectly poached egg.",
     "author_username": "organic_olivia",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Toast bread until golden. 2. Mash avocado with lemon juice and salt. 3. Spread avocado on toast. 4. Poach or fry an egg. 5. Place egg on top of avocado. 6. Season with pepper and red pepper flakes.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Toast bread until golden. 2. Mash avocado with lemon juice and salt. 3. Spread avocado on toast. 4. Poach or fry an egg. 5. Place egg on top of avocado. 6. Season with pepper.",
     "ingredients": [
-      {
-        "foodName": "Whole Wheat Bread",
-        "amount": 60.0,
-        "customUnit": "slices",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Avocado",
-        "amount": 75.0,
-        "customUnit": "half",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Egg",
-        "amount": 50.0,
-        "customUnit": "large egg",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 15.0,
-        "customUnit": "tablespoon juice",
-        "customAmount": 1.0
-      }
+      {"foodName": "Whole Wheat Bread", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
+      {"foodName": "Avocado", "amount": 75.0, "customUnit": "g", "customAmount": 75.0},
+      {"foodName": "Egg", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Lemon", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
     ]
-  },
+  }
+,
   {
     "title": "Shrimp Stir Fry",
-    "body": "Quick and flavorful shrimp stir fry with vegetables in a savory sauce.",
+    "body": "Quick and flavorful shrimp stir fry with vegetables.",
     "author_username": "fit_foodie",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
-    "instructions": "1. Season shrimp with salt and pepper. 2. Stir fry shrimp until pink and set aside. 3. Sauté broccoli and bell peppers. 4. Add garlic and ginger. 5. Return shrimp to the pan. 6. Add soy sauce and toss. 7. Serve over rice.",
+    "tags": ["Recipe", "High-Protein"],
+    "instructions": "1. Season shrimp with salt and pepper. 2. Stir fry shrimp until pink and set aside. 3. Sauté broccoli and bell peppers. 4. Add garlic. 5. Return shrimp to the pan. 6. Season and serve over rice.",
     "ingredients": [
-      {
-        "foodName": "Shrimp",
-        "amount": 300.0,
-        "customUnit": "grams",
-        "customAmount": 300.0
-      },
-      {
-        "foodName": "Broccoli",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Bell Pepper",
-        "amount": 100.0,
-        "customUnit": "medium pepper",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 6.0,
-        "customUnit": "cloves",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "White Rice",
-        "amount": 200.0,
-        "customUnit": "cups cooked",
-        "customAmount": 2.0
-      }
+      {"foodName": "Shrimp", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Broccoli", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Bell Pepper", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0},
+      {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
     "title": "Lamb Chops with Herbs",
     "body": "Tender lamb chops seasoned with rosemary and garlic, pan-seared to perfection.",
     "author_username": "culinary_chris",
-    "tags": [
-      "Recipe",
-      "High-Protein",
-      "Halal"
-    ],
+    "tags": ["Recipe", "High-Protein", "Halal"],
     "instructions": "1. Season lamb chops with salt, pepper, and rosemary. 2. Heat olive oil in a pan. 3. Sear lamb chops for 3-4 minutes per side. 4. Add garlic and butter to the pan. 5. Baste lamb with the butter. 6. Rest for 5 minutes before serving.",
     "ingredients": [
-      {
-        "foodName": "Lamb",
-        "amount": 400.0,
-        "customUnit": "chops",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 12.0,
-        "customUnit": "cloves",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Lamb", "amount": 250.0, "customUnit": "g", "customAmount": 250.0},
+      {"foodName": "Garlic", "amount": 10.0, "customUnit": "g", "customAmount": 10.0},
+      {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Mango Smoothie Bowl",
-    "body": "A tropical smoothie bowl topped with fresh fruits and granola for a refreshing breakfast.",
+    "body": "A tropical smoothie bowl topped with fresh fruits and granola.",
     "author_username": "chef_maria",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Blend frozen mango with yogurt until smooth. 2. Pour into a bowl. 3. Top with sliced banana. 4. Add granola for crunch. 5. Drizzle with honey if desired.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Blend frozen mango with yogurt until smooth. 2. Pour into a bowl. 3. Top with sliced banana. 4. Add granola for crunch.",
     "ingredients": [
-      {
-        "foodName": "Mango",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Yogurt",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 0.75
-      },
-      {
-        "foodName": "Bananas",
-        "amount": 50.0,
-        "customUnit": "half banana",
-        "customAmount": 0.5
-      },
-      {
-        "foodName": "Classic Granola",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Mango", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Yogurt", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Bananas", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Classic Granola", "amount": 30.0, "customUnit": "g", "customAmount": 30.0}
     ]
   },
   {
     "title": "Caprese Salad",
-    "body": "A classic Italian salad with fresh tomatoes, mozzarella, and basil drizzled with olive oil.",
+    "body": "A classic Italian salad with fresh tomatoes, mozzarella, and basil.",
     "author_username": "healthy_mike",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Slice tomatoes and mozzarella into rounds. 2. Arrange alternating slices on a plate. 3. Tuck fresh basil leaves between slices. 4. Drizzle generously with olive oil. 5. Season with salt and pepper. 6. Optionally add balsamic glaze.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Slice tomatoes and mozzarella into rounds. 2. Arrange alternating slices on a plate. 3. Drizzle generously with olive oil. 4. Season with salt and pepper.",
     "ingredients": [
-      {
-        "foodName": "Tomato",
-        "amount": 300.0,
-        "customUnit": "medium tomatoes",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Mozzarella Cheese (Whole Milk)",
-        "amount": 200.0,
-        "customUnit": "grams",
-        "customAmount": 200.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Tomato", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
-  },
+  }
+,
   {
     "title": "Tuna Salad Sandwich",
     "body": "A classic tuna salad sandwich with celery and mayonnaise on whole wheat bread.",
     "author_username": "foodie_sarah",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
-    "instructions": "1. Drain canned tuna. 2. Mix tuna with mayonnaise. 3. Add diced celery and onion. 4. Season with salt and pepper. 5. Spread on whole wheat bread. 6. Add lettuce and serve.",
+    "tags": ["Recipe", "High-Protein"],
+    "instructions": "1. Drain canned tuna. 2. Mix tuna with mayonnaise. 3. Add diced celery. 4. Season with salt and pepper. 5. Spread on whole wheat bread. 6. Add lettuce and serve.",
     "ingredients": [
-      {
-        "foodName": "Tuna",
-        "amount": 150.0,
-        "customUnit": "can",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Mayonnaise",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Celery",
-        "amount": 30.0,
-        "customUnit": "stalk",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Whole Wheat Bread",
-        "amount": 60.0,
-        "customUnit": "slices",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lettuce",
-        "amount": 30.0,
-        "customUnit": "leaves",
-        "customAmount": 2.0
-      }
+      {"foodName": "Tuna", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Mayonnaise", "amount": 25.0, "customUnit": "g", "customAmount": 25.0},
+      {"foodName": "Celery", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
+      {"foodName": "Whole Wheat Bread", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
+      {"foodName": "Lettuce", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
   },
   {
     "title": "Pumpkin Soup",
     "body": "A creamy and comforting pumpkin soup perfect for autumn evenings.",
     "author_username": "kitchen_ninja",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
-    "instructions": "1. Sauté onions in olive oil until soft. 2. Add pumpkin cubes and vegetable broth. 3. Simmer until pumpkin is tender. 4. Blend until smooth. 5. Season with salt, pepper, and nutmeg. 6. Serve with a swirl of cream.",
+    "tags": ["Recipe", "Vegan"],
+    "instructions": "1. Sauté onions in olive oil until soft. 2. Add pumpkin cubes and vegetable broth. 3. Simmer until pumpkin is tender. 4. Blend until smooth. 5. Season with salt, pepper, and nutmeg.",
     "ingredients": [
-      {
-        "foodName": "Cooked Pumpkin",
-        "amount": 500.0,
-        "customUnit": "cups",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 100.0,
-        "customUnit": "medium onion",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 6.0,
-        "customUnit": "cloves",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Cooked Pumpkin", "amount": 400.0, "customUnit": "g", "customAmount": 400.0},
+      {"foodName": "Onions", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Chicken Caesar Salad",
-    "body": "Crisp romaine lettuce with grilled chicken, parmesan, and creamy Caesar dressing.",
+    "body": "Crisp romaine lettuce with grilled chicken and parmesan.",
     "author_username": "veggie_lover",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
-    "instructions": "1. Grill chicken breast and slice. 2. Chop romaine lettuce. 3. Toss lettuce with Caesar dressing. 4. Top with sliced chicken. 5. Add shaved parmesan. 6. Serve with croutons.",
+    "tags": ["Recipe", "High-Protein"],
+    "instructions": "1. Grill chicken breast and slice. 2. Chop romaine lettuce. 3. Toss lettuce with olive oil and lemon. 4. Top with sliced chicken. 5. Add shaved parmesan.",
     "ingredients": [
-      {
-        "foodName": "Chicken Breast",
-        "amount": 200.0,
-        "customUnit": "breast",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Lettuce",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Parmesan Cheese (Shredded)",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 15.0,
-        "customUnit": "tablespoon juice",
-        "customAmount": 1.0
-      }
+      {"foodName": "Chicken Breast", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Lettuce", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Parmesan Cheese (Shredded)", "amount": 25.0, "customUnit": "g", "customAmount": 25.0},
+      {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Blueberry Pancakes",
-    "body": "Fluffy pancakes studded with fresh blueberries, perfect for a weekend breakfast.",
+    "body": "Fluffy pancakes studded with fresh blueberries.",
     "author_username": "protein_pete",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
+    "tags": ["Recipe", "Vegetarian"],
     "instructions": "1. Mix flour, milk, egg, and a pinch of salt. 2. Fold in blueberries. 3. Heat butter in a pan. 4. Pour batter to form pancakes. 5. Cook until bubbles form, then flip. 6. Serve with maple syrup.",
     "ingredients": [
-      {
-        "foodName": "Blueberries",
-        "amount": 100.0,
-        "customUnit": "cups",
-        "customAmount": 0.75
-      },
-      {
-        "foodName": "Whole Milk",
-        "amount": 240.0,
-        "customUnit": "cup",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Egg",
-        "amount": 50.0,
-        "customUnit": "large egg",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Blueberries", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Whole Milk", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Egg", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0}
     ]
-  },
+  }
+,
   {
     "title": "Stuffed Bell Peppers",
-    "body": "Colorful bell peppers stuffed with a savory mixture of rice, beef, and tomatoes.",
+    "body": "Colorful bell peppers stuffed with a savory mixture of rice and beef.",
     "author_username": "home_cook_anna",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Cut tops off peppers and remove seeds. 2. Cook rice according to package. 3. Brown ground beef with onions. 4. Mix beef with rice and tomatoes. 5. Stuff peppers with mixture. 6. Bake at 180°C for 35 minutes.",
     "ingredients": [
-      {
-        "foodName": "Bell Pepper",
-        "amount": 400.0,
-        "customUnit": "large peppers",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "White Rice",
-        "amount": 200.0,
-        "customUnit": "cups cooked",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Beef Steak",
-        "amount": 300.0,
-        "customUnit": "grams",
-        "customAmount": 300.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 100.0,
-        "customUnit": "medium onion",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Tomato",
-        "amount": 200.0,
-        "customUnit": "medium tomatoes",
-        "customAmount": 2.0
-      }
+      {"foodName": "Bell Pepper", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Beef Steak", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Onions", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Tomato", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
     "title": "Honey Glazed Carrots",
-    "body": "Sweet and tender carrots glazed with honey and butter, a perfect side dish.",
+    "body": "Sweet and tender carrots glazed with butter, a perfect side dish.",
     "author_username": "taste_explorer",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Peel and slice carrots. 2. Boil carrots until tender. 3. Drain and return to pot. 4. Add butter and honey. 5. Toss until carrots are coated. 6. Season with salt and serve.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Peel and slice carrots. 2. Boil carrots until tender. 3. Drain and return to pot. 4. Add butter. 5. Toss until carrots are coated. 6. Season with salt and serve.",
     "ingredients": [
-      {
-        "foodName": "Carrots",
-        "amount": 400.0,
-        "customUnit": "medium carrots",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Carrots", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "Butter", "amount": 25.0, "customUnit": "g", "customAmount": 25.0}
     ]
   },
   {
     "title": "Mushroom Risotto",
     "body": "Creamy Italian risotto with sautéed mushrooms and parmesan cheese.",
     "author_username": "nutrition_nerd",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
+    "tags": ["Recipe", "Vegetarian"],
     "instructions": "1. Sauté mushrooms in butter and set aside. 2. Sauté onions in olive oil. 3. Add rice and toast for 2 minutes. 4. Add broth gradually, stirring constantly. 5. Stir in mushrooms and parmesan. 6. Season and serve immediately.",
     "ingredients": [
-      {
-        "foodName": "White Rice",
-        "amount": 300.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Mushroom",
-        "amount": 200.0,
-        "customUnit": "cups sliced",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 100.0,
-        "customUnit": "medium onion",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Parmesan Cheese (Shredded)",
-        "amount": 50.0,
-        "customUnit": "tablespoons",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 15.0,
-        "customUnit": "tablespoon",
-        "customAmount": 1.0
-      }
+      {"foodName": "White Rice", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Mushroom", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Onions", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
+      {"foodName": "Parmesan Cheese (Shredded)", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
+      {"foodName": "Butter", "amount": 25.0, "customUnit": "g", "customAmount": 25.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Baked Salmon with Asparagus",
-    "body": "Oven-baked salmon fillets with tender asparagus spears, a healthy one-pan meal.",
+    "body": "Oven-baked salmon fillets with tender asparagus spears.",
     "author_username": "quick_meals_joe",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Preheat oven to 200°C. 2. Place salmon and asparagus on a baking sheet. 3. Drizzle with olive oil. 4. Season with salt, pepper, and lemon. 5. Bake for 15-18 minutes. 6. Serve immediately.",
     "ingredients": [
-      {
-        "foodName": "Salmon",
-        "amount": 400.0,
-        "customUnit": "fillets",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Asparagus",
-        "amount": 200.0,
-        "customUnit": "spears",
-        "customAmount": 12.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 30.0,
-        "customUnit": "half lemon",
-        "customAmount": 0.5
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 6.0,
-        "customUnit": "cloves",
-        "customAmount": 2.0
-      }
+      {"foodName": "Salmon", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Asparagus", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0},
+      {"foodName": "Lemon", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0}
     ]
-  },
+  }
+,
   {
     "title": "Black Bean Tacos",
     "body": "Flavorful vegetarian tacos filled with seasoned black beans and fresh toppings.",
     "author_username": "organic_olivia",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
+    "tags": ["Recipe", "Vegan"],
     "instructions": "1. Heat black beans with cumin and chili powder. 2. Warm tortillas. 3. Fill tortillas with beans. 4. Top with diced tomatoes and onions. 5. Add avocado slices. 6. Squeeze lime juice on top.",
     "ingredients": [
-      {
-        "foodName": "Black Beans (Canned)",
-        "amount": 300.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Tortilla",
-        "amount": 120.0,
-        "customUnit": "tortillas",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Tomato",
-        "amount": 100.0,
-        "customUnit": "medium tomato",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 50.0,
-        "customUnit": "small onion",
-        "customAmount": 0.5
-      },
-      {
-        "foodName": "Avocado",
-        "amount": 75.0,
-        "customUnit": "half",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Lime",
-        "amount": 30.0,
-        "customUnit": "lime",
-        "customAmount": 1.0
-      }
+      {"foodName": "Black Beans (Canned)", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Tortilla", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Tomato", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Onions", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
+      {"foodName": "Avocado", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Lime", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Peanut Butter Banana Smoothie",
     "body": "A creamy and protein-rich smoothie with peanut butter and banana.",
     "author_username": "fit_foodie",
-    "tags": [
-      "Recipe",
-      "Vegetarian",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "Vegetarian", "High-Protein"],
     "instructions": "1. Add banana to blender. 2. Add peanut butter and milk. 3. Blend until smooth. 4. Add ice if desired. 5. Pour into glass and serve.",
     "ingredients": [
-      {
-        "foodName": "Bananas",
-        "amount": 100.0,
-        "customUnit": "medium banana",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Peanut Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Whole Milk",
-        "amount": 240.0,
-        "customUnit": "cup",
-        "customAmount": 1.0
-      }
+      {"foodName": "Bananas", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Peanut Butter", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
+      {"foodName": "Whole Milk", "amount": 200.0, "customUnit": "g", "customAmount": 200.0}
     ]
   },
   {
     "title": "Eggplant Parmesan",
     "body": "Breaded eggplant slices baked with marinara sauce and melted mozzarella cheese.",
     "author_username": "culinary_chris",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Slice eggplant and salt to remove moisture. 2. Bread eggplant slices with egg and breadcrumbs. 3. Bake at 200°C until golden. 4. Layer with tomato sauce and mozzarella. 5. Bake until cheese melts. 6. Top with parmesan.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Slice eggplant and salt to remove moisture. 2. Bread eggplant slices with egg. 3. Bake at 200°C until golden. 4. Layer with tomato sauce and mozzarella. 5. Bake until cheese melts. 6. Top with parmesan.",
     "ingredients": [
-      {
-        "foodName": "Eggplant",
-        "amount": 400.0,
-        "customUnit": "medium eggplant",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Mozzarella Cheese (Whole Milk)",
-        "amount": 200.0,
-        "customUnit": "grams",
-        "customAmount": 200.0
-      },
-      {
-        "foodName": "Tomato Juice",
-        "amount": 300.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Parmesan Cheese (Shredded)",
-        "amount": 50.0,
-        "customUnit": "tablespoons",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Egg",
-        "amount": 100.0,
-        "customUnit": "large eggs",
-        "customAmount": 2.0
-      }
+      {"foodName": "Eggplant", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Tomato", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Parmesan Cheese (Shredded)", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
+      {"foodName": "Egg", "amount": 50.0, "customUnit": "g", "customAmount": 50.0}
     ]
   },
   {
     "title": "Grilled Zucchini Salad",
-    "body": "Charred zucchini slices with feta cheese, mint, and a lemon dressing.",
+    "body": "Charred zucchini slices with feta cheese and a lemon dressing.",
     "author_username": "chef_maria",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Slice zucchini lengthwise. 2. Brush with olive oil. 3. Grill until charred. 4. Arrange on a plate. 5. Top with crumbled feta. 6. Drizzle with lemon juice and olive oil.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Slice zucchini lengthwise. 2. Brush with olive oil. 3. Grill until charred. 4. Arrange on a plate. 5. Top with crumbled cheese. 6. Drizzle with lemon juice and olive oil.",
     "ingredients": [
-      {
-        "foodName": "Zucchini",
-        "amount": 400.0,
-        "customUnit": "medium zucchini",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Mozzarella Cheese (Whole Milk)",
-        "amount": 100.0,
-        "customUnit": "grams",
-        "customAmount": 100.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 30.0,
-        "customUnit": "tablespoons juice",
-        "customAmount": 2.0
-      }
+      {"foodName": "Zucchini", "amount": 250.0, "customUnit": "g", "customAmount": 250.0},
+      {"foodName": "Mozzarella Cheese (Whole Milk)", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
-  },
+  }
+,
   {
     "title": "Turkey Meatballs",
     "body": "Lean turkey meatballs baked to perfection, great with pasta or as an appetizer.",
     "author_username": "healthy_mike",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
-    "instructions": "1. Mix ground turkey with egg and breadcrumbs. 2. Add minced garlic and onion. 3. Season with salt and pepper. 4. Form into meatballs. 5. Bake at 200°C for 20 minutes. 6. Serve with marinara sauce.",
+    "tags": ["Recipe", "High-Protein"],
+    "instructions": "1. Mix ground turkey with egg. 2. Add minced garlic and onion. 3. Season with salt and pepper. 4. Form into meatballs. 5. Bake at 200°C for 20 minutes. 6. Serve with marinara sauce.",
     "ingredients": [
-      {
-        "foodName": "Turkey",
-        "amount": 500.0,
-        "customUnit": "grams",
-        "customAmount": 500.0
-      },
-      {
-        "foodName": "Egg",
-        "amount": 50.0,
-        "customUnit": "large egg",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 50.0,
-        "customUnit": "small onion",
-        "customAmount": 0.5
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 6.0,
-        "customUnit": "cloves",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Tomato Juice",
-        "amount": 200.0,
-        "customUnit": "cup",
-        "customAmount": 1.0
-      }
+      {"foodName": "Turkey", "amount": 300.0, "customUnit": "g", "customAmount": 300.0},
+      {"foodName": "Egg", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Onions", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Garlic", "amount": 5.0, "customUnit": "g", "customAmount": 5.0},
+      {"foodName": "Tomato", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
     "title": "Coconut Curry Vegetables",
-    "body": "A fragrant Thai-inspired curry with mixed vegetables in creamy coconut milk.",
+    "body": "A fragrant Thai-inspired curry with mixed vegetables.",
     "author_username": "foodie_sarah",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
-    "instructions": "1. Sauté onions and garlic. 2. Add curry paste and cook for 1 minute. 3. Add coconut milk. 4. Add broccoli and bell peppers. 5. Simmer until vegetables are tender. 6. Serve over rice.",
+    "tags": ["Recipe", "Vegan"],
+    "instructions": "1. Sauté onions and garlic. 2. Add curry paste and cook for 1 minute. 3. Add broccoli and bell peppers. 4. Simmer until vegetables are tender. 5. Serve over rice.",
     "ingredients": [
-      {
-        "foodName": "Broccoli",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Bell Pepper",
-        "amount": 150.0,
-        "customUnit": "medium peppers",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Onions",
-        "amount": 100.0,
-        "customUnit": "medium onion",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 9.0,
-        "customUnit": "cloves",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "White Rice",
-        "amount": 200.0,
-        "customUnit": "cups cooked",
-        "customAmount": 2.0
-      }
+      {"foodName": "Broccoli", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Bell Pepper", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Onions", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Garlic", "amount": 8.0, "customUnit": "g", "customAmount": 8.0},
+      {"foodName": "White Rice", "amount": 150.0, "customUnit": "g", "customAmount": 150.0}
     ]
   },
   {
     "title": "Bison Burger",
     "body": "A lean and flavorful bison burger served on a toasted bun with fresh toppings.",
     "author_username": "kitchen_ninja",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
-    "instructions": "1. Form bison meat into patties. 2. Season with salt and pepper. 3. Grill for 4-5 minutes per side. 4. Toast burger buns. 5. Assemble with lettuce, tomato, and onion. 6. Add your favorite condiments.",
+    "tags": ["Recipe", "High-Protein"],
+    "instructions": "1. Form bison meat into patties. 2. Season with salt and pepper. 3. Grill for 4-5 minutes per side. 4. Toast burger buns. 5. Assemble with lettuce, tomato, and onion.",
     "ingredients": [
-      {
-        "foodName": "Bison",
-        "amount": 400.0,
-        "customUnit": "patties",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Bagel",
-        "amount": 200.0,
-        "customUnit": "buns",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lettuce",
-        "amount": 30.0,
-        "customUnit": "leaves",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Tomato",
-        "amount": 100.0,
-        "customUnit": "slices",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 30.0,
-        "customUnit": "slices",
-        "customAmount": 2.0
-      }
+      {"foodName": "Bison", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Bagel", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Lettuce", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Tomato", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Onions", "amount": 30.0, "customUnit": "g", "customAmount": 30.0}
     ]
   },
   {
     "title": "Scallops with Garlic Butter",
-    "body": "Pan-seared scallops in a rich garlic butter sauce, an elegant seafood dish.",
+    "body": "Pan-seared scallops in a rich garlic butter sauce.",
     "author_username": "veggie_lover",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Pat scallops dry and season. 2. Sear in hot pan for 2 minutes per side. 3. Remove scallops. 4. Add butter and garlic to pan. 5. Return scallops and baste with butter. 6. Finish with lemon juice.",
     "ingredients": [
-      {
-        "foodName": "Scallops",
-        "amount": 300.0,
-        "customUnit": "large scallops",
-        "customAmount": 8.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 45.0,
-        "customUnit": "tablespoons",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Garlic",
-        "amount": 9.0,
-        "customUnit": "cloves",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 30.0,
-        "customUnit": "tablespoons juice",
-        "customAmount": 2.0
-      }
+      {"foodName": "Scallops", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Butter", "amount": 30.0, "customUnit": "g", "customAmount": 30.0},
+      {"foodName": "Garlic", "amount": 8.0, "customUnit": "g", "customAmount": 8.0},
+      {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
-  },
+  }
+,
   {
     "title": "Kale and Quinoa Salad",
     "body": "A nutritious salad with massaged kale, quinoa, and a tangy lemon dressing.",
     "author_username": "protein_pete",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
+    "tags": ["Recipe", "Vegan"],
     "instructions": "1. Cook quinoa and let cool. 2. Massage kale with olive oil and salt. 3. Combine kale and quinoa. 4. Add diced cucumber. 5. Dress with lemon juice and olive oil. 6. Top with pumpkin seeds.",
     "ingredients": [
-      {
-        "foodName": "Kale",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Quinoa (Cooked)",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Cucumber",
-        "amount": 100.0,
-        "customUnit": "medium cucumber",
-        "customAmount": 0.5
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 30.0,
-        "customUnit": "tablespoons juice",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Pumpkin Seeds",
-        "amount": 20.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Kale", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Quinoa (Cooked)", "amount": 120.0, "customUnit": "g", "customAmount": 120.0},
+      {"foodName": "Cucumber", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Olive Oil", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Lemon", "amount": 15.0, "customUnit": "g", "customAmount": 15.0},
+      {"foodName": "Pumpkin Seeds", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   },
   {
     "title": "Ham and Cheese Omelette",
     "body": "A classic breakfast omelette filled with ham and melted cheese.",
     "author_username": "home_cook_anna",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Whisk eggs with salt and pepper. 2. Heat butter in a pan. 3. Pour in eggs and cook until set. 4. Add diced ham and cheese to one half. 5. Fold omelette over. 6. Serve immediately.",
     "ingredients": [
-      {
-        "foodName": "Egg",
-        "amount": 150.0,
-        "customUnit": "large eggs",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Ham",
-        "amount": 60.0,
-        "customUnit": "slices",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Cheddar Cheese",
-        "amount": 50.0,
-        "customUnit": "grams",
-        "customAmount": 50.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 15.0,
-        "customUnit": "tablespoon",
-        "customAmount": 1.0
-      }
+      {"foodName": "Egg", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Ham", "amount": 50.0, "customUnit": "g", "customAmount": 50.0},
+      {"foodName": "Cheddar Cheese", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
+      {"foodName": "Butter", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
     ]
   },
   {
     "title": "Tilapia with Lemon Butter",
     "body": "Light and flaky tilapia fillets pan-fried with a simple lemon butter sauce.",
     "author_username": "taste_explorer",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
+    "tags": ["Recipe", "High-Protein"],
     "instructions": "1. Season tilapia with salt and pepper. 2. Heat olive oil in a pan. 3. Cook tilapia for 3-4 minutes per side. 4. Add butter and lemon juice. 5. Spoon sauce over fish. 6. Garnish with parsley.",
     "ingredients": [
-      {
-        "foodName": "Tilapia Fillets",
-        "amount": 400.0,
-        "customUnit": "fillets",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Lemon",
-        "amount": 30.0,
-        "customUnit": "tablespoons juice",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 15.0,
-        "customUnit": "tablespoon",
-        "customAmount": 1.0
-      }
+      {"foodName": "Tilapia Fillets", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Lemon", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Olive Oil", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
     ]
   },
   {
     "title": "Ricotta Toast with Berries",
-    "body": "Creamy ricotta spread on toast topped with fresh berries and a drizzle of honey.",
+    "body": "Creamy ricotta spread on toast topped with fresh berries.",
     "author_username": "nutrition_nerd",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Toast bread until golden. 2. Spread ricotta cheese on toast. 3. Top with fresh blueberries and strawberries. 4. Drizzle with honey. 5. Sprinkle with chia seeds if desired.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Toast bread until golden. 2. Spread ricotta cheese on toast. 3. Top with fresh blueberries and strawberries. 4. Drizzle with honey if desired.",
     "ingredients": [
-      {
-        "foodName": "Whole Wheat Bread",
-        "amount": 60.0,
-        "customUnit": "slices",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Ricotta Cheese",
-        "amount": 110.0,
-        "customUnit": "tablespoons",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Blueberries",
-        "amount": 50.0,
-        "customUnit": "tablespoons",
-        "customAmount": 4.0
-      },
-      {
-        "foodName": "Strawberries",
-        "amount": 50.0,
-        "customUnit": "medium berries",
-        "customAmount": 4.0
-      }
+      {"foodName": "Whole Wheat Bread", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
+      {"foodName": "Ricotta Cheese", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Blueberries", "amount": 40.0, "customUnit": "g", "customAmount": 40.0},
+      {"foodName": "Strawberries", "amount": 40.0, "customUnit": "g", "customAmount": 40.0}
     ]
-  },
+  }
+,
   {
     "title": "Edamame Salad",
-    "body": "A refreshing Asian-inspired salad with edamame, cucumber, and sesame dressing.",
+    "body": "A refreshing Asian-inspired salad with edamame, cucumber, and sesame.",
     "author_username": "quick_meals_joe",
-    "tags": [
-      "Recipe",
-      "Vegan"
-    ],
-    "instructions": "1. Cook edamame and let cool. 2. Dice cucumber. 3. Combine edamame and cucumber. 4. Add sesame seeds. 5. Dress with sesame oil and rice vinegar. 6. Season with salt.",
+    "tags": ["Recipe", "Vegan"],
+    "instructions": "1. Cook edamame and let cool. 2. Dice cucumber. 3. Combine edamame and cucumber. 4. Add sesame seeds. 5. Dress with olive oil. 6. Season with salt.",
     "ingredients": [
-      {
-        "foodName": "Edamame",
-        "amount": 200.0,
-        "customUnit": "cups",
-        "customAmount": 1.5
-      },
-      {
-        "foodName": "Cucumber",
-        "amount": 150.0,
-        "customUnit": "medium cucumber",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Sesame Seeds",
-        "amount": 15.0,
-        "customUnit": "tablespoons",
-        "customAmount": 1.0
-      }
+      {"foodName": "Edamame", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Cucumber", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Sesame Seeds", "amount": 10.0, "customUnit": "g", "customAmount": 10.0}
     ]
   },
   {
     "title": "Pork Chops with Apple",
     "body": "Juicy pork chops pan-fried and served with caramelized apples.",
     "author_username": "organic_olivia",
-    "tags": [
-      "Recipe",
-      "High-Protein"
-    ],
-    "instructions": "1. Season pork chops with salt and pepper. 2. Sear in a hot pan for 4-5 minutes per side. 3. Remove and rest. 4. Slice apples and sauté in butter. 5. Add a touch of honey. 6. Serve pork with apples.",
+    "tags": ["Recipe", "High-Protein"],
+    "instructions": "1. Season pork chops with salt and pepper. 2. Sear in a hot pan for 4-5 minutes per side. 3. Remove and rest. 4. Slice apples and sauté in butter. 5. Serve pork with apples.",
     "ingredients": [
-      {
-        "foodName": "Pork Chops (Top Loin, Boneless)",
-        "amount": 400.0,
-        "customUnit": "chops",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Apple",
-        "amount": 200.0,
-        "customUnit": "medium apples",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Butter",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Onions",
-        "amount": 50.0,
-        "customUnit": "small onion",
-        "customAmount": 0.5
-      }
+      {"foodName": "Pork Chops (Top Loin, Boneless)", "amount": 200.0, "customUnit": "g", "customAmount": 200.0},
+      {"foodName": "Apple", "amount": 150.0, "customUnit": "g", "customAmount": 150.0},
+      {"foodName": "Butter", "amount": 20.0, "customUnit": "g", "customAmount": 20.0},
+      {"foodName": "Onions", "amount": 40.0, "customUnit": "g", "customAmount": 40.0}
     ]
   },
   {
     "title": "Goat Cheese Salad",
     "body": "Mixed greens topped with creamy goat cheese, walnuts, and balsamic dressing.",
     "author_username": "fit_foodie",
-    "tags": [
-      "Recipe",
-      "Vegetarian"
-    ],
-    "instructions": "1. Arrange mixed greens on plates. 2. Crumble goat cheese on top. 3. Add toasted walnuts. 4. Slice pears and add to salad. 5. Drizzle with olive oil and balsamic. 6. Season with salt and pepper.",
+    "tags": ["Recipe", "Vegetarian"],
+    "instructions": "1. Arrange mixed greens on plates. 2. Crumble goat cheese on top. 3. Add toasted walnuts. 4. Slice pears and add to salad. 5. Drizzle with olive oil.",
     "ingredients": [
-      {
-        "foodName": "Lettuce",
-        "amount": 150.0,
-        "customUnit": "cups",
-        "customAmount": 3.0
-      },
-      {
-        "foodName": "Goats Cheese (Soft)",
-        "amount": 100.0,
-        "customUnit": "grams",
-        "customAmount": 100.0
-      },
-      {
-        "foodName": "Walnuts",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      },
-      {
-        "foodName": "Pears",
-        "amount": 100.0,
-        "customUnit": "medium pear",
-        "customAmount": 1.0
-      },
-      {
-        "foodName": "Olive Oil",
-        "amount": 30.0,
-        "customUnit": "tablespoons",
-        "customAmount": 2.0
-      }
+      {"foodName": "Lettuce", "amount": 100.0, "customUnit": "g", "customAmount": 100.0},
+      {"foodName": "Goats Cheese (Soft)", "amount": 60.0, "customUnit": "g", "customAmount": 60.0},
+      {"foodName": "Walnuts", "amount": 25.0, "customUnit": "g", "customAmount": 25.0},
+      {"foodName": "Pears", "amount": 80.0, "customUnit": "g", "customAmount": 80.0},
+      {"foodName": "Olive Oil", "amount": 15.0, "customUnit": "g", "customAmount": 15.0}
     ]
   }
 ]
