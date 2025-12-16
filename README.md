@@ -376,7 +376,12 @@ npm run dev
 
 ## Production APK Build
 
-### Using Docker (Recommended)
+### Using github action (Recommended)
+
+We have a github action that builds the apk for you. You can trigger it by going to the actions tab and selecting "Apk Builder" [workflow](https://github.com/bounswe/bounswe2025group9/actions/workflows/apk_builder.yml). Then click on "Run workflow" button.
+
+
+### Using Docker
 
 Docker ensures a consistent build environment and handles all dependencies.
 
@@ -422,14 +427,8 @@ npm install
 # Generate native Android project
 npx expo prebuild --platform android --clean
 
-# Configure Gradle memory settings
-cd android
-echo "org.gradle.jvmargs=-Xmx4096m -XX:MaxMetaspaceSize=1024m" >> gradle.properties
-echo "org.gradle.daemon=false" >> gradle.properties
-echo "org.gradle.parallel=false" >> gradle.properties
-
 # Build release APK
-./gradlew assembleRelease --stacktrace
+./gradlew assembleRelease
 
 # APK output location:
 # android/app/build/outputs/apk/release/app-release.apk
