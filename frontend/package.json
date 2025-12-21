@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest",
+    "test:report": "vitest run --reporter=junit --reporter=html --outputFile.junit=../reports/frontend/test-report.xml",
     "prepare": "husky"
   },
   "dependencies": {
@@ -47,7 +48,8 @@
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.26.1",
     "vite": "^6.3.1",
-    "vitest": "^3.1.2"
+    "vitest": "^3.1.2",
+    "@vitest/ui": "^3.1.2"
   },
   "msw": {
     "workerDirectory": [

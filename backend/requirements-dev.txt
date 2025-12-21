@@ -1,3 +1,9 @@
 -r requirements.txt
 black >= 25.1.0
 pre-commit >= 4.2.0
+
+# Testing and reporting
+pytest >= 8.0.0
+pytest-django >= 4.8.0
+pytest-html >= 4.1.0
+pytest-cov >= 4.1.0
