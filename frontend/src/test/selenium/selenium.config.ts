@@ -10,7 +10,7 @@ export interface SeleniumConfig {
 
 export const defaultConfig: SeleniumConfig = {
   browser: Browser.CHROME,
-  headless: true,  // Set to true for faster CI/report generation
+  headless: false,
   baseUrl: 'http://localhost:8080', // Vite default dev server port
   defaultTimeout: 10000,
 };
