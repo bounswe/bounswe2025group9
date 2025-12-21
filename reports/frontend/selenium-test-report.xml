@@ -1,0 +1,589 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<testsuites name="vitest tests" tests="196" failures="14" errors="0" time="1568.508463419">
+    <testsuite name="src/test/selenium/CreatePost.selenium.test.ts" timestamp="2025-12-21T13:13:54.790Z" hostname="Ardas-MacBook-Air-502.local" tests="5" failures="1" errors="0" skipped="0" time="33.203275209">
+        <testcase classname="src/test/selenium/CreatePost.selenium.test.ts" name="Create Post Page - Selenium E2E Tests &gt; should display create post form" time="11.564432208">
+        </testcase>
+        <testcase classname="src/test/selenium/CreatePost.selenium.test.ts" name="Create Post Page - Selenium E2E Tests &gt; should show validation errors when submitting empty form (if authenticated)" time="11.1228175">
+            <failure message="expected &apos;http://localhost:8080/forum/create&apos; to contain &apos;/login&apos;" type="AssertionError">
+AssertionError: expected &apos;http://localhost:8080/forum/create&apos; to contain &apos;/login&apos;
+
+Expected: &quot;/login&quot;
+Received: &quot;http://localhost:8080/forum/create&quot;
+
+ ❯ src/test/selenium/CreatePost.selenium.test.ts:54:26
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/CreatePost.selenium.test.ts" name="Create Post Page - Selenium E2E Tests &gt; should have post type selector (if authenticated)" time="1.030482917">
+        </testcase>
+        <testcase classname="src/test/selenium/CreatePost.selenium.test.ts" name="Create Post Page - Selenium E2E Tests &gt; should have tag selection functionality (if authenticated)" time="1.025818833">
+        </testcase>
+        <testcase classname="src/test/selenium/CreatePost.selenium.test.ts" name="Create Post Page - Selenium E2E Tests &gt; should have a cancel button that goes back to forum" time="1.028387625">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/FollowSystem.selenium.test.ts" timestamp="2025-12-21T13:13:54.800Z" hostname="Ardas-MacBook-Air-502.local" tests="9" failures="0" errors="0" skipped="0" time="76.846360042">
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should display follow button on other user profiles" time="4.183892375">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should toggle follow status when clicking follow button" time="6.143962792">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should show success message after following a user" time="14.102015292">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should update followers count after following" time="6.622369791">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should show loading state while following" time="14.292891166">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should display followers and following counts on user profile" time="4.08886275">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should not show follow button on own profile" time="12.0162805">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should allow unfollowing a user" time="6.196145958">
+        </testcase>
+        <testcase classname="src/test/selenium/FollowSystem.selenium.test.ts" name="Follow System - Selenium E2E Tests &gt; should navigate to user profile from post author link" time="4.120448667">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/FoodCompare.selenium.test.ts" timestamp="2025-12-21T13:13:54.802Z" hostname="Ardas-MacBook-Air-502.local" tests="4" failures="3" errors="0" skipped="0" time="72.693493625">
+        <testcase classname="src/test/selenium/FoodCompare.selenium.test.ts" name="Food Compare - Selenium E2E Tests &gt; 0 - shows hint when no foods selected" time="0.450591458">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodCompare.selenium.test.ts" name="Food Compare - Selenium E2E Tests &gt; 1 - selecting same food twice shows duplicate alert" time="21.609801625">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//div[contains(@class,&apos;nh-card&apos;) and .//h3[contains(., &apos;Bulgur&apos;)]]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//div[contains(@class,&apos;nh-card&apos;) and .//h3[contains(., &apos;Bulgur&apos;)]]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ selectFoodByName src/test/selenium/FoodCompare.selenium.test.ts:45:14
+ ❯ src/test/selenium/FoodCompare.selenium.test.ts:71:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x00000001049a4b2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x000000010499cb30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x0000000104496b0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x00000001044dd9c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x000000010451e968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x00000001044d216c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x0000000104968098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x000000010496b804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x0000000104948850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x000000010496c074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001049391cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x000000010498bcb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x000000010498be34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x000000010499c788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/FoodCompare.selenium.test.ts" name="Food Compare - Selenium E2E Tests &gt; 2 - selecting two foods renders comparison successfully" time="21.386240208">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//div[contains(@class,&apos;nh-card&apos;) and .//h3[contains(., &apos;Bulgur&apos;)]]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//div[contains(@class,&apos;nh-card&apos;) and .//h3[contains(., &apos;Bulgur&apos;)]]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ selectFoodByName src/test/selenium/FoodCompare.selenium.test.ts:45:14
+ ❯ src/test/selenium/FoodCompare.selenium.test.ts:88:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x00000001049a4b2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x000000010499cb30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x0000000104496b0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x00000001044dd9c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x000000010451e968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x00000001044d216c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x0000000104968098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x000000010496b804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x0000000104948850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x000000010496c074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001049391cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x000000010498bcb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x000000010498be34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x000000010499c788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/FoodCompare.selenium.test.ts" name="Food Compare - Selenium E2E Tests &gt; 3 - selecting three foods renders comparison successfully" time="21.453801667">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//div[contains(@class,&apos;nh-card&apos;) and .//h3[contains(., &apos;Bulgur&apos;)]]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//div[contains(@class,&apos;nh-card&apos;) and .//h3[contains(., &apos;Bulgur&apos;)]]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ selectFoodByName src/test/selenium/FoodCompare.selenium.test.ts:45:14
+ ❯ src/test/selenium/FoodCompare.selenium.test.ts:105:5
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x00000001049a4b2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x000000010499cb30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x0000000104496b0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x00000001044dd9c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x000000010451e968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x00000001044d216c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x0000000104968098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x000000010496b804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x0000000104948850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x000000010496c074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001049391cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x000000010498bcb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x000000010498be34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x000000010499c788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/FoodDetail.selenium.test.ts" timestamp="2025-12-21T13:13:54.810Z" hostname="Ardas-MacBook-Air-502.local" tests="14" failures="0" errors="0" skipped="0" time="99.456084875">
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should navigate to food detail page from foods list" time="13.117218792">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should display food detail page with food name" time="1.536952125">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should show nutrition information section" time="3.574586625">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should display serving size information" time="11.535946667">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should show nutrition score badge" time="1.537649458">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should display food category or type" time="1.531512292">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should have add to meal planner button" time="11.588610875">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should show detailed nutritional breakdown" time="11.556505292">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should display food image if available" time="1.529677958">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should have back or close button to return to foods list" time="1.524540459">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should allow selecting different serving sizes" time="1.526733333">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should display allergen information if available" time="11.52684675">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should show related or similar foods" time="11.564991125">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodDetail.selenium.test.ts" name="Food Detail Page - Selenium E2E Tests &gt; should handle clicking add to meal planner button" time="11.5285175">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/FoodProposal.selenium.test.ts" timestamp="2025-12-21T13:13:54.813Z" hostname="Ardas-MacBook-Air-502.local" tests="18" failures="0" errors="0" skipped="0" time="132.702920167">
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should display propose food button on foods page" time="11.549642917">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should navigate to food proposal form" time="1.519053167">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should redirect to login if not authenticated" time="11.564800958">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should display food proposal form fields" time="1.534138208">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have food name input field" time="1.524684083">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have nutrition information fields" time="11.553271334">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have serving size field" time="11.570654166">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have food category selector" time="1.540609375">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should allow typing in food name field" time="1.6286805">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should allow entering nutrition values" time="11.545469833">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have food description field" time="11.580381667">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have food image upload capability" time="11.5248395">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have submit button" time="1.537307958">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have cancel button" time="1.529074916">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should show validation errors when submitting empty form" time="12.102051291">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should validate numeric fields for nutrition values" time="11.557339458">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should have allergen information section" time="11.580855833">
+        </testcase>
+        <testcase classname="src/test/selenium/FoodProposal.selenium.test.ts" name="Food Proposal - Selenium E2E Tests &gt; should display form title or heading" time="1.526393291">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/Foods.selenium.test.ts" timestamp="2025-12-21T13:13:54.816Z" hostname="Ardas-MacBook-Air-502.local" tests="7" failures="2" errors="0" skipped="0" time="48.058538042">
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should display foods page with header and search functionality" time="10.271729375">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;Sort Options&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;Sort Options&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ src/test/selenium/Foods.selenium.test.ts:33:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x0000000101248b2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x0000000101240b30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x0000000100d3ab0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x0000000100d819c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x0000000100dc2968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x0000000100d7616c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x000000010120c098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x000000010120f804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x00000001011ec850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x0000000101210074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001011dd1cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x000000010122fcb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x000000010122fe34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x0000000101240788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should allow searching for foods" time="1.128289916">
+        </testcase>
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should display food items in cards" time="2.061733208">
+        </testcase>
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should show filter button and allow filtering" time="10.061985875">
+            <failure message="Waiting for element to be located By(xpath, //*[contains(text(), &apos;Sort Options&apos;)])
+Wait timed out after 10044ms" type="TimeoutError">
+TimeoutError: Waiting for element to be located By(xpath, //*[contains(text(), &apos;Sort Options&apos;)])
+Wait timed out after 10044ms
+ ❯ node_modules/selenium-webdriver/lib/webdriver.js:929:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should have pagination controls" time="12.035300125">
+        </testcase>
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should display nutrition score on food cards" time="2.039190791">
+        </testcase>
+        <testcase classname="src/test/selenium/Foods.selenium.test.ts" name="Foods Page - Selenium E2E Tests &gt; should open food detail when clicking on a food card" time="3.084571208">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/Forum.selenium.test.ts" timestamp="2025-12-21T13:13:54.820Z" hostname="Ardas-MacBook-Air-502.local" tests="7" failures="1" errors="0" skipped="0" time="29.224933208">
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; should display forum page with header and create post button" time="0.127232333">
+        </testcase>
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; should display search input and filter button" time="0.068846209">
+        </testcase>
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; should allow typing in search field" time="0.103769375">
+        </testcase>
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; should display forum post cards when posts are loaded" time="2.028281125">
+        </testcase>
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; should show filter panel when filter button is clicked" time="0.639742292">
+        </testcase>
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; should have pagination controls if there are posts" time="12.023525875">
+        </testcase>
+        <testcase classname="src/test/selenium/Forum.selenium.test.ts" name="Forum Page - Selenium E2E Tests &gt; opens the food filter modal and can search/select a food" time="10.208852833">
+            <failure message="Waiting for element to be located By(xpath, //div[contains(@class,&apos;max-w-4xl&apos;) and .//h3[contains(text(), &apos;Select Food Item&apos;)]])
+Wait timed out after 10014ms" type="TimeoutError">
+TimeoutError: Waiting for element to be located By(xpath, //div[contains(@class,&apos;max-w-4xl&apos;) and .//h3[contains(text(), &apos;Select Food Item&apos;)]])
+Wait timed out after 10014ms
+ ❯ node_modules/selenium-webdriver/lib/webdriver.js:929:22
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;&apos; }
+            </failure>
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/Login.selenium.test.ts" timestamp="2025-12-21T13:13:54.821Z" hostname="Ardas-MacBook-Air-502.local" tests="5" failures="0" errors="0" skipped="0" time="5.061519917">
+        <testcase classname="src/test/selenium/Login.selenium.test.ts" name="Login Page - Selenium E2E Tests &gt; should display login form with all required elements" time="0.582065458">
+        </testcase>
+        <testcase classname="src/test/selenium/Login.selenium.test.ts" name="Login Page - Selenium E2E Tests &gt; should show validation errors when submitting empty form" time="0.694666875">
+        </testcase>
+        <testcase classname="src/test/selenium/Login.selenium.test.ts" name="Login Page - Selenium E2E Tests &gt; should toggle password visibility when clicking eye icon" time="0.51998525">
+        </testcase>
+        <testcase classname="src/test/selenium/Login.selenium.test.ts" name="Login Page - Selenium E2E Tests &gt; should allow typing in username and password fields" time="0.232431375">
+        </testcase>
+        <testcase classname="src/test/selenium/Login.selenium.test.ts" name="Login Page - Selenium E2E Tests &gt; should successfully login with valid credentials" time="2.171338">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/MealPlanner.selenium.test.ts" timestamp="2025-12-21T13:13:54.822Z" hostname="Ardas-MacBook-Air-502.local" tests="13" failures="0" errors="0" skipped="0" time="91.650837167">
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should display meal planner page with header" time="1.550121542">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should display calendar or day selector" time="1.023611292">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should have meal type sections (breakfast, lunch, dinner)" time="1.527689917">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should display add meal buttons for each meal type" time="11.623075375">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should open meal selection modal when clicking add meal" time="11.53900775">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should display total calorie count for the day" time="1.038138292">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should have navigation between different days" time="11.059990458">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should display planned meals if any exist" time="11.616828917">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should show nutrition summary for planned meals" time="1.030637">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should have meal suggestions or recommendations feature" time="11.064667333">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should allow removing meals from the plan" time="11.588485833">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should display weekly view option" time="1.028497875">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlanner.selenium.test.ts" name="Meal Planner Page - Selenium E2E Tests &gt; should show loading state while fetching meal plan data" time="11.568964584">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/MealPlannerActions.selenium.test.ts" timestamp="2025-12-21T13:13:54.823Z" hostname="Ardas-MacBook-Air-502.local" tests="18" failures="1" errors="0" skipped="0" time="199.173911875">
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should display add to meal planner button on food detail page" time="11.582732958">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should open meal selection modal when clicking add to meal planner" time="11.661686875">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should show meal type options in add meal modal" time="11.578099292">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should show date selector in add meal modal" time="11.541385708">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should allow selecting meal type" time="11.579597208">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should have confirm button in add meal modal" time="11.623185459">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should have cancel button in add meal modal" time="11.573523">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should close modal when clicking cancel" time="11.5762005">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should show add meal button on meal planner page" time="11.559200333">
+            <failure message="expected 0 to be greater than 0" type="AssertionError">
+AssertionError: expected 0 to be greater than 0
+ ❯ src/test/selenium/MealPlannerActions.selenium.test.ts:217:31
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should open meal search when clicking add on meal planner" time="11.5410285">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should display serving size selector when adding meal" time="11.591402542">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should show quick add buttons for today meals" time="11.531356125">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should display planned meals on meal planner page" time="12.046329709">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should allow removing meals from planner" time="12.116511791">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should confirm before removing meal" time="12.098235875">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should show meal details when clicking on planned meal" time="3.073574042">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should display total nutrition for the day" time="1.529153834">
+        </testcase>
+        <testcase classname="src/test/selenium/MealPlannerActions.selenium.test.ts" name="Meal Planner Actions - Selenium E2E Tests &gt; should allow copying meals to another day" time="12.069093084">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/Navigation.selenium.test.ts" timestamp="2025-12-21T13:13:54.825Z" hostname="Ardas-MacBook-Air-502.local" tests="8" failures="2" errors="0" skipped="0" time="58.311681208">
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should display navbar with logo" time="0.129910959">
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should navigate to home page when clicking logo" time="1.619091083">
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should have navigation links in navbar" time="11.099677458">
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should navigate to forum page" time="2.6008375">
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should navigate to foods page" time="2.636868208">
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should navigate to meal planner page" time="11.055850667">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//a[@href=&apos;/mealplanner&apos;]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//a[@href=&apos;/mealplanner&apos;]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ src/test/selenium/Navigation.selenium.test.ts:109:29
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x00000001050a0b2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x0000000105098b30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x0000000104b92b0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x0000000104bd99c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x0000000104c1a968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x0000000104bce16c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x0000000105064098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x0000000105067804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x0000000105044850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x0000000105068074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001050351cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x0000000105087cb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x0000000105087e34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x0000000105098788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should show login/signup links when not authenticated" time="20.586491542">
+            <failure message="expected 0 to be greater than 0" type="AssertionError">
+AssertionError: expected 0 to be greater than 0
+ ❯ src/test/selenium/Navigation.selenium.test.ts:130:52
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/Navigation.selenium.test.ts" name="Navigation - Selenium E2E Tests &gt; should have footer with links" time="1.053417916">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/NutrientHelpButtons.selenium.test.ts" timestamp="2025-12-21T13:13:54.827Z" hostname="Ardas-MacBook-Air-502.local" tests="4" failures="1" errors="0" skipped="0" time="62.88219725">
+        <testcase classname="src/test/selenium/NutrientHelpButtons.selenium.test.ts" name="Nutrient Help Buttons E2E Tests &gt; should display help buttons on nutrient cards" time="7.188003292">
+        </testcase>
+        <testcase classname="src/test/selenium/NutrientHelpButtons.selenium.test.ts" name="Nutrient Help Buttons E2E Tests &gt; should open recommendations modal when help button is clicked" time="9.247782">
+        </testcase>
+        <testcase classname="src/test/selenium/NutrientHelpButtons.selenium.test.ts" name="Nutrient Help Buttons E2E Tests &gt; should display daily target and serving information" time="19.253654291">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;This Serving Provides&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;This Serving Provides&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ src/test/selenium/NutrientHelpButtons.selenium.test.ts:142:28
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x00000001047a8b2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x00000001047a0b30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x000000010429ab0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x00000001042e19c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x0000000104322968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x00000001042d616c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x000000010476c098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x000000010476f804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x000000010474c850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x0000000104770074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x000000010473d1cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x000000010478fcb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x000000010478fe34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x00000001047a0788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/NutrientHelpButtons.selenium.test.ts" name="Nutrient Help Buttons E2E Tests &gt; should close modal when X button is clicked" time="19.824044583">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/NutritionTracking.selenium.test.ts" timestamp="2025-12-21T13:13:54.828Z" hostname="Ardas-MacBook-Air-502.local" tests="6" failures="0" errors="0" skipped="0" time="61.567513416">
+        <testcase classname="src/test/selenium/NutritionTracking.selenium.test.ts" name="Nutrition Tracking - Selenium E2E Tests &gt; should navigate to nutrition tracking tab" time="11.548122958">
+        </testcase>
+        <testcase classname="src/test/selenium/NutritionTracking.selenium.test.ts" name="Nutrition Tracking - Selenium E2E Tests &gt; should display nutrition summary in overview tab" time="1.528530292">
+        </testcase>
+        <testcase classname="src/test/selenium/NutritionTracking.selenium.test.ts" name="Nutrition Tracking - Selenium E2E Tests &gt; should open add food modal when clicking Add Food button" time="11.043836417">
+        </testcase>
+        <testcase classname="src/test/selenium/NutritionTracking.selenium.test.ts" name="Nutrition Tracking - Selenium E2E Tests &gt; should add a food entry" time="11.069906625">
+        </testcase>
+        <testcase classname="src/test/selenium/NutritionTracking.selenium.test.ts" name="Nutrition Tracking - Selenium E2E Tests &gt; should display meal sections (Breakfast, Lunch, Dinner, Snack)" time="11.067293708">
+        </testcase>
+        <testcase classname="src/test/selenium/NutritionTracking.selenium.test.ts" name="Nutrition Tracking - Selenium E2E Tests &gt; should display macronutrients (Calories, Protein, Carbs, Fat)" time="11.034543125">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/PostDetail.selenium.test.ts" timestamp="2025-12-21T13:13:54.828Z" hostname="Ardas-MacBook-Air-502.local" tests="18" failures="0" errors="0" skipped="0" time="104.687276334">
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should navigate to post detail from forum list" time="3.076068916">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should display post detail page with title and content" time="1.527646875">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should show post author information" time="1.526293">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should display post timestamp" time="11.568977583">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should show like button and like count" time="11.540601458">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should display tags associated with the post" time="11.554696583">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should have comments section" time="1.537023041">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should display existing comments if any" time="2.018520875">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should have comment input field (if authenticated)" time="11.530541458">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should allow typing in comment field (if authenticated)" time="1.67674325">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should have submit comment button (if authenticated)" time="1.531386833">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should show edit button if user owns the post" time="11.533754917">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should show delete button if user owns the post" time="11.525234583">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should have back button to return to forum" time="1.548470334">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should display recipe ingredients if post is a recipe" time="1.527670958">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should display recipe instructions if post is a recipe" time="1.552486375">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should allow liking the post when clicking like button" time="11.548385458">
+        </testcase>
+        <testcase classname="src/test/selenium/PostDetail.selenium.test.ts" name="Post Detail Page - Selenium E2E Tests &gt; should show comment count" time="1.53453275">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/PostInteraction.selenium.test.ts" timestamp="2025-12-21T13:13:54.830Z" hostname="Ardas-MacBook-Air-502.local" tests="14" failures="0" errors="0" skipped="0" time="150.846040542">
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should display like button on forum post cards" time="12.1177015">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should display like count on posts" time="12.172660458">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should allow clicking like button on a post" time="12.0837135">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should toggle like state when clicking like button" time="12.09874925">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should show like button on post detail page" time="11.531995708">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should update like count when liking a post" time="11.554593542">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should show visual feedback when post is liked" time="11.565890833">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should persist like state after page refresh (if authenticated)" time="11.566444375">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should display comment button on posts" time="12.09076575">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should show comment count on posts" time="2.03224725">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should navigate to post detail when clicking on post" time="3.079924709">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should show share button on posts" time="11.537013375">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should require authentication to like posts" time="11.573159458">
+        </testcase>
+        <testcase classname="src/test/selenium/PostInteraction.selenium.test.ts" name="Post Interaction - Selenium E2E Tests &gt; should allow unliking a post" time="11.584592834">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/Profile.selenium.test.ts" timestamp="2025-12-21T13:13:54.831Z" hostname="Ardas-MacBook-Air-502.local" tests="9" failures="0" errors="0" skipped="0" time="66.002279167">
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should display user profile information" time="1.655369042">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should have edit profile button" time="11.068997542">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should display profile form fields when editing (if authenticated)" time="11.064964625">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should have profile image upload capability (if authenticated)" time="1.026186667">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should allow updating profile information (if authenticated)" time="11.056934792">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should have save and cancel buttons when editing (if authenticated)" time="11.048336">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should display user stats and activity (if authenticated)" time="1.032399583">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should allow viewing other users profiles" time="1.522461083">
+        </testcase>
+        <testcase classname="src/test/selenium/Profile.selenium.test.ts" name="Profile Page - Selenium E2E Tests &gt; should display user posts on profile page (if authenticated)" time="11.546390833">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/RecipeCreation.selenium.test.ts" timestamp="2025-12-21T13:13:54.832Z" hostname="Ardas-MacBook-Air-502.local" tests="13" failures="0" errors="0" skipped="0" time="104.864413583">
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should display recipe post type option" time="1.03649225">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should show ingredients section when recipe type is selected" time="1.566199208">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have add ingredient button" time="1.581488">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should allow adding multiple ingredients" time="11.57701625">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have ingredient name and quantity fields" time="11.587140625">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should allow typing ingredient information" time="11.582102917">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have remove ingredient button for each ingredient" time="11.581908208">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have instructions/steps section for recipes" time="1.773103334">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have cooking time field for recipes" time="11.610380167">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have servings field for recipes" time="11.600829125">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should validate required fields when submitting recipe" time="12.20234275">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should have image upload for recipe" time="11.5651785">
+        </testcase>
+        <testcase classname="src/test/selenium/RecipeCreation.selenium.test.ts" name="Recipe Creation - Selenium E2E Tests &gt; should allow switching between recipe and regular post" time="1.027056083">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/Signup.selenium.test.ts" timestamp="2025-12-21T13:13:54.833Z" hostname="Ardas-MacBook-Air-502.local" tests="6" failures="0" errors="0" skipped="0" time="3.904344">
+        <testcase classname="src/test/selenium/Signup.selenium.test.ts" name="Signup Page - Selenium E2E Tests &gt; should display signup form with all required fields" time="0.596216584">
+        </testcase>
+        <testcase classname="src/test/selenium/Signup.selenium.test.ts" name="Signup Page - Selenium E2E Tests &gt; should show validation errors for empty form submission" time="0.617045">
+        </testcase>
+        <testcase classname="src/test/selenium/Signup.selenium.test.ts" name="Signup Page - Selenium E2E Tests &gt; should show password criteria when typing password" time="0.484446292">
+        </testcase>
+        <testcase classname="src/test/selenium/Signup.selenium.test.ts" name="Signup Page - Selenium E2E Tests &gt; should validate password match in confirm password field" time="0.808409375">
+        </testcase>
+        <testcase classname="src/test/selenium/Signup.selenium.test.ts" name="Signup Page - Selenium E2E Tests &gt; should toggle password visibility" time="0.52471525">
+        </testcase>
+        <testcase classname="src/test/selenium/Signup.selenium.test.ts" name="Signup Page - Selenium E2E Tests &gt; should have a link to login page" time="0.056745541">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/ThemeToggle.selenium.test.ts" timestamp="2025-12-21T13:13:54.833Z" hostname="Ardas-MacBook-Air-502.local" tests="5" failures="0" errors="0" skipped="0" time="57.164871625">
+        <testcase classname="src/test/selenium/ThemeToggle.selenium.test.ts" name="Theme Toggle - Selenium E2E Tests &gt; should display theme toggle button" time="10.573975417">
+        </testcase>
+        <testcase classname="src/test/selenium/ThemeToggle.selenium.test.ts" name="Theme Toggle - Selenium E2E Tests &gt; should toggle between light and dark mode" time="10.561421958">
+        </testcase>
+        <testcase classname="src/test/selenium/ThemeToggle.selenium.test.ts" name="Theme Toggle - Selenium E2E Tests &gt; should persist theme preference after page reload" time="10.580833375">
+        </testcase>
+        <testcase classname="src/test/selenium/ThemeToggle.selenium.test.ts" name="Theme Toggle - Selenium E2E Tests &gt; should change background color when toggling theme" time="10.591899584">
+        </testcase>
+        <testcase classname="src/test/selenium/ThemeToggle.selenium.test.ts" name="Theme Toggle - Selenium E2E Tests &gt; should have accessible theme toggle button" time="10.5362315">
+        </testcase>
+    </testsuite>
+    <testsuite name="src/test/selenium/UserFlow.selenium.test.ts" timestamp="2025-12-21T13:13:54.834Z" hostname="Ardas-MacBook-Air-502.local" tests="13" failures="3" errors="0" skipped="0" time="110.205972167">
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should complete full signup to login flow" time="12.121944208">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should navigate from home to forum to post detail" time="4.1413955">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should navigate from foods to food detail and back" time="12.066449666">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;Sort Options&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;Sort Options&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ src/test/selenium/UserFlow.selenium.test.ts:81:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x000000010271cb2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x0000000102714b30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x000000010220eb0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x00000001022559c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x0000000102296968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x000000010224a16c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x00000001026e0098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x00000001026e3804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x00000001026c0850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x00000001026e4074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001026b11cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x0000000102703cb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x0000000102703e34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x0000000102714788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should navigate through all main pages" time="14.135738542">
+            <failure message="no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;Sort Options&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)" type="NoSuchElementError">
+NoSuchElementError: no such element: Unable to locate element: {&quot;method&quot;:&quot;xpath&quot;,&quot;selector&quot;:&quot;//*[contains(text(), &apos;Sort Options&apos;)]&quot;}
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ src/test/selenium/UserFlow.selenium.test.ts:126:25
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x000000010271cb2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x0000000102714b30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x000000010220eb0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x00000001022559c8 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 364688\n4   chromedriver                        0x0000000102296968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n5   chromedriver                        0x000000010224a16c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n6   chromedriver                        0x00000001026e0098 cxxbridge1$str$ptr + 2785128\n7   chromedriver                        0x00000001026e3804 cxxbridge1$str$ptr + 2799316\n8   chromedriver                        0x00000001026c0850 cxxbridge1$str$ptr + 2656032\n9   chromedriver                        0x00000001026e4074 cxxbridge1$str$ptr + 2801476\n10  chromedriver                        0x00000001026b11cc cxxbridge1$str$ptr + 2592924\n11  chromedriver                        0x0000000102703cb4 cxxbridge1$str$ptr + 2931588\n12  chromedriver                        0x0000000102703e34 cxxbridge1$str$ptr + 2931972\n13  chromedriver                        0x0000000102714788 cxxbridge1$str$ptr + 2999896\n14  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n15  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should search for food and view details" time="4.723502875">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should search for posts in forum" time="5.468738041">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should access create post page when authenticated" time="3.106045917">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should use navbar to navigate between pages" time="3.706609459">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should filter foods and view results" time="11.578118">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should filter forum posts by tags" time="3.199882459">
+            <failure message="element click intercepted: Element &lt;button class=&quot;p-2 rounded-full focus:outline-none border border-transparent cursor-pointer&quot; aria-label=&quot;Switch to light mode&quot; title=&quot;Switch to light mode&quot;&gt;...&lt;/button&gt; is not clickable at point (1565, 32). Other element would receive the click: &lt;div class=&quot;fixed inset-0 flex items-center justify-center p-4&quot;&gt;...&lt;/div&gt;
+  (Session info: chrome=143.0.7499.169)" type="ElementClickInterceptedError">
+ElementClickInterceptedError: element click intercepted: Element &lt;button class=&quot;p-2 rounded-full focus:outline-none border border-transparent cursor-pointer&quot; aria-label=&quot;Switch to light mode&quot; title=&quot;Switch to light mode&quot;&gt;...&lt;/button&gt; is not clickable at point (1565, 32). Other element would receive the click: &lt;div class=&quot;fixed inset-0 flex items-center justify-center p-4&quot;&gt;...&lt;/div&gt;
+  (Session info: chrome=143.0.7499.169)
+ ❯ Object.throwDecodedError node_modules/selenium-webdriver/lib/error.js:523:15
+ ❯ parseHttpResponse node_modules/selenium-webdriver/lib/http.js:524:13
+ ❯ Executor.execute node_modules/selenium-webdriver/lib/http.js:456:28
+ ❯ Driver.execute node_modules/selenium-webdriver/lib/webdriver.js:745:17
+ ❯ src/test/selenium/UserFlow.selenium.test.ts:294:9
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯
+Serialized Error: { remoteStacktrace: &apos;0   chromedriver                        0x000000010271cb2c cxxbridge1$str$ptr + 3033596\n1   chromedriver                        0x0000000102714b30 cxxbridge1$str$ptr + 3000832\n2   chromedriver                        0x000000010220eb0c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 74196\n3   chromedriver                        0x000000010225b43c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 387844\n4   chromedriver                        0x0000000102259a1c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 381156\n5   chromedriver                        0x000000010225788c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 372564\n6   chromedriver                        0x0000000102256c9c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 369508\n7   chromedriver                        0x000000010224bca4 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 324460\n8   chromedriver                        0x000000010224b748 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 323088\n9   chromedriver                        0x0000000102296968 _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 630832\n10  chromedriver                        0x000000010224a16c _RNvCsgXDX2mvAJAg_7___rustc35___rust_no_alloc_shim_is_unstable_v2 + 317492\n11  chromedriver                        0x00000001026e0098 cxxbridge1$str$ptr + 2785128\n12  chromedriver                        0x00000001026e3804 cxxbridge1$str$ptr + 2799316\n13  chromedriver                        0x00000001026c0850 cxxbridge1$str$ptr + 2656032\n14  chromedriver                        0x00000001026e4074 cxxbridge1$str$ptr + 2801476\n15  chromedriver                        0x00000001026b11cc cxxbridge1$str$ptr + 2592924\n16  chromedriver                        0x0000000102703cb4 cxxbridge1$str$ptr + 2931588\n17  chromedriver                        0x0000000102703e34 cxxbridge1$str$ptr + 2931972\n18  chromedriver                        0x0000000102714788 cxxbridge1$str$ptr + 2999896\n19  libsystem_pthread.dylib             0x00000001944c42e4 _pthread_start + 136\n20  libsystem_pthread.dylib             0x00000001944bf0fc thread_start + 8\n&apos; }
+            </failure>
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should toggle theme and persist across pages" time="11.041596">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should navigate to profile and back to forum" time="4.048115875">
+        </testcase>
+        <testcase classname="src/test/selenium/UserFlow.selenium.test.ts" name="User Flow - Selenium E2E Tests &gt; should complete food browsing to meal planner flow" time="13.137822">
+        </testcase>
+    </testsuite>
+</testsuites>
