@@ -11,7 +11,7 @@ export interface SeleniumConfig {
 export const defaultConfig: SeleniumConfig = {
   browser: Browser.CHROME,
   headless: false,
-  baseUrl: 'http://localhost:5173', // Vite default dev server port
+  baseUrl: 'http://localhost:8080', // Vite default dev server port
   defaultTimeout: 10000,
 };
 

@@ -101,7 +101,7 @@ WSGI_APPLICATION = "project.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-if "test" in sys.argv:
+if "test" in sys.argv or "pytest" in sys.modules:
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.sqlite3",
@@ -236,9 +236,9 @@ CLOUDINARY_API_SECRET = os.environ.get("CLOUDINARY_API_SECRET", "")
 SPECTACULAR_SETTINGS = {
     "TITLE": "NutriHub API",
     "DESCRIPTION": "Comprehensive nutrition tracking and food community platform API. "
-                   "Features include food catalog with micronutrient filtering, "
-                   "meal planning, nutrition logging, community forum with recipes, "
-                   "and user profile management.",
+    "Features include food catalog with micronutrient filtering, "
+    "meal planning, nutrition logging, community forum with recipes, "
+    "and user profile management.",
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -248,7 +248,10 @@ SPECTACULAR_SETTINGS = {
         {"url": "http://localhost:8080", "description": "Development server"},
     ],
     "TAGS": [
-        {"name": "authentication", "description": "User authentication and registration"},
+        {
+            "name": "authentication",
+            "description": "User authentication and registration",
+        },
         {"name": "users", "description": "User profile management"},
         {"name": "foods", "description": "Food catalog and nutrition data"},
         {"name": "forum", "description": "Community posts, recipes, and comments"},
@@ -260,7 +263,7 @@ SPECTACULAR_SETTINGS = {
                 "type": "http",
                 "scheme": "bearer",
                 "bearerFormat": "JWT",
-                "description": "JWT token authentication. Obtain token via /api/users/token/ endpoint."
+                "description": "JWT token authentication. Obtain token via /api/users/token/ endpoint.",
             }
         }
     },
