@@ -1,0 +1,811 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="jest tests" tests="219" failures="5" errors="0" time="14.043">
+  <testsuite name="API Client Implementation" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:53" time="3.709" tests="9">
+    <testcase classname="API Client Implementation Request interceptor should add authorization header when token exists" name="API Client Implementation Request interceptor should add authorization header when token exists" time="0.005">
+    </testcase>
+    <testcase classname="API Client Implementation Request interceptor should not add authorization header when no token exists" name="API Client Implementation Request interceptor should not add authorization header when no token exists" time="0.001">
+    </testcase>
+    <testcase classname="API Client Implementation Response handling should return data and status for successful response" name="API Client Implementation Response handling should return data and status for successful response" time="0">
+    </testcase>
+    <testcase classname="API Client Implementation Response handling should handle error response properly" name="API Client Implementation Response handling should handle error response properly" time="0.001">
+    </testcase>
+    <testcase classname="API Client Implementation Response handling should handle network errors properly" name="API Client Implementation Response handling should handle network errors properly" time="0">
+    </testcase>
+    <testcase classname="API Client Implementation HTTP methods should make POST requests correctly" name="API Client Implementation HTTP methods should make POST requests correctly" time="0.001">
+    </testcase>
+    <testcase classname="API Client Implementation HTTP methods should make PATCH requests correctly" name="API Client Implementation HTTP methods should make PATCH requests correctly" time="0">
+    </testcase>
+    <testcase classname="API Client Implementation HTTP methods should make DELETE requests correctly" name="API Client Implementation HTTP methods should make DELETE requests correctly" time="0.001">
+    </testcase>
+    <testcase classname="API Client Implementation Token refresh should skip token refresh tests due to implementation complexity" name="API Client Implementation Token refresh should skip token refresh tests due to implementation complexity" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="useForm" errors="0" failures="1" skipped="0" timestamp="2025-12-21T13:44:53" time="4.065" tests="9">
+    <testcase classname="useForm should initialize with the correct initial values" name="useForm should initialize with the correct initial values" time="0.079">
+    </testcase>
+    <testcase classname="useForm should update values when handleChange is called" name="useForm should update values when handleChange is called" time="0.005">
+      <failure>Error: expect(received).toBe(expected) // Object.is equality
+
+Expected: true
+Received: undefined
+    at Object.toBe (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/__tests__/useForm.test.ts:60:42)
+    at Promise.then.completed (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:316:40)
+    at _runTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:252:3)
+    at _runTestsForDescribeBlock (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="useForm should mark fields as touched when handleBlur is called" name="useForm should mark fields as touched when handleBlur is called" time="0.003">
+    </testcase>
+    <testcase classname="useForm should validate fields when validateOnBlur is true" name="useForm should validate fields when validateOnBlur is true" time="0.004">
+    </testcase>
+    <testcase classname="useForm should validate fields when validateOnChange is true" name="useForm should validate fields when validateOnChange is true" time="0.004">
+    </testcase>
+    <testcase classname="useForm should validate all fields on form submission" name="useForm should validate all fields on form submission" time="0.004">
+    </testcase>
+    <testcase classname="useForm should call onSubmit with the form values when form is valid" name="useForm should call onSubmit with the form values when form is valid" time="0.037">
+    </testcase>
+    <testcase classname="useForm should handle cross-field validation correctly" name="useForm should handle cross-field validation correctly" time="0.058">
+    </testcase>
+    <testcase classname="useForm should handle submission errors gracefully" name="useForm should handle submission errors gracefully" time="0.005">
+    </testcase>
+  </testsuite>
+  <testsuite name="User Service - Follow Features" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:53" time="4.096" tests="23">
+    <testcase classname="User Service - Follow Features toggleFollow should follow a user successfully" name="User Service - Follow Features toggleFollow should follow a user successfully" time="0.004">
+    </testcase>
+    <testcase classname="User Service - Follow Features toggleFollow should unfollow a user successfully" name="User Service - Follow Features toggleFollow should unfollow a user successfully" time="0.001">
+    </testcase>
+    <testcase classname="User Service - Follow Features toggleFollow should throw error when API request fails" name="User Service - Follow Features toggleFollow should throw error when API request fails" time="0.163">
+    </testcase>
+    <testcase classname="User Service - Follow Features toggleFollow should throw error when trying to follow self" name="User Service - Follow Features toggleFollow should throw error when trying to follow self" time="0.006">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowers should return list of followers" name="User Service - Follow Features getFollowers should return list of followers" time="0.001">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowers should return empty array when user has no followers" name="User Service - Follow Features getFollowers should return empty array when user has no followers" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowers should throw error when user not found" name="User Service - Follow Features getFollowers should throw error when user not found" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowers should normalize user profile data correctly" name="User Service - Follow Features getFollowers should normalize user profile data correctly" time="0.001">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowing should return list of users being followed" name="User Service - Follow Features getFollowing should return list of users being followed" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowing should return empty array when user follows no one" name="User Service - Follow Features getFollowing should return empty array when user follows no one" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowing should throw error when user not found" name="User Service - Follow Features getFollowing should throw error when user not found" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getFollowing should normalize user profile data correctly" name="User Service - Follow Features getFollowing should normalize user profile data correctly" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features uploadProfilePhoto should upload profile photo successfully and return URL" name="User Service - Follow Features uploadProfilePhoto should upload profile photo successfully and return URL" time="0.001">
+    </testcase>
+    <testcase classname="User Service - Follow Features uploadProfilePhoto should handle PNG file type correctly" name="User Service - Follow Features uploadProfilePhoto should handle PNG file type correctly" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features uploadProfilePhoto should throw error when no authentication token found" name="User Service - Follow Features uploadProfilePhoto should throw error when no authentication token found" time="0.001">
+    </testcase>
+    <testcase classname="User Service - Follow Features uploadProfilePhoto should throw error when upload fails" name="User Service - Follow Features uploadProfilePhoto should throw error when upload fails" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features uploadProfilePhoto should throw error when file is too large" name="User Service - Follow Features uploadProfilePhoto should throw error when file is too large" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features uploadProfilePhoto should normalize relative URL to absolute URL" name="User Service - Follow Features uploadProfilePhoto should normalize relative URL to absolute URL" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features removeProfilePhoto should remove profile photo successfully" name="User Service - Follow Features removeProfilePhoto should remove profile photo successfully" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features removeProfilePhoto should throw error when removal fails" name="User Service - Follow Features removeProfilePhoto should throw error when removal fails" time="0.001">
+    </testcase>
+    <testcase classname="User Service - Follow Features getMyProfile should fetch user profile successfully" name="User Service - Follow Features getMyProfile should fetch user profile successfully" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getMyProfile should force refresh profile with cache-busting parameter" name="User Service - Follow Features getMyProfile should force refresh profile with cache-busting parameter" time="0">
+    </testcase>
+    <testcase classname="User Service - Follow Features getMyProfile should throw error when profile fetch fails" name="User Service - Follow Features getMyProfile should throw error when profile fetch fails" time="0.01">
+    </testcase>
+  </testsuite>
+  <testsuite name="Forum Service - Feed Feature" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:53" time="4.257" tests="11">
+    <testcase classname="Forum Service - Feed Feature getFeed should return feed posts on success" name="Forum Service - Feed Feature getFeed should return feed posts on success" time="0.019">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should preserve like status from AsyncStorage" name="Forum Service - Feed Feature getFeed should preserve like status from AsyncStorage" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should return empty array when feed is empty" name="Forum Service - Feed Feature getFeed should return empty array when feed is empty" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should handle paginated feed response" name="Forum Service - Feed Feature getFeed should handle paginated feed response" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should return empty array when user is not authenticated" name="Forum Service - Feed Feature getFeed should return empty array when user is not authenticated" time="0">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should throw error on authentication failure" name="Forum Service - Feed Feature getFeed should throw error on authentication failure" time="0.188">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should throw error on server error" name="Forum Service - Feed Feature getFeed should throw error on server error" time="0">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should handle unexpected response format" name="Forum Service - Feed Feature getFeed should handle unexpected response format" time="0.002">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should map author display name correctly" name="Forum Service - Feed Feature getFeed should map author display name correctly" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should handle author as string fallback" name="Forum Service - Feed Feature getFeed should handle author as string fallback" time="0">
+    </testcase>
+    <testcase classname="Forum Service - Feed Feature getFeed should append pagination params when provided" name="Forum Service - Feed Feature getFeed should append pagination params when provided" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="AuthContext" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:53" time="4.125" tests="8">
+    <testcase classname="AuthContext login should login successfully and update state" name="AuthContext login should login successfully and update state" time="0.05">
+    </testcase>
+    <testcase classname="AuthContext login should handle login failure" name="AuthContext login should handle login failure" time="0.006">
+    </testcase>
+    <testcase classname="AuthContext logout should clear auth state and storage on logout" name="AuthContext logout should clear auth state and storage on logout" time="0.006">
+    </testcase>
+    <testcase classname="AuthContext logout should still clear state even if API call fails" name="AuthContext logout should still clear state even if API call fails" time="0.074">
+    </testcase>
+    <testcase classname="AuthContext checkAuth should restore authenticated state if token exists" name="AuthContext checkAuth should restore authenticated state if token exists" time="0.03">
+    </testcase>
+    <testcase classname="AuthContext checkAuth should remain logged out if no token exists" name="AuthContext checkAuth should remain logged out if no token exists" time="0.014">
+    </testcase>
+    <testcase classname="AuthContext checkAuth should clear tokens if auth check fails" name="AuthContext checkAuth should clear tokens if auth check fails" time="0.008">
+    </testcase>
+    <testcase classname="AuthContext clearError should clear the error state" name="AuthContext clearError should clear the error state" time="0.004">
+    </testcase>
+  </testsuite>
+  <testsuite name="Nutrition Helper Functions" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:57" time="0.224" tests="8">
+    <testcase classname="Nutrition Helper Functions extractUnit should extract unit from key with parentheses" name="Nutrition Helper Functions extractUnit should extract unit from key with parentheses" time="0">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions extractUnit should return empty string if no unit found" name="Nutrition Helper Functions extractUnit should return empty string if no unit found" time="0.001">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions extractName should remove unit and parenthetical clarifications" name="Nutrition Helper Functions extractName should remove unit and parenthetical clarifications" time="0">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions extractName should handle names without parentheses" name="Nutrition Helper Functions extractName should handle names without parentheses" time="0">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions isVitamin should identify vitamins correctly" name="Nutrition Helper Functions isVitamin should identify vitamins correctly" time="0.001">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions isVitamin should not identify minerals as vitamins" name="Nutrition Helper Functions isVitamin should not identify minerals as vitamins" time="0">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions isMineral should identify minerals correctly" name="Nutrition Helper Functions isMineral should identify minerals correctly" time="0.001">
+    </testcase>
+    <testcase classname="Nutrition Helper Functions isMineral should not identify vitamins as minerals" name="Nutrition Helper Functions isMineral should not identify vitamins as minerals" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="Forum Service" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:53" time="4.345" tests="7">
+    <testcase classname="Forum Service getPosts should return mapped forum topics on success" name="Forum Service getPosts should return mapped forum topics on success" time="0.165">
+    </testcase>
+    <testcase classname="Forum Service getPosts should include tag params in the request when provided" name="Forum Service getPosts should include tag params in the request when provided" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service getPosts should throw error when API request fails" name="Forum Service getPosts should throw error when API request fails" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service getPost should return mapped forum topic with comments count" name="Forum Service getPost should return mapped forum topic with comments count" time="0.001">
+    </testcase>
+    <testcase classname="Forum Service getPost should throw error when post not found" name="Forum Service getPost should throw error when post not found" time="0">
+    </testcase>
+    <testcase classname="Forum Service createPost should return newly created post" name="Forum Service createPost should return newly created post" time="0.002">
+    </testcase>
+    <testcase classname="Forum Service createPost should throw error when creation fails" name="Forum Service createPost should throw error when creation fails" time="0.001">
+    </testcase>
+  </testsuite>
+  <testsuite name="Auth Service" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:57" time="0.306" tests="9">
+    <testcase classname="Auth Service login should return token response on successful login" name="Auth Service login should return token response on successful login" time="0.001">
+    </testcase>
+    <testcase classname="Auth Service login should throw error on invalid credentials" name="Auth Service login should throw error on invalid credentials" time="0.014">
+    </testcase>
+    <testcase classname="Auth Service login should throw general error on other API failures" name="Auth Service login should throw general error on other API failures" time="0.001">
+    </testcase>
+    <testcase classname="Auth Service register should return success response on successful registration" name="Auth Service register should return success response on successful registration" time="0">
+    </testcase>
+    <testcase classname="Auth Service register should throw error on username already exists" name="Auth Service register should throw error on username already exists" time="0.001">
+    </testcase>
+    <testcase classname="Auth Service register should throw error on email already exists" name="Auth Service register should throw error on email already exists" time="0.004">
+    </testcase>
+    <testcase classname="Auth Service register should throw general validation error for other 400 errors" name="Auth Service register should throw general validation error for other 400 errors" time="0">
+    </testcase>
+    <testcase classname="Auth Service getUserProfile should return user profile on successful request" name="Auth Service getUserProfile should return user profile on successful request" time="0">
+    </testcase>
+    <testcase classname="Auth Service getUserProfile should throw error on failed request" name="Auth Service getUserProfile should throw error on failed request" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="Price Category Filtering" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:57" time="0.197" tests="8">
+    <testcase classname="Price Category Filtering Category Normalization should normalize Turkish Lira to dollar signs" name="Price Category Filtering Category Normalization should normalize Turkish Lira to dollar signs" time="0.001">
+    </testcase>
+    <testcase classname="Price Category Filtering Category Normalization should remove spaces from categories" name="Price Category Filtering Category Normalization should remove spaces from categories" time="0">
+    </testcase>
+    <testcase classname="Price Category Filtering Category Normalization should handle already normalized categories" name="Price Category Filtering Category Normalization should handle already normalized categories" time="0">
+    </testcase>
+    <testcase classname="Price Category Filtering Filter by Price Category should filter items by $ category" name="Price Category Filtering Filter by Price Category should filter items by $ category" time="0.001">
+    </testcase>
+    <testcase classname="Price Category Filtering Filter by Price Category should filter items by $ category" name="Price Category Filtering Filter by Price Category should filter items by $ category" time="0">
+    </testcase>
+    <testcase classname="Price Category Filtering Filter by Price Category should filter items by $$ category" name="Price Category Filtering Filter by Price Category should filter items by $$ category" time="0">
+    </testcase>
+    <testcase classname="Price Category Filtering Filter by Price Category should exclude items without price category" name="Price Category Filtering Filter by Price Category should exclude items without price category" time="0">
+    </testcase>
+    <testcase classname="Price Category Filtering Filter by Price Category should handle Turkish Lira categories in filter" name="Price Category Filtering Filter by Price Category should handle Turkish Lira categories in filter" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="Private Food Service" errors="0" failures="2" skipped="0" timestamp="2025-12-21T13:44:57" time="5.057" tests="5">
+    <testcase classname="Private Food Service addPrivateFood should create a new private food with generated ID" name="Private Food Service addPrivateFood should create a new private food with generated ID" time="3.424">
+      <failure>TypeError: Cannot read properties of undefined (reading &apos;id&apos;)
+    at id (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/src/services/api/privateFood.service.ts:36:25)
+    at normalizePrivateFood (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/src/services/api/privateFood.service.ts:177:23)
+    at Generator.next (&lt;anonymous&gt;)
+    at asyncGeneratorStep (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+    at _next (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)</failure>
+    </testcase>
+    <testcase classname="Private Food Service getPrivateFoods should return empty array when no foods exist" name="Private Food Service getPrivateFoods should return empty array when no foods exist" time="0.296">
+    </testcase>
+    <testcase classname="Private Food Service getPrivateFoods should return stored private foods" name="Private Food Service getPrivateFoods should return stored private foods" time="0.127">
+      <failure>Error: expect(received).toHaveLength(expected)
+
+Expected length: 1
+Received length: 0
+Received array:  []
+    at Object.toHaveLength (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/__tests__/PrivateFoodService.test.ts:89:28)
+    at Generator.next (&lt;anonymous&gt;)
+    at asyncGeneratorStep (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/@babel/runtime/helpers/asyncToGenerator.js:3:17)
+    at _next (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/@babel/runtime/helpers/asyncToGenerator.js:17:9)
+    at processTicksAndRejections (node:internal/process/task_queues:105:5)</failure>
+    </testcase>
+    <testcase classname="Private Food Service convertToFoodItem should convert PrivateFood to FoodItem with negative ID" name="Private Food Service convertToFoodItem should convert PrivateFood to FoodItem with negative ID" time="0.001">
+    </testcase>
+    <testcase classname="Private Food Service Private Food Entries should add and retrieve private food entries for a date" name="Private Food Service Private Food Entries should add and retrieve private food entries for a date" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="MicronutrientPanel" errors="0" failures="1" skipped="0" timestamp="2025-12-21T13:44:57" time="5.62" tests="10">
+    <testcase classname="MicronutrientPanel should render without crashing" name="MicronutrientPanel should render without crashing" time="0.358">
+    </testcase>
+    <testcase classname="MicronutrientPanel should render vitamins section" name="MicronutrientPanel should render vitamins section" time="0.023">
+    </testcase>
+    <testcase classname="MicronutrientPanel should render minerals section" name="MicronutrientPanel should render minerals section" time="0.045">
+    </testcase>
+    <testcase classname="MicronutrientPanel should display vitamin entries" name="MicronutrientPanel should display vitamin entries" time="0.018">
+    </testcase>
+    <testcase classname="MicronutrientPanel should display mineral entries" name="MicronutrientPanel should display mineral entries" time="0.099">
+    </testcase>
+    <testcase classname="MicronutrientPanel should show warning message about maximum limits" name="MicronutrientPanel should show warning message about maximum limits" time="0.135">
+      <failure>Error: Unable to find an element with text: /Important Note/i
+
+&lt;View&gt;
+  &lt;View&gt;
+    &lt;MockIcon /&gt;
+    &lt;Text&gt;
+      Micronutrients
+    &lt;/Text&gt;
+  &lt;/View&gt;
+  &lt;View&gt;
+    &lt;View
+      accessible={true}
+    &gt;
+      &lt;View&gt;
+        &lt;View&gt;
+          &lt;MockIcon /&gt;
+        &lt;/View&gt;
+        &lt;Text&gt;
+          Vitamins
+        &lt;/Text&gt;
+      &lt;/View&gt;
+      &lt;View&gt;
+        &lt;Text&gt;
+          1
+           / 
+          2
+           
+          met
+        &lt;/Text&gt;
+        &lt;MockIcon /&gt;
+      &lt;/View&gt;
+    &lt;/View&gt;
+    &lt;View&gt;
+      &lt;View
+        accessible={true}
+      &gt;
+        &lt;View&gt;
+          &lt;RNSVGSvgView&gt;
+            &lt;RNSVGGroup&gt;
+              &lt;RNSVGGroup&gt;
+                &lt;RNSVGCircle /&gt;
+                &lt;RNSVGCircle /&gt;
+              &lt;/RNSVGGroup&gt;
+            &lt;/RNSVGGroup&gt;
+          &lt;/RNSVGSvgView&gt;
+          &lt;View&gt;
+            &lt;Text&gt;
+              94
+              %
+            &lt;/Text&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+        &lt;View&gt;
+          &lt;Text&gt;
+            Vitamin A
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            850
+            µg
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            / 
+            900
+          &lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+      &lt;View
+        accessible={true}
+      &gt;
+        &lt;View&gt;
+          &lt;RNSVGSvgView&gt;
+            &lt;RNSVGGroup&gt;
+              &lt;RNSVGGroup&gt;
+                &lt;RNSVGCircle /&gt;
+                &lt;RNSVGCircle /&gt;
+              &lt;/RNSVGGroup&gt;
+            &lt;/RNSVGGroup&gt;
+          &lt;/RNSVGSvgView&gt;
+          &lt;View&gt;
+            &lt;MockIcon /&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+        &lt;View&gt;
+          &lt;Text&gt;
+            Vitamin C
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            95
+            mg
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            / 
+            90
+          &lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+  &lt;View&gt;
+    &lt;View
+      accessible={true}
+    &gt;
+      &lt;View&gt;
+        &lt;View&gt;
+          &lt;MockIcon /&gt;
+        &lt;/View&gt;
+        &lt;Text&gt;
+          Minerals
+        &lt;/Text&gt;
+      &lt;/View&gt;
+      &lt;View&gt;
+        &lt;Text&gt;
+          1
+           / 
+          2
+           
+          met
+        &lt;/Text&gt;
+        &lt;MockIcon /&gt;
+      &lt;/View&gt;
+    &lt;/View&gt;
+    &lt;View&gt;
+      &lt;View
+        accessible={true}
+      &gt;
+        &lt;View&gt;
+          &lt;RNSVGSvgView&gt;
+            &lt;RNSVGGroup&gt;
+              &lt;RNSVGGroup&gt;
+                &lt;RNSVGCircle /&gt;
+                &lt;RNSVGCircle /&gt;
+              &lt;/RNSVGGroup&gt;
+            &lt;/RNSVGGroup&gt;
+          &lt;/RNSVGSvgView&gt;
+          &lt;View&gt;
+            &lt;MockIcon /&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+        &lt;View&gt;
+          &lt;Text&gt;
+            Calcium
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            1050
+            mg
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            / 
+            1000
+          &lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+      &lt;View
+        accessible={true}
+      &gt;
+        &lt;View&gt;
+          &lt;RNSVGSvgView&gt;
+            &lt;RNSVGGroup&gt;
+              &lt;RNSVGGroup&gt;
+                &lt;RNSVGCircle /&gt;
+                &lt;RNSVGCircle /&gt;
+              &lt;/RNSVGGroup&gt;
+            &lt;/RNSVGGroup&gt;
+          &lt;/RNSVGSvgView&gt;
+          &lt;View&gt;
+            &lt;Text&gt;
+              83
+              %
+            &lt;/Text&gt;
+          &lt;/View&gt;
+        &lt;/View&gt;
+        &lt;View&gt;
+          &lt;Text&gt;
+            Iron
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            15
+            mg
+          &lt;/Text&gt;
+          &lt;Text&gt;
+            / 
+            18
+          &lt;/Text&gt;
+        &lt;/View&gt;
+      &lt;/View&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+  &lt;View&gt;
+    &lt;MockIcon /&gt;
+    &lt;Text&gt;
+      Some micronutrients have maximum safe limits.
+    &lt;/Text&gt;
+  &lt;/View&gt;
+&lt;/View&gt;
+    at Object.getByText (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/__tests__/MicronutrientPanel.test.tsx:144:12)
+    at Promise.then.completed (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:316:40)
+    at _runTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:252:3)
+    at _runTestsForDescribeBlock (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MicronutrientPanel should handle empty micronutrients array" name="MicronutrientPanel should handle empty micronutrients array" time="0.023">
+    </testcase>
+    <testcase classname="MicronutrientPanel should display only vitamins when no minerals provided" name="MicronutrientPanel should display only vitamins when no minerals provided" time="0.009">
+    </testcase>
+    <testcase classname="MicronutrientPanel should display only minerals when no vitamins provided" name="MicronutrientPanel should display only minerals when no vitamins provided" time="0.025">
+    </testcase>
+    <testcase classname="MicronutrientPanel should render nutrients with different units" name="MicronutrientPanel should render nutrients with different units" time="0.09">
+    </testcase>
+  </testsuite>
+  <testsuite name="Price Utilities" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:03" time="0.54" tests="26">
+    <testcase classname="Price Utilities formatPrice should format USD price correctly" name="Price Utilities formatPrice should format USD price correctly" time="0.03">
+    </testcase>
+    <testcase classname="Price Utilities formatPrice should format TRY price correctly" name="Price Utilities formatPrice should format TRY price correctly" time="0.001">
+    </testcase>
+    <testcase classname="Price Utilities formatPrice should return N/A for null price" name="Price Utilities formatPrice should return N/A for null price" time="0.001">
+    </testcase>
+    <testcase classname="Price Utilities formatPrice should return N/A for undefined price" name="Price Utilities formatPrice should return N/A for undefined price" time="0">
+    </testcase>
+    <testcase classname="Price Utilities formatPrice should return N/A for NaN price" name="Price Utilities formatPrice should return N/A for NaN price" time="0.001">
+    </testcase>
+    <testcase classname="Price Utilities formatPrice should use fallback formatting when Intl is not available" name="Price Utilities formatPrice should use fallback formatting when Intl is not available" time="0.001">
+    </testcase>
+    <testcase classname="Price Utilities calculatePriceForServing should calculate price for per_100g unit" name="Price Utilities calculatePriceForServing should calculate price for per_100g unit" time="0">
+    </testcase>
+    <testcase classname="Price Utilities calculatePriceForServing should return base price for per_unit" name="Price Utilities calculatePriceForServing should return base price for per_unit" time="0">
+    </testcase>
+    <testcase classname="Price Utilities calculatePriceForServing should return null for null base price" name="Price Utilities calculatePriceForServing should return null for null base price" time="0">
+    </testcase>
+    <testcase classname="Price Utilities calculatePriceForServing should return null for undefined base price" name="Price Utilities calculatePriceForServing should return null for undefined base price" time="0.001">
+    </testcase>
+    <testcase classname="Price Utilities calculatePriceForServing should return null for NaN base price" name="Price Utilities calculatePriceForServing should return null for NaN base price" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryText should normalize Turkish Lira to dollar signs" name="Price Utilities getPriceCategoryText should normalize Turkish Lira to dollar signs" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryText should remove spaces from category" name="Price Utilities getPriceCategoryText should remove spaces from category" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryText should return empty string for null" name="Price Utilities getPriceCategoryText should return empty string for null" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryText should return empty string for undefined" name="Price Utilities getPriceCategoryText should return empty string for undefined" time="0.001">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryText should handle already normalized categories" name="Price Utilities getPriceCategoryText should handle already normalized categories" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryText should trim whitespace" name="Price Utilities getPriceCategoryText should trim whitespace" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryCount should count dollar signs correctly" name="Price Utilities getPriceCategoryCount should count dollar signs correctly" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryCount should count Turkish Lira symbols correctly" name="Price Utilities getPriceCategoryCount should count Turkish Lira symbols correctly" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryCount should return 0 for null" name="Price Utilities getPriceCategoryCount should return 0 for null" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryCount should return 0 for undefined" name="Price Utilities getPriceCategoryCount should return 0 for undefined" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryCount should return 0 for empty string" name="Price Utilities getPriceCategoryCount should return 0 for empty string" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryColor should return green for $ (cheap)" name="Price Utilities getPriceCategoryColor should return green for $ (cheap)" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryColor should return orange for $ (mid-range)" name="Price Utilities getPriceCategoryColor should return orange for $ (mid-range)" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryColor should return red for $$ (premium)" name="Price Utilities getPriceCategoryColor should return red for $$ (premium)" time="0">
+    </testcase>
+    <testcase classname="Price Utilities getPriceCategoryColor should return gray for unknown categories" name="Price Utilities getPriceCategoryColor should return gray for unknown categories" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="HomeScreen" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:03" time="1.298" tests="6">
+    <testcase classname="HomeScreen renders feed header when user is logged in" name="HomeScreen renders feed header when user is logged in" time="0.281">
+    </testcase>
+    <testcase classname="HomeScreen renders welcome message when user is not logged in" name="HomeScreen renders welcome message when user is not logged in" time="0.008">
+    </testcase>
+    <testcase classname="HomeScreen renders empty feed message when user is logged in but has no posts" name="HomeScreen renders empty feed message when user is logged in but has no posts" time="0.148">
+    </testcase>
+    <testcase classname="HomeScreen renders posts when feed has data" name="HomeScreen renders posts when feed has data" time="0.059">
+    </testcase>
+    <testcase classname="HomeScreen calls getFeed when user is logged in" name="HomeScreen calls getFeed when user is logged in" time="0.012">
+    </testcase>
+    <testcase classname="HomeScreen does not call getFeed when user is not logged in" name="HomeScreen does not call getFeed when user is not logged in" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="API Client" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:04" time="0.13" tests="7">
+    <testcase classname="API Client get method should return data for successful response" name="API Client get method should return data for successful response" time="0.001">
+    </testcase>
+    <testcase classname="API Client get method should handle errors with response" name="API Client get method should handle errors with response" time="0">
+    </testcase>
+    <testcase classname="API Client get method should handle errors without response" name="API Client get method should handle errors without response" time="0">
+    </testcase>
+    <testcase classname="API Client post method should return data for successful response" name="API Client post method should return data for successful response" time="0.001">
+    </testcase>
+    <testcase classname="API Client post method should handle validation errors" name="API Client post method should handle validation errors" time="0">
+    </testcase>
+    <testcase classname="API Client patch method should return data for successful response" name="API Client patch method should return data for successful response" time="0">
+    </testcase>
+    <testcase classname="API Client delete method should return successful response for delete operation" name="API Client delete method should return successful response for delete operation" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="FoodItem Price Category Badge" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:03" time="1.371" tests="8">
+    <testcase classname="FoodItem Price Category Badge should not render badge when showPrice is false" name="FoodItem Price Category Badge should not render badge when showPrice is false" time="0.039">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should not render badge when priceCategory is null" name="FoodItem Price Category Badge should not render badge when priceCategory is null" time="0.004">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should render $ badge for cheap category" name="FoodItem Price Category Badge should render $ badge for cheap category" time="0.005">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should render $ badge for mid-range category" name="FoodItem Price Category Badge should render $ badge for mid-range category" time="0.024">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should render $$ badge for premium category" name="FoodItem Price Category Badge should render $$ badge for premium category" time="0.018">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should normalize Turkish Lira to dollar signs" name="FoodItem Price Category Badge should normalize Turkish Lira to dollar signs" time="0.01">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should render badge in grid layout" name="FoodItem Price Category Badge should render badge in grid layout" time="0.003">
+    </testcase>
+    <testcase classname="FoodItem Price Category Badge should render badge in detailed layout" name="FoodItem Price Category Badge should render badge in detailed layout" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="FollowingListScreen" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:57" time="7.377" tests="6">
+    <testcase classname="FollowingListScreen renders following list successfully" name="FollowingListScreen renders following list successfully" time="4.843">
+    </testcase>
+    <testcase classname="FollowingListScreen displays empty state when not following anyone" name="FollowingListScreen displays empty state when not following anyone" time="0.073">
+    </testcase>
+    <testcase classname="FollowingListScreen displays error state on API failure" name="FollowingListScreen displays error state on API failure" time="0.088">
+    </testcase>
+    <testcase classname="FollowingListScreen navigates to user profile on following tap" name="FollowingListScreen navigates to user profile on following tap" time="0.11">
+    </testcase>
+    <testcase classname="FollowingListScreen shows loading state initially" name="FollowingListScreen shows loading state initially" time="0.017">
+    </testcase>
+    <testcase classname="FollowingListScreen handles retry on error" name="FollowingListScreen handles retry on error" time="0.079">
+    </testcase>
+  </testsuite>
+  <testsuite name="FollowersListScreen" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:57" time="7.186" tests="6">
+    <testcase classname="FollowersListScreen renders followers list successfully" name="FollowersListScreen renders followers list successfully" time="4.812">
+    </testcase>
+    <testcase classname="FollowersListScreen displays empty state when no followers" name="FollowersListScreen displays empty state when no followers" time="0.071">
+    </testcase>
+    <testcase classname="FollowersListScreen displays error state on API failure" name="FollowersListScreen displays error state on API failure" time="0.096">
+    </testcase>
+    <testcase classname="FollowersListScreen navigates to user profile on follower tap" name="FollowersListScreen navigates to user profile on follower tap" time="0.102">
+    </testcase>
+    <testcase classname="FollowersListScreen shows loading state initially" name="FollowersListScreen shows loading state initially" time="0.02">
+    </testcase>
+    <testcase classname="FollowersListScreen handles retry on error" name="FollowersListScreen handles retry on error" time="0.079">
+    </testcase>
+  </testsuite>
+  <testsuite name="LoginScreen" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:05" time="0.131" tests="1">
+    <testcase classname="LoginScreen should skip tests temporarily" name="LoginScreen should skip tests temporarily" time="0">
+    </testcase>
+  </testsuite>
+  <testsuite name="NutritionTrackingScreen" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:53" time="12.002" tests="3">
+    <testcase classname="NutritionTrackingScreen should render without crashing" name="NutritionTrackingScreen should render without crashing" time="2.703">
+    </testcase>
+    <testcase classname="NutritionTrackingScreen should handle component mount without errors" name="NutritionTrackingScreen should handle component mount without errors" time="0.092">
+    </testcase>
+    <testcase classname="NutritionTrackingScreen should render translated meal section labels" name="NutritionTrackingScreen should render translated meal section labels" time="0.155">
+    </testcase>
+  </testsuite>
+  <testsuite name="FoodCompareScreen - Basic Scenarios" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:04" time="0.825" tests="3">
+    <testcase classname="FoodCompareScreen - Basic Scenarios should show empty state hint when no foods are selected" name="FoodCompareScreen - Basic Scenarios should show empty state hint when no foods are selected" time="0.174">
+    </testcase>
+    <testcase classname="FoodCompareScreen - Basic Scenarios should render with duplicate prevention logic" name="FoodCompareScreen - Basic Scenarios should render with duplicate prevention logic" time="0.015">
+    </testcase>
+    <testcase classname="FoodCompareScreen - Basic Scenarios should render comparison results structure for 2-item comparison" name="FoodCompareScreen - Basic Scenarios should render comparison results structure for 2-item comparison" time="0.025">
+    </testcase>
+  </testsuite>
+  <testsuite name="FoodDetailModal - Micronutrients Feature" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:57" time="8.231" tests="7">
+    <testcase classname="FoodDetailModal - Micronutrients Feature should display micronutrients section when micronutrients data exists" name="FoodDetailModal - Micronutrients Feature should display micronutrients section when micronutrients data exists" time="5.121">
+    </testcase>
+    <testcase classname="FoodDetailModal - Micronutrients Feature should not display micronutrients section when data is missing" name="FoodDetailModal - Micronutrients Feature should not display micronutrients section when data is missing" time="0.169">
+    </testcase>
+    <testcase classname="FoodDetailModal - Micronutrients Feature should display correct micronutrient names without units in labels" name="FoodDetailModal - Micronutrients Feature should display correct micronutrient names without units in labels" time="0.027">
+    </testcase>
+    <testcase classname="FoodDetailModal - Micronutrients Feature should display micronutrient values with correct units" name="FoodDetailModal - Micronutrients Feature should display micronutrient values with correct units" time="0.03">
+    </testcase>
+    <testcase classname="FoodDetailModal - Micronutrients Feature should display micronutrients sorted by normalized amount (descending)" name="FoodDetailModal - Micronutrients Feature should display micronutrients sorted by normalized amount (descending)" time="0.096">
+    </testcase>
+    <testcase classname="API Transform - Micronutrients Mapping should include micronutrients field in ApiFoodItem interface" name="API Transform - Micronutrients Mapping should include micronutrients field in ApiFoodItem interface" time="0.217">
+    </testcase>
+    <testcase classname="API Transform - Micronutrients Mapping should normalize micronutrient values to per 100g" name="API Transform - Micronutrients Mapping should normalize micronutrient values to per 100g" time="0.003">
+    </testcase>
+  </testsuite>
+  <testsuite name="NutritionService" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:05" time="0.459" tests="5">
+    <testcase classname="NutritionService getLogsForRange should handle paginated response from backend" name="NutritionService getLogsForRange should handle paginated response from backend" time="0.001">
+    </testcase>
+    <testcase classname="NutritionService getLogsForRange should handle direct array response" name="NutritionService getLogsForRange should handle direct array response" time="0">
+    </testcase>
+    <testcase classname="NutritionService getLogsForRange should return empty array if no data" name="NutritionService getLogsForRange should return empty array if no data" time="0">
+    </testcase>
+    <testcase classname="NutritionService getLogsForRange should return empty array if results is empty" name="NutritionService getLogsForRange should return empty array if results is empty" time="0">
+    </testcase>
+    <testcase classname="NutritionService getLogsForRange should throw error if API returns error" name="NutritionService getLogsForRange should throw error if API returns error" time="0.032">
+    </testcase>
+  </testsuite>
+  <testsuite name="ProposeFoodModal - Basic Tests" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:44:56" time="8.639" tests="6">
+    <testcase classname="ProposeFoodModal - Basic Tests should render modal with title when visible" name="ProposeFoodModal - Basic Tests should render modal with title when visible" time="5.408">
+    </testcase>
+    <testcase classname="ProposeFoodModal - Basic Tests should display basic information section" name="ProposeFoodModal - Basic Tests should display basic information section" time="0.093">
+    </testcase>
+    <testcase classname="ProposeFoodModal - Basic Tests should display nutrition information sections" name="ProposeFoodModal - Basic Tests should display nutrition information sections" time="0.063">
+    </testcase>
+    <testcase classname="ProposeFoodModal - Basic Tests should display optional sections" name="ProposeFoodModal - Basic Tests should display optional sections" time="0.029">
+    </testcase>
+    <testcase classname="ProposeFoodModal - Basic Tests should display micronutrients section with counter" name="ProposeFoodModal - Basic Tests should display micronutrients section with counter" time="0.209">
+    </testcase>
+    <testcase classname="ProposeFoodModal - Basic Tests should have complete modal structure with all sections" name="ProposeFoodModal - Basic Tests should have complete modal structure with all sections" time="0.049">
+    </testcase>
+  </testsuite>
+  <testsuite name="Button Component" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:05" time="0.433" tests="5">
+    <testcase classname="Button Component renders correctly with default props" name="Button Component renders correctly with default props" time="0.054">
+    </testcase>
+    <testcase classname="Button Component calls onPress when pressed" name="Button Component calls onPress when pressed" time="0.011">
+    </testcase>
+    <testcase classname="Button Component does not call onPress when disabled" name="Button Component does not call onPress when disabled" time="0.001">
+    </testcase>
+    <testcase classname="Button Component renders with loading indicator when loading is true" name="Button Component renders with loading indicator when loading is true" time="0.027">
+    </testcase>
+    <testcase classname="Button Component renders with different variants" name="Button Component renders with different variants" time="0.011">
+    </testcase>
+  </testsuite>
+  <testsuite name="TextInput Component" errors="0" failures="0" skipped="2" timestamp="2025-12-21T13:45:05" time="0.855" tests="6">
+    <testcase classname="TextInput Component renders correctly with label" name="TextInput Component renders correctly with label" time="0.256">
+    </testcase>
+    <testcase classname="TextInput Component handles text input correctly" name="TextInput Component handles text input correctly" time="0.002">
+    </testcase>
+    <testcase classname="TextInput Component displays error message when error prop is provided" name="TextInput Component displays error message when error prop is provided" time="0.006">
+    </testcase>
+    <testcase classname="TextInput Component displays helper text when helperText prop is provided" name="TextInput Component displays helper text when helperText prop is provided" time="0.003">
+    </testcase>
+    <testcase classname="TextInput Component toggles secure text entry when toggleSecureEntry is true" name="TextInput Component toggles secure text entry when toggleSecureEntry is true" time="0">
+      <skipped/>
+    </testcase>
+    <testcase classname="TextInput Component calls onClear when clear button is pressed" name="TextInput Component calls onClear when clear button is pressed" time="0">
+      <skipped/>
+    </testcase>
+  </testsuite>
+  <testsuite name="ProfilePhotoPicker" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:05" time="0.264" tests="3">
+    <testcase classname="ProfilePhotoPicker shows Upload Photo when no uri provided" name="ProfilePhotoPicker shows Upload Photo when no uri provided" time="0.031">
+    </testcase>
+    <testcase classname="ProfilePhotoPicker shows Change Photo and Remove when uri exists" name="ProfilePhotoPicker shows Change Photo and Remove when uri exists" time="0.005">
+    </testcase>
+    <testcase classname="ProfilePhotoPicker shows Uploading when uploading=true" name="ProfilePhotoPicker shows Uploading when uploading=true" time="0.014">
+    </testcase>
+  </testsuite>
+  <testsuite name="NutritionCompare - Micronutrients Feature" errors="0" failures="0" skipped="0" timestamp="2025-12-21T13:45:05" time="0.469" tests="4">
+    <testcase classname="NutritionCompare - Micronutrients Feature should render micronutrients comparison section" name="NutritionCompare - Micronutrients Feature should render micronutrients comparison section" time="0.055">
+    </testcase>
+    <testcase classname="NutritionCompare - Micronutrients Feature should display all 4 micronutrients" name="NutritionCompare - Micronutrients Feature should display all 4 micronutrients" time="0.024">
+    </testcase>
+    <testcase classname="NutritionCompare - Micronutrients Feature should not display micronutrients when less than 2 foods" name="NutritionCompare - Micronutrients Feature should not display micronutrients when less than 2 foods" time="0.002">
+    </testcase>
+    <testcase classname="NutritionCompare - Micronutrients Feature should handle foods without micronutrients data" name="NutritionCompare - Micronutrients Feature should handle foods without micronutrients data" time="0.016">
+    </testcase>
+  </testsuite>
+  <testsuite name="MacronutrientCard" errors="0" failures="1" skipped="0" timestamp="2025-12-21T13:45:05" time="0.574" tests="10">
+    <testcase classname="MacronutrientCard should render without crashing" name="MacronutrientCard should render without crashing" time="0.099">
+    </testcase>
+    <testcase classname="MacronutrientCard should display nutrient name" name="MacronutrientCard should display nutrient name" time="0.003">
+    </testcase>
+    <testcase classname="MacronutrientCard should display current value" name="MacronutrientCard should display current value" time="0.002">
+    </testcase>
+    <testcase classname="MacronutrientCard should display target value" name="MacronutrientCard should display target value" time="0.002">
+      <failure>Error: Unable to find an element with text: /Daily Target.*120.*g/
+
+&lt;View&gt;
+  &lt;View&gt;
+    &lt;View&gt;
+      &lt;View&gt;
+        &lt;Text&gt;
+          🥩
+        &lt;/Text&gt;
+      &lt;/View&gt;
+      &lt;View&gt;
+        &lt;Text&gt;
+          Protein
+        &lt;/Text&gt;
+        &lt;Text&gt;
+          Daily Goal
+          : 
+          120
+          g
+        &lt;/Text&gt;
+      &lt;/View&gt;
+    &lt;/View&gt;
+    &lt;View
+      accessible={true}
+    &gt;
+      &lt;MockIcon /&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+  &lt;View&gt;
+    &lt;Text&gt;
+      100
+      g
+    &lt;/Text&gt;
+    &lt;View&gt;
+      &lt;Text&gt;
+        83
+        %
+      &lt;/Text&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+  &lt;View&gt;
+    &lt;View&gt;
+      &lt;View /&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+  &lt;View&gt;
+    &lt;View&gt;
+      &lt;Text&gt;
+        &lt;Text&gt;
+          20g remaining to reach goal
+        &lt;/Text&gt;
+      &lt;/Text&gt;
+    &lt;/View&gt;
+  &lt;/View&gt;
+&lt;/View&gt;
+    at Object.getByText (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/__tests__/MacronutrientCard.test.tsx:69:12)
+    at Promise.then.completed (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/utils.js:298:28)
+    at new Promise (&lt;anonymous&gt;)
+    at callAsyncCircusFn (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/utils.js:231:10)
+    at _callCircusTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:316:40)
+    at _runTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:252:3)
+    at _runTestsForDescribeBlock (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:126:9)
+    at _runTestsForDescribeBlock (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:121:9)
+    at run (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/run.js:71:3)
+    at runAndTransformResultsToJestFormat (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapterInit.js:122:21)
+    at jestAdapter (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-circus/build/legacy-code-todo-rewrite/jestAdapter.js:79:19)
+    at runTestInternal (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/runTest.js:367:16)
+    at runTest (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/runTest.js:444:34)
+    at Object.worker (/Users/ardasaygan/Desktop/School_Materials/4th/CMPE 352/bounswe2025group9/mobile/nutrihub/node_modules/jest-runner/build/testWorker.js:106:12)</failure>
+    </testcase>
+    <testcase classname="MacronutrientCard should render with custom icon" name="MacronutrientCard should render with custom icon" time="0.002">
+    </testcase>
+    <testcase classname="MacronutrientCard should show remaining amount when under target" name="MacronutrientCard should show remaining amount when under target" time="0.008">
+    </testcase>
+    <testcase classname="MacronutrientCard should handle different nutrient names" name="MacronutrientCard should handle different nutrient names" time="0.007">
+    </testcase>
+    <testcase classname="MacronutrientCard should handle different units" name="MacronutrientCard should handle different units" time="0.002">
+    </testcase>
+    <testcase classname="MacronutrientCard should render with zero current value" name="MacronutrientCard should render with zero current value" time="0.003">
+    </testcase>
+    <testcase classname="MacronutrientCard should render when exceeding target" name="MacronutrientCard should render when exceeding target" time="0.003">
+    </testcase>
+  </testsuite>
+</testsuites>

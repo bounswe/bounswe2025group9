@@ -18,5 +18,18 @@ module.exports = {
   testPathIgnorePatterns: [
     '<rootDir>/node_modules/'
   ],
-  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
+  moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+  reporters: [
+    'default',
+    ['jest-junit', {
+      outputDirectory: '../../reports/mobile',
+      outputName: 'test-report.xml',
+    }],
+    ['jest-html-reporter', {
+      outputPath: '../../reports/mobile/test-report.html',
+      pageTitle: 'NutriHub Mobile Test Report',
+      includeFailureMsg: true,
+      includeSuiteFailure: true,
+    }],
+  ],
 }; 
